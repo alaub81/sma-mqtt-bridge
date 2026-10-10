@@ -4,7 +4,7 @@ A Python Docker service publishing SMA measurements and charging preferences thr
 
 **Status: Python read service, first installation reads verified.** Configuration, profile validation, generic Modbus reads, Home Manager meter reception, local eCharger API/SEMP reads, optional ennexOS reads and Homie publishing are implemented. The three bundled inverter profiles cover the existing 41 channels and were checked against official model-specific lists and local identity reads. Inverters and SEMP have published real values to the installation broker. Authenticated API/portal reads and verified local setting units have also reached MQTT. Full openHAB comparison and Raspberry Pi/Home Manager acceptance remain pending. Local enum/boolean controls, combined charging plans and portal minimum PV writes are implemented and offline-tested behind independent disabled-by-default gates; no Python live device write has been accepted. See the [local command contract](docs/CONFIGURATION.md#local-echarger-command-milestone). See [register validation](docs/REGISTER_VALIDATION.md) and [Mac test instructions](docs/MAC_TEST.md).
 
-The runtime uses the verified official `python:3.14.8-slim-trixie` multi-platform digest in `Dockerfile-SMAB`. On 2026-10-10 the stable `3.15.0-slim-trixie` tag was still absent. The obsolete C++ diagnostic sources/toolchain have been removed; [baseline provenance](docs/BASELINE.md) and [third-party attribution](docs/THIRD_PARTY.md) are preserved.
+The runtime uses the verified official `python:3.14.8-slim-trixie` multi-platform digest in `Dockerfile-SMAB`. On 2026-10-10 the stable `3.15.0-slim-trixie` tag was still absent. The obsolete C++ diagnostic sources/toolchain have been removed.
 
 ## Local setup and diagnostics
 
@@ -70,4 +70,4 @@ GitHub publication, pushes and container releases remain later milestones. No pa
 
 ## License
 
-MIT. Inherited BMW attribution remains in [THIRD_PARTY.md](docs/THIRD_PARTY.md); historical nlohmann/json attribution is preserved in [THIRD_PARTY.md](docs/THIRD_PARTY.md). [BASELINE.md](docs/BASELINE.md) remains the original provenance record. This project is not affiliated with SMA.
+MIT. See [LICENSE](LICENSE). This project is not affiliated with SMA.

@@ -34,5 +34,5 @@ The private directory is deliberately excluded from Git and Docker build context
 - TLS verification defaults to enabled. Andreas explicitly requested configurable unverified TLS for the local wallbox and MQTT; permit only their explicit `SMAB_ECHARGER_TLS_VERIFY=false` / `SMAB_MQTT_TLS_VERIFY=false` overrides. Portal verification remains mandatory. Do not globally disable certificate checks or automatically trust a downloaded certificate.
 - Local API sessions and portal sessions are separate. Do not assume one uniform SMA API or that the Home Manager serves all configuration via Modbus.
 - Run `./tests/linter-check.sh` and `./tests/test-check.sh` for relevant changes. Use deterministic protocol fixtures for automated tests; live writes require an explicit user-requested action.
-- Keep MIT attribution for inherited BMW code and nlohmann/json. Preserve `docs/BASELINE.md` provenance.
+- The BMW bridge served as an initial structural reference. At Andreas' request, obsolete BMW sources, attribution documentation, baseline/import manifest and scaffold validation archive were removed. Do not restore these historical files; the root MIT license names the SMA project author.
 - GitHub publication and container release are later milestones. The current task authorizes local preparation, not creating a remote repository or pushing secrets/private data.

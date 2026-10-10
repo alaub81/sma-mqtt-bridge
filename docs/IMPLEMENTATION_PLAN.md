@@ -4,7 +4,7 @@
 
 The Python runtime, configuration/profile loaders, local adapters, optional portal reader, Homie lifecycle, heartbeat and deterministic offline tests are implemented. Three validated inverter profiles and installation read-publication evidence are recorded in REGISTER_VALIDATION.md and VALIDATION.md. Identity-only descriptors remain rejected. Local allowlisted controls, combined plans and portal PV commands are implemented; live acceptance is recorded per action, not inferred for the whole service. Full openHAB continuity and production outage acceptance remain pending; publication remains a later milestone.
 
-The obsolete C++ diagnostic runtime and compiler/container scripts have been removed. Keep the original [baseline provenance](BASELINE.md), import manifest and [MIT attribution](THIRD_PARTY.md). Private SMA original references remain read-only. Obsolete private BMW source copies were removed with user approval on 2026-10-10. Historical scaffold checks are archived under `docs/archive/`.
+The obsolete C++ diagnostic runtime and compiler/container scripts have been removed. Private SMA original references remain read-only. Obsolete private BMW source copies were removed with user approval on 2026-10-10. Obsolete baseline/import records and scaffold validation documentation were removed with user approval on 2026-10-10.
 
 ## Implemented foundation
 

@@ -450,3 +450,15 @@ Entscheidungen, eingegangene Unterlagen, erledigte Arbeiten und Prüfergebnisse 
 - Sieben zusätzliche Testfälle: defekte/tote Heartbeats, Liveness bei Geräte-/MQTT-Ausfall, Geräte-Erholung, unerwartetes Supervisorende, MQTT-Geschwisterbereinigung, echte MQTT-Verbindung mit verlorener Empfangsbestätigung sowie Portal-Dienstausfälle. Bestehende Tests für stale-Bereinigung und unklare Befehle weiterhin bestanden.
 - Validierung: 129 Offline-Tests lokal und im separaten Linux-arm64-Prüfcontainer bestanden; externes Container-Netzwerk deaktiviert, nur öffentliche Testdaten eingebunden. Vollständiger Linter über 83 Dateien, Compose-Parität einschließlich Overrides, separates Image-Build und Diff-Hygiene bestanden. Anfängliche lokale Loopback-Tests waren durch die Sandbox blockiert; erlaubte Wiederholung erfolgreich. Erster Container-Testaufruf hatte unvollständige Fixture-/Importpfade; mit den erforderlichen öffentlichen Pfaden korrigiert.
 - Keine echte Geräte-/Broker-Ausfallprüfung, keine Live-Schreibaktion und keine Änderung am laufenden Dienst. Zielhost-Ausfallabnahme, TLS-Vertrauen, externe Alarmierung und openHAB-Kontinuität bleiben ausdrücklich offen. Bestehende offene Dokumentationsänderungen einschließlich Attribution werden auf Andreas Wunsch gemeinsam lokal committet; private ENV/Daten/Referenzen sind ausgeschlossen, kein Push/Release.
+
+## 10.10.2026 — Separates historisches Lizenzdokument entfernt
+
+- Auf ausdrücklichen Wunsch von Andreas `docs/THIRD_PARTY.md` vollständig entfernt. BMW dient als historische Aufbau-Referenz; aktuelle Verweise und Projektvorgabe angepasst. Frühere Tagebucheinträge bleiben als Verlauf erhalten und beschreiben den damaligen Stand.
+- `LICENSE` mit eigenem Copyright-Vermerk und MIT-Text sowie `docs/BASELINE.md` und ursprüngliches Importmanifest bleiben erhalten. Keine Laufzeitänderung.
+- Validierung: `./tests/linter-check.sh` über 82 Projektdateien bestanden; `git diff --check` ohne Befund. Keine Laufzeitänderung; kein erneuter Protokolltest erforderlich.
+
+## 10.10.2026 — Historische BMW-Baseline und Scaffold-Nachweise entfernt
+
+- Auf Wunsch von Andreas `docs/BASELINE.md` und `docs/baseline-manifest.json` entfernt. Zusätzlich das ausschließlich zum entfernten C++-Grundgerüst gehörende `docs/archive/scaffold-validation.md` und dessen leeres Archivverzeichnis entfernt. Aktuelle Verweise und Projektvorgaben angepasst.
+- Bestandsprüfung: übrige öffentliche Dokumente und die beiden JSON-Inventare betreffen SMA-Konfiguration, Registervalidierung, Geräte-/Parameterinventar, Tests oder offene openHAB-Migration und bleiben erhalten. Frühere Tagebucheinträge bleiben als historischer Verlauf unverändert.
+- Validierung: `./tests/linter-check.sh` über 79 Projektdateien bestanden; `git diff --check` ohne Befund. Nur Dokumentationsbereinigung; Laufzeit unverändert.
