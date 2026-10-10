@@ -8,7 +8,7 @@ The obsolete C++ diagnostic runtime and compiler/container scripts have been rem
 
 ## Implemented foundation
 
-- Typed configuration with precedence built-in/profile defaults < optional JSON < explicit `SMAB_` ENV. Every source has its own activation flag; disabled sources perform no device I/O. Root `smab.env` is private; `smab.example.env` documents all variables. Other installation files live under `data/sma-mqtt-bridge/` and `/data/sma-mqtt-bridge` in the container.
+- Typed configuration with precedence built-in/profile defaults < optional JSON < explicit `SMAB_` ENV. Every source has its own activation flag; disabled sources perform no device I/O. Root `smab.env` is private; `smab.example.env` documents all variables. Configuration files live under `data/sma-mqtt-bridge/` and `/data/sma-mqtt-bridge` in the container; persistent runtime state uses the named Compose volume `data_smab_state` at its `state/` child path.
 - File-based reusable inverter profiles, strict schema/path/identity checks, host overrides and `file:<name>.json`. No invented registers or model-specific adapter branches.
 - Generic read-only Modbus, Home Manager meter telegrams, separate eCharger HTTPS API and SEMP, and optional ennexOS minimum PV share through a normal portal account. No paid Developer API or evcc substitution.
 - Bounded timeouts, supervised reconnection with jitter, separate local/portal sessions, verified TLS, redacted diagnostics and controlled shutdown. Authentication challenges block repeated login attempts.

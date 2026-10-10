@@ -8,7 +8,7 @@ Create a self-hosted Docker SMA-to-Homie-MQTT bridge based on the existing BMW-M
 
 Use local sources for inverter/meter measurements and wallbox settings. Use the existing ennexOS portal web API for the minimum PV percentage. The user explicitly rejected paying for SMA Developer APIs. A completely local setter for the SMA PV-percentage slider has not been confirmed.
 
-Each source must be independently configurable and enabled/disabled. The chosen environment prefix is `SMAB_`; all operational options need defaults and ENV overrides so only installation basics are necessary. The private `smab.env` lives in the repository root; `smab.example.env` documents every variable. Optional JSON configuration, profiles, certificates, password files and persistent state belong under `./data/sma-mqtt-bridge/`. See [the binding configuration contract](CONFIGURATION.md). Compose prepares this layout; the Python configuration loader and first read runtime are offline tested; hardware acceptance remains pending.
+Each source must be independently configurable and enabled/disabled. The chosen environment prefix is `SMAB_`; all operational options need defaults and ENV overrides so only installation basics are necessary. The private `smab.env` lives in the repository root; `smab.example.env` documents every variable. Optional JSON configuration, profiles, certificates and password files belong under `./data/sma-mqtt-bridge/`; runtime state uses the Compose volume `data_smab_state` at `/data/sma-mqtt-bridge/state`. See [the binding configuration contract](CONFIGURATION.md). Compose prepares this layout; the Python configuration loader and first read runtime are offline tested; hardware acceptance remains pending.
 
 ## Known devices and software
 

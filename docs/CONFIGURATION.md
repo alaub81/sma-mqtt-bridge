@@ -14,8 +14,12 @@ data/sma-mqtt-bridge/
   profiles/            # Verified register profiles, one or more per inverter
   certificates/        # CA certificates and optional client certificate/key
   secrets/             # Optional password files
-  state/               # Heartbeat and necessary non-secret persistent state
+
+Docker volume data_smab_state -> /data/sma-mqtt-bridge/state
+                       # Heartbeat and owned MQTT-topic manifest
 ```
+
+Both Compose files mount the project-scoped named volume `data_smab_state` at the state path, over the configuration bind mount. Docker initializes a fresh volume from the image-owned directory for UID/GID 10001. Keep this volume when replacing containers; `docker compose down -v` deletes it. Changing the Compose project name creates a different volume. Only one bridge instance may write this state. If overriding UID/GID, prepare matching ownership on the state volume; host-file access alone is insufficient. If changing `SMAB_STATE_DIR` or JSON `runtime.stateDir`, also adjust the volume target.
 
 The private `smab.env` and data directory are excluded from Git and Docker build contexts. Compose reads `smab.env` on the host and passes its values into the container; the file itself is not mounted. Keep `smab.env` readable only by its host owner, and secret files/private keys readable only by the owner/container user. Never generate a configuration file containing resolved passwords or session tokens. Do not rewrite user configuration automatically.
 
@@ -60,7 +64,7 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 | `SMAB_UID`, `SMAB_GID` | `10001` | Compose-only integer user/group IDs; align file access with the host account. |
 | `SMAB_CONFIG_FILE` | `/data/sma-mqtt-bridge/config.json` | Optional JSON configuration. |
 | `SMAB_PROFILE_DIR` | `/data/sma-mqtt-bridge/profiles` | Verified device profile directory. |
-| `SMAB_STATE_DIR` | `/data/sma-mqtt-bridge/state` | Non-secret persistent state and heartbeat. |
+| `SMAB_STATE_DIR` | `/data/sma-mqtt-bridge/state` | Non-secret persistent state and heartbeat; Compose mounts `data_smab_state` here. |
 | `SMAB_TIMEZONE` | `Europe/Berlin` | IANA timezone for timestamps and day boundaries. |
 | `SMAB_LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR`; redact secrets at every level. |
 | `SMAB_HEALTH_INTERVAL_SECONDS` | `10` | Main-loop heartbeat interval. |
@@ -179,3 +183,9 @@ Local API measurements require a recent timezone-qualified timestamp; missing or
 Retained retirement uses `state/mqtt-topics.json`, containing owned topics only. Removed properties/devices and previous prefixes are cleared on reconnect. Fresh values are reannounced; unavailable current values are cleared first. The manifest cannot retire another broker's data after changing `HOST`/port. Keep the original broker available for a separate retirement step; no automatic cross-broker access occurs.
 
 Every dataclass field in `ressources/sma_mqtt_bridge/config.py` has the documented ENV family and camelCase JSON name. `runtime` fields use `SMAB_`; `commands.enabled` maps to `SMAB_COMMANDS_ENABLED`, and its timeout maps to `SMAB_COMMAND_READBACK_TIMEOUT_SECONDS`. Numbered inverter IDs are JSON selectors, not ENV identity overrides. The Python CLI receives ENV from Compose; dotenv syntax is handled by Compose rather than a second parser.
+
+## Migrating existing state from a bind mount
+
+Stop the bridge before copying state. Copy the existing `heartbeat.json` and `mqtt-topics.json` into the Compose volume `data_smab_state`, retaining their contents and restrictive file modes; assign them to the configured container UID/GID. Do not overwrite a volume already in use. Start the bridge and verify its heartbeat and Docker health status. Keep the former host files as an inactive backup until verification. A new empty volume does not automatically import the state hidden under the parent bind mount. Preserve `mqtt-topics.json` to retain ownership of old topics for cleanup.
+
+See [Docker volume lifecycle and migration](https://docs.docker.com/engine/storage/volumes/) and [Compose volume naming](https://docs.docker.com/reference/compose-file/volumes/).

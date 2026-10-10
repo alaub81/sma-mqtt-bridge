@@ -30,7 +30,7 @@ docker compose -f docker-compose.dev.yml up --build -d
 docker compose -f docker-compose.dev.yml logs --tail=100 -f
 ```
 
-The first command validates configuration without device or broker I/O. The second starts live read/publish activity for explicitly enabled sources. With all sources disabled, configuration validation succeeds but the runtime exits with an actionable message. A running container alone does not establish adapter acceptance.
+The first command validates configuration without device or broker I/O. The second starts live read/publish activity for explicitly enabled sources. With all sources disabled, configuration validation succeeds but the runtime exits with an actionable message. A running container alone does not establish adapter acceptance. Runtime files now live in the named Docker volume `data_smab_state`, mounted at `/data/sma-mqtt-bridge/state`; inspect the heartbeat inside the container rather than reading a former host `state/` directory. Preserve the volume and use the [state migration instructions](CONFIGURATION.md#migrating-existing-state-from-a-bind-mount) for existing deployments.
 
 Inspect `homie/sma-inverter1/`, `homie/sma-inverter2/`, `homie/sma-inverter3/` and `homie/sma-echarger/` on the configured broker. Verify discovery, source diagnostics, fresh settings and measurement values against the local SMA interface/openHAB. Missing, invalid and stale values must disappear instead of becoming zero. Verify TLS, disconnect/reconnect, Last Will and graceful stop. Commands are not yet available under `/set`.
 
