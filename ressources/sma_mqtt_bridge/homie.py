@@ -68,9 +68,9 @@ class HomiePublisher:
                 if key is None:
                     continue
                 if message.retain:
-                    self.command_controller.result("rejected-retained")
+                    self.command_controller.reject(key, "rejected-retained")
                 elif active is not None and not active.done():
-                    self.command_controller.result("rejected-busy")
+                    self.command_controller.reject(key, "rejected-busy")
                 else:
                     active = asyncio.create_task(self.command_controller.handle(key, message.payload))
         finally:

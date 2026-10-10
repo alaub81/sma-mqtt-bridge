@@ -51,7 +51,7 @@ def main(argv=None):
         if args.check_config:
             print(json.dumps({"valid": True, "enabledSources": sum(i.enabled for i in config.inverters)
                               + sum((config.home_manager.enabled, config.echarger.enabled,
-                                     config.echarger.semp_enabled, config.portal.enabled)), "readOnly": not (config.commands.enabled and config.echarger.commands_enabled)}))
+                                     config.echarger.semp_enabled, config.portal.enabled)), "readOnly": not (config.commands.enabled and (config.echarger.commands_enabled or config.portal.commands_enabled))}))
             return 0
         if args.refresh_portal and not config.portal.enabled:
             raise ConfigError("--refresh-portal requires an explicitly enabled portal adapter")

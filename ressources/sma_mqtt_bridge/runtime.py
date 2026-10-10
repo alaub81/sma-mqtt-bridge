@@ -13,6 +13,7 @@ from .adapters.modbus import ModbusReader
 from .adapters.portal import PortalReader
 from .errors import AuthenticationError
 from .commands import LOCAL_COMMANDS, LocalCommands
+from .portal_commands import CommandRouter, PortalCommands
 from .health import atomic_json, heartbeat
 from .homie import HomiePublisher, backoff, wait_stop
 from .model import Property, SourceState
@@ -98,16 +99,30 @@ async def run(config, refresh_portal=False, stop=None, publisher_factory=HomiePu
     readers = sources(config)
     states = [s for s, _, _ in readers]
     controller = None
+    local_controller, portal_controller = None, None
     if config.commands.enabled and config.echarger.commands_enabled:
         api_state = next(s for s in states if s.id == "api")
         api_state.properties = tuple(replace(p, settable=True) if p.node == "settings" and p.id in LOCAL_COMMANDS else p
                                      for p in api_state.properties)
         result_state = SourceState("commands", config.echarger.homie_id,
-                                   (Property("commands", "local-result", "Local command result", "string"),),
+                                   (Property("commands", "local-result", "Local command result", "string"),
+                                    Property("commands", "plan", "Confirmed charging plan", "string", settable=True)),
                                    config.echarger.stale_seconds)
         states.append(result_state)
         api_reader = next(r for s, r, _ in readers if s.id == "api")
-        controller = LocalCommands(config, api_state, result_state, reader=api_reader)
+        local_controller = LocalCommands(config, api_state, result_state, reader=api_reader)
+    if config.commands.enabled and config.portal.commands_enabled:
+        portal_state = next(s for s in states if s.id == "portal")
+        portal_state.properties = tuple(replace(p, settable=True, format="0:100") if p.id == "pv-minimum" else p
+                                        for p in portal_state.properties)
+        result_state = SourceState("portal-commands", config.echarger.homie_id,
+                                   (Property("commands", "portal-result", "Portal command result", "string"),),
+                                   config.portal.stale_seconds)
+        states.append(result_state)
+        portal_reader = next(r for s, r, _ in readers if s.id == "portal")
+        portal_controller = PortalCommands(config, portal_state, result_state, reader=portal_reader)
+    if local_controller is not None or portal_controller is not None:
+        controller = CommandRouter(local_controller, portal_controller)
     publisher = publisher_factory(config, states)
     if controller is not None:
         publisher.command_controller = controller

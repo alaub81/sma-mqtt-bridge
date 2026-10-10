@@ -1,5 +1,6 @@
-"""Read-only normal-account ennexOS PKCE session, separate from local API."""
+"""Normal-account ennexOS PKCE session, separate from local API."""
 
+import asyncio
 import base64
 import hashlib
 from html.parser import HTMLParser
@@ -103,6 +104,7 @@ class PortalReader:
         self.settings = settings
         self.http = HTTP(settings.timeout_seconds, max_bytes, cookies=True)
         self.token, self.refresh, self.expires = None, None, 0
+        self.lock = asyncio.Lock()
         self.redirect = settings.base_url.rstrip("/") + "/dashboard/initialize"
         self.token_url = settings.auth_base_url.rstrip("/") + "/protocol/openid-connect/token"
 
@@ -151,9 +153,13 @@ class PortalReader:
             raise AuthenticationError("Portal authorization code exchange failed")
         return self.store_tokens(body)
 
-    async def read(self):
+    def device_url(self):
         s = self.settings
-        url = s.api_base_url.rstrip("/") + "/plants/" + quote(s.plant_id, safe="") + "/devices/" + quote(s.device_id, safe="") + "?menuItemType=ViewDeviceProperties"
+        return s.api_base_url.rstrip("/") + "/plants/" + quote(s.plant_id, safe="") + "/devices/" + quote(s.device_id, safe="")
+
+    async def read_device(self):
+        s = self.settings
+        url = self.device_url() + "?menuItemType=ViewDeviceProperties"
         for attempt in range(2):
             status, _, body = await self.http.request("GET", url, token=await self.access_token())
             if status == 401 and attempt == 0:
@@ -163,7 +169,14 @@ class PortalReader:
                 raise AuthenticationError("Portal device access denied")
             if status != 200:
                 raise ProtocolError("Portal device read failed")
-            return portal_values(json_data(body), s.plant_id, s.device_id)
+            reply = json_data(body)
+            portal_values(reply, s.plant_id, s.device_id)
+            return reply
+
+    async def read(self):
+        async with self.lock:
+            s = self.settings
+            return portal_values(await self.read_device(), s.plant_id, s.device_id)
 
     async def close(self):
         self.token, self.refresh = None, None

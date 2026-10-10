@@ -454,10 +454,12 @@ def load_config(environ=None, bundled_dir=None):
             raise ConfigError("Portal endpoints require a verified HTTPS origin")
     if portal.enabled and not all((portal.username, portal.password, portal.plant_id, portal.device_id)):
         raise ConfigError("Portal requires separate credentials and plant/device selectors")
-    if portal.commands_enabled or any(i.commands_enabled for i in inverters):
-        raise ConfigError("Portal/inverter command paths are not implemented")
+    if any(i.commands_enabled for i in inverters):
+        raise ConfigError("Inverter command paths are not implemented")
     if ec.commands_enabled and not ec.enabled:
         raise ConfigError("Local commands require the enabled eCharger API")
-    if commands.enabled and not ec.commands_enabled:
+    if portal.commands_enabled and not portal.enabled:
+        raise ConfigError("Portal commands require the enabled portal adapter")
+    if commands.enabled and not (ec.commands_enabled or portal.commands_enabled):
         raise ConfigError("Global commands require a supported per-device command gate")
     return replace(config, mqtt=mqtt, echarger=ec, portal=portal)
