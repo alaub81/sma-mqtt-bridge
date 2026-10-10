@@ -18,6 +18,7 @@ class Property:
     unit: str = ""
     format: str = ""
     stale_seconds: float | None = None
+    settable: bool = False
 
     @property
     def key(self):

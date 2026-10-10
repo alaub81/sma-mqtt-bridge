@@ -1,6 +1,7 @@
 """Independent read supervisors, monotonic scheduling and main-loop liveness."""
 
 import asyncio
+from dataclasses import replace
 import logging
 from pathlib import Path
 import signal
@@ -10,9 +11,10 @@ from .adapters.meter import MeterReader
 from .adapters.modbus import ModbusReader
 from .adapters.portal import PortalReader
 from .errors import AuthenticationError
+from .commands import LOCAL_COMMANDS, LocalCommands
 from .health import atomic_json, heartbeat
 from .homie import HomiePublisher, backoff, wait_stop
-from .model import SourceState
+from .model import Property, SourceState
 
 LOG = logging.getLogger(__name__)
 
@@ -86,7 +88,20 @@ async def run(config, refresh_portal=False, stop=None, publisher_factory=HomiePu
             pass
     readers = sources(config)
     states = [s for s, _, _ in readers]
+    controller = None
+    if config.commands.enabled and config.echarger.commands_enabled:
+        api_state = next(s for s in states if s.id == "api")
+        api_state.properties = tuple(replace(p, settable=True) if p.node == "settings" and p.id in LOCAL_COMMANDS else p
+                                     for p in api_state.properties)
+        result_state = SourceState("commands", config.echarger.homie_id,
+                                   (Property("commands", "local-result", "Local command result", "string"),),
+                                   config.echarger.stale_seconds)
+        states.append(result_state)
+        api_reader = next(r for s, r, _ in readers if s.id == "api")
+        controller = LocalCommands(config, api_state, result_state, reader=api_reader)
     publisher = publisher_factory(config, states)
+    if controller is not None:
+        publisher.command_controller = controller
     tasks = [asyncio.create_task(supervise(state, reader, interval, config, stop,
                                           refresh_portal and state.id == "portal"))
              for state, reader, interval in readers]
@@ -105,6 +120,8 @@ async def run(config, refresh_portal=False, stop=None, publisher_factory=HomiePu
         for task in pending:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
+        if controller is not None:
+            await controller.close()
         atomic_json(Path(config.runtime.state_dir) / "heartbeat.json", {"status": "stopped"})
         for sig in installed:
             loop.remove_signal_handler(sig)
