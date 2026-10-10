@@ -14,6 +14,9 @@ services:
       - type: bind
         source: ${SMAB_DATA_DIR:-./data/sma-mqtt-bridge}
         target: /data/sma-mqtt-bridge
+      - type: volume
+        source: data_smab_state
+        target: /data/sma-mqtt-bridge/state
     # Linux host networking is needed for Home Manager multicast on the Pi.
     network_mode: host
     init: true
@@ -23,3 +26,6 @@ services:
     cap_drop: [ALL]
     stop_grace_period: 15s
     restart: unless-stopped
+
+volumes:
+  data_smab_state:

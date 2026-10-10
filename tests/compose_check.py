@@ -26,6 +26,9 @@ def render(filename, overrides):
     config = json.loads(result.stdout)
     if set(config["services"]) != {"sma-mqtt-bridge"}:
         raise ValueError("Unexpected Compose service set")
+    volumes = config.get("volumes", {})
+    if set(volumes) != {"data_smab_state"} or volumes["data_smab_state"]["name"] != config["name"] + "_data_smab_state":
+        raise ValueError("State must use the project-scoped data_smab_state volume")
     return config["services"]["sma-mqtt-bridge"]
 
 
@@ -51,8 +54,15 @@ def check(overrides):
     if dev["user"] != user:
         raise ValueError("Container user override was not applied")
     source = (ROOT / overrides.get("SMAB_DATA_DIR", "./data/sma-mqtt-bridge")).resolve()
-    if Path(dev["volumes"][0]["source"]) != source:
+    mounts = {mount["target"]: mount for mount in dev["volumes"]}
+    if set(mounts) != {"/data/sma-mqtt-bridge", "/data/sma-mqtt-bridge/state"}:
+        raise ValueError("Unexpected configuration/state mount paths")
+    data_mount = mounts["/data/sma-mqtt-bridge"]
+    if data_mount["type"] != "bind" or Path(data_mount["source"]) != source:
         raise ValueError("Host data directory override was not applied")
+    state_mount = mounts["/data/sma-mqtt-bridge/state"]
+    if state_mount["type"] != "volume" or state_mount["source"] != "data_smab_state" or state_mount.get("read_only", False):
+        raise ValueError("State must use a writable named volume")
 
 
 def main():
