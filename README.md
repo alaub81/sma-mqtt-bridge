@@ -12,17 +12,17 @@ Use Python 3.14+ and the pinned dependencies:
 
 ```bash
 python3.14 -m venv .venv
-.venv/bin/python -m pip install --requirement requirements.txt
-.venv/bin/python -m sma_mqtt_bridge --version
-.venv/bin/python -m sma_mqtt_bridge --project-status
-.venv/bin/python -m sma_mqtt_bridge --check-config
-.venv/bin/python -m sma_mqtt_bridge --check-profile sma-stp8-0-3av-40
+.venv/bin/python -m pip install --requirement ressources/requirements.txt
+(cd ressources && ../.venv/bin/python -m sma_mqtt_bridge --version)
+(cd ressources && ../.venv/bin/python -m sma_mqtt_bridge --project-status)
+(cd ressources && ../.venv/bin/python -m sma_mqtt_bridge --check-config)
+(cd ressources && ../.venv/bin/python -m sma_mqtt_bridge --check-profile sma-stp8-0-3av-40)
 ./tests/test-check.sh
 ```
 
 The Python CLI consumes process environment variables; it does not read or rewrite `.env`. Compose passes the host file into the service. Additional JSON is optional. Diagnostics show counts/status only, never resolved settings or credentials. A profile schema check can succeed while `pollingValidated` remains false.
 
-Read [configuration and defaults](docs/CONFIGURATION.md), [profile schema](profiles/README.md), [migration coverage](docs/MIGRATION.md), [the value catalogue](docs/WERTEKATALOG.md) and [validation evidence](docs/VALIDATION.md). Outstanding inputs and decisions are preserved in [todo.md](todo.md).
+Read [configuration and defaults](docs/CONFIGURATION.md), [profile schema](docs/PROFILES.md), [migration coverage](docs/MIGRATION.md), [the value catalogue](docs/WERTEKATALOG.md) and [validation evidence](docs/VALIDATION.md). Outstanding inputs and decisions are preserved in [todo.md](todo.md).
 
 ## Docker on the Raspberry Pi
 
@@ -59,12 +59,12 @@ All repository files receive hygiene checks; Python, shell, Docker, YAML, Action
 
 ## Repository layout
 
-- `sma_mqtt_bridge/`: Python runtime and read adapters.
-- `profiles/`: bundled inverter model descriptors and profile schema.
-- `ressources/`: optional [JSON configuration example](ressources/config.example.json) and Docker lint configuration.
+- `ressources/`: all image inputs, copied into `/app`: `sma_mqtt_bridge/`, bundled `profiles/` and pinned `requirements.txt`.
 - `tests/`: deterministic offline tests, Compose parity and lint tooling.
-- `docs/`: current configuration, values, migration and implementation documentation; historical evidence is explicitly archived.
-- Root: `Dockerfile-SMAB`, both standalone Compose files, `.env.example`, private ignored `.env`, and Python dependency pins in `requirements.txt`.
+- `docs/`: current configuration, [profile schema](docs/PROFILES.md), values, migration and implementation documentation; historical evidence is explicitly archived.
+- Root: `Dockerfile-SMAB`, both standalone Compose files, `.env.example`, private ignored `.env`, optional [JSON configuration example](config.example.json) and lint settings including `.hadolint.yaml`.
+
+`ressources/` is reserved for image contents. Examples, tests, documentation and private host files stay outside it. The Docker build context uses an allowlist for this directory and excludes Python bytecode caches.
 
 GitHub publication, pushes and container releases remain later milestones. No paid SMA Developer API or alternative charging controller is used.
 

@@ -15,10 +15,10 @@ The obsolete C++ diagnostic runtime and compiler/container scripts have been rem
 - Homie 4 discovery, one client/Last Will per device, independent source freshness, retained retirement and unavailable values instead of zero. No `/set` subscriptions or device-write paths.
 - Atomic main-loop heartbeat and local healthcheck separate from device/MQTT availability.
 - One `Dockerfile-SMAB` using the stable official Python 3.14.8 slim-trixie index verified on 2026-10-10. The 3.15.0 stable slim tag was absent when selected; recheck stable official tags before future image updates.
-- Standalone Compose files with identical runtime options: development builds locally; example pulls GHCR. Supplemental deployment files live under `ressources/`. Root Compose/ENV/build-context files remain directly usable by editors and Compose.
+- Standalone Compose files with identical runtime options: development builds locally; example pulls GHCR. `ressources/` holds image inputs only (Python package, bundled profiles and requirements), copied into `/app`. Examples and tooling remain outside it. Root Compose/ENV/build-context files remain directly usable by editors and Compose.
 - Offline tests, complete repository lint, Compose parity/override checks and prepared amd64/arm64 CI. Release is prepared for stable tags but has not run.
 
-Sources: [official Python images](https://hub.docker.com/_/python), [configuration contract](CONFIGURATION.md), [profile schema](../profiles/README.md), [validation evidence](VALIDATION.md).
+Sources: [official Python images](https://hub.docker.com/_/python), [configuration contract](CONFIGURATION.md), [profile schema](PROFILES.md), [validation evidence](VALIDATION.md).
 
 ## Next: accept the read adapters on the target installation
 

@@ -23,7 +23,7 @@ The loader uses built-in defaults and selected profile connection defaults, then
 
 Every operational option must be overridable through ENV and documented with type, default and validation. Unknown runtime `SMAB_` keys, malformed values, duplicate device/Homie IDs and conflicting password/password-file settings must fail validation before any connection. Recognize Compose-only variables without treating them as runtime options. An absent variable uses the previous layer; an empty value clears only optional strings. Empty booleans or numbers are errors. Accept boolean `true`/`false` case-insensitively, validate finite positive durations, ports 1–65535 and Modbus unit IDs 1–247. Only portal polling accepts zero to mean no periodic polling.
 
-JSON is optional, not a second mandatory setup step. JSON names use camelCase as illustrated in [config.example.json](../ressources/config.example.json); runtime fields live under `runtime`, MQTT fields under `mqtt`, device fields under their respective sections, and global command settings under `commands`. Compose-only settings are not JSON fields. Credentials use ENV or optional password files.
+JSON is optional, not a second mandatory setup step. JSON names use camelCase as illustrated in [config.example.json](../config.example.json); runtime fields live under `runtime`, MQTT fields under `mqtt`, device fields under their respective sections, and global command settings under `commands`. Compose-only settings are not JSON fields. Credentials use ENV or optional password files.
 
 ## Minimal deployment overrides
 
@@ -38,7 +38,7 @@ SMAB_INVERTER1_HOST=inverter.example.invalid
 SMAB_INVERTER1_PROFILE=sma-stp8-0-3av-40
 ```
 
-Add broker authentication/CA overrides if required by that installation. Select a reusable model profile by ID; the repository now provides three identity-only default descriptors under [profiles/](../profiles/README.md), but does not yet bundle validated complete register mappings for the installed devices. Never invent an IP address, password, serial number or register mapping as a working default.
+Add broker authentication/CA overrides if required by that installation. Select a reusable model profile by ID; the repository provides three identity-only default descriptors under [ressources/profiles/](../ressources/profiles/), with the schema documented in [PROFILES.md](PROFILES.md), but does not yet bundle validated complete register mappings for the installed devices. Never invent an IP address, password, serial number or register mapping as a working default.
 
 Each inverter is independent. The first three slots default respectively to `sma-stp8-0-3av-40`, `sma-sbs3-7-10` and `sma-sb4-0-1av-41`, and each selection can be overridden. A profile is reusable across slots; slot number does not determine the connected model. Further slots use the same `SMAB_INVERTER<N>_` family, with an empty profile default requiring explicit selection, without another hard-coded adapter. A disabled slot does not require a host or profile. An enabled slot requires a host and validated matching profile; validate discovered device identity against the profile and an optional expected serial number before accepting data.
 
@@ -170,4 +170,4 @@ Local API measurements require a recent timezone-qualified timestamp; missing or
 
 Retained retirement uses `state/mqtt-topics.json`, containing owned topics only. Removed properties/devices and previous prefixes are cleared on reconnect. Fresh values are reannounced; unavailable current values are cleared first. The manifest cannot retire another broker's data after changing `HOST`/port. Keep the original broker available for a separate retirement step; no automatic cross-broker access occurs.
 
-Every dataclass field in `sma_mqtt_bridge/config.py` has the documented ENV family and camelCase JSON name. `runtime` fields use `SMAB_`; `commands.enabled` maps to `SMAB_COMMANDS_ENABLED`, and its timeout maps to `SMAB_COMMAND_READBACK_TIMEOUT_SECONDS`. Numbered inverter IDs are JSON selectors, not ENV identity overrides. The Python CLI receives ENV from Compose; dotenv syntax is handled by Compose rather than a second parser.
+Every dataclass field in `ressources/sma_mqtt_bridge/config.py` has the documented ENV family and camelCase JSON name. `runtime` fields use `SMAB_`; `commands.enabled` maps to `SMAB_COMMANDS_ENABLED`, and its timeout maps to `SMAB_COMMAND_READBACK_TIMEOUT_SECONDS`. Numbered inverter IDs are JSON selectors, not ENV identity overrides. The Python CLI receives ENV from Compose; dotenv syntax is handled by Compose rather than a second parser.

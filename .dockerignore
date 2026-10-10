@@ -1,18 +1,8 @@
-.git
-.env
-.env.*
-!.env.example
-config.json
-docker-compose.yml
-data/
-secrets/
-private/
-.lint-venv/
-.lint-tools/
-.ruff_cache/
-__pycache__/
-build/
-*.sarif
-.DS_Store
-.venv/
-*.egg-info/
+# Only image inputs are sent as build context.
+**
+!ressources/
+!ressources/**
+# Local bytecode is not a runtime input.
+**/__pycache__/
+**/*.pyc
+**/*.pyo

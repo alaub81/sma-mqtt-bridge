@@ -1,6 +1,6 @@
 # Inverter profiles
 
-These public JSON files define the version-1 profile format used by the Python loader. They contain no installation addresses, serial numbers or credentials. **They are model descriptors, not validated polling profiles.** The Python loader validates them but rejects them for enabled polling.
+The public JSON files under `ressources/profiles/` define the version-1 profile format used by the Python loader. They contain no installation addresses, serial numbers or credentials. **They are model descriptors, not validated polling profiles.** The Python loader validates them but rejects them for enabled polling.
 
 | Profile ID | Model | Observed firmware | Default slot |
 | --- | --- | --- | --- |
@@ -12,13 +12,13 @@ Select an ID through `SMAB_INVERTER<N>_PROFILE` or the inverter's JSON `profile`
 
 The Docker image packages these defaults as resources. For a bare profile ID, resolve `<id>.json` in the host profile directory first, then the bundled resource directory. A malformed or incompatible host override is an error; do not fall back silently. Require the file's `id` to match its selected ID. Use `file:custom-name.json` to select only a file in the host profile directory, without bundled fallback. Reject absolute paths and traversal outside that directory. Additional slots have no default model and require explicit selection.
 
-Custom installation files belong under `./data/sma-mqtt-bridge/profiles/`. Future reusable, sanitized model profiles can be added here. The loader/adapter must use profile data rather than model-specific branches, so adding a supported model needs no new adapter implementation.
+Custom installation files belong under `./data/sma-mqtt-bridge/profiles/`. Future reusable, sanitized model profiles can be added under `ressources/profiles/`. The loader/adapter must use profile data rather than model-specific branches, so adding a supported model needs no new adapter implementation.
 
 The schema separates device identity, protocol defaults, evidence/validation, pollers, property definitions and command allowlists. When completing it, describe register functions and zero-based addresses, lengths, data types, word/byte order, scaling, units, invalid sentinels, source channels, per-poller intervals and Homie metadata. Keep installation connection overrides separate from model defaults. Define the final schema and validate it in Python before using profiles.
 
 All initial descriptors have `validation.status=identity-only` and empty poller/property/command arrays. The loader must reject them for normal polling until confirmed register definitions are added and the status is explicitly changed to `validated` after offline verification. Do not assume that a Sunny Boy -40 register document validates a -41, Tripower or Storage model. Preserve existing mappings as migration evidence while reconciling their types and units.
 
-See [the configuration contract](../docs/CONFIGURATION.md), [the value catalogue](../docs/WERTEKATALOG.md) and [migration requirements](../docs/MIGRATION.md).
+See [the configuration contract](CONFIGURATION.md), [the value catalogue](WERTEKATALOG.md) and [migration requirements](MIGRATION.md).
 
 ## Version 1 polling schema
 
