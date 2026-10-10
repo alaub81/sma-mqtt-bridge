@@ -1,0 +1,5 @@
+failure-threshold: warning
+ignored:
+  # Debian and Alpine security updates follow the selected distribution.
+  - DL3008
+  - DL3018

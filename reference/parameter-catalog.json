@@ -1,0 +1,548 @@
+[
+  {
+    "channelId": "Parameter.FTPPush.RemStoLcn",
+    "editable": true
+  },
+  {
+    "channelId": "Parameter.Nameplate.Model",
+    "editable": false,
+    "numericOptions": [
+      "19143"
+    ],
+    "optionCount": 1
+  },
+  {
+    "channelId": "Parameter.GridGuard.Cntry.PEOpnMon",
+    "editable": true,
+    "numericOptions": [
+      "1129",
+      "1130"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.Nameplate.CmpMain.SusyId",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.Wl.DoWPS",
+    "editable": true,
+    "numericOptions": [
+      "3321",
+      "302"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.FTPPush.Pwd",
+    "editable": true
+  },
+  {
+    "channelId": "Parameter.Chrg.Plan.En",
+    "editable": true,
+    "min": 0
+  },
+  {
+    "channelId": "Parameter.WebConn.SwRev",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.Nameplate.MainModel",
+    "editable": false,
+    "numericOptions": [
+      "8008"
+    ],
+    "optionCount": 1
+  },
+  {
+    "channelId": "Parameter.PCC.ARtg",
+    "editable": true,
+    "min": 16,
+    "max": 1000
+  },
+  {
+    "channelId": "Parameter.Wl.Sec.Psk",
+    "editable": true
+  },
+  {
+    "channelId": "Parameter.Spdwr.AutoCfgIsOn[]",
+    "editable": true,
+    "numericOptions": [
+      "1129"
+    ],
+    "optionCount": 1
+  },
+  {
+    "channelId": "Parameter.Acs.PwdIstl",
+    "editable": true
+  },
+  {
+    "channelId": "Parameter.SwCmp.CmpComBlt.SwRev",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.Sys.AmbLghtBri",
+    "editable": true,
+    "numericOptions": [
+      "5191",
+      "5190",
+      "5173"
+    ],
+    "optionCount": 3
+  },
+  {
+    "channelId": "Parameter.Nameplate.SerNum",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.FTPPush.IsOn",
+    "editable": true,
+    "numericOptions": [
+      "1129",
+      "1130"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.Mb.UdpSrv.Port",
+    "editable": true,
+    "min": 0,
+    "max": 65535
+  },
+  {
+    "channelId": "Parameter.Spdwr.ActlSnetMsk[]",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.Upd.AutoUpdIsOn",
+    "editable": true,
+    "numericOptions": [
+      "1129",
+      "1130"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.IecCfg.SrvIsOn",
+    "editable": true,
+    "numericOptions": [
+      "1129",
+      "1130"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.Nameplate.ChrgCtrl.SusyId",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.Inverter.AcALim",
+    "editable": true,
+    "min": 6,
+    "max": 32
+  },
+  {
+    "channelId": "Parameter.Nameplate.CmpCom.HwVer",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.Chrg.ActChaMod",
+    "editable": true,
+    "numericOptions": [
+      "4718",
+      "4719",
+      "4720",
+      "4721"
+    ],
+    "optionCount": 4
+  },
+  {
+    "channelId": "Parameter.Sys.UseAmbLght",
+    "editable": true,
+    "numericOptions": [
+      "308",
+      "303"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.Acs.PwdUsr",
+    "editable": true
+  },
+  {
+    "channelId": "Parameter.Spdwr.ActlIp[]",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.Chrg.Plan.StopTm",
+    "editable": true,
+    "min": 0
+  },
+  {
+    "channelId": "Parameter.Nameplate.CmpOS.SwRev",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.Inverter.WMaxIn",
+    "editable": true,
+    "min": 4500,
+    "max": 22000
+  },
+  {
+    "channelId": "Parameter.WebConn.IsOn",
+    "editable": true,
+    "numericOptions": [
+      "1129",
+      "1130"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.PCC.WMaxAsym",
+    "editable": true,
+    "min": 0,
+    "max": 10000
+  },
+  {
+    "channelId": "Parameter.Mb.UdpSrv.IsOn",
+    "editable": true,
+    "numericOptions": [
+      "1130",
+      "1129"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.Nameplate.ARtg",
+    "editable": false,
+    "min": 32,
+    "max": 32
+  },
+  {
+    "channelId": "Parameter.DtTm.NtpSrv",
+    "editable": true
+  },
+  {
+    "channelId": "Parameter.Inverter.WMax",
+    "editable": true,
+    "min": 4500,
+    "max": 22000
+  },
+  {
+    "channelId": "Parameter.Nameplate.ChrgCtrl.SerNumTxt",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.Chrg.ChrgLok",
+    "editable": true,
+    "numericOptions": [
+      "1130",
+      "1129"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.Chrg.Plan.DurTmm",
+    "editable": true,
+    "min": 0
+  },
+  {
+    "channelId": "Parameter.Nameplate.CmpCom.SerNum",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.Nameplate.MacId",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.Nameplate.ChrgCtrl.SwRevTxt",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.Wl.Sec.Cry",
+    "editable": true,
+    "numericOptions": [
+      "3323",
+      "3324",
+      "3398"
+    ],
+    "optionCount": 3
+  },
+  {
+    "channelId": "Parameter.Spdwr.IgmpQryTms",
+    "editable": true,
+    "min": 11,
+    "max": 31744
+  },
+  {
+    "channelId": "Parameter.Nameplate.CmpCom.Rev",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.FTPPush.UpldCyc",
+    "editable": true,
+    "numericOptions": [
+      "1188",
+      "1189"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.DevUpd.IsOn",
+    "editable": true,
+    "numericOptions": [
+      "1129",
+      "1130"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.Nameplate.Location",
+    "editable": true
+  },
+  {
+    "channelId": "Parameter.Spdwr.ActlDnsSrvIp[]",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.Chrg.AMinCha",
+    "editable": true,
+    "min": 6,
+    "max": 32
+  },
+  {
+    "channelId": "Parameter.Inverter.OutPhs",
+    "editable": true,
+    "numericOptions": [
+      "325",
+      "327",
+      "329",
+      "326",
+      "5194",
+      "5195"
+    ],
+    "optionCount": 6
+  },
+  {
+    "channelId": "Parameter.Nameplate.PkgRev",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.FTPPush.Login",
+    "editable": true
+  },
+  {
+    "channelId": "Parameter.PCC.FlbInv.WMax",
+    "editable": true,
+    "min": 0,
+    "max": 22000
+  },
+  {
+    "channelId": "Parameter.IecCfg.GoCfg.GoAppId",
+    "editable": true,
+    "min": 0,
+    "max": 16384
+  },
+  {
+    "channelId": "Parameter.Inverter.WMaxInRtg",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.Mb.TcpSrv.IsOn",
+    "editable": true,
+    "numericOptions": [
+      "1130",
+      "1129"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.Sys.DevSigBri",
+    "editable": true,
+    "numericOptions": [
+      "5191",
+      "5190",
+      "5173"
+    ],
+    "optionCount": 3
+  },
+  {
+    "channelId": "Parameter.SwCmp.CmpEnnexOS.Frwk.SwRev",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.Chrg.CblLok",
+    "editable": true,
+    "numericOptions": [
+      "303",
+      "308"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.Mb.ScdInEna",
+    "editable": true,
+    "numericOptions": [
+      "308",
+      "303"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.Nameplate.ModelStr",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.FTPPush.Srv",
+    "editable": true
+  },
+  {
+    "channelId": "Parameter.Spdwr.IgmpQryTx",
+    "editable": true,
+    "numericOptions": [
+      "303",
+      "4478",
+      "4479"
+    ],
+    "optionCount": 3
+  },
+  {
+    "channelId": "Parameter.Spdwr.ActlGwIp[]",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.Chrg.UseEnergyMeter",
+    "editable": true,
+    "numericOptions": [
+      "1129",
+      "1130"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.Sys.DevRstr",
+    "editable": true,
+    "numericOptions": [
+      "302",
+      "1146"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.GridGuard.Cntry.VRtg",
+    "editable": true,
+    "min": 210,
+    "max": 260
+  },
+  {
+    "channelId": "Parameter.Operation.ComTmOut",
+    "editable": true,
+    "min": 200,
+    "max": 60000
+  },
+  {
+    "channelId": "Parameter.Wl.Sec.Ssid",
+    "editable": true
+  },
+  {
+    "channelId": "Parameter.FTPPush.Port",
+    "editable": true,
+    "min": 0,
+    "max": 65535
+  },
+  {
+    "channelId": "Parameter.Chrg.ChrgApv",
+    "editable": true,
+    "numericOptions": [
+      "5171",
+      "5172"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.IecCfg.GoCfg.GoMacId",
+    "editable": true
+  },
+  {
+    "channelId": "Parameter.Nameplate.WlMacId",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.Upd.AvalChkIstl",
+    "editable": true,
+    "numericOptions": [
+      "302",
+      "1146"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.Nameplate.Vendor",
+    "editable": false,
+    "numericOptions": [
+      "461"
+    ],
+    "optionCount": 1
+  },
+  {
+    "channelId": "Parameter.Wl.IsOn",
+    "editable": true,
+    "numericOptions": [
+      "1129",
+      "1130"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.Nameplate.VendorStr",
+    "editable": false
+  },
+  {
+    "channelId": "Parameter.Chrg.StpWhenFl",
+    "editable": true,
+    "numericOptions": [
+      "1129",
+      "1130"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.Wl.SoftAcsIsOn",
+    "editable": true,
+    "numericOptions": [
+      "1129",
+      "1130"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.Chrg.StpWhenFlTm",
+    "editable": true,
+    "min": 5,
+    "max": 1440
+  },
+  {
+    "channelId": "Parameter.Wl.DoAcq",
+    "editable": true,
+    "numericOptions": [
+      "3342",
+      "302"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.Sys.DevSig",
+    "editable": true,
+    "numericOptions": [
+      "303",
+      "878"
+    ],
+    "optionCount": 2
+  },
+  {
+    "channelId": "Parameter.Mb.TcpSrv.Port",
+    "editable": true,
+    "min": 0,
+    "max": 65535
+  }
+]
