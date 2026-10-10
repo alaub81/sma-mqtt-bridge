@@ -40,7 +40,7 @@ jobs:
           fi
           echo "Newest stable tag: ${latest_tag:-none}; current tag: $GITHUB_REF_NAME"
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.14.8'
       - name: Verify Python runtime before release
