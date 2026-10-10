@@ -25,7 +25,7 @@ The private `smab.env` and data directory are excluded from Git and Docker build
 
 The loader uses built-in defaults and selected profile connection defaults, then optional `config.json`, then explicit `SMAB_` environment values. Resolve the profile selector from configuration/ENV first; its defaults never override explicit installation settings. Missing default `config.json` is valid; an explicitly selected missing file or invalid JSON is an error. Profiles supply protocol metadata and per-poller intervals, not credentials or device activation. A device-level interval explicitly set in JSON or ENV overrides all its pollers; otherwise preserve profile intervals and use the default only for pollers without an interval.
 
-Every operational option must be overridable through ENV and documented with type, default and validation. Unknown runtime `SMAB_` keys, malformed values, duplicate device/Homie IDs and conflicting password/password-file settings must fail validation before any connection. Recognize Compose-only variables without treating them as runtime options. An absent variable uses the previous layer; an empty value clears only optional strings. Empty booleans or numbers are errors. Accept boolean `true`/`false` case-insensitively, validate finite positive durations, ports 1–65535 and Modbus unit IDs 1–247. Only portal polling accepts zero to mean no periodic polling.
+Every operational option must be overridable through ENV and documented with type, default and validation. Unknown runtime `SMAB_` keys, malformed values, duplicate device/Homie IDs and conflicting password/password-file settings must fail validation before any connection. Recognize Compose-only variables without treating them as runtime options. An absent variable uses the previous layer; an empty value clears only optional strings. Empty booleans or numbers are errors. Accept boolean `true`/`false` case-insensitively, validate finite positive durations, ports 1–65535 and Modbus unit IDs 1–247. Portal polling accepts zero to mean no periodic polling. Home Manager Modbus pacing/reconnect delays also accept zero; connection/request timeouts and polling intervals remain positive.
 
 JSON is optional, not a second mandatory setup step. JSON names use camelCase as illustrated in [config.example.json](../config.example.json); runtime fields live under `runtime`, MQTT fields under `mqtt`, device fields under their respective sections, and global command settings under `commands`. Compose-only settings are not JSON fields. Credentials use ENV or optional password files.
 
@@ -48,7 +48,7 @@ Each inverter is independent. The first three slots default respectively to `sma
 
 For an ID, the resolver checks `<id>.json` under `SMAB_PROFILE_DIR` before the bundled resource. An invalid override must fail instead of silently falling back. `file:custom-name.json` selects only a host file, with no bundled fallback; reject directory traversal and absolute paths. Model profiles contain model/firmware compatibility evidence, protocol defaults, register definitions and Homie metadata, not installation credentials or addresses. Add future supported inverters as profile files rather than code branches. See the profile README for the version-1 schema and validation gate.
 
-Home Manager requires a serial selector to distinguish meter telegrams. Its host/IP is an optional additional sender filter; UDP reception does not establish a TCP connection to that host. Interface/bind address, multicast group and timeout remain configurable. Do not enable its NSD Modbus server merely to read meter data. Encrypted Speedwire support must be verified separately before promising compatibility.
+Home Manager requires a serial selector for both transports. `TRANSPORT=udp` (default) receives meter telegrams; HOST is an optional IPv4 sender filter. `TRANSPORT=modbus-tcp` requires HOST and uses the separate MODBUS_PORT (502 by default), with persistent sessions and a documented read profile. Exactly one transport owns its Homie values. Modbus server enablement and Grid Guard access are installation prerequisites; the bridge never changes them or sends a Grid Guard login. See [Home Manager Modbus](HOME_MANAGER_MODBUS.md) for complete coverage and acceptance. Encrypted Speedwire support remains a separate UDP verification task.
 
 eCharger requires a host and local account credentials. With the default TLS verification, supply a trusted certificate/CA unless system trust already covers it. `TLS_SERVER_NAME` optionally verifies the certificate's DNS name while connecting to the configured IP. An explicit `SMAB_ECHARGER_TLS_VERIFY=false` skips certificate/name verification and ignores the CA path. Its API and SEMP activation flags and schedules are separate. SEMP defaults to disabled. The portal remains separately enabled and uses separate credentials, plant/device IDs and session handling. It initially supplies minimum PV percentage for the configured eCharger Homie device, independently of local API availability. Home Manager remains the charging controller.
 
@@ -108,9 +108,17 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 
 | Home Manager suffix after `SMAB_HOME_MANAGER_` | Default | Meaning / validation |
 | --- | --- | --- |
-| `ENABLED` | `false` | Enable the meter receiver for this source. |
-| `HOST` | empty | Optional source IP filter. |
-| `SERIAL` | empty | Required telegram identity selector when enabled. |
+| `ENABLED` | `false` | Explicitly enable the selected transport. |
+| `TRANSPORT` | `udp` | `udp` or `modbus-tcp`; no automatic fallback or dual ownership. |
+| `PROFILE` | `sma-home-manager-2-modbus` | Bundled ID or host `file:<name>.json`; used only for Modbus. |
+| `HOST` | empty | Optional UDP source IP filter; required TCP hostname/address for Modbus. |
+| `SERIAL` | empty | Required numeric serial selector/identity guard when enabled. |
+| `MODBUS_PORT` | `502` | TCP port, 1–65535; independent of UDP PORT. |
+| `POLL_INTERVAL_SECONDS` | `3` | Positive explicit JSON/ENV override for Unit 2 only; otherwise profile intervals apply. |
+| `CONNECT_TIMEOUT_SECONDS` | `5` | Positive TCP connect timeout, seconds. |
+| `TRANSACTION_DELAY_SECONDS` | `0.2` | Minimum pause after each completed transaction, seconds; zero allowed. |
+| `AFTER_CONNECTION_DELAY_SECONDS` | `3` | Pause before session identity verification, seconds; zero allowed. |
+| `RECONNECT_DELAY_SECONDS` | `5` | Minimum pause after closing a session, seconds; zero allowed, plus runtime error backoff. |
 | `INTERFACE_ADDRESS`, `BIND_ADDRESS` | `0.0.0.0` | Multicast interface and UDP listening address; select a concrete LAN interface if needed. |
 | `PORT` | `9522` | Energy-meter UDP port. |
 | `MULTICAST_ENABLED` | `true` | Join multicast; `false` for separately configured direct delivery. |

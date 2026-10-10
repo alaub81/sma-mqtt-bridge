@@ -77,6 +77,14 @@ class Inverter(SafeRepr):
 
 @dataclass(frozen=True, repr=False)
 class HomeManager(SafeRepr):
+    transport: str = "udp"
+    profile: str = "sma-home-manager-2-modbus"
+    modbus_port: int = 502
+    poll_interval_seconds: float = 3.0
+    connect_timeout_seconds: float = 5.0
+    transaction_delay_seconds: float = 0.2
+    after_connection_delay_seconds: float = 3.0
+    reconnect_delay_seconds: float = 5.0
     enabled: bool = False
     host: str = ""
     serial: str = ""
@@ -243,7 +251,9 @@ def section(defaults, data, env, prefix, recognized):
                 minimum, maximum = 1, 2
             elif field.name in ("max_queue_messages", "max_response_bytes", "keepalive_seconds"):
                 minimum = 1
-            elif not (isinstance(defaults, Portal) and field.name == "poll_interval_seconds"):
+            elif not ((isinstance(defaults, Portal) and field.name == "poll_interval_seconds")
+                      or (isinstance(defaults, HomeManager) and field.name in
+                          ("transaction_delay_seconds", "after_connection_delay_seconds", "reconnect_delay_seconds"))):
                 if value <= 0:
                     raise ConfigError(f"Positive number required for {key}")
             if value < minimum or (maximum is not None and value > maximum):
@@ -408,10 +418,19 @@ def load_config(environ=None, bundled_dir=None):
                 raise ValueError
         except ValueError:
             raise ConfigError("Invalid Home Manager network address") from None
+    if hm.transport not in ("udp", "modbus-tcp"):
+        raise ConfigError("Home Manager transport must be udp or modbus-tcp")
+    if hm.enabled and hm.transport == "modbus-tcp":
+        from .home_manager_profile import load_home_manager_profile
+        require_host(hm.host, "Home Manager Modbus")
+        profiles["home-manager"] = load_home_manager_profile(hm.profile, runtime.profile_dir, bundled_dir)
+        if "SMAB_HOME_MANAGER_POLL_INTERVAL_SECONDS" in env or "pollIntervalSeconds" in data.get("homeManager", {}):
+            intervals.add("home-manager")
+        config = replace(config, interval_overrides=frozenset(intervals))
     if hm.enabled:
         if not hm.serial.isdecimal() or not 0 < int(hm.serial) <= 0xffffffff:
             raise ConfigError("Home Manager requires a numeric serial selector")
-        if hm.host:
+        if hm.host and hm.transport == "udp":
             try:
                 ipaddress.IPv4Address(hm.host)
             except ValueError:

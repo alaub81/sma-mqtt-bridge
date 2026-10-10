@@ -79,7 +79,14 @@
     "multicastGroup": "239.12.255.254",
     "timeoutSeconds": 5.0,
     "staleSeconds": 30.0,
-    "homieId": "sma-home-manager"
+    "homieId": "sma-home-manager",
+    "transport": "udp",
+    "profile": "sma-home-manager-2-modbus",
+    "modbusPort": 502,
+    "connectTimeoutSeconds": 5,
+    "transactionDelaySeconds": 0.2,
+    "afterConnectionDelaySeconds": 3,
+    "reconnectDelaySeconds": 5
   },
   "echarger": {
     "enabled": false,

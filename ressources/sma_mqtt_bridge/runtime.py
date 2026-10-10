@@ -8,6 +8,7 @@ import signal
 
 from .adapters.echarger import EChargerReader, SempReader
 from .adapters.meter import MeterReader
+from .adapters.home_manager_modbus import HomeManagerModbusReader
 from .adapters.modbus import ModbusReader
 from .adapters.portal import PortalReader
 from .errors import AuthenticationError
@@ -29,8 +30,12 @@ def sources(config):
             result.append((SourceState(device.id, device.homie_id, reader.properties, device.stale_seconds), reader, interval))
     hm, ec, portal = config.home_manager, config.echarger, config.portal
     if hm.enabled:
-        reader = MeterReader(hm)
-        result.append((SourceState("home-manager", hm.homie_id, reader.properties, hm.stale_seconds), reader, None))
+        if hm.transport == "modbus-tcp":
+            reader = HomeManagerModbusReader(hm, config.profiles["home-manager"], "home-manager" in config.interval_overrides)
+            interval = hm.poll_interval_seconds
+        else:
+            reader, interval = MeterReader(hm), None
+        result.append((SourceState("home-manager", hm.homie_id, reader.properties, hm.stale_seconds), reader, interval))
     if ec.enabled:
         reader = EChargerReader(ec, limit, include_base=not ec.semp_enabled)
         result.append((SourceState("api", ec.homie_id, reader.properties, ec.stale_seconds), reader, ec.api_poll_interval_seconds))
@@ -53,6 +58,10 @@ async def supervise(state, reader, interval, config, stop, refresh_portal=False)
             try:
                 # HTTP timeout bounds individual requests; this also bounds a whole cycle.
                 values = await reader.read()
+                if isinstance(reader, HomeManagerModbusReader):
+                    state.properties = reader.properties
+                    keys = {p.key for p in state.properties}
+                    state.values = {k: v for k, v in state.values.items() if k in keys}
                 state.update(values)
                 if values and not state.fresh_values():
                     state.error = True

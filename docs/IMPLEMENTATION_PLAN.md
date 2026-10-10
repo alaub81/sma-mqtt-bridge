@@ -52,3 +52,7 @@ The inverter profile blocker is resolved for the original 41-channel read baseli
 ## Initial local command implementation, 2026-10-10
 
 The first enum/boolean allowlist is now implemented behind global and local API gates, both false by default. It covers fast/PV/stop mode, release, approval requirement, stop-when-full, cable locking and status/ambient lighting. Target mode 4720, stop-delay writes, plan transactions and portal writes remain blocked. Fresh identity/rights/choice checks, serialized read/write access, exact reference PUT payload, confirmed readback, retained replay rejection and a durable uncertain-write journal are included. See CONFIGURATION.md. Offline tests do not certify a live action; the private installation remains read-only.
+
+## Home Manager Modbus read transport, 2026-10-10
+
+The requested alternative transport is implemented with all officially documented readable Unit 1/2 entries, the complete assignment table and delegated read parameter templates. Unit 1 identity, request pacing, persistent sessions, independent rejected-block handling and changing Homie inventory are offline tested. Select `SMAB_HOME_MANAGER_TRANSPORT=modbus-tcp` only with the independently enabled source, real host and serial. Default UDP selection is unchanged. [Home Manager Modbus](HOME_MANAGER_MODBUS.md) records access restrictions and the still-required Pi/firmware/openHAB acceptance; no NSD activation or Grid Guard write is performed automatically.

@@ -11,6 +11,14 @@ from ..model import Property
 from ..profiles import verify_identity
 
 
+class ModbusException(ProtocolError):
+    """A validated Modbus exception response, without request/response contents."""
+
+    def __init__(self, code):
+        self.code = code
+        super().__init__("Modbus read was rejected by the device")
+
+
 def decode(registers, prop):
     words = registers[prop["offset"]:prop["offset"] + prop["length"]]
     if len(words) != prop["length"]:
@@ -75,15 +83,16 @@ class ModbusReader:
     async def read_block(self, reader, writer, poller):
         self.transaction = (self.transaction + 1) % 65536
         pdu = struct.pack(">BHH", poller["function"], poller["start"], poller["count"])
-        writer.write(struct.pack(">HHHB", self.transaction, 0, len(pdu) + 1, self.settings.unit_id) + pdu)
+        unit = poller.get("unitId", self.settings.unit_id)
+        writer.write(struct.pack(">HHHB", self.transaction, 0, len(pdu) + 1, unit) + pdu)
         await writer.drain()
         header = await reader.readexactly(7)
         tx, proto, length, unit = struct.unpack(">HHHB", header)
-        if tx != self.transaction or proto != 0 or unit != self.settings.unit_id or not 2 <= length <= 254:
+        if tx != self.transaction or proto != 0 or unit != poller.get("unitId", self.settings.unit_id) or not 2 <= length <= 254:
             raise ProtocolError("Invalid Modbus response header")
         body = await reader.readexactly(length - 1)
-        if body[0] & 0x80:
-            raise ProtocolError("Modbus read was rejected by the device")
+        if body[0] == poller["function"] | 0x80 and len(body) == 2:
+            raise ModbusException(body[1])
         if body[0] != poller["function"] or len(body) != 2 + poller["count"] * 2 or body[1] != poller["count"] * 2:
             raise ProtocolError("Invalid Modbus response payload")
         return list(struct.unpack(">" + "H" * poller["count"], body[2:]))
