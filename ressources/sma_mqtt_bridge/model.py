@@ -6,7 +6,7 @@ from decimal import Decimal
 import math
 import time
 
-from .errors import ProtocolError
+from .errors import ConfigError, ProtocolError
 
 
 @dataclass(frozen=True)
@@ -19,6 +19,7 @@ class Property:
     format: str = ""
     stale_seconds: float | None = None
     settable: bool = False
+    required_for_ready: bool = False
 
     @property
     def key(self):
@@ -72,6 +73,21 @@ class SourceState:
     last_timestamp: str = ""
     error: bool = False
     diagnostics_enabled: bool = True
+    ready_properties: tuple = ()
+    monitor: object = None
+    contributes_availability: bool = True
+
+    def __post_init__(self):
+        if set(self.ready_properties) - {p.key for p in self.properties}:
+            raise ConfigError("Readiness references an unavailable property")
+
+    @property
+    def required_keys(self):
+        return (self.ready_properties or tuple(p.key for p in self.properties if p.required_for_ready)
+                or tuple(p.key for p in self.properties if p.node == "measurements"))
+
+    def missing_critical(self, now=None):
+        return sorted(set(self.required_keys) - set(self.fresh_values(now)))
 
     @property
     def diagnostic_keys(self):
@@ -108,4 +124,5 @@ class SourceState:
             return "error"
         if self.last_success is None:
             return "init"
-        return "ready" if self.fresh_values(now) else "stale"
+        fresh = self.fresh_values(now)
+        return "ready" if fresh and not self.missing_critical(now) else "stale"

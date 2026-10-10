@@ -5,7 +5,7 @@ import json
 
 import aiohttp
 
-from ..errors import AuthenticationError, ProtocolError
+from ..errors import AuthenticationError, ProtocolError, ProtocolTimeout
 
 
 def json_data(text):
@@ -63,7 +63,9 @@ class HTTP:
                 except UnicodeError:
                     raise ProtocolError("HTTP response is not UTF-8") from None
                 return response.status, dict(response.headers), text
-        except (aiohttp.ClientError, OSError, asyncio.TimeoutError):
+        except asyncio.TimeoutError:
+            raise ProtocolTimeout("HTTP request timed out") from None
+        except (aiohttp.ClientError, OSError):
             raise ProtocolError("HTTP connection failed; check network/TLS and clock") from None
 
     async def get_json(self, method, url, **kwargs):

@@ -311,7 +311,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "requiredForReady": true
     },
     {
       "id": "pres-batt-discharge",
@@ -328,7 +329,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "requiredForReady": true
     },
     {
       "id": "internal-temperature",

@@ -71,7 +71,8 @@ class ModbusReader:
         self.pollers = [p for p in profile["pollers"] if p["id"] in active]
         self.properties = tuple(Property(p["node"], p["id"], p["name"], p["datatype"], p["unit"],
                                          ",".join(dict.fromkeys(p.get("valueMap", {}).values())) if p["datatype"] == "enum" else "",
-                                         max(settings.stale_seconds, 2 * self.interval(next(b for b in profile["pollers"] if b["id"] == p["poller"]))))
+                                         max(settings.stale_seconds, 2 * self.interval(next(b for b in profile["pollers"] if b["id"] == p["poller"]))),
+                                         required_for_ready=p.get("requiredForReady", False))
                                 for p in self.definitions)
 
     def channel_enabled(self, prop):

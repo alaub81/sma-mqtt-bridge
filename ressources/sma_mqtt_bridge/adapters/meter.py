@@ -51,7 +51,8 @@ class MeterReader:
         self.socket = None
         self.last_counter = None
         self.last_received = None
-        self.properties = tuple(Property("measurements", name, name.replace("-", " ").title(), unit=unit)
+        self.properties = tuple(Property("measurements", name, name.replace("-", " ").title(), unit=unit,
+                                         required_for_ready=name in ("power-import", "power-export"))
                                 for name, unit, _ in OBIS.values())
 
     async def read(self):

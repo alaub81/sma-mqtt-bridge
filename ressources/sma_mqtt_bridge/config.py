@@ -37,6 +37,9 @@ class Runtime(SafeRepr):
     reconnect_min_seconds: float = 1.0
     reconnect_max_seconds: float = 60.0
     max_response_bytes: int = 1048576
+    max_state_bytes: int = 1048576
+    read_cycle_timeout_seconds: float = 120.0
+    failure_log_interval_seconds: float = 300.0
 
 
 @dataclass(frozen=True, repr=False)
@@ -61,6 +64,7 @@ class MQTT(SafeRepr):
 
 @dataclass(frozen=True, repr=False)
 class Inverter(SafeRepr):
+    ready_properties: str = ""
     advanced_channels_enabled: bool = True
     diagnostics_enabled: bool = True
     id: str = ""
@@ -79,6 +83,7 @@ class Inverter(SafeRepr):
 
 @dataclass(frozen=True, repr=False)
 class HomeManager(SafeRepr):
+    ready_properties: str = ""
     advanced_channels_enabled: bool = True
     diagnostics_enabled: bool = True
     transport: str = "udp"
@@ -104,6 +109,8 @@ class HomeManager(SafeRepr):
 
 @dataclass(frozen=True, repr=False)
 class ECharger(SafeRepr):
+    api_ready_properties: str = ""
+    semp_ready_properties: str = ""
     advanced_channels_enabled: bool = True
     diagnostics_enabled: bool = True
     enabled: bool = False
@@ -130,6 +137,7 @@ class ECharger(SafeRepr):
 
 @dataclass(frozen=True, repr=False)
 class Portal(SafeRepr):
+    ready_properties: str = ""
     diagnostics_enabled: bool = True
     enabled: bool = False
     base_url: str = "https://ennexos.sunnyportal.com"
@@ -256,7 +264,7 @@ def section(defaults, data, env, prefix, recognized):
                 minimum, maximum = 1, 247
             elif field.name == "qos":
                 minimum, maximum = 1, 2
-            elif field.name in ("max_queue_messages", "max_response_bytes", "keepalive_seconds"):
+            elif field.name in ("max_queue_messages", "max_response_bytes", "max_state_bytes", "keepalive_seconds"):
                 minimum = 1
             elif not ((isinstance(defaults, Portal) and field.name == "poll_interval_seconds")
                       or (isinstance(defaults, HomeManager) and field.name in
@@ -266,6 +274,11 @@ def section(defaults, data, env, prefix, recognized):
             if value < minimum or (maximum is not None and value > maximum):
                 raise ConfigError(f"Out of range: {key}")
         values[field.name] = value
+        if field.name.endswith("ready_properties") and value:
+            entries = value.split(",")
+            if (len(set(entries)) != len(entries)
+                    or any(len(k.split("/")) != 2 or not all(ID.fullmatch(p) for p in k.split("/")) for k in entries)):
+                raise ConfigError("Readiness properties must be unique node/property keys")
     return replace(defaults, **values)
 
 

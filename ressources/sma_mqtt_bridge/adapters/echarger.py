@@ -43,7 +43,7 @@ for i, phase in enumerate("ABC", 1):
               (f"voltage-l{i}", (f"Measurement.GridMs.PhV.phs{phase}",), "V")]
 EXTRA.append(("frequency", ("Measurement.GridMs.Hz",), "Hz"))
 BASE = (
-    Property("measurements", "power", "Charging power", unit="W"),
+    Property("measurements", "power", "Charging power", unit="W", required_for_ready=True),
     Property("measurements", "session-energy", "Session energy", unit="kWh"),
     Property("measurements", "vehicle-status", "Vehicle status", "string"),
     Property("measurements", "vehicle-status-code", "Vehicle status code", "integer"),
@@ -229,7 +229,8 @@ class EChargerReader:
         self.lock = asyncio.Lock()
         props = [Property("settings", id, id.replace("-", " ").title(), datatype, unit, fmt)
                  for id, _, datatype, unit, _, fmt in SETTINGS]
-        props += [Property("measurements", id, id.replace("-", " ").title(), unit=unit) for id, _, unit in EXTRA]
+        props += [Property("measurements", id, id.replace("-", " ").title(), unit=unit,
+                           required_for_ready=id in ("current-l1", "voltage-l1")) for id, _, unit in EXTRA]
         if include_base:
             props += [p for p in base_properties(settings.advanced_channels_enabled) if p.node != "settings"]
         self.properties = tuple(props)

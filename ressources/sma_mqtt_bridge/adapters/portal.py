@@ -99,7 +99,7 @@ def portal_values(reply, plant_id, device_id):
 
 class PortalReader:
     properties = (
-        Property("portal", "pv-minimum", "Minimum PV preference", "integer", "%"),
+        Property("portal", "pv-minimum", "Minimum PV preference", "integer", "%", required_for_ready=True),
         Property("portal", "grid-share", "Allowed grid preference", "integer", "%"),
         Property("portal", "writable", "Portal edit permission", "boolean"),
         Property("portal", "setting-mode", "Preference mode", "string"),

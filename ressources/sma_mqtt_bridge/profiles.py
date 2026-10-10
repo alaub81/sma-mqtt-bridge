@@ -108,7 +108,9 @@ def validate_mappings(poller_list, property_list):
             raise ConfigError("Invalid poller interval")
         pollers[poller["id"]] = poller
     for prop in property_list:
-        keys(prop, ("id", "node", "name", "poller", "offset", "type", "length", "byteOrder", "wordOrder", "scale", "unit", "invalid", "datatype"), ("valueMap", "minimum", "maximum", "format", "channelGroup"))
+        keys(prop, ("id", "node", "name", "poller", "offset", "type", "length", "byteOrder", "wordOrder", "scale", "unit", "invalid", "datatype"), ("valueMap", "minimum", "maximum", "format", "channelGroup", "requiredForReady"))
+        if "requiredForReady" in prop and type(prop["requiredForReady"]) is not bool:
+            raise ConfigError("Profile requiredForReady must be boolean")
         if not all(isinstance(prop[k], str) and ID.fullmatch(prop[k]) for k in ("id", "node")) or prop["id"] in properties:
             raise ConfigError("Invalid/duplicate profile property ID")
         if not isinstance(prop["name"], str) or not prop["name"] or not isinstance(prop["unit"], str):

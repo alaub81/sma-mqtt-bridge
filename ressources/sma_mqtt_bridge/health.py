@@ -26,11 +26,14 @@ def atomic_json(path, data):
         os.close(directory)
 
 
-def heartbeat(config, states, mqtt):
+def heartbeat(config, states, mqtt, mqtt_diagnostics=None):
     atomic_json(Path(config.runtime.state_dir) / "heartbeat.json", {
         "schemaVersion": 2, "status": "running", "pid": os.getpid(), "timestamp": time.time(),
         "monotonic": time.monotonic(),
         "sources": {s.id: s.status() for s in states}, "mqtt": dict(mqtt),
+        "sourceDiagnostics": {s.id: {**s.monitor.snapshot(), "missingCritical": s.missing_critical()}
+                              for s in states if s.monitor is not None},
+        "mqttDiagnostics": mqtt_diagnostics or {},
     })
 
 
