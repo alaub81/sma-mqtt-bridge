@@ -1,7 +1,6 @@
 {
   "schemaVersion": 1,
   "labels": {
-    "-": "Ohne Bezeichnung",
     "Allowed grid preference": "Erlaubter Netzanteil",
     "Ambient Brightness": "Helligkeit der Umgebungsbeleuchtung",
     "Ambient Enabled": "Umgebungsbeleuchtung aktiviert",
@@ -9,6 +8,12 @@
     "Assigned Modbus unit": "Zugeordnete Modbus-Geräteadresse",
     "Assigned SUSy ID": "Zugeordnete SUSy-ID",
     "Assigned serial": "Zugeordnete Seriennummer",
+    "Battery capacity": "Batteriekapazität",
+    "Battery charging power": "Batterieladeleistung",
+    "Battery discharging power": "Batterieentladeleistung",
+    "Battery state of charge": "Batterieladezustand",
+    "Battery status": "Batteriestatus",
+    "Battery temperature": "Batterietemperatur",
     "Cab.TmpVal": "Gehäusetemperatur",
     "Cable Lock": "Dauerhafte Kabelverriegelung",
     "Charge Mode": "Lademodus",

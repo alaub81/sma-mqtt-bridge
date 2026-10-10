@@ -1,7 +1,6 @@
 {
   "schemaVersion": 1,
   "labels": {
-    "-": "-",
     "Allowed grid preference": "Allowed grid preference",
     "Ambient Brightness": "Ambient Brightness",
     "Ambient Enabled": "Ambient Enabled",
@@ -9,6 +8,12 @@
     "Assigned Modbus unit": "Assigned Modbus unit",
     "Assigned SUSy ID": "Assigned SUSy ID",
     "Assigned serial": "Assigned serial",
+    "Battery capacity": "Battery capacity",
+    "Battery charging power": "Battery charging power",
+    "Battery discharging power": "Battery discharging power",
+    "Battery state of charge": "Battery state of charge",
+    "Battery status": "Battery status",
+    "Battery temperature": "Battery temperature",
     "Cab.TmpVal": "Cab.TmpVal",
     "Cable Lock": "Cable Lock",
     "Charge Mode": "Charge Mode",

@@ -23,6 +23,15 @@ class TranslationTests(unittest.TestCase):
         self.assertGreater(len(en), 100)
         self.assertTrue((BUNDLED / 'en.json').is_file())
 
+    def test_bundled_profiles_have_concrete_translated_labels(self):
+        labels = load_translation('de', '/nonexistent-smab-translation-fixture')
+        for path in (BUNDLED.parent / 'profiles').glob('*.json'):
+            data = json.loads(path.read_text())
+            for prop in data['properties'] + data.get('delegated', {}).get('properties', []):
+                self.assertNotEqual(prop['name'], '-', (path.name, prop['id']))
+                self.assertIn(prop['name'], labels, (path.name, prop['id']))
+        self.assertEqual(labels['Battery state of charge'], 'Batterieladezustand')
+
     def test_custom_language_partial_override_and_config_precedence(self):
         with tempfile.TemporaryDirectory() as tmp:
             Path(tmp, 'fr.json').write_text(json.dumps({'schemaVersion': 1, 'labels': {'Measurements': 'Mesures'}}))
