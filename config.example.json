@@ -1,80 +1,120 @@
 {
   "schemaVersion": 1,
   "runtime": {
+    "profileDir": "/data/sma-mqtt-bridge/profiles",
+    "stateDir": "/data/sma-mqtt-bridge/state",
     "timezone": "Europe/Berlin",
     "logLevel": "INFO",
-    "profileDir": "/data/sma-mqtt-bridge/profiles",
-    "stateDir": "/data/sma-mqtt-bridge/state"
+    "healthIntervalSeconds": 10.0,
+    "healthStaleSeconds": 60.0,
+    "shutdownTimeoutSeconds": 10.0,
+    "reconnectMinSeconds": 1.0,
+    "reconnectMaxSeconds": 60.0,
+    "maxResponseBytes": 1048576
   },
   "mqtt": {
-    "host": "",
+    "host": "mqtt.example.invalid",
     "port": 8883,
     "clientId": "sma-mqtt-bridge",
     "homiePrefix": "homie",
     "tls": true,
-    "tlsVerify": true
+    "tlsVerify": true,
+    "tlsCaFile": "",
+    "tlsCertFile": "",
+    "tlsKeyFile": "",
+    "keepaliveSeconds": 60,
+    "connectTimeoutSeconds": 10.0,
+    "qos": 1,
+    "maxQueueMessages": 1000
   },
   "inverters": [
     {
       "id": "inverter1",
       "enabled": false,
-      "host": "",
+      "host": "192.0.2.11",
       "port": 502,
       "unitId": 3,
       "profile": "sma-stp8-0-3av-40",
-      "homieId": "sma-inverter1"
+      "expectedSerial": "",
+      "homieId": "sma-inverter1",
+      "timeoutSeconds": 5.0,
+      "staleSeconds": 60.0,
+      "commandsEnabled": false
     },
     {
       "id": "inverter2",
       "enabled": false,
-      "host": "",
+      "host": "192.0.2.12",
       "port": 502,
       "unitId": 3,
       "profile": "sma-sbs3-7-10",
-      "homieId": "sma-inverter2"
+      "expectedSerial": "",
+      "homieId": "sma-inverter2",
+      "timeoutSeconds": 5.0,
+      "staleSeconds": 60.0,
+      "commandsEnabled": false
     },
     {
       "id": "inverter3",
       "enabled": false,
-      "host": "",
+      "host": "192.0.2.13",
       "port": 502,
       "unitId": 3,
       "profile": "sma-sb4-0-1av-41",
-      "homieId": "sma-inverter3"
+      "expectedSerial": "",
+      "homieId": "sma-inverter3",
+      "timeoutSeconds": 5.0,
+      "staleSeconds": 60.0,
+      "commandsEnabled": false
     }
   ],
   "homeManager": {
     "enabled": false,
-    "host": "",
-    "serial": "",
+    "host": "192.0.2.20",
+    "serial": "1234567890",
     "interfaceAddress": "0.0.0.0",
     "bindAddress": "0.0.0.0",
     "port": 9522,
     "multicastEnabled": true,
     "multicastGroup": "239.12.255.254",
+    "timeoutSeconds": 5.0,
+    "staleSeconds": 30.0,
     "homieId": "sma-home-manager"
   },
   "echarger": {
     "enabled": false,
-    "host": "",
+    "host": "192.0.2.30",
     "port": 443,
     "tlsCaFile": "",
+    "tlsVerify": true,
+    "expectedSerial": "1234567890",
+    "tlsServerName": "",
+    "apiPollIntervalSeconds": 60.0,
     "sempEnabled": false,
     "sempPort": 80,
     "sempPath": "/SEMP/",
+    "sempPollIntervalSeconds": 30.0,
+    "sempDeviceId": "F-EXAMPLE-CHARGER",
+    "timeoutSeconds": 10.0,
+    "staleSeconds": 180.0,
     "homieId": "sma-echarger",
     "commandsEnabled": false
   },
   "portal": {
     "enabled": false,
     "baseUrl": "https://ennexos.sunnyportal.com",
-    "plantId": "",
-    "deviceId": "",
-    "pollIntervalSeconds": 0,
-    "commandsEnabled": false
+    "apiBaseUrl": "https://uiapi.sunnyportal.com/api/v1",
+    "authBaseUrl": "https://login.sma.energy/auth/realms/SMA",
+    "clientId": "SPpbeOS",
+    "plantId": "12345",
+    "deviceId": "67890",
+    "timeoutSeconds": 15.0,
+    "staleSeconds": 180.0,
+    "commandsEnabled": false,
+    "pollIntervalSeconds": 0
   },
   "commands": {
     "enabled": false,
-    "readbackTimeoutSeconds": 30
+    "readbackTimeoutSeconds": 30.0
   }
 }

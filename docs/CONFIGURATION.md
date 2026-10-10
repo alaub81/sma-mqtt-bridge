@@ -1,23 +1,23 @@
 # Configuration contract
 
-Andreas requested this contract on 2026-10-10. It is binding for the Python implementation. **Implemented by the Python loader.** Read adapters and Homie are offline tested; hardware acceptance is pending. Bundled inverter descriptors still cannot be used for polling.
+Andreas requested this contract on 2026-10-10. It is binding for the Python implementation. **Implemented by the Python loader.** Inverter and SEMP reads have been checked against the installation; complete hardware/openHAB acceptance remains pending. See [register validation](REGISTER_VALIDATION.md).
 
 ## Host files and precedence
 
-The private `.env` belongs in the repository root next to the Compose files. `.env.example` documents every available variable, including its purpose, type and default. Store other installation files under `./data/sma-mqtt-bridge/` relative to the Compose project directory; bind-mount that directory to `/data/sma-mqtt-bridge` in the container:
+The private `smab.env` belongs in the repository root next to the Compose files. `smab.example.env` documents every available variable, including its purpose, type and default. Store other installation files under `./data/sma-mqtt-bridge/` relative to the Compose project directory; bind-mount that directory to `/data/sma-mqtt-bridge` in the container:
 
 ```text
-.env                   # Explicit overrides and installation credentials, host only
-.env.example           # Public, fully commented variable reference
+smab.env               # Explicit overrides and installation credentials, host only
+smab.example.env       # Public, fully commented variable reference
 data/sma-mqtt-bridge/
   config.json          # Optional non-secret configuration
   profiles/            # Verified register profiles, one or more per inverter
-  certs/               # CA certificates and optional client certificate/key
+  certificates/        # CA certificates and optional client certificate/key
   secrets/             # Optional password files
   state/               # Heartbeat and necessary non-secret persistent state
 ```
 
-The private `.env` and data directory are excluded from Git and Docker build contexts. Compose reads `.env` on the host and passes its values into the container; the file itself is not mounted. Keep `.env` readable only by its host owner, and secret files/private keys readable only by the owner/container user. Never generate a configuration file containing resolved passwords or session tokens. Do not rewrite user configuration automatically.
+The private `smab.env` and data directory are excluded from Git and Docker build contexts. Compose reads `smab.env` on the host and passes its values into the container; the file itself is not mounted. Keep `smab.env` readable only by its host owner, and secret files/private keys readable only by the owner/container user. Never generate a configuration file containing resolved passwords or session tokens. Do not rewrite user configuration automatically.
 
 The loader uses built-in defaults and selected profile connection defaults, then optional `config.json`, then explicit `SMAB_` environment values. Resolve the profile selector from configuration/ENV first; its defaults never override explicit installation settings. Missing default `config.json` is valid; an explicitly selected missing file or invalid JSON is an error. Profiles supply protocol metadata and per-poller intervals, not credentials or device activation. A device-level interval explicitly set in JSON or ENV overrides all its pollers; otherwise preserve profile intervals and use the default only for pollers without an interval.
 
@@ -29,7 +29,7 @@ JSON is optional, not a second mandatory setup step. JSON names use camelCase as
 
 A broker address and each enabled device's required installation values suffice. All sources and write paths are disabled by default; setting a host or credentials does not enable a source. Enabling an adapter enables bridge access, not the physical inverter/charger itself. A disabled source creates no device sessions, polling, subscriptions to its commands or writes, and must not advertise its unavailable properties as fresh. A Homie device with no enabled sources must not be advertised as ready. Sources sharing one Homie device retain independent availability; disabling one does not implicitly enable or disable the other. Previously retained discovery/state must have an explicit retirement policy when a source is disabled.
 
-For one inverter, the runtime configuration needs only (plus a validated host profile):
+For one supported inverter, the runtime configuration needs only:
 
 ```dotenv
 SMAB_MQTT_HOST=mqtt.example.invalid
@@ -38,7 +38,7 @@ SMAB_INVERTER1_HOST=inverter.example.invalid
 SMAB_INVERTER1_PROFILE=sma-stp8-0-3av-40
 ```
 
-Add broker authentication/CA overrides if required by that installation. Select a reusable model profile by ID; the repository provides three identity-only default descriptors under [ressources/profiles/](../ressources/profiles/), with the schema documented in [PROFILES.md](PROFILES.md), but does not yet bundle validated complete register mappings for the installed devices. Never invent an IP address, password, serial number or register mapping as a working default.
+Add broker authentication/CA overrides if required by that installation. Select a reusable model profile by ID; the repository packages three validated profiles under [ressources/profiles/](../ressources/profiles/), covering the existing 41 channels. Their schema and host overrides are documented in [PROFILES.md](PROFILES.md). Never invent an IP address, password, serial number or register mapping as a working default.
 
 Each inverter is independent. The first three slots default respectively to `sma-stp8-0-3av-40`, `sma-sbs3-7-10` and `sma-sb4-0-1av-41`, and each selection can be overridden. A profile is reusable across slots; slot number does not determine the connected model. Further slots use the same `SMAB_INVERTER<N>_` family, with an empty profile default requiring explicit selection, without another hard-coded adapter. A disabled slot does not require a host or profile. An enabled slot requires a host and validated matching profile; validate discovered device identity against the profile and an optional expected serial number before accepting data.
 
@@ -46,7 +46,7 @@ For an ID, the resolver checks `<id>.json` under `SMAB_PROFILE_DIR` before the b
 
 Home Manager requires a serial selector to distinguish meter telegrams. Its host/IP is an optional additional sender filter; UDP reception does not establish a TCP connection to that host. Interface/bind address, multicast group and timeout remain configurable. Do not enable its NSD Modbus server merely to read meter data. Encrypted Speedwire support must be verified separately before promising compatibility.
 
-eCharger requires a host, local account credentials and a trusted certificate/CA, unless its certificate is already trusted by the system store. Its API and SEMP activation flags and schedules are separate. SEMP defaults to disabled, unlike the earlier parent-dependent design. The portal remains separately enabled and uses separate credentials, plant/device IDs and session handling. It initially supplies minimum PV percentage for the configured eCharger Homie device, independently of local API availability. Home Manager remains the charging controller.
+eCharger requires a host and local account credentials. With the default TLS verification, supply a trusted certificate/CA unless system trust already covers it. `TLS_SERVER_NAME` optionally verifies the certificate's DNS name while connecting to the configured IP. An explicit `SMAB_ECHARGER_TLS_VERIFY=false` skips certificate/name verification and ignores the CA path. Its API and SEMP activation flags and schedules are separate. SEMP defaults to disabled. The portal remains separately enabled and uses separate credentials, plant/device IDs and session handling. It initially supplies minimum PV percentage for the configured eCharger Homie device, independently of local API availability. Home Manager remains the charging controller.
 
 ## ENV options and defaults
 
@@ -56,7 +56,7 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 | --- | --- | --- |
 | `SMAB_BRIDGE_VERSION` | `latest` | Compose image tag; select a published version for deployment. No release exists yet. |
 | `SMAB_DATA_DIR` | `./data/sma-mqtt-bridge` | Compose host bind directory. |
-| `SMAB_ENV_FILE` | `./.env` | Compose service ENV file; optional for diagnostics. |
+| `SMAB_ENV_FILE` | `./smab.env` | Compose service ENV file; optional for diagnostics. |
 | `SMAB_UID`, `SMAB_GID` | `10001` | Compose-only integer user/group IDs; align file access with the host account. |
 | `SMAB_CONFIG_FILE` | `/data/sma-mqtt-bridge/config.json` | Optional JSON configuration. |
 | `SMAB_PROFILE_DIR` | `/data/sma-mqtt-bridge/profiles` | Verified device profile directory. |
@@ -80,7 +80,7 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 | `CLIENT_ID` | `sma-mqtt-bridge` | Base ID; derive unique clients for advertised Homie devices. |
 | `HOMIE_PREFIX` | `homie` | One valid Homie topic level, without wildcards. |
 | `TLS` | `true` | Use TLS; explicit `false` selects a plaintext broker connection. |
-| `TLS_VERIFY` | `true` | Certificate verification; `false` is rejected. |
+| `TLS_VERIFY` | `true` | Explicit `false` skips broker certificate/name verification and ignores the CA path; TLS encryption remains active. Portal verification is unaffected. |
 | `TLS_CA_FILE` | empty | System trust by default; optional private broker CA. |
 | `TLS_CERT_FILE`, `TLS_KEY_FILE` | empty | Optional mutual TLS; require both together. |
 | `KEEPALIVE_SECONDS` | `60` | MQTT keepalive interval. |
@@ -117,8 +117,10 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 | --- | --- | --- |
 | `ENABLED` | `false` | Enable local charger API access. |
 | `HOST`, `USERNAME`, `PASSWORD`, `PASSWORD_FILE` | empty | Local address and credentials; choose password or a file. |
-| `PORT` | `443` | HTTPS port; local API always verifies TLS. |
+| `PORT` | `443` | HTTPS port; TLS encryption remains active. |
 | `TLS_CA_FILE` | empty | Trusted local certificate/CA; system trust if omitted. |
+| `TLS_VERIFY` | `true` | Explicit `false` permits unverified local TLS without a CA file; never changes MQTT or portal verification. |
+| `TLS_SERVER_NAME` | empty | Optional certificate DNS name while connecting to HOST/IP; empty verifies HOST. Relevant when verification is enabled. |
 | `EXPECTED_SERIAL` | empty | Required local API serial guard; optional additional SEMP guard. |
 | `API_POLL_INTERVAL_SECONDS` | `60` | Parameter/live-data schedule, separate from SEMP. |
 | `SEMP_ENABLED` | `false` | Independently enable SEMP reads, without API credentials or implicit activation. |
@@ -143,15 +145,21 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 | `STALE_SECONDS` | `180` | Positive freshness limit for explicitly retrieved preferences. |
 | `COMMANDS_ENABLED` | `false` | Reserved gate; enabling it is rejected until command implementation. |
 
-The option list is expandable as adapters are implemented; add settings, their defaults and validation here and in `.env.example` in the same change. Validate Homie IDs as lowercase letters, digits and internal hyphens; derive one MQTT connection/Last Will per advertised device. Command gates never override a missing allowlist, missing rights, invalid bounds or readback requirements. Do not expose an editable installer setting merely because its metadata is writable.
+The option list is expandable as adapters are implemented; add settings, their defaults and validation here and in `smab.example.env` in the same change. Validate Homie IDs as lowercase letters, digits and internal hyphens; derive one MQTT connection/Last Will per advertised device. Command gates never override a missing allowlist, missing rights, invalid bounds or readback requirements. Do not expose an editable installer setting merely because its metadata is writable.
 
 ## Compose usage
 
-Place only needed overrides in the root `.env`; no additional JSON file is mandatory. On a fresh installation, copy `.env.example` to `.env` and replace its placeholder broker host. Keep existing configuration intact. Root `.env` supplies Compose interpolation automatically, and the service's `env_file` passes those values into the container. No `--env-file` flag is needed for the default layout:
+Place only needed overrides in the root `smab.env`; no additional JSON file is mandatory. On a fresh installation, copy `smab.example.env` to `smab.env` and replace its placeholder broker host. Keep existing configuration intact. Both Compose files explicitly pass `smab.env` through the service's `env_file`. No extra flag is needed to load bridge settings with the default layout:
 
 ```bash
 docker compose -f docker-compose.dev.yml run --rm sma-mqtt-bridge --check-config
 docker compose -f docker-compose.dev.yml up -d --build
+```
+
+For Compose-only overrides such as host data paths, UID/GID or the deployment image version, pass `--env-file smab.env` before `-f`. Compose automatically reads only `.env` for variable interpolation; it does not automatically use service ENV files for this. Alternatively, an optional root `.env` can hold only these Compose settings while `smab.env` holds the bridge configuration. Avoid duplicating settings across the files.
+
+```bash
+docker compose --env-file smab.env -f docker-compose.dev.yml up -d --build
 ```
 
 Both Compose files are standalone and carry identical runtime options. Development explicitly builds `Dockerfile-SMAB`; example uses the GHCR image instead. `python3 tests/compose_check.py` checks this parity with public settings and overrides. Use `--check-config` to validate all enabled sources without connecting. Starting without a diagnostic flag runs only explicitly enabled read sources. No command gate may be enabled in this milestone. The optional service ENV file requires Docker Compose 2.24 or newer. Diagnostics can render templates without any private file. To use another ENV file for both interpolation and service variables, set `SMAB_ENV_FILE` to that path in the shell and also pass `--env-file` with the same path. Home Manager multicast networking on the Raspberry Pi remains a separate deployment check; the bind mount alone does not establish UDP reachability.

@@ -28,7 +28,7 @@ class BootstrapTests(unittest.TestCase):
         status = json.loads(self.cli('--project-status').stdout)
         self.assertTrue(status['runtimeImplemented'])
         self.assertFalse(status['liveVerified'])
-        self.assertEqual(status['bundledPollingProfiles'], 0)
+        self.assertEqual(status['bundledPollingProfiles'], 3)
         self.assertTrue(status['readOnly'])
 
     def test_no_sources_fail_without_secret_output(self):
@@ -43,10 +43,10 @@ class BootstrapTests(unittest.TestCase):
         self.assertEqual(result.returncode, 0)
         self.assertEqual(json.loads(result.stdout)['enabledSources'], 0)
 
-    def test_check_profile_reports_descriptor_gate(self):
+    def test_check_profile_reports_validated_profile(self):
         result = self.cli('--check-profile', 'sma-stp8-0-3av-40')
         self.assertEqual(result.returncode, 0)
-        self.assertFalse(json.loads(result.stdout)['pollingValidated'])
+        self.assertTrue(json.loads(result.stdout)['pollingValidated'])
 
     def test_command_option_is_not_available(self):
         self.assertEqual(self.cli('--set-pv-share', '50').returncode, 2)

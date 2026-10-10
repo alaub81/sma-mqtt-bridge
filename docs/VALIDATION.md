@@ -1,6 +1,6 @@
 # Validation evidence
 
-## Python milestone on 2026-10-10
+## Initial Python milestone on 2026-10-10
 
 The first read-only Python runtime is implemented. Bundled inverter profiles remain identity-only; hardware acceptance is pending. Historical evidence is preserved in [the scaffold archive](archive/scaffold-validation.md).
 
@@ -23,3 +23,13 @@ All 100 original Item/channel/topic mappings are preserved. SHA-256 comparisons 
 `ressources/` now contains image inputs only: Python runtime, bundled profile JSONs and runtime requirements. Configuration example and Hadolint settings are back at the root; profile documentation lives in `docs/PROFILES.md`. All 19 moved runtime/profile/dependency files are byte-for-byte identical; no adapter behavior changed.
 
 The complete lint run, 65 local tests, the same 65 tests in arm64 and amd64 containers, both image builds, Compose parity, local CLI and Compose configuration diagnostics passed. Image inspection confirmed that `/app` contains only the package, profiles and requirements, with no examples, tooling, private files or local bytecode caches. All 158 protected files remain unchanged. No device connections or publication occurred.
+
+## Read runtime and ENV naming checkpoint on 2026-10-10
+
+Subsequent implementation supersedes the initial identity-only and no-live-read status above. All three bundled profiles now contain verified mappings for the 41 existing inverter channels, with model/firmware/serial guards and documented units. Read-only device/broker verification published 69 values across three inverters and the eCharger SEMP source. Two Sunny Boy phase registers returned SMA unavailable markers and were omitted, not replaced with zero. This does not certify complete openHAB migration or every catalogue entry.
+
+The private root ENV file is now `smab.env`; the public reference is `smab.example.env`. Both Compose files explicitly load the former via service `env_file`. Compose-only interpolation uses `--env-file smab.env`, shell variables or an optional separate `.env`. The private service-file path was adjusted without changing other assignments or mode 0600. Git excludes private ENV and data; only image inputs enter the Docker build context. All 154 private original reference files retain their recorded SHA-256 hashes.
+
+All 75 offline tests passed locally and in the rebuilt Linux arm64 and amd64 images with external networking disabled. The full lint check covers 73 public files; standalone Compose parity and override checks passed. Development Compose rebuilt and started with the renamed file; in-container configuration validation reports four enabled read-only sources, and heartbeat confirms MQTT connectivity and ready inverter/SEMP sources.
+
+Home Manager remains disabled on the Mac because it is outside the meter network; Pi multicast/serial selection remains pending. Local eCharger API and portal credentials are still pending, so those sources remain disabled. Wallbox certificate/name validation passed with configured trust. MQTT verification is explicitly disabled by the user for this installation while TLS encryption remains enabled; defaults continue to verify and portal verification remains mandatory. Device writes, hosted CI/security scans, push and container release remain outside this checkpoint.

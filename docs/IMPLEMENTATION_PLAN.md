@@ -8,7 +8,7 @@ The obsolete C++ diagnostic runtime and compiler/container scripts have been rem
 
 ## Implemented foundation
 
-- Typed configuration with precedence built-in/profile defaults < optional JSON < explicit `SMAB_` ENV. Every source has its own activation flag; disabled sources perform no device I/O. Root `.env` is private; `.env.example` documents all variables. Other installation files live under `data/sma-mqtt-bridge/` and `/data/sma-mqtt-bridge` in the container.
+- Typed configuration with precedence built-in/profile defaults < optional JSON < explicit `SMAB_` ENV. Every source has its own activation flag; disabled sources perform no device I/O. Root `smab.env` is private; `smab.example.env` documents all variables. Other installation files live under `data/sma-mqtt-bridge/` and `/data/sma-mqtt-bridge` in the container.
 - File-based reusable inverter profiles, strict schema/path/identity checks, host overrides and `file:<name>.json`. No invented registers or model-specific adapter branches.
 - Generic read-only Modbus, Home Manager meter telegrams, separate eCharger HTTPS API and SEMP, and optional ennexOS minimum PV share through a normal portal account. No paid Developer API or evcc substitution.
 - Bounded timeouts, supervised reconnection with jitter, separate local/portal sessions, verified TLS, redacted diagnostics and controlled shutdown. Authentication challenges block repeated login attempts.
@@ -44,3 +44,7 @@ Implement the confirmed local enum/boolean controls first: charging mode, releas
 ## Later: publication
 
 GitHub upload and GHCR publication remain later tasks. The authorized cleanup checkpoint is a local Git commit only. Before publication, execute hosted CI/security scans, verify the image source namespace and choose release tags; do not infer successful CI from local workflow files. Maintain the German project diary after each milestone.
+
+## Current installation step, 2026-10-10
+
+The inverter profile blocker is resolved for the original 41-channel read baseline: official model-specific lists, local identity checks and live MQTT publication are recorded in REGISTER_VALIDATION.md. Complete openHAB value/dependency comparison remains pending. SEMP is active; API/portal await private credentials. Home Manager is prepared but intentionally disabled on the Mac and awaits Pi-network acceptance. Explicit MQTT/local-wallbox TLS_VERIFY=false overrides are supported at Andreas' request; safe defaults and portal verification remain intact.

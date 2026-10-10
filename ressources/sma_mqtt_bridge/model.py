@@ -17,6 +17,7 @@ class Property:
     datatype: str = "float"
     unit: str = ""
     format: str = ""
+    stale_seconds: float | None = None
 
     @property
     def key(self):
@@ -96,8 +97,9 @@ class SourceState:
 
     def fresh_values(self, now=None):
         now = time.monotonic() if now is None else now
+        expiry = {p.key: p.stale_seconds if p.stale_seconds is not None else self.stale_seconds for p in self.properties}
         return {k: value for k, (value, received) in self.values.items()
-                if math.isfinite(received) and 0 <= now - received <= self.stale_seconds}
+                if math.isfinite(received) and 0 <= now - received <= expiry[k]}
 
     def status(self, now=None):
         if self.error:

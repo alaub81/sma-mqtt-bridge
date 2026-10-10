@@ -1,6 +1,6 @@
 # Inverter profiles
 
-The public JSON files under `ressources/profiles/` define the version-1 profile format used by the Python loader. They contain no installation addresses, serial numbers or credentials. **They are model descriptors, not validated polling profiles.** The Python loader validates them but rejects them for enabled polling.
+The public JSON files under `ressources/profiles/` are packaged directly in the Docker image. They contain no installation addresses, serial numbers or credentials. **The three supplied profiles now cover the existing 41 read channels**, checked against official model-specific SMA lists and local model/firmware/serial reads. See [register validation](REGISTER_VALIDATION.md) for units, type corrections, source hashes and remaining parallel acceptance.
 
 | Profile ID | Model | Observed firmware | Default slot |
 | --- | --- | --- | --- |
@@ -16,7 +16,7 @@ Custom installation files belong under `./data/sma-mqtt-bridge/profiles/`. Futur
 
 The schema separates device identity, protocol defaults, evidence/validation, pollers, property definitions and command allowlists. When completing it, describe register functions and zero-based addresses, lengths, data types, word/byte order, scaling, units, invalid sentinels, source channels, per-poller intervals and Homie metadata. Keep installation connection overrides separate from model defaults. Define the final schema and validate it in Python before using profiles.
 
-All initial descriptors have `validation.status=identity-only` and empty poller/property/command arrays. The loader must reject them for normal polling until confirmed register definitions are added and the status is explicitly changed to `validated` after offline verification. Do not assume that a Sunny Boy -40 register document validates a -41, Tripower or Storage model. Preserve existing mappings as migration evidence while reconciling their types and units.
+The original descriptors were `identity-only`; unsupported new descriptors must still have empty mappings and remain blocked. The supplied profiles are now `validated` for the explicitly listed locally checked firmware. A Sunny Boy -40 document alone never validates a -41, Tripower or Storage model. Full openHAB acceptance remains separate from profile validation.
 
 See [the configuration contract](CONFIGURATION.md), [the value catalogue](WERTEKATALOG.md) and [migration requirements](MIGRATION.md).
 
@@ -28,7 +28,7 @@ See [the configuration contract](CONFIGURATION.md), [the value catalogue](WERTEK
 .venv/bin/python tests/inventory_things.py private/things/sma.things private/things/sma-sunnyboy.things --output reference/inverter-things-inventory.json
 ```
 
-This deliberately narrow importer rejects unsupported syntax, write mappings, unknown transforms, duplicate definitions and out-of-range values rather than silently dropping them. It performs no network access and does not rewrite private originals. `migration-evidence-only` is not a runtime profile status; the profile loader rejects the inventory. Missing identity definitions, model/firmware support, raw units/sentinels and byte/word order must be reconciled before generating validated profiles. Do not infer units or scaling solely from Item labels.
+This deliberately narrow importer rejects unsupported syntax, write mappings, unknown transforms, duplicate definitions and out-of-range values rather than silently dropping them. It performs no network access and does not rewrite private originals. `migration-evidence-only` is not a runtime profile status; the profile loader rejects the inventory. The reconciliation is now recorded in REGISTER_VALIDATION.md; the original evidence keeps the original signed types and transforms rather than being rewritten as runtime definitions. Do not infer units or scaling solely from Item labels.
 
 ## Version 1 polling schema
 
@@ -41,13 +41,13 @@ The loader rejects unknown fields and non-standard JSON numbers. Required top-le
 | `validation` | `status` is `identity-only` or `validated`; nonempty `reason`; `evidence` required for validated profiles. |
 | `identity` | `model`, `firmware`, `serial` reference defined property IDs. Identity blocks are read and checked before measurement blocks on each TCP session. |
 | `pollers[]` | Unique `id`, read `function` 3 or 4, `start` 0–65535, `count` 1–125 with no address overflow; optional positive `intervalSeconds`. |
-| `properties[]` | Unique `id`, Homie `node`, `name`, `poller` reference, register `offset`, `length`, `type`, explicit `byteOrder`/`wordOrder`, finite `scale`, `unit`, raw `invalid` list, Homie `datatype`; optional `valueMap`, `minimum`, `maximum`. |
+| `properties[]` | Unique `id`, Homie `node`, `name`, `poller` reference, register `offset`, `length`, `type`, explicit `byteOrder`/`wordOrder`, finite `scale`, `unit`, raw `invalid` list, Homie `datatype`; optional `valueMap`, `minimum`, `maximum`, `format`. |
 | `commands` | Must be empty in the read-only runtime. |
 
 Register types: `uint16`, `int16`, `uint32`, `int32`, `uint64`, `int64`, `float32`, `string`. Numeric lengths must match the type; ASCII strings use their explicit register length. Order is `big` or `little`. Homie datatypes are `integer`, `float`, `string`, `boolean`, `enum`; enums/booleans require `valueMap`; boolean map values are `true`/`false`. Unknown enum codes are unavailable, never guessed. Maps can preserve existing openHAB status strings. Sentinel checks precede mapping/scaling; floating-point NaN is always unavailable. Bounds apply to scaled numbers.
 
-The identity gate compares decoded model and firmware against the profile and optionally serial against `EXPECTED_SERIAL`. Define model/firmware maps from verified register evidence. No universal identification registers are invented. Identity-only profiles must have empty mapping arrays. Merely changing their status fails validation.
+The identity gate compares decoded model and firmware against the profile and optionally serial against `EXPECTED_SERIAL`. Define model maps and firmware encoding from verified register evidence. `format=sma-firmware` requires U32, string datatype, scale 1 and no value map: it decodes BCD major/minor, binary build and release type. Malformed BCD is unavailable. No universal identification registers are invented. Identity-only profiles must have empty mapping arrays. Merely changing their status fails validation.
 
-Profile poller intervals are preserved unless an installation-level JSON/ENV interval was explicitly set. Scheduling uses each poller's next deadline. Existing 3-/5-second cycles remain inventory obligations pending manufacturer validation; a generic fallback of 10 seconds does not override them.
+Profile poller intervals are preserved unless an installation-level JSON/ENV interval was explicitly set. Scheduling uses each poller's next deadline. The supplied profiles preserve existing 3-/5-second cycles and all slower pollers; a generic fallback of 10 seconds does not override them. Properties expire after the larger of the configured stale threshold and twice their effective polling interval.
 
 Host filenames use lowercase letters, digits and internal hyphens followed by `.json`; IDs follow the same name without the extension. Symlink files, absolute selectors and directory traversal are rejected. A custom `file:` filename may differ from the internal profile ID. The synthetic profile in `tests/helpers.py` documents executable schema usage and is **not a device profile**.

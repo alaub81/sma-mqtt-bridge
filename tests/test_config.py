@@ -2,11 +2,12 @@
 
 from dataclasses import fields
 from pathlib import Path
+import ssl
 import tempfile
 import unittest
 from unittest.mock import patch
 
-from sma_mqtt_bridge.config import COMPOSE_KEYS, load_config
+from sma_mqtt_bridge.config import COMPOSE_KEYS, ECharger, echarger_ssl_context, load_config, ssl_context
 from sma_mqtt_bridge.errors import ConfigError
 from tests.helpers import validated_profile, write_json
 
@@ -76,13 +77,41 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(config.inverters[-1].profile, config.inverters[0].profile)
 
     def test_identity_only_cannot_enable_polling(self):
+        env = self.enabled()
+        profile = validated_profile()
+        profile.pop("identity")
+        profile.update(pollers=[], properties=[])
+        profile["validation"]["status"] = "identity-only"
+        write_json(self.directory.name, "test-inverter.json", profile)
         with self.assertRaisesRegex(ConfigError, "identity-only"):
-            load_config({"SMAB_INVERTER1_ENABLED": "true"})
+            load_config(env)
+
+    def test_local_unverified_tls_override_is_isolated(self):
+        verified = echarger_ssl_context(ECharger())
+        self.assertTrue(verified.check_hostname)
+        self.assertEqual(verified.verify_mode, ssl.CERT_REQUIRED)
+        unverified = echarger_ssl_context(ECharger(tls_verify=False, tls_ca_file="/not/present"))
+        self.assertFalse(unverified.check_hostname)
+        self.assertEqual(unverified.verify_mode, ssl.CERT_NONE)
+        self.assertTrue(ssl_context().check_hostname)
+        with self.assertRaises(ConfigError):
+            echarger_ssl_context(ECharger(tls_ca_file="/not/present"))
+
+    def test_mqtt_unverified_tls_is_explicit_and_keeps_defaults_verified(self):
+        env = self.enabled() | {"SMAB_MQTT_TLS": "true", "SMAB_MQTT_TLS_VERIFY": "false",
+                                "SMAB_MQTT_TLS_CA_FILE": "/not/present"}
+        config = load_config(env)
+        self.assertTrue(config.mqtt.tls)
+        self.assertFalse(config.mqtt.tls_verify)
+        context = ssl_context(config.mqtt.tls_ca_file, verify=config.mqtt.tls_verify)
+        self.assertEqual(context.verify_mode, ssl.CERT_NONE)
+        self.assertTrue(load_config({}).mqtt.tls_verify)
+        self.assertTrue(ssl_context().check_hostname)
 
     def test_bool_numbers_unknown_options_and_bounds(self):
         cases = {"SMAB_HOME_MANAGER_ENABLED": "1", "SMAB_HOME_MANAGER_PORT": "0",
                  "SMAB_INVERTER1_PORT": "65536", "SMAB_INVERTER1_UNIT_ID": "248",
-                 "SMAB_MQTT_TLS": "", "SMAB_MQTT_TLS_VERIFY": "false",
+                 "SMAB_MQTT_TLS": "", "SMAB_MQTT_TLS_VERIFY": "sometimes",
                  "SMAB_HOME_MANAGER_TIMEOUT_SECONDS": "NaN", "SMAB_RECONNECT_MAX_SECONDS": "inf",
                  "SMAB_ECHARGER_API_POLL_INTERVAL_SECONDS": "0", "SMAB_HEALTH_INTERVAL_SECONDS": "",
                  "SMAB_HEALTH_STALE_SECONDS": "10", "SMAB_RECONNECT_MIN_SECONDS": "61",
@@ -124,7 +153,7 @@ class ConfigTests(unittest.TestCase):
     def test_public_json_and_complete_env_example(self):
         load_config({"SMAB_CONFIG_FILE": str(ROOT / "config.example.json")})
         env = {}
-        lines = (ROOT / ".env.example").read_text().splitlines()
+        lines = (ROOT / "smab.example.env").read_text().splitlines()
         for index, line in enumerate(lines):
             line = line.removeprefix("# ")
             if line.startswith("SMAB_") and "=" in line:
@@ -156,7 +185,7 @@ class ConfigTests(unittest.TestCase):
                     else:
                         self.assertEqual(env[key], value)
         self.assertEqual(set(env), expected, "Example must cover every supported ENV option")
-        self.assertEqual(env["SMAB_ENV_FILE"], "./.env")
+        self.assertEqual(env["SMAB_ENV_FILE"], "./smab.env")
         self.assertFalse(load_config({k: v for k, v in env.items() if k != "SMAB_CONFIG_FILE"}).has_sources)
 
     def test_separate_semp_gate_needs_no_api_credentials(self):

@@ -99,7 +99,9 @@ class ECharger(SafeRepr):
     password: str = ""
     password_file: str = ""
     tls_ca_file: str = ""
+    tls_verify: bool = True
     expected_serial: str = ""
+    tls_server_name: str = ""
     api_poll_interval_seconds: float = 60.0
     semp_enabled: bool = False
     semp_port: int = 80
@@ -274,14 +276,22 @@ def https_url(value):
         return False
 
 
-def ssl_context(ca="", cert="", key=""):
+def ssl_context(ca="", cert="", key="", *, verify=True):
     try:
-        context = ssl.create_default_context(cafile=ca or None)
+        context = ssl.create_default_context(cafile=(ca or None) if verify else None)
+        if not verify:
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
         if cert:
             context.load_cert_chain(cert, key)
         return context
     except (OSError, ValueError, ssl.SSLError):
         raise ConfigError("Cannot load configured TLS trust/client certificate") from None
+
+
+def echarger_ssl_context(settings):
+    """An explicit installation override applies only to the local wallbox."""
+    return ssl_context(settings.tls_ca_file, verify=settings.tls_verify)
 
 
 def password(settings, active):
@@ -378,8 +388,6 @@ def load_config(environ=None, bundled_dir=None):
         raise ConfigError("Invalid or duplicate Homie device IDs")
     if not ID.fullmatch(mqtt.homie_prefix) or not mqtt.client_id:
         raise ConfigError("Invalid MQTT prefix/client ID")
-    if mqtt.tls and not mqtt.tls_verify:
-        raise ConfigError("MQTT TLS verification must remain enabled")
     if bool(mqtt.tls_cert_file) != bool(mqtt.tls_key_file):
         raise ConfigError("MQTT client certificate and key must be configured together")
     config = Config(runtime, mqtt, tuple(inverters), hm, ec, portal, commands, profiles, frozenset(intervals))
@@ -387,7 +395,7 @@ def load_config(environ=None, bundled_dir=None):
     if mqtt_needed:
         require_host(mqtt.host, "MQTT")
         if mqtt.tls:
-            ssl_context(mqtt.tls_ca_file, mqtt.tls_cert_file, mqtt.tls_key_file)
+            ssl_context(mqtt.tls_ca_file, mqtt.tls_cert_file, mqtt.tls_key_file, verify=mqtt.tls_verify)
     mqtt = password(mqtt, mqtt_needed)
     for inverter in inverters:
         if inverter.enabled:
@@ -414,7 +422,9 @@ def load_config(environ=None, bundled_dir=None):
     if ec.enabled:
         if not ec.username or not ec.password or not ec.expected_serial:
             raise ConfigError("Local API requires username, password and expected serial")
-        ssl_context(ec.tls_ca_file)
+        if ec.tls_server_name:
+            require_host(ec.tls_server_name, "eCharger TLS server name")
+        echarger_ssl_context(ec)
     if ec.semp_enabled and not ec.semp_device_id:
         raise ConfigError("SEMP requires a configured device ID")
     if not ec.semp_path.startswith("/") or any(c in ec.semp_path for c in "?#") or ".." in ec.semp_path:

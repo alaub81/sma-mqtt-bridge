@@ -7,12 +7,12 @@ import struct
 import unittest
 from unittest.mock import AsyncMock, MagicMock, patch
 
-from sma_mqtt_bridge.adapters.echarger import NS, parameter_catalog, semp_values, settings_values, validate_semp_identity
+from sma_mqtt_bridge.adapters.echarger import NS, SempReader, parameter_catalog, semp_values, settings_values, validate_semp_identity
 from sma_mqtt_bridge.adapters.http import HTTP, json_data
 from sma_mqtt_bridge.adapters.meter import parse_telegram
 from sma_mqtt_bridge.adapters.modbus import ModbusReader, decode
 from sma_mqtt_bridge.adapters.portal import PortalReader, authorization_code, login_action, portal_values
-from sma_mqtt_bridge.config import Inverter, Portal
+from sma_mqtt_bridge.config import ECharger, Inverter, Portal
 from sma_mqtt_bridge.errors import AuthenticationError, ProtocolError
 from sma_mqtt_bridge.profiles import validate_profile
 from tests.helpers import validated_profile
@@ -35,6 +35,14 @@ class DecodeTests(unittest.TestCase):
         p = validated_profile()["properties"][0]
         self.assertEqual(decode([1, 2, 3], p), "TEST-INVERTER")
         self.assertIsNone(decode([9, 2, 3], p))
+
+    def test_sma_firmware_bcd_and_binary_build(self):
+        p = validated_profile()["properties"][-1] | {"type": "uint32", "datatype": "string",
+                                                       "scale": 1, "format": "sma-firmware", "invalid": [4294967295]}
+        self.assertEqual(decode([0x0410, 0x0a04], p), "4.10.10.R")
+        self.assertEqual(decode([0x0407, 0x1f04], p), "4.07.31.R")
+        self.assertIsNone(decode([0x04fa, 0x0104], p))
+        self.assertIsNone(decode([0xffff, 0xffff], p))
 
     def test_meter_unsigned_energy_scaling_serial_selection(self):
         header = bytearray(28)
@@ -78,6 +86,27 @@ class DecodeTests(unittest.TestCase):
         self.assertEqual(settings_values(catalog)['settings/plan-energy'], 3)
         with self.assertRaises(ProtocolError):
             parameter_catalog(reply, '999')
+
+    def test_semp_settings_raw_units_and_stale_setpoints(self):
+        channels = {'Parameter.Chrg.Plan.En': '3', 'Parameter.Chrg.StpWhenFlTm': '5',
+                    'Parameter.Chrg.ChrgLok': '1129', 'Parameter.Chrg.CblLok': '308',
+                    'Setpoint.PlantControl.PCC.ChrgActCnt': '1'}
+        body = ''.join(f'<Parameter><channelId>{k}</channelId><timestamp>2026-10-10T10:00:00Z</timestamp><value>{v}</value></Parameter>'
+                       for k, v in channels.items())
+        xml = f'<Device2EM xmlns="{NS}"><Parameters>{body}</Parameters></Device2EM>'
+        values = semp_values(xml, 30, datetime(2026, 10, 10, 10, 1, tzinfo=timezone.utc))
+        self.assertIs(values['settings/approval-required'], True)
+        self.assertIs(values['settings/cable-lock'], True)
+        self.assertIsNone(values['settings/plan-energy'])
+        self.assertIsNone(values['settings/stop-delay'])
+        self.assertEqual(values['parameters/chrg-plan-en-raw'], 3)
+        self.assertEqual(values['parameters/chrg-stpwhenfltm-raw'], 5)
+        self.assertIsNone(values['control/active-charging-count'])
+        adapter = SempReader(ECharger(), 10000)
+        self.assertEqual(len({p.key for p in adapter.properties}), len(adapter.properties))
+        self.assertTrue(set(values).issubset({p.key for p in adapter.properties}))
+        shared = SempReader(ECharger(), 10000, include_settings=False)
+        self.assertFalse(any(p.node == 'settings' for p in shared.properties))
 
     def test_portal_nullable_preference_rights_and_identity(self):
         reply = {'plantId': 'fixture-plant', 'deviceId': 'fixture-device', 'productTagId': 19143,

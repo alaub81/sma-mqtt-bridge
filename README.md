@@ -2,7 +2,7 @@
 
 A Python Docker service publishing read-only SMA measurements and charging preferences through Homie 4 MQTT. Target: Raspberry Pi 5, Linux arm64. Sunny Home Manager remains the charging controller.
 
-**Status: first Python implementation, offline tested.** Configuration, profile validation, generic Modbus reads, Home Manager meter reception, local eCharger API/SEMP reads, optional ennexOS reads and Homie publishing are implemented. Hardware/network acceptance and full openHAB migration remain pending. The three bundled inverter profiles are identity-only; enabling them deliberately fails before any network connection. No command subscriptions or device writes are implemented.
+**Status: Python read service, first installation reads verified.** Configuration, profile validation, generic Modbus reads, Home Manager meter reception, local eCharger API/SEMP reads, optional ennexOS reads and Homie publishing are implemented. The three bundled inverter profiles cover the existing 41 channels and were checked against official model-specific lists and local identity reads. Inverters and SEMP have published real values to the installation broker. Full openHAB comparison, authenticated API/portal acceptance and Raspberry Pi/Home Manager acceptance remain pending. No command subscriptions or device writes are implemented. See [register validation](docs/REGISTER_VALIDATION.md) and [Mac test instructions](docs/MAC_TEST.md).
 
 The runtime uses the verified official `python:3.14.8-slim-trixie` multi-platform digest in `Dockerfile-SMAB`. On 2026-10-10 the stable `3.15.0-slim-trixie` tag was still absent. The obsolete C++ diagnostic sources/toolchain have been removed; [baseline provenance](docs/BASELINE.md) and [third-party attribution](docs/THIRD_PARTY.md) are preserved.
 
@@ -20,7 +20,7 @@ python3.14 -m venv .venv
 ./tests/test-check.sh
 ```
 
-The Python CLI consumes process environment variables; it does not read or rewrite `.env`. Compose passes the host file into the service. Additional JSON is optional. Diagnostics show counts/status only, never resolved settings or credentials. A profile schema check can succeed while `pollingValidated` remains false.
+The Python CLI consumes process environment variables; it does not read or rewrite `smab.env`. Compose passes the host file into the service. Additional JSON is optional. Diagnostics show counts/status only, never resolved settings or credentials. A profile schema check can succeed while `pollingValidated` remains false.
 
 Read [configuration and defaults](docs/CONFIGURATION.md), [profile schema](docs/PROFILES.md), [migration coverage](docs/MIGRATION.md), [the value catalogue](docs/WERTEKATALOG.md) and [validation evidence](docs/VALIDATION.md). Outstanding inputs and decisions are preserved in [todo.md](todo.md).
 
@@ -36,9 +36,9 @@ docker compose -f docker-compose.dev.yml up -d
 
 Both Compose files are standalone. You can start `docker-compose.dev.yml` directly with VS Code's Compose Up command; its build settings select `Dockerfile-SMAB` and build the local image automatically. `docker-compose.example.yml` has the same runtime options, but pulls `ghcr.io/alaub81/sma-mqtt-bridge` with the selected `SMAB_BRIDGE_VERSION`. The deployment template becomes usable once an image has been published. [Compose's build specification](https://docs.docker.com/reference/compose-file/build/) describes the build/image selection.
 
-Prepare `.env` in the repository root only on a fresh installation; preserve any existing file. [.env.example](.env.example) documents every available variable with purpose, type and default. Copy it to `.env` on a fresh installation and change only the required settings. Compose automatically reads the root `.env` for interpolation and passes it into the service; no `--env-file` flag is needed. Optional JSON, profiles, certificates, password files and state remain under `data/sma-mqtt-bridge/`. All sources default to disabled. Enabling an inverter needs a validated host profile with local identity mappings. Home Manager needs its serial selector; SEMP needs its device ID. The local API requires separate credentials, expected serial and verified TLS trust. No addresses or credentials are invented.
+Prepare `smab.env` in the repository root only on a fresh installation; preserve any existing file. [smab.example.env](smab.example.env) documents every available variable with purpose, type and default. Copy it to `smab.env` on a fresh installation and change only the required settings. Both Compose files explicitly load `smab.env` through the service's `env_file`; starting with the default layout needs no extra flag. To apply Compose-only settings from that file, such as `SMAB_DATA_DIR`, `SMAB_UID` or the deployment image version, use `docker compose --env-file smab.env -f docker-compose.dev.yml up -d`. Compose automatically looks only for `.env` for interpolation; an optional `.env` may hold Compose-only settings separately. Optional JSON, profiles, certificates, password files and state remain under `data/sma-mqtt-bridge/`. All sources default to disabled. Enabling an inverter needs a validated bundled or host profile with local identity mappings. Home Manager needs its serial selector; SEMP needs its device ID. The local API requires separate credentials, expected serial and verified TLS trust. No addresses or credentials are invented.
 
-Files are bind-mounted at `/data/sma-mqtt-bridge`. The container runs as UID/GID 10001; set Compose-only `SMAB_UID`/`SMAB_GID` to the host account IDs where required. The chosen account must read configured profiles/certificates/password files and write the `state/` subdirectory. Keep `.env` and secrets at mode 0600. Do not make the entire configuration directory world-writable. Compose requires version 2.24+.
+Files are bind-mounted at `/data/sma-mqtt-bridge`. The container runs as UID/GID 10001; set Compose-only `SMAB_UID`/`SMAB_GID` to the host account IDs where required. The chosen account must read configured profiles/certificates/password files and write the `state/` subdirectory. Keep `smab.env` and secrets at mode 0600. Do not make the entire configuration directory world-writable. Compose requires version 2.24+.
 
 The template uses Linux host networking for multicast. Receiving actual Home Manager telegrams on the Pi, interface/VLAN routing and encrypted Speedwire remain acceptance checks. Docker Desktop does not certify this network behavior.
 
@@ -62,7 +62,7 @@ All repository files receive hygiene checks; Python, shell, Docker, YAML, Action
 - `ressources/`: all image inputs, copied into `/app`: `sma_mqtt_bridge/`, bundled `profiles/` and pinned `requirements.txt`.
 - `tests/`: deterministic offline tests, Compose parity and lint tooling.
 - `docs/`: current configuration, [profile schema](docs/PROFILES.md), values, migration and implementation documentation; historical evidence is explicitly archived.
-- Root: `Dockerfile-SMAB`, both standalone Compose files, `.env.example`, private ignored `.env`, optional [JSON configuration example](config.example.json) and lint settings including `.hadolint.yaml`.
+- Root: `Dockerfile-SMAB`, both standalone Compose files, `smab.example.env`, private ignored `smab.env`, optional [JSON configuration example](config.example.json) and lint settings including `.hadolint.yaml`.
 
 `ressources/` is reserved for image contents. Examples, tests, documentation and private host files stay outside it. The Docker build context uses an allowlist for this directory and excludes Python bytecode caches.
 

@@ -1561,3 +1561,13 @@ Bei jeder neuen Unterlage die Quelle/Version und Modellgeltung ergänzen, Regist
 - Alle Properties bleiben `$settable=false`, ohne `/set`-Abonnement. Schreib-/Komfortbefehle, zusätzliche Diagnosezusammenfassungen und vollständige openHAB-Abnahme bleiben offen. Herkunftskennzeichen und Inventarzeilen werden durch Offline-Unterstützung nicht zu Live-Nachweisen.
 
 Siehe `docs/migration-coverage.csv` für den zeilenweisen Stand. Berechnungen, Regeln, Shelly-Quellen und InfluxDB-Historien bleiben in openHAB.
+
+## Geräte- und MQTT-Lesetest am 10.10.2026
+
+Die drei Standardprofile unter `ressources/profiles/` enthalten jetzt alle 41 bestehenden Wechselrichterkanäle und jeweils Modell, Firmware und Seriennummer. Grundlage sind passende offizielle SMA-Listen, lokale FC04-Identitätsabfragen und Offline-Decodiertests; Quellen und Abweichungen stehen in [REGISTER_VALIDATION.md](REGISTER_VALIDATION.md). Am echten Broker wurden 39 Messwerte und neun Identitätswerte geprüft. Die zwei Sunny-Boy-Phasenwerte 30777/30783 liefern SMA-NaN und werden bis zum Tagesvergleich ausgelassen.
+
+Wichtige Korrektur: Tripower/Sunny Boy liefern 30531/30537 in ganzen kWh, Storage in Wh. Dokumentierte U32-Werte werden unsigned decodiert; Zähler oberhalb 2³¹ bleiben gültig. Statusstrings und Intervalle bleiben erhalten. Alte negative-zu-Null-Filter ersetzen keine Sentinelprüfung; gültige negative Messwerte bleiben vorzeichenbehaftet und benötigen den Parallelabgleich.
+
+SEMP liefert zusätzlich die belegten Einstellungen und Rohdiagnosen: Phasencode, Geräte-/Fahrzeug-/Ereigniscodes, Moduswechsel, Registrierung und Anlagen-Sollwerte. Alle sind `$settable=false`. Die Einheiten der normierten Sollwerte sind weiterhin offen; es wird keine Prozent-Unit behauptet. `parameters/chrg-plan-en-raw` und `parameters/chrg-stpwhenfltm-raw` zeigen die Rohzahlen ohne Unit; `settings/plan-energy` und `settings/stop-delay` bleiben ohne verifizierte Skalierung unverfügbar. Standortname sowie sensible Konto-/Netzwerkdaten werden nicht veröffentlicht. Mess- und Sollwerte mit veralteten Quellzeitstempeln bleiben unverfügbar. Mit erweiterten SEMP-Lesewerten wurden insgesamt 69 Werte am Broker geprüft.
+
+Home Manager bleibt auf dem Mac ausdrücklich deaktiviert, da dieser in einem anderen Netz liegt. Serienselektor/Multicast werden auf dem Pi geprüft. Authentifizierte lokale Zusatzmessungen, Portal-Mindest-PV-Anteil, Schreibfunktionen und vollständiger openHAB-/Persistenzabgleich bleiben offen.

@@ -8,7 +8,7 @@ Create a self-hosted Docker SMA-to-Homie-MQTT bridge based on the existing BMW-M
 
 Use local sources for inverter/meter measurements and wallbox settings. Use the existing ennexOS portal web API for the minimum PV percentage. The user explicitly rejected paying for SMA Developer APIs. A completely local setter for the SMA PV-percentage slider has not been confirmed.
 
-Each source must be independently configurable and enabled/disabled. The chosen environment prefix is `SMAB_`; all operational options need defaults and ENV overrides so only installation basics are necessary. The private `.env` lives in the repository root; `.env.example` documents every variable. Optional JSON configuration, profiles, certificates, password files and persistent state belong under `./data/sma-mqtt-bridge/`. See [the binding configuration contract](CONFIGURATION.md). Compose prepares this layout; the Python configuration loader and first read runtime are offline tested; hardware acceptance remains pending.
+Each source must be independently configurable and enabled/disabled. The chosen environment prefix is `SMAB_`; all operational options need defaults and ENV overrides so only installation basics are necessary. The private `smab.env` lives in the repository root; `smab.example.env` documents every variable. Optional JSON configuration, profiles, certificates, password files and persistent state belong under `./data/sma-mqtt-bridge/`. See [the binding configuration contract](CONFIGURATION.md). Compose prepares this layout; the Python configuration loader and first read runtime are offline tested; hardware acceptance remains pending.
 
 ## Known devices and software
 
@@ -132,3 +132,9 @@ Protocol implementation references:
 ## Python implementation milestone
 
 On 2026-10-10 the Python configuration/profile loaders, generic read adapters, Homie lifecycle and heartbeat replaced the C++ runtime in Docker/tests/CI. Bundled models remain identity-only and cannot poll. API/SEMP and portal sources are separately gated; no command code exists. Migration acceptance, local certificate hostname matching, local units and Pi multicast reachability remain outstanding. See VALIDATION.md and todo.md.
+
+## First installation read and explicit TLS overrides, 2026-10-10
+
+The bundled model files now cover all 41 existing inverter channels using matching official lists and locally checked identity/firmware, with private serial guards. See REGISTER_VALIDATION.md. Three inverters and SEMP run on the Mac and have published values to the installation broker. Complete openHAB parallel acceptance remains pending. Home Manager stays disabled because the Mac runs in another network; prepare and verify its receiver on the Pi. Local API and portal still await the four private account fields.
+
+At Andreas' explicit request, MQTT and local-wallbox TLS verification can each be disabled independently through their TLS_VERIFY flag. Defaults remain true; portal verification remains mandatory. The private Mac test uses unverified MQTT TLS after the real broker presented an untrusted self-signed chain. Wallbox certificate/name verification has passed and remains enabled. This overrides the earlier mandatory-verification requirement only for explicitly configured MQTT/local-API sessions. No trust is automatically adopted from a network download.

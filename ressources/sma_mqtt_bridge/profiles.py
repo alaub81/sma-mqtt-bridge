@@ -95,7 +95,7 @@ def validate_profile(raw):
             raise ConfigError("Invalid poller interval")
         pollers[poller["id"]] = poller
     for prop in raw["properties"]:
-        keys(prop, ("id", "node", "name", "poller", "offset", "type", "length", "byteOrder", "wordOrder", "scale", "unit", "invalid", "datatype"), ("valueMap", "minimum", "maximum"))
+        keys(prop, ("id", "node", "name", "poller", "offset", "type", "length", "byteOrder", "wordOrder", "scale", "unit", "invalid", "datatype"), ("valueMap", "minimum", "maximum", "format"))
         if not all(isinstance(prop[k], str) and ID.fullmatch(prop[k]) for k in ("id", "node")) or prop["id"] in properties:
             raise ConfigError("Invalid/duplicate profile property ID")
         if not isinstance(prop["name"], str) or not prop["name"] or not isinstance(prop["unit"], str):
@@ -109,6 +109,9 @@ def validate_profile(raw):
         if prop["byteOrder"] not in ("big", "little") or prop["wordOrder"] not in ("big", "little") or prop["datatype"] not in ("integer", "float", "string", "boolean", "enum"):
             raise ConfigError("Invalid property encoding/Homie datatype")
         convert(prop["scale"], float, "property scale")
+        if "format" in prop and (prop["format"] != "sma-firmware" or prop["type"] != "uint32"
+                                  or prop["datatype"] != "string" or prop["scale"] != 1 or "valueMap" in prop):
+            raise ConfigError("Invalid firmware format/encoding")
         if not isinstance(prop["invalid"], list) or any(type(v) not in (int, str) for v in prop["invalid"]):
             raise ConfigError("Explicit raw sentinels required")
         if "valueMap" in prop and (not isinstance(prop["valueMap"], dict) or not prop["valueMap"] or any(not isinstance(k, str) or not isinstance(v, str) or not v for k, v in prop["valueMap"].items())):
