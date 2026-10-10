@@ -26,7 +26,7 @@ The private directory is deliberately excluded from Git and Docker build context
 
 - The Python read runtime is offline tested. Do not claim live SMA/MQTT acceptance or complete openHAB migration until verified. Bundled identity-only profiles remain blocked for polling.
 - The working openHAB JavaScript references are evidence and protocol examples. Port their behavior; they depend on the openHAB runtime and cannot run unchanged in the Python service.
-- Private references are read-only. Update public documentation and migration mappings, not original openHAB exports.
+- SMA private references and original openHAB exports are read-only. Update public documentation and migration mappings, not those originals. The obsolete private BMW source copies were removed with user approval on 2026-10-10; do not restore them.
 - Only expose confirmed writable parameters through Homie `/set`. Read-only measurements remain non-settable. Do not expose every editable installer parameter automatically.
 - Validate parameter metadata, device identity, command bounds and units. Read back changes before publishing a confirmed state. An HTTP success is not proof of a completed device action.
 - Avoid retained-command replay, writes on startup/reconnection, duplicate write retries after uncertain responses, and competing charging controllers.

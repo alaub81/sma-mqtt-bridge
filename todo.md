@@ -5,6 +5,9 @@ Das erste Python-Lesegrundgerüst einschließlich Homie ist implementiert und of
 - [ ] Ein openHAB-MainUI-Widget mit den Basisfunktionen zur Wallboxsteuerung sowie den wichtigsten Messwerten und Statusanzeigen erstellen. Nur nachweislich schreibbare Funktionen zur Bedienung anbieten.
 - [ ] Eine Beispiel-`.items`-Datei mit allen verfügbaren Thing-Channels der Bridge erstellen, einschließlich korrekter Item-Typen, Einheiten und Channel-Verknüpfungen.
 - [ ] Eine Beispiel-Sitemap auf Basis der Beispiel-Items erstellen.
+- [x] Reconnect-Fähigkeit offline prüfen und härten: unabhängige Quellen, begrenzte Wiederholungsintervalle, Portal-Login-Dienstausfälle und echte MQTT-Bibliothek bei Verbindungsabbruch vor Empfangsbestätigung geprüft. Keine Befehlswiederholung. Am 10.10.2026 erledigt; reale Ausfallabnahme bleibt unten offen.
+- [ ] Produktionsabnahme auf dem Zielhost: Geräte-/Netzwerkausfälle, Broker-Neustart, TLS-Vertrauen, Container-Stop und Wiederanlauf kontrolliert prüfen; openHAB-Frische und Abhängigkeiten vergleichen. Externe Alarmierung für Broker-Ausfall und Docker-unhealthy einrichten; Compose startet einen noch laufenden unhealthy-Container allein nicht neu.
+- [ ] Die Wechselrichter in `inverter-carport`, `inverter-roof` und `inverter-battery` umbenennen. Gerätezuordnung bestätigen und betroffene Konfiguration, Homie-/MQTT-IDs, openHAB-Verknüpfungen und Dokumentation entsprechend anpassen.
 - [x] Zugangsdaten über ENV konfigurierbar: MQTT, lokaler eCharger und separater Portalzugang; sichere Fehlerausgabe und keine persistierten Geheimnisse. Offline geprüft am 10.10.2026.
 - [x] Weitere Wechselrichter über Profildateien ohne Modellzweige im Adapter ergänzbar. Schema-/Identitätsprüfung offline getestet; ursprüngliche 41 Kanäle unter Q20 inzwischen freigegeben, vollständiger Parallelvergleich bleibt offen.
 - [x] Die Implementierungssprache der Bridge klären und bestätigen. Am 10.10.2026 wurde Python gewählt; Docker und Tests wurden im ersten Python-Schritt ersetzt; öffentliches C++-Diagnosegrundgerüst beim Cleanup entfernt, Herkunft und private Referenzen erhalten.
@@ -68,6 +71,7 @@ Entscheidungen, eingegangene Unterlagen, erledigte Arbeiten und Prüfergebnisse 
 
 ## Ausstehende Implementierungsmeilensteine
 
+- [ ] Ladeplan-Liveabnahme in einer frischen Ladesitzung nachholen — Andreas kann diesen Test aktuell nicht durchführen. Vorher Sitzungsenergie nahe 0 und Aufnahmefähigkeit des Fahrzeugs prüfen; anschließend ausdrücklich einen 1-kWh-Plan mit zukünftiger Endzeit senden. Beide Planwerte und Modus 4720 zurücklesen, Ladeverlauf beobachten und den Rückwechsel auf 4719 nach Zielerreichung prüfen. Klären, ob die lokale Zielenergie auf die gesamte Sitzung oder zusätzliche Energie bezogen ist; bei Bedarf mit SMA Energy App vergleichen. Bisherige Planübertragung ist bestätigt, vollständige Ladeabnahme bleibt offen. Keine automatische Wiederholung oder Umrechnung des Sitzungszählers.
 - [x] Diagnoseprogramm und compilerabhängige Tests durch Python ersetzt. CLI-Diagnose und klare Fehler für deaktivierte Quellen/unvalidierte Profile bleiben erhalten; lesende Laufzeit ist offline getestet.
 - [x] Docker, CI und vorbereitete Release-Vorlage am 10.10.2026 auf das verifizierte Python-Image und feste Bibliotheksversionen umgestellt; BMW-/nlohmann-Herkunftsnachweise erhalten. Release nicht ausgelöst.
 - [x] Profillader und ENV-Konfiguration am 10.10.2026 offline umgesetzt. Tatsächliche Freigabe der Geräteprofile bleibt unter Q20 offen.
@@ -392,6 +396,25 @@ Entscheidungen, eingegangene Unterlagen, erledigte Arbeiten und Prüfergebnisse 
 - Keine Geräte-Schreibaktion, keine Grid-Guard-Anmeldung und keine Änderung am laufenden Container oder privaten Zugangsdaten. Live-Abnahme bleibt offen.
 - Andreas fordert den lokalen Commit dieses Plan-/Portal-Meilensteins. Enthalten sind Schreibpfade, unabhängige Portal-Gates, 16 neue Offline-Protokolltests und öffentliche Dokumentation. Prüfstand: 117 Tests, vollständiger Linter, Compose-Parität und Diff-Hygiene bestanden. Private ENV und Referenzen bleiben ausgeschlossen; kein Push, Deployment oder Live-Schreibtest.
 
+## 10.10.2026 — Home-Manager-Modbus-Lesen erstmals live bestätigt
+
+- Auf Andreas erneute Aufforderung TCP-Lesetest wiederholt: Verbindung erfolgreich, Typ/Klasse/Hersteller und beide Serienregister gegen den privaten Selektor bestätigt. Vorherige Verbindungsablehnung damit für diesen Zeitpunkt aufgelöst; keine Grid-Guard-Anmeldung gesendet.
+- Vollständiger direkter Lesedurchlauf: alle 16 Unit-1-/Unit-2-Basiswerte verfügbar, Anlagenstatus OK, Gesamtleistung/-energie und Zeitregister gelesen. Komplette Zuordnungstabelle erfolgreich gelesen, drei belegte Gerätezuordnungen erkannt.
+- Alle 48 delegierten Parameterabfragen ausgeführt: drei gültige Werte, 45 nach Profildekodierung unavailable, keine Modbus-Exception. Die 45 Werte sind nicht als implementierte Live-Messwerte abgenommen; rohe Antworten wurden nicht geloggt.
+- Ausschließlich direkter Python-Lesetest; laufender Container und MQTT-Publikation unverändert. openHAB-Zähleroffsets, Parallelwertvergleich und Persistenzkontinuität bleiben offen. Keine Geräte-Schreibaktion, kein Commit/Push/Release.
+
+## 10.10.2026 — Erster lokaler Wallbox-Befehl durch Andreas bestätigt
+
+- Andreas meldet einen erfolgreichen MQTT-Explorer-Test der Statuslicht-Helligkeit: commands/local-result meldet confirmed, settings/led-brightness entspricht dem gesendeten Wert. Konkreter Payload und Rücksetzen wurden nicht genannt; keine weitere Schreibaktion durch den Agenten.
+- Bestätigtes Live-Schreiben mit Rücklesung für diese Property; optische Kontrolle an der LED-Statusanzeige noch offen. Kein Nachweis für andere lokale Befehle, Ladeplanung oder Portal-PV-Schreiben. Offizielle SMA-Anleitung unterscheidet LED-Statusanzeige (Produktbild Position D) von der Beleuchtung an der Ladebuchse.
+
+## 10.10.2026 — Plan-Schreibtest bestätigt, unmittelbarer SMA-Rückwechsel offen
+
+- Andreas meldet commands/local-result=confirmed, Zielenergie 1.0 kWh und erwartete UTC-Endzeit; Zielmodus 4720 nur kurz, anschließend 4719. Fahrzeug angeschlossen und freigegeben; keine zusätzliche openHAB-Modusregel laut Andreas. In derselben Sitzung waren bereits mehr als 1 kWh geladen.
+- Ausschließlich direkte lokale API-Leseprüfung: Modus 4719 Confirmed, Planenergie 0 Confirmed, Plan-Endzeit auf den Testzeitpunkt zurückgesetzt; Ladefreigabe 5172. Leistung 0 W und Fahrzeugstatus verbunden/wartend frisch; Sitzungszähler 8.680375 kWh mit älterem Zeitstempel vor dem Plan-Test. Keine Annahme einer neuen 1-kWh-Ladung aus diesem Zähler. Lokales Unklarheitsjournal nicht vorhanden. Kein MQTT-Topic-Konflikt zwischen API/SEMP im Quellcode gefunden.
+- Offizielle SMA-Dokumentation bestätigt automatischen Rückwechsel auf PV-Laden nach Zielerreichung: [Eigenschaften der Lademodi](https://manuals.sma.de/EVCxx20/de-DE/14505538315.html). Bereits erfülltes Ziel plausibel, Zuordnung der lokalen Planenergie zur gesamten laufenden Sitzung gegenüber zusätzlich zu ladender Energie bleibt offen. Keinen Home-Manager-/Firmwarefehler oder erfolgreiche physische Zielladung behauptet; keine automatische Addition des Sitzungszählers implementiert.
+- Planübertragung und momentane Modus-Rücklesung durch Andreas bestätigt; vollständige Ladeplan-Abnahme bleibt bis zum Vergleich in einer frischen Sitzung oder mit der SMA Energy App offen. confirmed ist das Ergebnis der Rücklesung zum Befehlszeitpunkt, keine dauerhafte Modusgarantie. Keine weiteren Writes, kein Neustart/Deployment/Commit.
+
 ### 2026-10-10 – Optionale Kanalgruppen pro Gerät
 
 - Benutzerwunsch umgesetzt: Advanced-Kanäle und Diagnosen separat per ENV/JSON abschaltbar, Standard jeweils eingeschaltet. Wechselrichter-Slots, Home Manager und eCharger unabhängig; Portal-Diagnosen separat.
@@ -405,3 +428,25 @@ Entscheidungen, eingegangene Unterlagen, erledigte Arbeiten und Prüfergebnisse 
 
 - Benutzerkorrektur: `internal-temperature` in allen drei Wechselrichterprofilen ausdrücklich der Basisgruppe zugeordnet; bleibt auch bei abgeschalteten Advanced-Kanälen und Diagnosen verfügbar. Frühere Zuordnung als Diagnose damit aufgehoben. Dokumentation entsprechend korrigiert.
 - Validierung: alle 122 Offline-Tests und vollständiger Lint-Lauf erfolgreich.
+
+## 10.10.2026 — Private BMW-Quellkopien entfernt
+
+- Auf ausdrücklichen Wunsch von Andreas die vier Dateien unter `private/reference/bmw/` entfernt: historische C++-Bridge, zwei Homie-Header und die redundante MIT-Lizenzkopie. Keine aktive Laufzeitabhängigkeit gefunden.
+- Projektvorgabe auf die weiter geschützten SMA-/openHAB-Originalreferenzen präzisiert. Umsetzungsplan und Attribution an den aktuellen Bestand angepasst. `docs/BASELINE.md` und Importmanifest bleiben historische Nachweise des ursprünglichen Imports.
+- Die zentrale `LICENSE` enthält bereits die ursprüngliche MIT-Attribution und den eigenen Copyright-Vermerk; unverändert erhalten. Das separate BMW-Projekt wurde nicht verändert.
+- Validierung: `./tests/linter-check.sh` über 83 Projektdateien bestanden; `./tests/test-check.sh` mit 128 Offline-Tests bestanden. Der erste Testlauf wurde bei drei lokalen Testservern durch die Sandbox blockiert; Wiederholung mit erlaubten Loopback-Sockets erfolgreich. Keine Geräteverbindungen oder Live-Schreibaktionen.
+
+## 10.10.2026 — Copyright-Angabe in LICENSE angepasst
+
+- Auf ausdrücklichen Wunsch von Andreas nennt die zentrale `LICENSE` nur noch den eigenen Copyright-Vermerk. Der MIT-Lizenztext bleibt unverändert; die ursprüngliche BMW-Attribution ist in `docs/THIRD_PARTY.md` erhalten. README-Verweis angepasst.
+- Validierung: Dokumentationsänderung; `git diff --check` ohne Befund.
+
+## 10.10.2026 — Ausfallbehandlung und Healthcheck gehärtet
+
+- Geräte-/MQTT-Ausfälle im Code geprüft: unabhängige Supervisoren, begrenzter Backoff mit Zufallsanteil, separate Sitzungserneuerung und propertybezogene Frische vorhanden. Fehlende Werte werden nicht zu null; alte retained Messwerte werden bei erreichbarem Broker gelöscht. Reconnect startet keine Gerätebefehle erneut.
+- Drei Lücken behoben: Healthcheck prüft jetzt lebende PID und monotone Heartbeat-Frische statt allein Wanduhrzeit; unerwartet abgebrochene oder still beendete Supervisoren führen zum kontrollierten Prozessende; vorübergehende Portal-Loginfehler HTTP 408/429/5xx bleiben in allen PKCE-Phasen wiederholbar statt dauerhaft als Authentifizierungsfehler blockiert.
+- MQTT-Geschwisteraufgaben werden bei fatalem Fehler abgebrochen und vollständig eingesammelt. Atomare Zustandsdateien synchronisieren nach dem Umbenennen auch das Elternverzeichnis; Topic-Manifest und Unklarheitsjournale bleiben erhalten. Heartbeat-Schema 2 wird beim Start geschrieben, alte Heartbeats zählen nicht als gesund.
+- Healthcheck bleibt bewusst Prozess-Liveness: Geräte und Broker dürfen ausgefallen sein, solange die Hauptschleife arbeitet. Deren Status steht getrennt im Heartbeat bzw. bei aktivierten Diagnosen in MQTT. Ein noch laufender unhealthy-Container wird durch Compose nicht automatisch neu gestartet; externe Alarmierung/Supervision bleibt Produktionsaufgabe. Ein einzelner hängender Coroutine-Pfad bei weiterlaufender Hauptschleife wird nicht unabhängig vom Healthcheck erkannt.
+- Sieben zusätzliche Testfälle: defekte/tote Heartbeats, Liveness bei Geräte-/MQTT-Ausfall, Geräte-Erholung, unerwartetes Supervisorende, MQTT-Geschwisterbereinigung, echte MQTT-Verbindung mit verlorener Empfangsbestätigung sowie Portal-Dienstausfälle. Bestehende Tests für stale-Bereinigung und unklare Befehle weiterhin bestanden.
+- Validierung: 129 Offline-Tests lokal und im separaten Linux-arm64-Prüfcontainer bestanden; externes Container-Netzwerk deaktiviert, nur öffentliche Testdaten eingebunden. Vollständiger Linter über 83 Dateien, Compose-Parität einschließlich Overrides, separates Image-Build und Diff-Hygiene bestanden. Anfängliche lokale Loopback-Tests waren durch die Sandbox blockiert; erlaubte Wiederholung erfolgreich. Erster Container-Testaufruf hatte unvollständige Fixture-/Importpfade; mit den erforderlichen öffentlichen Pfaden korrigiert.
+- Keine echte Geräte-/Broker-Ausfallprüfung, keine Live-Schreibaktion und keine Änderung am laufenden Dienst. Zielhost-Ausfallabnahme, TLS-Vertrauen, externe Alarmierung und openHAB-Kontinuität bleiben ausdrücklich offen. Bestehende offene Dokumentationsänderungen einschließlich Attribution werden auf Andreas Wunsch gemeinsam lokal committet; private ENV/Daten/Referenzen sind ausgeschlossen, kein Push/Release.

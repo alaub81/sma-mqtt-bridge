@@ -13,6 +13,11 @@ from ..model import Property, number
 from .http import HTTP, json_data
 
 
+def transient_login_status(status):
+    if status in (408, 429) or 500 <= status <= 599:
+        raise ProtocolError("Portal login service temporarily unavailable")
+
+
 class LoginParser(HTMLParser):
     def __init__(self):
         super().__init__()
@@ -138,17 +143,20 @@ class PortalReader:
             "response_type": "code", "client_id": self.settings.client_id, "redirect_uri": self.redirect,
             "scope": "openid profile", "state": state, "code_challenge": challenge, "code_challenge_method": "S256"})
         status, _, body = await self.http.request("GET", auth_url)
+        transient_login_status(status)
         if status != 200:
             raise AuthenticationError("Portal login page is unavailable or requires interaction")
         action = login_action(body, self.settings.auth_base_url)
         status, headers, _ = await self.http.request("POST", action,
             data={"username": self.settings.username.strip(), "password": self.settings.password, "credentialId": ""})
+        transient_login_status(status)
         if status not in (302, 303):
             raise AuthenticationError("Portal login rejected or requires MFA/CAPTCHA/password interaction")
         code = authorization_code(headers.get("Location", ""), self.redirect, state)
         status, _, body = await self.http.request("POST", self.token_url, data={
             "grant_type": "authorization_code", "code": code, "redirect_uri": self.redirect,
             "code_verifier": verifier, "client_id": self.settings.client_id})
+        transient_login_status(status)
         if status != 200:
             raise AuthenticationError("Portal authorization code exchange failed")
         return self.store_tokens(body)

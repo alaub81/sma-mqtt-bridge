@@ -2,9 +2,9 @@
 
 ## Current baseline
 
-The Python read runtime, configuration/profile loaders, local adapters, optional portal reader, Homie lifecycle, heartbeat and deterministic offline tests are implemented. Actual SMA/MQTT deployment and full openHAB continuity remain unverified. The three bundled inverter profiles are identity-only; normal polling is blocked before network access. Confirmed local eCharger commands are the next functional milestone alongside telemetry acceptance; publication remains a later milestone.
+The Python runtime, configuration/profile loaders, local adapters, optional portal reader, Homie lifecycle, heartbeat and deterministic offline tests are implemented. Three validated inverter profiles and installation read-publication evidence are recorded in REGISTER_VALIDATION.md and VALIDATION.md. Identity-only descriptors remain rejected. Local allowlisted controls, combined plans and portal PV commands are implemented; live acceptance is recorded per action, not inferred for the whole service. Full openHAB continuity and production outage acceptance remain pending; publication remains a later milestone.
 
-The obsolete C++ diagnostic runtime and compiler/container scripts have been removed. Keep the original [baseline provenance](BASELINE.md), import manifest and [MIT attribution](THIRD_PARTY.md). Private original references remain read-only. Historical scaffold checks are archived under `docs/archive/`.
+The obsolete C++ diagnostic runtime and compiler/container scripts have been removed. Keep the original [baseline provenance](BASELINE.md), import manifest and [MIT attribution](THIRD_PARTY.md). Private SMA original references remain read-only. Obsolete private BMW source copies were removed with user approval on 2026-10-10. Historical scaffold checks are archived under `docs/archive/`.
 
 ## Implemented foundation
 
@@ -12,8 +12,8 @@ The obsolete C++ diagnostic runtime and compiler/container scripts have been rem
 - File-based reusable inverter profiles, strict schema/path/identity checks, host overrides and `file:<name>.json`. No invented registers or model-specific adapter branches.
 - Generic read-only Modbus, Home Manager meter telegrams, separate eCharger HTTPS API and SEMP, and optional ennexOS minimum PV share through a normal portal account. No paid Developer API or evcc substitution.
 - Bounded timeouts, supervised reconnection with jitter, separate local/portal sessions, verified TLS, redacted diagnostics and controlled shutdown. Authentication challenges block repeated login attempts.
-- Homie 4 discovery, one client/Last Will per device, independent source freshness, retained retirement and unavailable values instead of zero. No `/set` subscriptions or device-write paths.
-- Atomic main-loop heartbeat and local healthcheck separate from device/MQTT availability.
+- Homie 4 discovery, one client/Last Will per device, independent source freshness, retained retirement and unavailable values instead of zero. Explicit command gates enable only confirmed allowlisted `/set` properties; startup and reconnect never replay writes.
+- Atomic main-loop heartbeat and local healthcheck separate from device/MQTT availability; schema 2 checks the live PID and monotonic freshness. Unexpected supervisor exits fail the runtime and clean up sibling sessions. See [failure supervision](CONFIGURATION.md#failure-supervision-and-healthcheck).
 - One `Dockerfile-SMAB` using the stable official Python 3.14.8 slim-trixie index verified on 2026-10-10. The 3.15.0 stable slim tag was absent when selected; recheck stable official tags before future image updates.
 - Standalone Compose files with identical runtime options: development builds locally; example pulls GHCR. `ressources/` holds image inputs only (Python package, bundled profiles and requirements), copied into `/app`. Examples and tooling remain outside it. Root Compose/ENV/build-context files remain directly usable by editors and Compose.
 - Offline tests, complete repository lint, Compose parity/override checks and prepared amd64/arm64 CI. Release is prepared for stable tags but has not run.

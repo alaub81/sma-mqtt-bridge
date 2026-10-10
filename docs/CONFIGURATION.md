@@ -240,6 +240,54 @@ Stop the bridge before copying state. Copy the existing `heartbeat.json` and `mq
 
 See [Docker volume lifecycle and migration](https://docs.docker.com/engine/storage/volumes/) and [Compose volume naming](https://docs.docker.com/reference/compose-file/volumes/).
 
+## Failure supervision and healthcheck
+
+The Docker probe runs `python -m sma_mqtt_bridge --healthcheck`. It validates configuration
+without device I/O and reads `state/heartbeat.json`. A successful probe requires schema 2,
+`status=running`, a positive PID still present in the same PID namespace, and a finite monotonic
+heartbeat age between zero and `SMAB_HEALTH_STALE_SECONDS` (default 60 seconds).
+The main loop writes every `SMAB_HEALTH_INTERVAL_SECONDS` (default 10 seconds).
+Wall-clock adjustments do not affect liveness. Old-schema, missing, stopped, malformed,
+future or expired heartbeat files fail the probe. A rebuild/recreation writes the new schema;
+preserve the topic manifest and command journals when upgrading.
+
+This is a **liveness** check, not confirmation that all sources or MQTT are available.
+The heartbeat separately records each source status and each Homie client's connection flag.
+A healthy process can be recovering from a complete broker or device outage.
+These connection flags do not certify delivery of every measurement. Network I/O has reader
+timeouts; the heartbeat does not independently detect every possible stuck coroutine while the
+main event loop continues running. Unexpected failed, cancelled or silently completed supervisors
+with active sources terminate the runtime, close sibling sessions and mark the heartbeat stopped.
+
+| Failure | Behavior |
+| --- | --- |
+| Device/network read failure | Only that source reports `error`; other sources continue. Retry with bounded exponential backoff and jitter, default 1–60 seconds. Valid receipt restores availability. |
+| Expired or missing measurement | Each property's own age is checked. Previously published retained values are deleted when they expire; never replace unavailable data with zero. |
+| Invalid credentials, denied access, MFA/login challenge | Source remains `error` without repeated logins until restart after resolving the cause. Local API and portal renew expired sessions independently. |
+| Portal login HTTP 408/429/5xx | Retryable service failure at every PKCE phase, rather than a permanent authentication block. Polling interval zero still disables automatic reads; requested refresh retries transient failures. |
+| Broker outage or lost publish acknowledgement | Rebuild each affected MQTT client after bounded backoff. The configured MQTT timeout (default 10 seconds) bounds acknowledgement waits as well as connection attempts. Reannounce discovery, retire owned obsolete topics, clear current retained values and publish only fresh samples. |
+| Abrupt MQTT loss | Broker publishes retained `$state=lost` through the Last Will once it detects loss; graceful shutdown confirms `$state=disconnected`. Detection is not instantaneous. |
+| Uncertain command response | Preserve the durable uncertainty journal and block further writes; no automatic command replay on reconnect/restart. |
+
+Homie `$state` is `ready` if at least one source of that device is ready, otherwise `alert`.
+For the eCharger, a ready SEMP reader therefore does not establish API/portal availability.
+Monitor individual source status/last-success topics when diagnostics are enabled.
+During a broker outage those topics cannot report new failures; monitor broker availability
+externally and inspect the local heartbeat/logs. Retained values cannot be cleared while the
+broker is unreachable, so consumers must observe connection state and freshness too.
+See the [official openHAB Homie documentation](https://www.openhab.org/addons/bindings/homie/).
+
+Compose uses `restart: unless-stopped` for process exits. Docker marks a failed probe `unhealthy`,
+but Compose does not restart a still-running unhealthy container automatically. External monitoring
+must alert on this state; automatic recovery from an event-loop hang needs an external supervisor.
+Do not restart the bridge repeatedly merely because a device or broker is offline.
+See [Docker restart policy](https://docs.docker.com/reference/compose-file/services/#restart).
+
+State writes sync file contents and the parent directory after atomic rename. Run only one bridge
+instance against its state volume and keep the filesystem writable. Full production acceptance
+still requires controlled target-host outage/recovery, broker restart, TLS trust, container shutdown
+and openHAB freshness/dependency comparisons. Offline tests do not certify those installation cases.
+
 ## Local eCharger command milestone
 
 The initial enum/boolean controls use `settings/<property>/set` under the configured charger Homie ID. Measurements and stop delay remain read-only. Energy/end-time planning uses the combined command below; portal preference has its own write gate. Homie discovery and typed command payloads follow the official [openHAB Homie binding](https://www.openhab.org/addons/bindings/homie/) and [Homie 4 specification](https://homieiot.github.io/specification/spec-core-v4_0_0/).

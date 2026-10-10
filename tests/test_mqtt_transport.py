@@ -30,6 +30,12 @@ def string(data, offset):
 
 class MQTTTransportTests(unittest.IsolatedAsyncioTestCase):
     async def test_actual_stack_retains_metadata_and_confirms_disconnect(self):
+        await self.exercise_broker(False)
+
+    async def test_actual_stack_recovers_after_broker_drops_unacknowledged_publish(self):
+        await self.exercise_broker(True)
+
+    async def exercise_broker(self, drop_first):
         stop, received, connects, failures = asyncio.Event(), [], [], []
         async def broker(reader, writer):
             try:
@@ -55,6 +61,9 @@ class MQTTTransportTests(unittest.IsolatedAsyncioTestCase):
                         offset += 2 if qos else 0
                         value = body[offset:].decode()
                         received.append((topic, value, bool(command & 1)))
+                        if drop_first and len(connects) == 1:
+                            # Lose the first publication before its QoS acknowledgement.
+                            return
                         if qos == 1:
                             writer.write(b'\x40\x02' + mid)
                             await writer.drain()
@@ -79,13 +88,15 @@ class MQTTTransportTests(unittest.IsolatedAsyncioTestCase):
             with tempfile.TemporaryDirectory() as tmp:
                 config = load_config({'SMAB_STATE_DIR': tmp, 'SMAB_MQTT_TLS': 'false',
                                       'SMAB_MQTT_HOST': '127.0.0.1', 'SMAB_MQTT_PORT': str(port)})
-                config = replace(config, runtime=replace(config.runtime, health_interval_seconds=.01))
+                config = replace(config, runtime=replace(config.runtime, health_interval_seconds=.01,
+                                                        reconnect_min_seconds=.001, reconnect_max_seconds=.002),
+                                 mqtt=replace(config.mqtt, connect_timeout_seconds=.1))
                 state = SourceState('fixture', 'test-device', (Property('measurements', 'power', 'Power'),), 5)
                 state.update({'measurements/power': 123})
                 publisher = HomiePublisher(config, [state])
                 await asyncio.wait_for(publisher.run(stop), 2)
                 self.assertEqual(failures, [])
-                self.assertEqual(connects, [('sma-mqtt-bridge-test-device', 'homie/test-device/$state', 'lost')])
+                self.assertEqual(connects, [('sma-mqtt-bridge-test-device', 'homie/test-device/$state', 'lost')] * (2 if drop_first else 1))
                 self.assertIn(('homie/test-device/measurements/power', '123', True), received)
                 self.assertIn(('homie/test-device/$state', 'disconnected', True), received)
                 self.assertTrue(all(retain for _, _, retain in received))

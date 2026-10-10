@@ -70,4 +70,4 @@ GitHub publication, pushes and container releases remain later milestones. No pa
 
 ## License
 
-MIT. Inherited BMW attribution remains in [LICENSE](LICENSE); historical nlohmann/json attribution is preserved in [THIRD_PARTY.md](docs/THIRD_PARTY.md). [BASELINE.md](docs/BASELINE.md) remains the original provenance record. This project is not affiliated with SMA.
+MIT. Inherited BMW attribution remains in [THIRD_PARTY.md](docs/THIRD_PARTY.md); historical nlohmann/json attribution is preserved in [THIRD_PARTY.md](docs/THIRD_PARTY.md). [BASELINE.md](docs/BASELINE.md) remains the original provenance record. This project is not affiliated with SMA.

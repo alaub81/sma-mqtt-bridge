@@ -73,3 +73,32 @@ The profile has 16 Unit 1/2 values, all 245 assignment slots and 16 delegated pa
 ## Offline combined plan and portal PV milestone, 2026-10-10
 
 All 117 integrated offline tests passed, including 16 new deterministic plan/portal tests. Local responses exercise the real catalog identity parser, the energy/end-time PUT before a separate mode PUT, common timestamps, partial/pending acceptance, offered units/bounds/rights, expired deadline before activation, target equality, active-plan replacement rejection and durable uncertainty after lost mode response. Portal fixtures check exact preserved-option payloads, empty edit-link rights, configured identity, special/cost-limit modes, invalid percentages, unchanged targets, response loss/cancellation/restart and readback disagreement in an unrelated option. Portal-only runtime tests verify no local API activation, no startup writes and no periodic read at interval zero. Existing loopback HTTP retry and MQTT transport regressions remain passing. Full lint and Compose parity were run for this milestone. No actual SMA/portal writes were sent; private gates and the deployed service remain unchanged. Live acceptance and openHAB command ownership migration are still pending.
+
+## User-reported local status-light acceptance, 2026-10-10
+
+Andreas reports a successful MQTT Explorer status-light brightness command: commands/local-result was confirmed and settings/led-brightness matched the submitted value. The exact payload and restoration were not specified. This verifies one local write/readback according to the user report; physical LED observation remains pending. It does not accept other local commands, combined plans or portal writes. The agent sent no additional device action.
+
+## User-reported plan write and subsequent mode reversion, 2026-10-10
+
+Andreas reports confirmed combined plan submission with 1.0 kWh, the expected UTC end time and briefly mode 4720, then 4719. The vehicle was connected and released, with no competing openHAB mode rule according to Andreas; more than 1 kWh had already been delivered in the same session. Read-only API inspection subsequently found confirmed PV mode, zero plan energy, a reset plan deadline, released charging, zero power and connected/waiting vehicle status. The session counter was 8.680375 kWh with a change timestamp preceding the test, not evidence of energy delivered after this plan. No uncertain-write journal remained.
+
+[SMA documents automatic return to PV mode after reaching the target](https://manuals.sma.de/EVCxx20/de-DE/14505538315.html). An already satisfied session target is plausible, but cumulative versus additional energy semantics of the local plan API remain unverified. Do not automatically add session energy or keep forcing target mode. confirmed records the command readback at that moment. Sustained plan/physical-charge acceptance requires a fresh-session or SMA Energy App comparison. The agent performed only reads and sent no additional command.
+
+## Failure supervision hardening, 2026-10-10
+
+The healthcheck now validates schema 2, a live PID and monotonic heartbeat freshness. It rejects
+dead processes and malformed/oversized fields, tolerates wall-clock changes and deliberately remains
+healthy during source/MQTT outages while recording their separate availability. Unexpected cancelled
+or silently completed supervisors terminate the runtime. Fatal MQTT task failures cancel and await
+sibling device sessions. Atomic state writes sync the renamed parent-directory entry too.
+
+Portal PKCE HTTP 408/429/5xx failures remain retryable at all three login phases; actual authentication
+rejections still block repeated login attempts. Deterministic regressions verify source recovery,
+supervisor cleanup, stale-value deletion, uncertainty guards and the actual aiomqtt/Paho stack reconnecting
+after the loopback broker drops a publication before its QoS acknowledgement. The test uses a shortened
+configured MQTT timeout; production defaults remain unchanged.
+
+Local tests, Linux container tests, full lint, Compose parity and image-build results are recorded in
+todo.md. These tests use synthetic fixtures, not the installation broker or devices. No running service
+was replaced and no live command was sent. Target-host outage/recovery and external unhealthy/broker
+alarm acceptance remain pending. Compose restarts exited processes, not still-running unhealthy containers.

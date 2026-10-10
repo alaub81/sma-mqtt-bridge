@@ -1,8 +1,10 @@
 # Third-party attribution
 
-The original development foundation came from BMW-MQTT-Bridge. Its MIT copyright attribution is retained in the root [LICENSE](../LICENSE). The original source commit and transferred-file checksums remain in [BASELINE.md](BASELINE.md) and `baseline-manifest.json`. That manifest records the initial import, not the current filesystem.
+The original development foundation came from BMW-MQTT-Bridge. The inherited MIT attribution is preserved below; the root [LICENSE](../LICENSE) names the SMA project author.
 
-The C++ diagnostic runtime, build scripts, duplicate Dockerfile and vendored JSON header were removed during the Python cleanup. Private originals remain read-only references and the removed public files remain recoverable in local Git history. No nlohmann/json code is used by the Python runtime or its image.
+Original BMW-MQTT-Bridge attribution: Copyright (c) 2025 Kurt Moraw. The inherited material was provided under the MIT License; its permission and warranty terms are retained in the root [LICENSE](../LICENSE). The original source commit and transferred-file checksums remain in [BASELINE.md](BASELINE.md) and `baseline-manifest.json`. That manifest records the initial import, not the current filesystem.
+
+The C++ diagnostic runtime, build scripts, duplicate Dockerfile and vendored JSON header were removed during the Python cleanup. Private BMW source copies were removed with user approval on 2026-10-10; private SMA originals remain read-only references. The removed public files remain recoverable in local Git history. No nlohmann/json code is used by the Python runtime or its image.
 
 ## Historical nlohmann/json notice
 
