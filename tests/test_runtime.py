@@ -2,6 +2,7 @@
 
 import asyncio
 from dataclasses import replace
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -9,7 +10,7 @@ from unittest.mock import AsyncMock, patch
 
 from sma_mqtt_bridge.config import load_config
 from sma_mqtt_bridge.errors import AuthenticationError
-from sma_mqtt_bridge.health import atomic_json, healthy
+from sma_mqtt_bridge.health import atomic_json, healthy, heartbeat
 from sma_mqtt_bridge.homie import HomiePublisher, backoff, discovery
 from sma_mqtt_bridge.model import Property, SourceState
 from sma_mqtt_bridge.runtime import run, sources, supervise
@@ -57,13 +58,38 @@ class ModelTests(unittest.TestCase):
     def test_heartbeat_atomic_freshness_and_stop(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'heartbeat.json'
-            atomic_json(path, {'status': 'running', 'timestamp': 10})
+            atomic_json(path, {'schemaVersion': 2, 'status': 'running', 'pid': os.getpid(), 'monotonic': 10})
             self.assertTrue(healthy(tmp, 5, 14))
             self.assertFalse(healthy(tmp, 5, 16))
             self.assertFalse(healthy(tmp, 5, 9))
             atomic_json(path, {'status': 'stopped'})
             self.assertFalse(healthy(tmp, 5, 14))
             self.assertFalse(path.with_name(path.name + '.tmp').exists())
+
+    def test_heartbeat_rejects_dead_process_old_schema_and_invalid_fields(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / 'heartbeat.json'
+            valid = {'schemaVersion': 2, 'status': 'running', 'pid': os.getpid(), 'monotonic': 10}
+            for change in ({'schemaVersion': 1}, {'pid': 0}, {'pid': True}, {'pid': 10 ** 100},
+                           {'monotonic': True}, {'monotonic': 10 ** 1000}):
+                atomic_json(path, valid | change)
+                self.assertFalse(healthy(tmp, 5, 14))
+            atomic_json(path, valid)
+            with patch('sma_mqtt_bridge.health.os.kill', side_effect=ProcessLookupError):
+                self.assertFalse(healthy(tmp, 5, 14))
+            with patch('sma_mqtt_bridge.health.time.time', return_value=-100000):
+                self.assertTrue(healthy(tmp, 5, 14))
+
+    def test_health_is_liveness_even_when_source_and_mqtt_are_unavailable(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            config = load_config({'SMAB_STATE_DIR': tmp})
+            state = self.state()
+            state.error = True
+            heartbeat(config, [state], {'test-device': False})
+            self.assertTrue(healthy(tmp, 5))
+            data = __import__('json').loads((Path(tmp) / 'heartbeat.json').read_text())
+            self.assertEqual(data['sources'], {'fixture': 'error'})
+            self.assertEqual(data['mqtt'], {'test-device': False})
 
     def test_bounded_backoff(self):
         for attempt in range(100):
@@ -277,3 +303,55 @@ class AsyncRuntimeTests(unittest.IsolatedAsyncioTestCase):
         await publisher.run(asyncio.Event())
         self.assertEqual(clients[0].messages[0][0], 'previous/old-device/$homie')
         self.assertEqual(clients[0].messages[0][1], b'')
+
+    async def test_source_recovers_after_outage(self):
+        state = SourceState('fixture', 'test-device', (Property('measurements', 'power', 'Power'),), 5)
+        stop = asyncio.Event()
+        reader = AsyncMock()
+        reader.read.side_effect = [OSError('fixture outage'), {'measurements/power': 42}]
+        config = replace(self.config, runtime=replace(self.config.runtime, reconnect_min_seconds=.001,
+                                                    reconnect_max_seconds=.002))
+        async def delay(*args):
+            if state.last_success is not None:
+                stop.set()
+        with patch('sma_mqtt_bridge.runtime.wait_stop', side_effect=delay):
+            await supervise(state, reader, .01, config, stop)
+        self.assertEqual(reader.read.await_count, 2)
+        self.assertEqual(state.status(), 'ready')
+        reader.close.assert_awaited_once()
+
+    async def test_runtime_rejects_cancelled_or_silently_stopped_publisher(self):
+        state = SourceState('fixture', 'test-device', (), 5)
+        for cancelled in (False, True):
+            reader = AsyncMock()
+            reader.read.side_effect = OSError('fixture outage')
+            class BrokenPublisher:
+                status = {}
+                def __init__(self, *args):
+                    pass
+                async def run(self, stop):
+                    if cancelled:
+                        raise asyncio.CancelledError
+            with patch('sma_mqtt_bridge.runtime.sources', return_value=[(state, reader, 1)]):
+                with self.assertRaisesRegex(RuntimeError, 'supervisor'):
+                    await asyncio.wait_for(run(self.config, publisher_factory=BrokenPublisher), .5)
+            self.assertFalse(healthy(self.tmp.name, 5))
+            reader.close.assert_awaited_once()
+
+    async def test_mqtt_failure_cleans_up_other_device_sessions(self):
+        states = [SourceState('fixture', d, (), 5) for d in ('a', 'b')]
+        publisher = HomiePublisher(self.config, states)
+        started, closed = asyncio.Event(), asyncio.Event()
+        async def serve(device, states, stop):
+            if device == 'a':
+                await started.wait()
+                raise RuntimeError('fixture failure')
+            try:
+                started.set()
+                await asyncio.Event().wait()
+            finally:
+                closed.set()
+        publisher.serve_device = serve
+        with self.assertRaises(RuntimeError):
+            await publisher.run(asyncio.Event())
+        self.assertTrue(closed.is_set())

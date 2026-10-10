@@ -241,8 +241,16 @@ class HomiePublisher:
 
     async def run(self, stop):
         devices = {s.device for s in self.states} | set(self.owned)
-        await asyncio.gather(*(self.serve_device(device, [s for s in self.states if s.device == device], stop)
-                               for device in sorted(devices)))
+        tasks = [asyncio.create_task(self.serve_device(device, [s for s in self.states if s.device == device], stop))
+                 for device in sorted(devices)]
+        try:
+            await asyncio.gather(*tasks)
+        finally:
+            # gather does not cancel siblings after a failure; never orphan MQTT sessions.
+            for task in tasks:
+                if not task.done():
+                    task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
 
 
 def abort_client(client):

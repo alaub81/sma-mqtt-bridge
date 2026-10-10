@@ -62,7 +62,7 @@ async def supervise(state, reader, interval, config, stop, refresh_portal=False)
             return
         while not stop.is_set():
             try:
-                # HTTP timeout bounds individual requests; this also bounds a whole cycle.
+                # Readers bound network I/O; HTTP cycles may contain several requests.
                 values = await reader.read()
                 if isinstance(reader, HomeManagerModbusReader):
                     state.properties = reader.properties
@@ -139,7 +139,8 @@ async def run(config, refresh_portal=False, stop=None, publisher_factory=HomiePu
         while not stop.is_set():
             # A failed supervisor must not leave an apparently healthy process behind.
             for task in tasks:
-                if task.done() and task.exception() is not None:
+                if task.done() and (task.cancelled() or task.exception() is not None
+                                    or bool(readers)):
                     raise RuntimeError("A runtime supervisor stopped unexpectedly")
             heartbeat(config, states, publisher.status)
             await wait_stop(stop, config.runtime.health_interval_seconds)

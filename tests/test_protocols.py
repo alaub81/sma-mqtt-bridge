@@ -243,6 +243,27 @@ class AsyncProtocolTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(AuthenticationError):
             await adapter.access_token()
 
+    async def test_portal_login_service_outages_remain_retryable_at_every_phase(self):
+        form = '<form id="kc-form-login" action="/auth/realms/SMA/login-actions/authenticate">'
+        for phase in range(3):
+            for status in (408, 429, 500, 502, 503, 504):
+                adapter = PortalReader(Portal(), 1000)
+                async def request(method, url, **kwargs):
+                    from urllib.parse import parse_qs, urlsplit
+                    if '/protocol/openid-connect/auth?' in url:
+                        request.state = parse_qs(urlsplit(url).query)['state'][0]
+                        return (status, {}, '') if phase == 0 else (200, {}, form)
+                    if '/login-actions/' in url:
+                        return (status, {}, '') if phase == 1 else (302, {'Location': adapter.redirect + '?code=fixture&state=' + request.state}, '')
+                    return status, {}, ''
+                adapter.http.request = AsyncMock(side_effect=request)
+                with self.subTest(phase=phase, status=status):
+                    with self.assertRaises(ProtocolError) as caught:
+                        await adapter.access_token()
+                    self.assertNotIsInstance(caught.exception, AuthenticationError)
+                    self.assertEqual(adapter.http.request.await_count, phase + 1)
+                await adapter.close()
+
     async def test_full_local_api_read_is_scoped_and_read_only(self):
         from sma_mqtt_bridge.adapters.echarger import EChargerReader
         from sma_mqtt_bridge.config import ECharger
