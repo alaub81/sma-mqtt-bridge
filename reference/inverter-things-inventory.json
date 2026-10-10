@@ -1,0 +1,537 @@
+{
+  "schemaVersion": 1,
+  "status": "migration-evidence-only",
+  "pollingAuthorized": false,
+  "provenance": "Existing read-only openHAB Modbus Things; addresses and labels omitted",
+  "unresolved": [
+    "Local model, firmware and serial register definitions",
+    "Per-model register support, raw units and invalid sentinels",
+    "Byte/word order and status maps",
+    "Local endpoint identity and parallel-value acceptance"
+  ],
+  "devices": [
+    {
+      "id": "inverter1",
+      "port": 502,
+      "unitId": 3,
+      "connectMaxTries": 3,
+      "pollers": [
+        {
+          "id": "SMA_Status",
+          "function": 4,
+          "start": 30201,
+          "count": 36,
+          "intervalSeconds": 60.0,
+          "channels": [
+            {
+              "id": "status",
+              "readStart": 30201,
+              "offset": 0,
+              "type": "int32",
+              "length": 2,
+              "readTransform": ""
+            },
+            {
+              "id": "Grid_Contactor",
+              "readStart": 30217,
+              "offset": 16,
+              "type": "int32",
+              "length": 2,
+              "readTransform": ""
+            }
+          ]
+        },
+        {
+          "id": "PowerDrawn",
+          "function": 4,
+          "start": 30865,
+          "count": 4,
+          "intervalSeconds": 5.0,
+          "channels": [
+            {
+              "id": "PowerDrawn",
+              "readStart": 30865,
+              "offset": 0,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit.js)"
+            },
+            {
+              "id": "PowerGridFeedIn",
+              "readStart": 30867,
+              "offset": 2,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit.js)"
+            }
+          ]
+        },
+        {
+          "id": "Yield",
+          "function": 4,
+          "start": 30517,
+          "count": 36,
+          "intervalSeconds": 180.0,
+          "channels": [
+            {
+              "id": "Day_Yield",
+              "readStart": 30537,
+              "offset": 20,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit_undef.js)"
+            },
+            {
+              "id": "Total_Yield",
+              "readStart": 30531,
+              "offset": 14,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit_undef.js)"
+            }
+          ]
+        },
+        {
+          "id": "power_a",
+          "function": 4,
+          "start": 30769,
+          "count": 20,
+          "intervalSeconds": 3.0,
+          "channels": [
+            {
+              "id": "currentA_input",
+              "readStart": 30769,
+              "offset": 0,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit1000.js)"
+            },
+            {
+              "id": "voltageA_input",
+              "readStart": 30771,
+              "offset": 2,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit100.js)"
+            },
+            {
+              "id": "powerA_input",
+              "readStart": 30773,
+              "offset": 4,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit.js)"
+            },
+            {
+              "id": "active_power",
+              "readStart": 30775,
+              "offset": 6,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit.js)"
+            }
+          ]
+        },
+        {
+          "id": "power_b",
+          "function": 4,
+          "start": 30957,
+          "count": 8,
+          "intervalSeconds": 5.0,
+          "channels": [
+            {
+              "id": "currentB_input",
+              "readStart": 30957,
+              "offset": 0,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit1000.js)"
+            },
+            {
+              "id": "voltageB_input",
+              "readStart": 30959,
+              "offset": 2,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit100.js)"
+            },
+            {
+              "id": "powerB_input",
+              "readStart": 30961,
+              "offset": 4,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit.js)"
+            }
+          ]
+        },
+        {
+          "id": "InternalTemperature",
+          "function": 4,
+          "start": 34113,
+          "count": 2,
+          "intervalSeconds": 120.0,
+          "channels": [
+            {
+              "id": "InternalTemperature",
+              "readStart": 34113,
+              "offset": 0,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit10_undef.js)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "inverter2",
+      "port": 502,
+      "unitId": 3,
+      "connectMaxTries": 3,
+      "pollers": [
+        {
+          "id": "SMA_Status",
+          "function": 4,
+          "start": 30201,
+          "count": 36,
+          "intervalSeconds": 60.0,
+          "channels": [
+            {
+              "id": "status",
+              "readStart": 30201,
+              "offset": 0,
+              "type": "int32",
+              "length": 2,
+              "readTransform": ""
+            },
+            {
+              "id": "Grid_Contactor",
+              "readStart": 30217,
+              "offset": 16,
+              "type": "int32",
+              "length": 2,
+              "readTransform": ""
+            }
+          ]
+        },
+        {
+          "id": "Yield",
+          "function": 4,
+          "start": 30517,
+          "count": 36,
+          "intervalSeconds": 180.0,
+          "channels": [
+            {
+              "id": "Day_Yield",
+              "readStart": 30537,
+              "offset": 20,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit_undef.js)"
+            },
+            {
+              "id": "Total_Yield",
+              "readStart": 30531,
+              "offset": 14,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit_undef.js)"
+            }
+          ]
+        },
+        {
+          "id": "CurrentBatStatCharge",
+          "function": 4,
+          "start": 30845,
+          "count": 4,
+          "intervalSeconds": 30.0,
+          "channels": [
+            {
+              "id": "CurrentBatStatCharge",
+              "readStart": 30845,
+              "offset": 0,
+              "type": "int32",
+              "length": 2,
+              "readTransform": ""
+            },
+            {
+              "id": "CurrentBatcapacity",
+              "readStart": 30847,
+              "offset": 2,
+              "type": "int32",
+              "length": 2,
+              "readTransform": ""
+            }
+          ]
+        },
+        {
+          "id": "CurrentBatTempPoller",
+          "function": 4,
+          "start": 30849,
+          "count": 2,
+          "intervalSeconds": 120.0,
+          "channels": [
+            {
+              "id": "CurrentBatTemp",
+              "readStart": 30849,
+              "offset": 0,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit10_undef.js)"
+            }
+          ]
+        },
+        {
+          "id": "BatteryStatus",
+          "function": 4,
+          "start": 30955,
+          "count": 4,
+          "intervalSeconds": 60.0,
+          "channels": [
+            {
+              "id": "BatteryStatus",
+              "readStart": 30955,
+              "offset": 0,
+              "type": "int32",
+              "length": 2,
+              "readTransform": ""
+            }
+          ]
+        },
+        {
+          "id": "PresBatCharge",
+          "function": 4,
+          "start": 31393,
+          "count": 4,
+          "intervalSeconds": 5.0,
+          "channels": [
+            {
+              "id": "PresBatCharge",
+              "readStart": 31393,
+              "offset": 0,
+              "type": "int32",
+              "length": 2,
+              "readTransform": ""
+            },
+            {
+              "id": "PresBattDischarge",
+              "readStart": 31395,
+              "offset": 2,
+              "type": "int32",
+              "length": 2,
+              "readTransform": ""
+            }
+          ]
+        },
+        {
+          "id": "InternalTemperature",
+          "function": 4,
+          "start": 34113,
+          "count": 2,
+          "intervalSeconds": 120.0,
+          "channels": [
+            {
+              "id": "InternalTemperature",
+              "readStart": 34113,
+              "offset": 0,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit10_undef.js)"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "inverter3",
+      "port": 502,
+      "unitId": 3,
+      "connectMaxTries": 3,
+      "pollers": [
+        {
+          "id": "DevType",
+          "function": 4,
+          "start": 30053,
+          "count": 4,
+          "intervalSeconds": 60.0,
+          "channels": [
+            {
+              "id": "type",
+              "readStart": 30053,
+              "offset": 0,
+              "type": "uint32",
+              "length": 2,
+              "readTransform": ""
+            }
+          ]
+        },
+        {
+          "id": "SMA_Status",
+          "function": 4,
+          "start": 30201,
+          "count": 36,
+          "intervalSeconds": 20.0,
+          "channels": [
+            {
+              "id": "status",
+              "readStart": 30201,
+              "offset": 0,
+              "type": "uint32",
+              "length": 2,
+              "readTransform": ""
+            },
+            {
+              "id": "Grid_Contactor",
+              "readStart": 30217,
+              "offset": 16,
+              "type": "uint32",
+              "length": 2,
+              "readTransform": ""
+            },
+            {
+              "id": "Max_Power",
+              "readStart": 30231,
+              "offset": 30,
+              "type": "uint32",
+              "length": 2,
+              "readTransform": ""
+            },
+            {
+              "id": "Set_Max_Power",
+              "readStart": 30233,
+              "offset": 32,
+              "type": "uint32",
+              "length": 2,
+              "readTransform": ""
+            }
+          ]
+        },
+        {
+          "id": "PowerDrawn",
+          "function": 4,
+          "start": 30865,
+          "count": 4,
+          "intervalSeconds": 5.0,
+          "channels": [
+            {
+              "id": "PowerDrawn",
+              "readStart": 30865,
+              "offset": 0,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit.js)"
+            },
+            {
+              "id": "PowerGridFeedIn",
+              "readStart": 30867,
+              "offset": 2,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit.js)"
+            }
+          ]
+        },
+        {
+          "id": "Yield",
+          "function": 4,
+          "start": 30517,
+          "count": 36,
+          "intervalSeconds": 60.0,
+          "channels": [
+            {
+              "id": "Day_Yield",
+              "readStart": 30537,
+              "offset": 20,
+              "type": "uint32",
+              "length": 2,
+              "readTransform": "JS(smalimit_undef.js)"
+            },
+            {
+              "id": "Total_Yield",
+              "readStart": 30531,
+              "offset": 14,
+              "type": "uint32",
+              "length": 2,
+              "readTransform": "JS(smalimit_undef.js)"
+            }
+          ]
+        },
+        {
+          "id": "power_a",
+          "function": 4,
+          "start": 30769,
+          "count": 20,
+          "intervalSeconds": 3.0,
+          "channels": [
+            {
+              "id": "currentA_input",
+              "readStart": 30769,
+              "offset": 0,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit1000.js)"
+            },
+            {
+              "id": "voltageA_input",
+              "readStart": 30771,
+              "offset": 2,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit100.js)"
+            },
+            {
+              "id": "powerA_input",
+              "readStart": 30773,
+              "offset": 4,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit.js)"
+            },
+            {
+              "id": "active_power",
+              "readStart": 30775,
+              "offset": 6,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit.js)"
+            },
+            {
+              "id": "power_L1",
+              "readStart": 30777,
+              "offset": 8,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit.js)"
+            },
+            {
+              "id": "volt_G1",
+              "readStart": 30783,
+              "offset": 14,
+              "type": "uint32",
+              "length": 2,
+              "readTransform": "JS(smalimit100.js)"
+            }
+          ]
+        },
+        {
+          "id": "InternalTemperature",
+          "function": 4,
+          "start": 34113,
+          "count": 2,
+          "intervalSeconds": 120.0,
+          "channels": [
+            {
+              "id": "InternalTemperature",
+              "readStart": 34113,
+              "offset": 0,
+              "type": "int32",
+              "length": 2,
+              "readTransform": "JS(smalimit10_undef.js)"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

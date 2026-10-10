@@ -20,6 +20,16 @@ All initial descriptors have `validation.status=identity-only` and empty poller/
 
 See [the configuration contract](CONFIGURATION.md), [the value catalogue](WERTEKATALOG.md) and [migration requirements](MIGRATION.md).
 
+## Existing Things evidence
+
+[The sanitized inventory](../reference/inverter-things-inventory.json) is derived from the user's two existing Things exports: 14/11/16 active channels across 6/7/6 pollers. It preserves FC04 ranges, zero-based addresses/offsets, signed/unsigned decoding, JS transform references and original 3–180 second intervals. Addresses, labels, credentials and device serials are excluded. Reproduce it locally with:
+
+```sh
+.venv/bin/python tests/inventory_things.py private/things/sma.things private/things/sma-sunnyboy.things --output reference/inverter-things-inventory.json
+```
+
+This deliberately narrow importer rejects unsupported syntax, write mappings, unknown transforms, duplicate definitions and out-of-range values rather than silently dropping them. It performs no network access and does not rewrite private originals. `migration-evidence-only` is not a runtime profile status; the profile loader rejects the inventory. Missing identity definitions, model/firmware support, raw units/sentinels and byte/word order must be reconciled before generating validated profiles. Do not infer units or scaling solely from Item labels.
+
 ## Version 1 polling schema
 
 The loader rejects unknown fields and non-standard JSON numbers. Required top-level fields: `schemaVersion` (integer 1), `id`, `device`, `protocol`, `validation`, `pollers`, `properties`, `commands`. `identity` is additionally required for a validated polling profile.
