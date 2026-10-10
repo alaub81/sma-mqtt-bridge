@@ -66,7 +66,7 @@ jobs:
         run: |
           docker run --rm sma-mqtt-bridge:ci-${{ matrix.platform }} --version
           docker run --rm sma-mqtt-bridge:ci-${{ matrix.platform }} --check-config
-          docker run --rm --entrypoint python -v "$PWD/tests:/app/tests:ro" -v "$PWD/.env.example:/app/.env.example:ro" -v "$PWD/config.example.json:/app/config.example.json:ro" sma-mqtt-bridge:ci-${{ matrix.platform }} tests/run_tests.py
+          docker run --rm --entrypoint python -v "$PWD/tests:/app/tests:ro" -v "$PWD/.env.example:/app/.env.example:ro" -v "$PWD/config.example.json:/app/config.example.json:ro" -v "$PWD/reference/inverter-things-inventory.json:/app/reference/inverter-things-inventory.json:ro" sma-mqtt-bridge:ci-${{ matrix.platform }} tests/run_tests.py
       - name: Trivy image gate
         uses: aquasecurity/trivy-action@v0.36.0
         with:
