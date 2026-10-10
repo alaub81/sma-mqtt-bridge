@@ -22,6 +22,7 @@ def main(argv=None):
     group.add_argument("--project-status", action="store_true")
     group.add_argument("--check-config", action="store_true")
     group.add_argument("--check-profile", metavar="PROFILE")
+    group.add_argument("--check-home-manager-profile", metavar="PROFILE")
     group.add_argument("--healthcheck", action="store_true")
     parser.add_argument("--refresh-portal", action="store_true", help="Explicitly request one portal read when periodic polling is zero")
     args = parser.parse_args(argv)
@@ -37,6 +38,11 @@ def main(argv=None):
             # The same JSON/ENV precedence applies, but source configuration does no I/O.
             config = load_config()
             return 0 if healthy(config.runtime.state_dir, config.runtime.health_stale_seconds) else 1
+        if args.check_home_manager_profile:
+            from .home_manager_profile import load_home_manager_profile
+            load_home_manager_profile(args.check_home_manager_profile, os.environ.get("SMAB_PROFILE_DIR", DATA + "/profiles"))
+            print(json.dumps({"validSchema": True, "documentedReadMappings": True, "liveVerified": False}))
+            return 0
         if args.check_profile:
             profile = load_profile(args.check_profile, os.environ.get("SMAB_PROFILE_DIR", DATA + "/profiles"))
             print(json.dumps({"validSchema": True, "pollingValidated": profile["validation"]["status"] == "validated"}))

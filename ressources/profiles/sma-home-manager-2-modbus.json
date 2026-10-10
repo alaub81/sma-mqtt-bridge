@@ -1,0 +1,876 @@
+{
+  "schemaVersion": 1,
+  "id": "sma-home-manager-2-modbus",
+  "kind": "home-manager-modbus-read",
+  "evidence": "SMA HM-20-Modbus-NSD-TI-de-12, version 1.2, chapters 4 and 6. https://files.sma.de/downloads/HM-20-Modbus-NSD-TI-de-12.pdf. Documentation-backed mappings; hardware acceptance pending. No documented firmware register or firmware gate.",
+  "identity": {
+    "model": "model",
+    "serial": "serial",
+    "serialCopy": "serial-copy",
+    "deviceClass": "device-class",
+    "manufacturer": "manufacturer"
+  },
+  "pollers": [
+    {
+      "id": "profile-version",
+      "function": 4,
+      "start": 30001,
+      "count": 2,
+      "intervalSeconds": 60,
+      "unitId": 1
+    },
+    {
+      "id": "susy-id",
+      "function": 4,
+      "start": 30003,
+      "count": 2,
+      "intervalSeconds": 60,
+      "unitId": 1
+    },
+    {
+      "id": "serial",
+      "function": 4,
+      "start": 30005,
+      "count": 2,
+      "intervalSeconds": 60,
+      "unitId": 1
+    },
+    {
+      "id": "data-change-counter",
+      "function": 4,
+      "start": 30007,
+      "count": 2,
+      "intervalSeconds": 60,
+      "unitId": 1
+    },
+    {
+      "id": "device-class",
+      "function": 4,
+      "start": 30051,
+      "count": 2,
+      "intervalSeconds": 60,
+      "unitId": 1
+    },
+    {
+      "id": "model",
+      "function": 4,
+      "start": 30053,
+      "count": 2,
+      "intervalSeconds": 60,
+      "unitId": 1
+    },
+    {
+      "id": "manufacturer",
+      "function": 4,
+      "start": 30055,
+      "count": 2,
+      "intervalSeconds": 60,
+      "unitId": 1
+    },
+    {
+      "id": "serial-copy",
+      "function": 4,
+      "start": 30057,
+      "count": 2,
+      "intervalSeconds": 60,
+      "unitId": 1
+    },
+    {
+      "id": "system-time",
+      "function": 4,
+      "start": 30193,
+      "count": 2,
+      "intervalSeconds": 60,
+      "unitId": 1
+    },
+    {
+      "id": "grid-guard-unlocked-devices",
+      "function": 4,
+      "start": 43090,
+      "count": 2,
+      "intervalSeconds": 60,
+      "unitId": 1
+    },
+    {
+      "id": "plant-time",
+      "function": 4,
+      "start": 30193,
+      "count": 2,
+      "intervalSeconds": 30,
+      "unitId": 2
+    },
+    {
+      "id": "plant-status",
+      "function": 4,
+      "start": 30201,
+      "count": 2,
+      "intervalSeconds": 30,
+      "unitId": 2
+    },
+    {
+      "id": "energy-import",
+      "function": 4,
+      "start": 30581,
+      "count": 2,
+      "intervalSeconds": 60,
+      "unitId": 2
+    },
+    {
+      "id": "energy-export",
+      "function": 4,
+      "start": 30583,
+      "count": 2,
+      "intervalSeconds": 60,
+      "unitId": 2
+    },
+    {
+      "id": "power-import",
+      "function": 4,
+      "start": 30865,
+      "count": 2,
+      "intervalSeconds": 3,
+      "unitId": 2
+    },
+    {
+      "id": "power-export",
+      "function": 4,
+      "start": 30867,
+      "count": 2,
+      "intervalSeconds": 3,
+      "unitId": 2
+    }
+  ],
+  "properties": [
+    {
+      "id": "profile-version",
+      "node": "parameters",
+      "name": "Profile Version",
+      "poller": "profile-version",
+      "offset": 0,
+      "length": 2,
+      "type": "uint32",
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "susy-id",
+      "node": "identity",
+      "name": "Susy Id",
+      "poller": "susy-id",
+      "offset": 0,
+      "length": 2,
+      "type": "uint32",
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "serial",
+      "node": "identity",
+      "name": "Serial",
+      "poller": "serial",
+      "offset": 0,
+      "length": 2,
+      "type": "uint32",
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "data-change-counter",
+      "node": "parameters",
+      "name": "Data Change Counter",
+      "poller": "data-change-counter",
+      "offset": 0,
+      "length": 2,
+      "type": "uint32",
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "device-class",
+      "node": "identity",
+      "name": "Device Class",
+      "poller": "device-class",
+      "offset": 0,
+      "length": 2,
+      "type": "uint32",
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "model",
+      "node": "identity",
+      "name": "Model",
+      "poller": "model",
+      "offset": 0,
+      "length": 2,
+      "type": "uint32",
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "manufacturer",
+      "node": "identity",
+      "name": "Manufacturer",
+      "poller": "manufacturer",
+      "offset": 0,
+      "length": 2,
+      "type": "uint32",
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "serial-copy",
+      "node": "identity",
+      "name": "Serial Copy",
+      "poller": "serial-copy",
+      "offset": 0,
+      "length": 2,
+      "type": "uint32",
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "system-time",
+      "node": "parameters",
+      "name": "System Time",
+      "poller": "system-time",
+      "offset": 0,
+      "length": 2,
+      "type": "uint32",
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "s",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "grid-guard-unlocked-devices",
+      "node": "parameters",
+      "name": "Grid Guard Unlocked Devices",
+      "poller": "grid-guard-unlocked-devices",
+      "offset": 0,
+      "length": 2,
+      "type": "uint32",
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "plant-time",
+      "node": "measurements",
+      "name": "Plant Time",
+      "poller": "plant-time",
+      "offset": 0,
+      "length": 2,
+      "type": "uint32",
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "s",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "plant-status",
+      "node": "measurements",
+      "name": "Plant Status",
+      "poller": "plant-status",
+      "offset": 0,
+      "length": 2,
+      "type": "uint32",
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        16777213,
+        4294967295
+      ],
+      "datatype": "enum",
+      "valueMap": {
+        "307": "ok",
+        "455": "warning",
+        "35": "error"
+      }
+    },
+    {
+      "id": "energy-import",
+      "node": "measurements",
+      "name": "Energy Import",
+      "poller": "energy-import",
+      "offset": 0,
+      "length": 2,
+      "type": "uint32",
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.001,
+      "unit": "kWh",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "float"
+    },
+    {
+      "id": "energy-export",
+      "node": "measurements",
+      "name": "Energy Export",
+      "poller": "energy-export",
+      "offset": 0,
+      "length": 2,
+      "type": "uint32",
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.001,
+      "unit": "kWh",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "float"
+    },
+    {
+      "id": "power-import",
+      "node": "measurements",
+      "name": "Power Import",
+      "poller": "power-import",
+      "offset": 0,
+      "length": 2,
+      "type": "int32",
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "power-export",
+      "node": "measurements",
+      "name": "Power Export",
+      "poller": "power-export",
+      "offset": 0,
+      "length": 2,
+      "type": "int32",
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "integer"
+    }
+  ],
+  "inventory": {
+    "start": 42109,
+    "slots": 245,
+    "intervalSeconds": 180
+  },
+  "delegated": {
+    "pollers": [
+      {
+        "id": "permanent-power-limit",
+        "function": 4,
+        "start": 30233,
+        "count": 2,
+        "intervalSeconds": 180
+      },
+      {
+        "id": "reactive-control-mode",
+        "function": 4,
+        "start": 30825,
+        "count": 2,
+        "intervalSeconds": 180
+      },
+      {
+        "id": "cos-phi-setpoint",
+        "function": 4,
+        "start": 30831,
+        "count": 2,
+        "intervalSeconds": 180
+      },
+      {
+        "id": "excitation-setpoint",
+        "function": 4,
+        "start": 30833,
+        "count": 2,
+        "intervalSeconds": 180
+      },
+      {
+        "id": "configured-reactive-control-mode",
+        "function": 4,
+        "start": 40200,
+        "count": 2,
+        "intervalSeconds": 180
+      },
+      {
+        "id": "configured-cos-phi-setpoint",
+        "function": 4,
+        "start": 40206,
+        "count": 2,
+        "intervalSeconds": 180
+      },
+      {
+        "id": "configured-excitation-setpoint",
+        "function": 4,
+        "start": 40208,
+        "count": 2,
+        "intervalSeconds": 180
+      },
+      {
+        "id": "overfrequency-power-mode",
+        "function": 4,
+        "start": 40216,
+        "count": 2,
+        "intervalSeconds": 180
+      },
+      {
+        "id": "gradient-start-frequency-offset",
+        "function": 4,
+        "start": 40218,
+        "count": 2,
+        "intervalSeconds": 180
+      },
+      {
+        "id": "gradient-reset-frequency-offset",
+        "function": 4,
+        "start": 40220,
+        "count": 2,
+        "intervalSeconds": 180
+      },
+      {
+        "id": "cos-phi-curve-start",
+        "function": 4,
+        "start": 40222,
+        "count": 2,
+        "intervalSeconds": 180
+      },
+      {
+        "id": "cos-phi-curve-start-excitation",
+        "function": 4,
+        "start": 40224,
+        "count": 2,
+        "intervalSeconds": 180
+      },
+      {
+        "id": "cos-phi-curve-end",
+        "function": 4,
+        "start": 40226,
+        "count": 2,
+        "intervalSeconds": 180
+      },
+      {
+        "id": "cos-phi-curve-end-excitation",
+        "function": 4,
+        "start": 40228,
+        "count": 2,
+        "intervalSeconds": 180
+      },
+      {
+        "id": "cos-phi-curve-start-power",
+        "function": 4,
+        "start": 40230,
+        "count": 2,
+        "intervalSeconds": 180
+      },
+      {
+        "id": "cos-phi-curve-end-power",
+        "function": 4,
+        "start": 40232,
+        "count": 2,
+        "intervalSeconds": 180
+      }
+    ],
+    "properties": [
+      {
+        "id": "permanent-power-limit",
+        "node": "parameters",
+        "name": "Permanent Power Limit",
+        "poller": "permanent-power-limit",
+        "offset": 0,
+        "length": 2,
+        "type": "uint32",
+        "byteOrder": "big",
+        "wordOrder": "big",
+        "scale": 1,
+        "unit": "W",
+        "invalid": [
+          4294967295
+        ],
+        "datatype": "integer"
+      },
+      {
+        "id": "reactive-control-mode",
+        "node": "parameters",
+        "name": "Reactive Control Mode",
+        "poller": "reactive-control-mode",
+        "offset": 0,
+        "length": 2,
+        "type": "uint32",
+        "byteOrder": "big",
+        "wordOrder": "big",
+        "scale": 1,
+        "unit": "",
+        "invalid": [
+          16777213,
+          4294967295
+        ],
+        "datatype": "enum",
+        "valueMap": {
+          "303": "303",
+          "1069": "1069",
+          "1070": "1070",
+          "1071": "1071",
+          "1072": "1072",
+          "1073": "1073",
+          "1074": "1074",
+          "1075": "1075",
+          "1076": "1076",
+          "1387": "1387",
+          "1388": "1388",
+          "1389": "1389"
+        }
+      },
+      {
+        "id": "cos-phi-setpoint",
+        "node": "parameters",
+        "name": "Cos Phi Setpoint",
+        "poller": "cos-phi-setpoint",
+        "offset": 0,
+        "length": 2,
+        "type": "int32",
+        "byteOrder": "big",
+        "wordOrder": "big",
+        "scale": 0.01,
+        "unit": "",
+        "invalid": [
+          -2147483648
+        ],
+        "datatype": "float"
+      },
+      {
+        "id": "excitation-setpoint",
+        "node": "parameters",
+        "name": "Excitation Setpoint",
+        "poller": "excitation-setpoint",
+        "offset": 0,
+        "length": 2,
+        "type": "uint32",
+        "byteOrder": "big",
+        "wordOrder": "big",
+        "scale": 1,
+        "unit": "",
+        "invalid": [
+          16777213,
+          4294967295
+        ],
+        "datatype": "enum",
+        "valueMap": {
+          "1041": "overexcited",
+          "1042": "underexcited"
+        }
+      },
+      {
+        "id": "configured-reactive-control-mode",
+        "node": "parameters",
+        "name": "Configured Reactive Control Mode",
+        "poller": "configured-reactive-control-mode",
+        "offset": 0,
+        "length": 2,
+        "type": "uint32",
+        "byteOrder": "big",
+        "wordOrder": "big",
+        "scale": 1,
+        "unit": "",
+        "invalid": [
+          16777213,
+          4294967295
+        ],
+        "datatype": "enum",
+        "valueMap": {
+          "303": "303",
+          "1069": "1069",
+          "1070": "1070",
+          "1071": "1071",
+          "1072": "1072",
+          "1073": "1073",
+          "1074": "1074",
+          "1075": "1075",
+          "1076": "1076",
+          "1387": "1387",
+          "1388": "1388",
+          "1389": "1389",
+          "2269": "2269",
+          "2270": "2270"
+        }
+      },
+      {
+        "id": "configured-cos-phi-setpoint",
+        "node": "parameters",
+        "name": "Configured Cos Phi Setpoint",
+        "poller": "configured-cos-phi-setpoint",
+        "offset": 0,
+        "length": 2,
+        "type": "int32",
+        "byteOrder": "big",
+        "wordOrder": "big",
+        "scale": 0.01,
+        "unit": "",
+        "invalid": [
+          -2147483648
+        ],
+        "datatype": "float"
+      },
+      {
+        "id": "configured-excitation-setpoint",
+        "node": "parameters",
+        "name": "Configured Excitation Setpoint",
+        "poller": "configured-excitation-setpoint",
+        "offset": 0,
+        "length": 2,
+        "type": "uint32",
+        "byteOrder": "big",
+        "wordOrder": "big",
+        "scale": 1,
+        "unit": "",
+        "invalid": [
+          16777213,
+          4294967295
+        ],
+        "datatype": "enum",
+        "valueMap": {
+          "1041": "overexcited",
+          "1042": "underexcited"
+        }
+      },
+      {
+        "id": "overfrequency-power-mode",
+        "node": "parameters",
+        "name": "Overfrequency Power Mode",
+        "poller": "overfrequency-power-mode",
+        "offset": 0,
+        "length": 2,
+        "type": "uint32",
+        "byteOrder": "big",
+        "wordOrder": "big",
+        "scale": 1,
+        "unit": "",
+        "invalid": [
+          16777213,
+          4294967295
+        ],
+        "datatype": "enum",
+        "valueMap": {
+          "303": "off",
+          "1132": "linear-gradient"
+        }
+      },
+      {
+        "id": "gradient-start-frequency-offset",
+        "node": "parameters",
+        "name": "Gradient Start Frequency Offset",
+        "poller": "gradient-start-frequency-offset",
+        "offset": 0,
+        "length": 2,
+        "type": "uint32",
+        "byteOrder": "big",
+        "wordOrder": "big",
+        "scale": 0.01,
+        "unit": "Hz",
+        "invalid": [
+          4294967295
+        ],
+        "datatype": "float"
+      },
+      {
+        "id": "gradient-reset-frequency-offset",
+        "node": "parameters",
+        "name": "Gradient Reset Frequency Offset",
+        "poller": "gradient-reset-frequency-offset",
+        "offset": 0,
+        "length": 2,
+        "type": "uint32",
+        "byteOrder": "big",
+        "wordOrder": "big",
+        "scale": 0.01,
+        "unit": "Hz",
+        "invalid": [
+          4294967295
+        ],
+        "datatype": "float"
+      },
+      {
+        "id": "cos-phi-curve-start",
+        "node": "parameters",
+        "name": "Cos Phi Curve Start",
+        "poller": "cos-phi-curve-start",
+        "offset": 0,
+        "length": 2,
+        "type": "uint32",
+        "byteOrder": "big",
+        "wordOrder": "big",
+        "scale": 0.01,
+        "unit": "",
+        "invalid": [
+          4294967295
+        ],
+        "datatype": "float"
+      },
+      {
+        "id": "cos-phi-curve-start-excitation",
+        "node": "parameters",
+        "name": "Cos Phi Curve Start Excitation",
+        "poller": "cos-phi-curve-start-excitation",
+        "offset": 0,
+        "length": 2,
+        "type": "uint32",
+        "byteOrder": "big",
+        "wordOrder": "big",
+        "scale": 1,
+        "unit": "",
+        "invalid": [
+          16777213,
+          4294967295
+        ],
+        "datatype": "enum",
+        "valueMap": {
+          "1041": "overexcited",
+          "1042": "underexcited"
+        }
+      },
+      {
+        "id": "cos-phi-curve-end",
+        "node": "parameters",
+        "name": "Cos Phi Curve End",
+        "poller": "cos-phi-curve-end",
+        "offset": 0,
+        "length": 2,
+        "type": "uint32",
+        "byteOrder": "big",
+        "wordOrder": "big",
+        "scale": 0.01,
+        "unit": "",
+        "invalid": [
+          4294967295
+        ],
+        "datatype": "float"
+      },
+      {
+        "id": "cos-phi-curve-end-excitation",
+        "node": "parameters",
+        "name": "Cos Phi Curve End Excitation",
+        "poller": "cos-phi-curve-end-excitation",
+        "offset": 0,
+        "length": 2,
+        "type": "uint32",
+        "byteOrder": "big",
+        "wordOrder": "big",
+        "scale": 1,
+        "unit": "",
+        "invalid": [
+          16777213,
+          4294967295
+        ],
+        "datatype": "enum",
+        "valueMap": {
+          "1041": "overexcited",
+          "1042": "underexcited"
+        }
+      },
+      {
+        "id": "cos-phi-curve-start-power",
+        "node": "parameters",
+        "name": "Cos Phi Curve Start Power",
+        "poller": "cos-phi-curve-start-power",
+        "offset": 0,
+        "length": 2,
+        "type": "uint32",
+        "byteOrder": "big",
+        "wordOrder": "big",
+        "scale": 1,
+        "unit": "%",
+        "invalid": [
+          4294967295
+        ],
+        "datatype": "integer"
+      },
+      {
+        "id": "cos-phi-curve-end-power",
+        "node": "parameters",
+        "name": "Cos Phi Curve End Power",
+        "poller": "cos-phi-curve-end-power",
+        "offset": 0,
+        "length": 2,
+        "type": "uint32",
+        "byteOrder": "big",
+        "wordOrder": "big",
+        "scale": 1,
+        "unit": "%",
+        "invalid": [
+          4294967295
+        ],
+        "datatype": "integer"
+      }
+    ]
+  },
+  "commands": []
+}

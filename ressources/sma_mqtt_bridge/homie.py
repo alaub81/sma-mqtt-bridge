@@ -127,6 +127,12 @@ class HomiePublisher:
         self.save_owned()  # Record ownership before any retained publication.
         attempt = 0
         while not stop.is_set():
+            props = self.properties(states)
+            metadata = discovery(mqtt.homie_prefix, device, props) if states else {}
+            all_topics = set(metadata) | {base + "/" + p.key for p in props}
+            previous = self.owned.get(device, set()).copy()
+            self.owned[device] = previous | all_topics
+            self.save_owned()
             self.status[device] = False
             client = self.client_factory(
                 mqtt.host, mqtt.port, username=mqtt.username or None, password=mqtt.password or None,
@@ -167,7 +173,7 @@ class HomiePublisher:
                         consumer = asyncio.create_task(self.receive_commands(client, base, props))
                     attempt = 0
                     try:
-                        await self.publish_values(client, base, states, stop, sent, last_status, consumer)
+                        await self.publish_values(client, base, states, stop, sent, last_status, consumer, props)
                     finally:
                         if consumer is not None:
                             consumer.cancel()
@@ -187,9 +193,33 @@ class HomiePublisher:
             finally:
                 self.status[device] = False
 
-    async def publish_values(self, client, base, states, stop, sent, last_status, consumer):
+    async def publish_values(self, client, base, states, stop, sent, last_status, consumer, declared=None):
         mqtt, runtime = self.config.mqtt, self.config.runtime
+        declared = self.properties(states) if declared is None else declared
         while not stop.is_set():
+            current = self.properties(states)
+            if current != declared:
+                # Inventory changes require a new Homie description and retained retirement.
+                device = states[0].device
+                metadata = discovery(mqtt.homie_prefix, device, current)
+                topics = set(metadata) | {base + "/" + p.key for p in current}
+                previous = self.owned.get(device, set())
+                self.owned[device] = previous | topics
+                self.save_owned()
+                await client.publish(base + "/$state", "init", qos=mqtt.qos, retain=True)
+                for topic in sorted(previous - topics):
+                    await client.publish(topic, b"", qos=mqtt.qos, retain=True)
+                    sent.pop(topic, None)
+                old_keys = {p.key for p in declared}
+                for p in current:
+                    if p.key not in old_keys:
+                        await client.publish(base + "/" + p.key, b"", qos=mqtt.qos, retain=True)
+                for topic, value in metadata.items():
+                    await client.publish(topic, value, qos=mqtt.qos, retain=True)
+                self.owned[device] = topics
+                self.save_owned()
+                declared = current
+                sent.pop(base + "/$state", None)
             if consumer is not None and consumer.done():
                 if consumer.exception() is not None:
                     raise consumer.exception()

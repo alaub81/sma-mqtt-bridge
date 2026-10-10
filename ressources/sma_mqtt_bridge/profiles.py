@@ -84,8 +84,21 @@ def validate_profile(raw):
     else:
         if not raw["pollers"] or not raw["properties"] or not device.get("supportedFirmware") or not isinstance(validation.get("evidence"), str) or not validation["evidence"]:
             raise ConfigError("Validated profiles need mappings, firmware compatibility and evidence")
+    _, properties = validate_mappings(raw["pollers"], raw["properties"])
+    if validation["status"] == "validated":
+        keys(raw.get("identity"), ("model", "firmware", "serial"))
+        for ref in raw["identity"].values():
+            if not isinstance(ref, str) or ref not in properties:
+                raise ConfigError("Identity needs explicit model, firmware and serial properties")
+    return {**raw, "protocol": {**protocol, "defaults": normalized}}
+
+
+def validate_mappings(poller_list, property_list):
+    """Validate reusable read mappings independently of device identity schema."""
+    if not isinstance(poller_list, list) or not isinstance(property_list, list):
+        raise ConfigError("Profile mappings must be arrays")
     pollers, properties = {}, {}
-    for poller in raw["pollers"]:
+    for poller in poller_list:
         keys(poller, ("id", "function", "start", "count"), ("intervalSeconds",))
         if not isinstance(poller["id"], str) or not ID.fullmatch(poller["id"]) or poller["id"] in pollers:
             raise ConfigError("Invalid/duplicate poller ID")
@@ -94,7 +107,7 @@ def validate_profile(raw):
         if "intervalSeconds" in poller and convert(poller["intervalSeconds"], float, "poller interval") <= 0:
             raise ConfigError("Invalid poller interval")
         pollers[poller["id"]] = poller
-    for prop in raw["properties"]:
+    for prop in property_list:
         keys(prop, ("id", "node", "name", "poller", "offset", "type", "length", "byteOrder", "wordOrder", "scale", "unit", "invalid", "datatype"), ("valueMap", "minimum", "maximum", "format"))
         if not all(isinstance(prop[k], str) and ID.fullmatch(prop[k]) for k in ("id", "node")) or prop["id"] in properties:
             raise ConfigError("Invalid/duplicate profile property ID")
@@ -130,12 +143,7 @@ def validate_profile(raw):
         if any(ord(c) < 32 for c in prop["name"] + prop["unit"]):
             raise ConfigError("Property metadata contains control characters")
         properties[prop["id"]] = prop
-    if validation["status"] == "validated":
-        keys(raw.get("identity"), ("model", "firmware", "serial"))
-        for ref in raw["identity"].values():
-            if not isinstance(ref, str) or ref not in properties:
-                raise ConfigError("Identity needs explicit model, firmware and serial properties")
-    return {**raw, "protocol": {**protocol, "defaults": normalized}}
+    return pollers, properties
 
 
 def verify_identity(profile, values, expected_serial=""):
