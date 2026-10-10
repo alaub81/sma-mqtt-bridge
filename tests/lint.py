@@ -129,8 +129,10 @@ def main():
           command=["yamllint", "--strict", "--config-file", ".yamllint.yaml"])
     check("GitHub Actions", [p for p in files if p.startswith(".github/workflows/") and p.endswith((".yml", ".yaml"))],
           command=["actionlint", "-pyflakes="])
-    check("Python", [p for p in files if p.endswith(".py")],
+    check("Python / Ruff", [p for p in files if p.endswith(".py")],
           command=["ruff", "check", "--config", "ruff.toml"])
+    check("Python / Pylint", [p for p in files if p.endswith(".py")],
+          command=["pylint", "--rcfile", ".pylintrc", "--errors-only"], timeout=180)
     check("Markdown", [p for p in files if p.endswith(".md")],
           command=["pymarkdown", "--config", ".pymarkdown.yaml", "--strict-config", "scan"])
     print("\n================ Summary ================", flush=True)

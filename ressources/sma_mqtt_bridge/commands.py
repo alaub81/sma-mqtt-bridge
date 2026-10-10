@@ -92,7 +92,8 @@ def plan_matches(catalog, targets):
                and number(catalog[channel].get("value")) == number(target) for channel, target in targets.items())
 
 
-class DurableCommands:
+# Subclasses provide result(), journal, config and reader.
+class DurableCommands:  # pylint: disable=no-member
     """Shared disk synchronization and session cleanup for command guards."""
     def reject(self, key, status):
         self.result(status)

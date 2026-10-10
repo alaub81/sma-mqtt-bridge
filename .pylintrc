@@ -1,0 +1,8 @@
+[MAIN]
+py-version=3.14
+init-hook=import sys; sys.path[:0] = ['ressources', 'tests']
+persistent=no
+
+[REPORTS]
+reports=no
+score=no
