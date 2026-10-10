@@ -1,0 +1,12 @@
+# Local image build; inherited runtime settings match the deployment template.
+services:
+  sma-mqtt-bridge:
+    extends:
+      file: docker-compose.example.yml
+      service: sma-mqtt-bridge
+    build: .
+    image: sma-mqtt-bridge:dev
+    pull_policy: build
+
+volumes:
+  sma_bridge_state:

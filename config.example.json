@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "status": "design-example-not-yet-implemented",
+  "mqtt": {
+    "hostEnv": "SMA_MQTT_HOST",
+    "portEnv": "SMA_MQTT_PORT",
+    "homieVersion": "4.0.0"
+  },
+  "inverters": [],
+  "homeManager": {
+    "enabled": false,
+    "serialNumber": "",
+    "interfaceAddress": ""
+  },
+  "wallbox": {
+    "enabled": false,
+    "baseUrl": "https://wallbox.example.invalid",
+    "certificateFile": "",
+    "usernameEnv": "SMA_WALLBOX_USERNAME",
+    "passwordEnv": "SMA_WALLBOX_PASSWORD"
+  },
+  "portal": {
+    "enabled": false,
+    "plantId": "",
+    "deviceId": "",
+    "usernameEnv": "SMA_PORTAL_USERNAME",
+    "passwordEnv": "SMA_PORTAL_PASSWORD"
+  },
+  "commands": {
+    "enabled": false
+  }
+}

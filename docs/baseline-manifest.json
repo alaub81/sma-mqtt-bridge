@@ -1,0 +1,66 @@
+{
+  "sourceProject": "BMW-MQTT-Bridge",
+  "sourceCommit": "7f7e932e27b6c29b1a5ae89a869a9ceb422f9834",
+  "copiedUnchanged": [
+    {
+      "path": ".editorconfig",
+      "sha256": "82bbad1c6a5c1741e5cc1c96e9c49fdf83b5e3acbf2bc01e931af1710beb9edc"
+    },
+    {
+      "path": ".hadolint.yaml",
+      "sha256": "ff0f0bd3eeac07731a61e5221bc45ddd53280992fc2e99a6353a84546d025da8"
+    },
+    {
+      "path": ".yamllint.yaml",
+      "sha256": "d6543b2dbbd78332e063fa7bfbde0074d2d8437e51cf6fe71e8ecd221bad4140"
+    },
+    {
+      "path": ".pymarkdown.yaml",
+      "sha256": "3bb3908edc241bab6df492791a27ac21802ab10a924b4ef15720027714da5995"
+    },
+    {
+      "path": "ruff.toml",
+      "sha256": "9d0389ee331a738e6b3bc85e38a2dc81a1d7170b2219335cdb26dc5cff21a761"
+    },
+    {
+      "path": "lint-tools.json",
+      "sha256": "e6d6c84b1fec4740331abdc8ff70ff1d2421de3a05a7dfe6edc18638254c65c3"
+    },
+    {
+      "path": "LICENSE",
+      "sha256": "4e5e2b275d97e7dc713f65994bc323d74f18590deb9384a8c0b5036facbc6823"
+    },
+    {
+      "path": ".github/dependabot.yml",
+      "sha256": "d7c5088551e97a37968e912e6e2ac734d72dd71bddd1339ad528d765f0ccd076"
+    },
+    {
+      "path": "tests/__init__.py",
+      "sha256": "37e0d458cd080c90cb474586cd4256c8287d58c823ffc03b3a624c36e1658692"
+    },
+    {
+      "path": "tests/install_lint_tools.py",
+      "sha256": "d950c4e44fe266227c794b424b847ab348a229daf32f078d438f88ff283a6504"
+    },
+    {
+      "path": "tests/lint.py",
+      "sha256": "1525535b971544da3faab38ed4d09ef7379a6dcfe76746d616d83e10e51f925a"
+    },
+    {
+      "path": "tests/run_tests.py",
+      "sha256": "c075750ba3e3792632e3baabf502dd779bb0f98acfb71ffd40217ac07d4f4ce9"
+    },
+    {
+      "path": "tests/requirements-lint.txt",
+      "sha256": "48eb70c2b7d2d6dbeb6877b851f90cf74cde49ffea08e19050482a752a1cc6de"
+    },
+    {
+      "path": "tests/linter-check.sh",
+      "sha256": "deab4059b1788c804728b24da75f71799fc31de8587504a4d4d92c2dab013270"
+    },
+    {
+      "path": "resources/src/json.hpp",
+      "sha256": "186fcc4d85e395571e2cd950ae1932f1cf2b08f89f4e0a501def2c903fd179df"
+    }
+  ]
+}

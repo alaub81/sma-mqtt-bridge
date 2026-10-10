@@ -1,0 +1,17 @@
+.env
+.env.*
+!.env.sample
+docker-compose.yml
+config.json
+data/
+secrets/
+private/*
+!private/README.md
+.lint-venv/
+.lint-tools/
+.ruff_cache/
+__pycache__/
+*.pyc
+build/
+*.sarif
+.DS_Store

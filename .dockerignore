@@ -1,0 +1,16 @@
+.git
+.env
+.env.*
+!.env.sample
+config.json
+docker-compose.yml
+data/
+secrets/
+private/
+.lint-venv/
+.lint-tools/
+.ruff_cache/
+__pycache__/
+build/
+*.sarif
+.DS_Store
