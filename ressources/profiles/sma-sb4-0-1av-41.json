@@ -150,7 +150,8 @@
         4294967295,
         16777213
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "advanced"
     },
     {
       "id": "status",
@@ -213,7 +214,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "advanced"
     },
     {
       "id": "set-max-power",
@@ -230,7 +232,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "advanced"
     },
     {
       "id": "power-drawn",
@@ -417,7 +420,8 @@
       "invalid": [
         -2147483648
       ],
-      "datatype": "float"
+      "datatype": "float",
+      "channelGroup": "basic"
     }
   ],
   "commands": [],

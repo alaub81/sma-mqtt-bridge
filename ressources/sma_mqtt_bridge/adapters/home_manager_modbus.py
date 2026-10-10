@@ -11,7 +11,8 @@ from .modbus import ModbusException, ModbusReader, decode
 
 class HomeManagerModbusReader(ModbusReader):
     def __init__(self, settings, profile, interval_override=False):
-        transport = Inverter(host=settings.host, port=settings.modbus_port, unit_id=1,
+        transport = Inverter(advanced_channels_enabled=settings.advanced_channels_enabled,
+                             diagnostics_enabled=settings.diagnostics_enabled, host=settings.host, port=settings.modbus_port, unit_id=1,
                              poll_interval_seconds=settings.poll_interval_seconds,
                              timeout_seconds=settings.timeout_seconds, stale_seconds=settings.stale_seconds)
         super().__init__(transport, profile, interval_override)
@@ -22,17 +23,19 @@ class HomeManagerModbusReader(ModbusReader):
         self.assignment_received = {}
         self.rejected = set()
         self.core_properties = self.properties
+        self.core_pollers = self.pollers
+        self.core_definitions = self.definitions
         self.inventory_pollers = []
         inv = profile['inventory']
         # Preserve four-register assignment records; no block exceeds 125 registers.
-        for slot in range(0, inv['slots'], 30):
+        for slot in range(0, inv['slots'] if settings.advanced_channels_enabled else 0, 30):
             self.inventory_pollers.append({'id': f'inventory-{slot}', 'function': 4, 'unitId': 1,
                                           'start': inv['start'] + slot * 4,
                                           'count': min(30, inv['slots'] - slot) * 4,
                                           'slot': slot, 'intervalSeconds': inv['intervalSeconds']})
-        self.pollers = list(profile['pollers']) + self.inventory_pollers
-        self.definitions = {p['id']: [v for v in profile['properties'] if v['poller'] == p['id']]
-                            for p in profile['pollers']}
+        self.pollers = list(self.core_pollers) + self.inventory_pollers
+        self.definitions = {p['id']: [v for v in self.core_definitions if v['poller'] == p['id']]
+                            for p in self.core_pollers}
         self.refresh_properties()
 
     def interval(self, poller):
@@ -55,16 +58,17 @@ class HomeManagerModbusReader(ModbusReader):
                     props.append(Property(node, v['id'], v['name'], v['datatype'], v['unit'],
                                           ','.join(dict.fromkeys(v.get('valueMap', {}).values())),
                                           max(self.settings.stale_seconds, 2 * self.interval(p))))
-        props.append(Property('diagnostics', 'modbus-rejected-blocks', 'Rejected read blocks', 'integer'))
+        if self.home_settings.diagnostics_enabled:
+            props.append(Property('diagnostics', 'modbus-rejected-blocks', 'Rejected read blocks', 'integer'))
         self.properties = tuple(props)
 
     def inventory_expiry(self):
         return max(self.settings.stale_seconds, 2 * self.profile['inventory']['intervalSeconds'])
 
     def rebuild_delegated(self):
-        self.pollers = list(self.profile['pollers']) + self.inventory_pollers
-        self.definitions = {p['id']: [v for v in self.profile['properties'] if v['poller'] == p['id']]
-                            for p in self.profile['pollers']}
+        self.pollers = list(self.core_pollers) + self.inventory_pollers
+        self.definitions = {p['id']: [v for v in self.core_definitions if v['poller'] == p['id']]
+                            for p in self.core_pollers}
         now = time.monotonic()
         units = set()
         for slot, (_, serial, unit) in sorted(self.assignments.items()):
@@ -120,7 +124,8 @@ class HomeManagerModbusReader(ModbusReader):
         self.rebuild_delegated()
         for p in self.inventory_pollers:
             self.next_due.pop(p['id'], None)
-        return {v['node'] + '/' + v['id']: identity[v['id']] for v in self.profile['properties'] if v['id'] in ids}
+        return {v['node'] + '/' + v['id']: identity[v['id']] for v in self.profile['properties'] if v['id'] in ids
+                and v['node'] + '/' + v['id'] in {p.key for p in self.core_properties}}
 
     def delay(self):
         now = time.monotonic()
@@ -181,7 +186,8 @@ class HomeManagerModbusReader(ModbusReader):
             else:
                 values.update({v['node'] + '/' + v['id']: decode(words, v) if words is not None else None
                                for v in self.definitions[p['id']]})
-            values['diagnostics/modbus-rejected-blocks'] = len(self.rejected)
+            if self.home_settings.diagnostics_enabled:
+                values['diagnostics/modbus-rejected-blocks'] = len(self.rejected)
             return values
         except BaseException:
             await self.close()

@@ -67,18 +67,32 @@ SEMP_EXTRA = (
 )
 
 
-def base_values(catalog):
+ADVANCED_BASE_KEYS = {"measurements/vehicle-status-code", "parameters/nameplate-pkgrev"}
+
+
+def base_properties(advanced):
+    return tuple(p for p in BASE if advanced or p.key not in ADVANCED_BASE_KEYS)
+
+
+def extra_channels(advanced, diagnostics):
+    return tuple(p for p in SEMP_EXTRA if (diagnostics if p[0] == "measurements" else advanced))
+
+
+def base_values(catalog, advanced=True):
     vehicle = catalog.get("Measurement.Operation.EVeh.ChaStt")
-    return {
+    result = {
         "measurements/power": number(catalog.get("Measurement.Metering.GridMs.TotWIn.ChaSta")),
         "measurements/session-energy": None if number(catalog.get("Measurement.ChaSess.WhIn")) is None else number(catalog["Measurement.ChaSess.WhIn"]) / 1000,
         "measurements/vehicle-status": VEHICLE.get(str(vehicle), "Unbekannter Fahrzeugstatus") if vehicle is not None else None,
-        "measurements/vehicle-status-code": number(vehicle),
         "measurements/health": HEALTH.get(str(catalog.get("Measurement.Operation.Health"))) if catalog.get("Measurement.Operation.Health") is not None else None,
-        "parameters/nameplate-pkgrev": catalog.get("Parameter.Nameplate.PkgRev"),
         "settings/charge-mode": catalog.get("Parameter.Chrg.ActChaMod"),
         "measurements/manual-approval": APPROVAL.get(str(catalog.get("Parameter.Chrg.ChrgApv"))),
     }
+
+    if advanced:
+        result["measurements/vehicle-status-code"] = number(vehicle)
+        result["parameters/nameplate-pkgrev"] = catalog.get("Parameter.Nameplate.PkgRev")
+    return result
 
 
 def parameter_catalog(reply, expected_serial):
@@ -154,7 +168,7 @@ def current_measurement(value, timestamp, stale_seconds, now=None):
         return None
 
 
-def semp_values(text, stale_seconds, now=None):
+def semp_values(text, stale_seconds, now=None, advanced=True, diagnostics=True):
     root = xml_root(text)
     catalog = {}
     now = datetime.now(timezone.utc) if now is None else now
@@ -167,9 +181,9 @@ def semp_values(text, stale_seconds, now=None):
         if channel.startswith(("Measurement.", "Setpoint.")):
             raw = current_measurement(raw, stamp, stale_seconds, now)
         catalog[channel] = raw
-    result = base_values(catalog)
+    result = base_values(catalog, advanced)
     result.update(settings_values({k: {"value": v} for k, v in catalog.items()}))
-    result.update({node + "/" + id: number(catalog.get(channel)) for node, id, channel in SEMP_EXTRA})
+    result.update({node + "/" + id: number(catalog.get(channel)) for node, id, channel in extra_channels(advanced, diagnostics)})
     return result
 
 
@@ -177,11 +191,11 @@ class SempReader:
     def __init__(self, settings, max_bytes, include_settings=True):
         self.settings, self.include_settings = settings, include_settings
         self.http = HTTP(settings.timeout_seconds, max_bytes)
-        props = [p for p in BASE if p.node != "settings"]
+        props = [p for p in base_properties(settings.advanced_channels_enabled) if p.node != "settings"]
         if include_settings:
             props += [Property("settings", id, id.replace("-", " ").title(), datatype, unit, fmt)
                       for id, _, datatype, unit, _, fmt in SETTINGS]
-        props += [Property(node, id, channel + " (raw code/value)", "float") for node, id, channel in SEMP_EXTRA]
+        props += [Property(node, id, channel + " (raw code/value)", "float") for node, id, channel in extra_channels(settings.advanced_channels_enabled, settings.diagnostics_enabled)]
         self.properties = tuple(props)
         host = "[" + settings.host + "]" if ":" in settings.host else settings.host
         self.url = f"http://{host}:{settings.semp_port}" + settings.semp_path.rstrip("/")
@@ -194,7 +208,8 @@ class SempReader:
         status, _, body = await self.http.request("GET", self.url + "/Parameters")
         if status != 200:
             raise ProtocolError("SEMP parameter read failed")
-        values = semp_values(body, self.settings.stale_seconds)
+        values = semp_values(body, self.settings.stale_seconds, advanced=self.settings.advanced_channels_enabled,
+                             diagnostics=self.settings.diagnostics_enabled)
         if not self.include_settings:
             values = {k: v for k, v in values.items() if not k.startswith("settings/")}
         return values
@@ -216,7 +231,7 @@ class EChargerReader:
                  for id, _, datatype, unit, _, fmt in SETTINGS]
         props += [Property("measurements", id, id.replace("-", " ").title(), unit=unit) for id, _, unit in EXTRA]
         if include_base:
-            props += [p for p in BASE if p.node != "settings"]
+            props += [p for p in base_properties(settings.advanced_channels_enabled) if p.node != "settings"]
         self.properties = tuple(props)
 
     async def access_token(self):
@@ -267,7 +282,7 @@ class EChargerReader:
                 if self.include_base:
                     combined = {k: v.get("value") for k, v in catalog.items()}
                     combined.update(values)
-                    baseline = base_values(combined)
+                    baseline = base_values(combined, self.settings.advanced_channels_enabled)
                     baseline.pop("settings/charge-mode")
                     result.update(baseline)
                 return result
