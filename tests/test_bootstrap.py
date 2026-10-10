@@ -1,9 +1,10 @@
-"""Exercise the compiled CLI and Compose templates without SMA or MQTT access."""
+"""Exercise Python CLI offline, without private ENV files or network sessions."""
 
 import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -11,62 +12,40 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class BootstrapTests(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        cls.directory = tempfile.TemporaryDirectory(prefix='sma-bootstrap-test-')
-        cls.binary = Path(cls.directory.name) / 'sma_mqtt_bridge'
-        subprocess.run(['c++', '-std=c++17', '-Wall', '-Wextra', '-Wpedantic',
-                        str(ROOT / 'resources/src/sma_mqtt_bridge.cpp'),
-                        '-o', str(cls.binary)], check=True, capture_output=True)
+    def cli(self, *args, env=None):
+        clean = {key: value for key, value in os.environ.items() if not key.startswith('SMAB_')}
+        clean.update(env or {})
+        return subprocess.run([sys.executable, '-m', 'sma_mqtt_bridge', *args], cwd=ROOT,
+                              env=clean, capture_output=True, text=True, timeout=5)
 
-    @classmethod
-    def tearDownClass(cls):
-        cls.directory.cleanup()
+    def test_version_without_credentials(self):
+        result = self.cli('--version')
+        self.assertEqual(result.returncode, 0)
+        self.assertRegex(result.stdout, r'^sma-mqtt-bridge \d+\.\d+\.\d+\n$')
 
-    def test_version_is_available_without_credentials(self):
-        result = subprocess.run([str(self.binary), '--version'],
-                                capture_output=True, text=True, check=True)
-        self.assertRegex(result.stdout, r'^sma-mqtt-bridge \d+\.\d+\.\d+[-\w]*\n$')
+    def test_status_distinguishes_runtime_from_live_acceptance(self):
+        status = json.loads(self.cli('--project-status').stdout)
+        self.assertTrue(status['runtimeImplemented'])
+        self.assertFalse(status['liveVerified'])
+        self.assertEqual(status['bundledPollingProfiles'], 0)
+        self.assertTrue(status['readOnly'])
 
-    def test_status_does_not_claim_a_functioning_runtime(self):
-        result = subprocess.run([str(self.binary), '--project-status'],
-                                capture_output=True, text=True, check=True)
-        status = json.loads(result.stdout)
-        self.assertFalse(status['runtimeImplemented'])
-        self.assertFalse(status['paidSmaApisRequired'])
+    def test_no_sources_fail_without_secret_output(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            result = self.cli(env={'SMAB_PORTAL_PASSWORD': 'fixture-do-not-log', 'SMAB_STATE_DIR': tmp})
+        self.assertEqual(result.returncode, 2)
+        self.assertIn('No sources enabled', result.stderr)
+        self.assertNotIn('fixture-do-not-log', result.stderr + result.stdout)
 
-    def test_start_fails_clearly_without_exposing_credentials(self):
-        env = dict(os.environ, SMAB_PORTAL_PASSWORD='test-do-not-log-this')
-        result = subprocess.run([str(self.binary)], env=env, capture_output=True, text=True)
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn('not implemented yet', result.stderr)
-        self.assertNotIn('test-do-not-log-this', result.stdout + result.stderr)
+    def test_check_config_without_network(self):
+        result = self.cli('--check-config')
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(json.loads(result.stdout)['enabledSources'], 0)
 
-    def test_unsupported_commands_are_rejected(self):
-        result = subprocess.run([str(self.binary), '--set-pv-share', '50'],
-                                capture_output=True, text=True)
-        self.assertNotEqual(result.returncode, 0)
+    def test_check_profile_reports_descriptor_gate(self):
+        result = self.cli('--check-profile', 'sma-stp8-0-3av-40')
+        self.assertEqual(result.returncode, 0)
+        self.assertFalse(json.loads(result.stdout)['pollingValidated'])
 
-    def test_both_compose_templates_render_without_personal_configuration(self):
-        env = dict(os.environ, SMAB_BRIDGE_VERSION='test',
-                   SMAB_ENV_FILE=str(ROOT / '.env.sample'))
-        env.pop('SMAB_DATA_DIR', None)
-        for filename in ('docker-compose.example.yml', 'docker-compose.dev.yml'):
-            with self.subTest(filename=filename):
-                result = subprocess.run(['docker', 'compose', '--env-file', '.env.sample',
-                                         '-f', filename, 'config', '--format', 'json'],
-                                        cwd=ROOT, env=env, capture_output=True, text=True, check=True)
-                configuration = json.loads(result.stdout)
-                self.assertIn('sma-mqtt-bridge', configuration['services'])
-                service = configuration['services']['sma-mqtt-bridge']
-                mounts = service['volumes']
-                self.assertEqual(len(mounts), 1)
-                self.assertEqual(mounts[0]['type'], 'bind')
-                self.assertEqual(Path(mounts[0]['source']), ROOT / 'data/sma-mqtt-bridge')
-                self.assertEqual(mounts[0]['target'], '/data/sma-mqtt-bridge')
-                self.assertTrue(all(key.startswith('SMAB_') for key in
-                                    service.get('environment', {})))
-
-
-if __name__ == '__main__':
-    unittest.main()
+    def test_command_option_is_not_available(self):
+        self.assertEqual(self.cli('--set-pv-share', '50').returncode, 2)

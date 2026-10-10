@@ -1,9 +1,25 @@
-# Local image build; inherited runtime settings match the deployment template.
+# Standalone development service; Compose Up also builds the local Python image.
 services:
   sma-mqtt-bridge:
-    extends:
-      file: docker-compose.example.yml
-      service: sma-mqtt-bridge
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile-SMAB
     image: sma-mqtt-bridge:dev
     pull_policy: build
+    user: "${SMAB_UID:-10001}:${SMAB_GID:-10001}"
+    env_file:
+      - path: ${SMAB_ENV_FILE:-./.env}
+        required: false
+    volumes:
+      - type: bind
+        source: ${SMAB_DATA_DIR:-./data/sma-mqtt-bridge}
+        target: /data/sma-mqtt-bridge
+    # Linux host networking is needed for Home Manager multicast on the Pi.
+    network_mode: host
+    init: true
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    stop_grace_period: 15s
+    restart: unless-stopped

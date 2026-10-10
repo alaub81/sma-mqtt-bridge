@@ -9,7 +9,6 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-VENDOR_HEADER = "resources/src/json.hpp"
 
 
 def project_files():
@@ -39,8 +38,8 @@ def check_text(files):
         for number, line in enumerate(text.splitlines(), 1):
             if re.match(r"^(<{7}|={7}|>{7})(?: |$)", line):
                 failures.append(f"{name}:{number}: unresolved merge marker")
-            # Markdown permits hard line breaks; keep upstream vendor formatting.
-            if not name.endswith(".md") and name != VENDOR_HEADER and line.rstrip() != line:
+            # Markdown permits hard line breaks.
+            if not name.endswith(".md") and line.rstrip() != line:
                 failures.append(f"{name}:{number}: trailing whitespace")
     if failures:
         print("\n".join(failures), flush=True)
@@ -72,10 +71,12 @@ def check_dotenv(files):
     for name in files:
         keys = set()
         for number, line in enumerate((ROOT / name).read_text().splitlines(), 1):
+            if line.startswith("# SMAB_"):
+                line = line.removeprefix("# ")
             if not line.strip() or line.lstrip().startswith("#"):
                 continue
             match = re.match(r"^([A-Za-z_][A-Za-z0-9_]*)=(.*)$", line)
-            if not match or match[1] in keys:
+            if not match or not match[1].startswith("SMAB_") or match[1] in keys:
                 print(f"{name}:{number}: expected a unique KEY=value assignment", flush=True)
                 passed = False
             else:
@@ -119,28 +120,21 @@ def main():
     check("JSON syntax and duplicate keys",
           [p for p in files if p.endswith(".json")],
           function=check_json)
-    check("Dotenv samples", [p for p in files if Path(p).name == ".env.sample"],
+    check("Dotenv examples", [p for p in files if Path(p).name == ".env.example"],
           function=check_dotenv)
     check("ShellCheck", [p for p in files if p.endswith(".sh")], command=["shellcheck"])
     check("Hadolint", [p for p in files if Path(p).name.startswith("Dockerfile")],
-          command=["hadolint", "--config", ".hadolint.yaml"])
+          command=["hadolint", "--config", "ressources/hadolint.yaml"])
     check("YAML", [p for p in files if p.endswith((".yml", ".yaml"))],
           command=["yamllint", "--strict", "--config-file", ".yamllint.yaml"])
     check("GitHub Actions", [p for p in files if p.startswith(".github/workflows/") and p.endswith((".yml", ".yaml"))],
           command=["actionlint", "-pyflakes="])
     check("Python", [p for p in files if p.endswith(".py")],
           command=["ruff", "check", "--config", "ruff.toml"])
-    check("C++", [p for p in files if p.endswith((".cpp", ".cc", ".cxx", ".h", ".hpp")) and p != VENDOR_HEADER],
-          command=["cppcheck", "--std=c++17", "--check-level=normal", "--report-progress",
-                   "--enable=warning,performance,portability",
-                   "--error-exitcode=1", "--inline-suppr", "--max-configs=1", "--suppress=missingIncludeSystem",
-                   "--suppress=toomanyconfigs", "--suppress=normalCheckLevelMaxBranches",
-                   f"--suppress=*:{VENDOR_HEADER}"], timeout=120)
     check("Markdown", [p for p in files if p.endswith(".md")],
           command=["pymarkdown", "--config", ".pymarkdown.yaml", "--strict-config", "scan"])
     print("\n================ Summary ================", flush=True)
     print(f"All {len(files)} project files received the text hygiene check.", flush=True)
-    print("Vendor json.hpp receives text checks and is parsed as a C++ include; upstream style is preserved.", flush=True)
     for label, passed in results:
         print(f"{'PASS' if passed else 'FAIL'}  {label}", flush=True)
     return 0 if all(passed for _, passed in results) else 1

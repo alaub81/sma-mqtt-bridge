@@ -1,14 +1,23 @@
-# Deployment template for the future runtime. No GHCR release exists yet.
-# Bootstrap diagnostics: use docker-compose.dev.yml and an explicit CLI command.
+# Standalone deployment service; requires a future published GHCR image.
+# Runtime options must match docker-compose.dev.yml (checked by tests/compose_check.py).
 services:
   sma-mqtt-bridge:
     image: ghcr.io/alaub81/sma-mqtt-bridge:${SMAB_BRIDGE_VERSION:-latest}
+    pull_policy: always
+    user: "${SMAB_UID:-10001}:${SMAB_GID:-10001}"
     env_file:
-      - path: ${SMAB_ENV_FILE:-./data/sma-mqtt-bridge/.env}
+      - path: ${SMAB_ENV_FILE:-./.env}
         required: false
     volumes:
       - type: bind
         source: ${SMAB_DATA_DIR:-./data/sma-mqtt-bridge}
         target: /data/sma-mqtt-bridge
-    # Enable the normal restart policy after runtime adapters are implemented.
-    restart: "no"
+    # Linux host networking is needed for Home Manager multicast on the Pi.
+    network_mode: host
+    init: true
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop: [ALL]
+    stop_grace_period: 15s
+    restart: unless-stopped
