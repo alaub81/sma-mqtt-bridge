@@ -82,3 +82,11 @@ Freshness is per property, using the larger of configured stale seconds and twic
 5. Check reconnect, rejected registers, stale values, changing assignments and retained retirement. Only then accept the installation; no source links/rules are removed by implementation.
 
 Deterministic tests cover register inventory, U32 high counters, signed values, sentinel/enum handling, identity-before-plant reads, session reuse, request correlation, timeouts/reconnect, pacing, assignment boundaries/duplicates/expiry and dynamic Homie discovery/manifest retirement. No live Home Manager read or write was performed for this implementation.
+
+## Reduced production polling
+
+Set `SMAB_HOME_MANAGER_ADVANCED_CHANNELS_ENABLED=false` to retain the six Unit 2 plant/grid
+readings while skipping Unit 1 metadata polling, the assignment table and all delegated inverter
+parameters. Mandatory Unit 1 identity verification still runs when a connection is established.
+`SMAB_HOME_MANAGER_DIAGNOSTICS_ENABLED=false` separately removes MQTT source diagnostics and the
+rejected-block counter. Both defaults are `true`; see [configuration](CONFIGURATION.md#optional-channel-groups).

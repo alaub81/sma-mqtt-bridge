@@ -59,3 +59,13 @@ The separate `sma-home-manager-2-modbus` profile uses `kind=home-manager-modbus-
 Its schema has `schemaVersion`, `id`, `kind`, `evidence`, `identity`, `pollers`, `properties`, `inventory`, `delegated`, and empty `commands`. Core pollers require `unitId` 1 or 2. `identity` references five distinct unscaled U32 properties on Unit 1: `model`, `serial`, `serialCopy`, `deviceClass`, `manufacturer`. The adapter checks model 9343, class 8128, manufacturer 461 and both serial registers against the configured serial before any plant or assignment reads. There is no claimed firmware validation or hardware acceptance.
 
 `inventory` defines the assignment table start, number of four-register slots (at most 245), and positive `intervalSeconds`. `delegated` holds reusable poller/property templates without a fixed unit ID. Only assigned units 3–247 are queried, using the freshly read table; duplicate units follow SMA's first-slot rule. Both mapping sections use the documented numeric/enum/scaling/sentinel rules above. Unit 2 intervals can be explicitly overridden; identity, inventory and delegated intervals remain profile-defined. All mappings are read-only, including source registers documented RW. See [coverage and acceptance](HOME_MANAGER_MODBUS.md).
+
+## Channel groups
+
+A property may specify `channelGroup`: `basic`, `advanced`, or `diagnostics`. Unknown groups fail
+validation. Without an explicit group, `identity` and `parameters` nodes are advanced, `diagnostics`
+nodes are diagnostics, and other nodes are basic. Device ENV flags select these groups before
+polling and decoding; mandatory identity checks always use the complete profile. Shared register
+blocks still serve enabled properties. Bundled inverter internal-temperature readings are explicitly tagged
+`basic` and remain enabled with either filter disabled; Sunny Boy type/max-power/set-max-power are tagged `advanced`. Default flags enable
+every existing channel. See [channel configuration](CONFIGURATION.md#optional-channel-groups).

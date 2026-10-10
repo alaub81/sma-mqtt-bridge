@@ -39,7 +39,9 @@
       "homieId": "sma-inverter1",
       "timeoutSeconds": 5.0,
       "staleSeconds": 60.0,
-      "commandsEnabled": false
+      "commandsEnabled": false,
+      "advancedChannelsEnabled": true,
+      "diagnosticsEnabled": true
     },
     {
       "id": "inverter2",
@@ -52,7 +54,9 @@
       "homieId": "sma-inverter2",
       "timeoutSeconds": 5.0,
       "staleSeconds": 60.0,
-      "commandsEnabled": false
+      "commandsEnabled": false,
+      "advancedChannelsEnabled": true,
+      "diagnosticsEnabled": true
     },
     {
       "id": "inverter3",
@@ -65,7 +69,9 @@
       "homieId": "sma-inverter3",
       "timeoutSeconds": 5.0,
       "staleSeconds": 60.0,
-      "commandsEnabled": false
+      "commandsEnabled": false,
+      "advancedChannelsEnabled": true,
+      "diagnosticsEnabled": true
     }
   ],
   "homeManager": {
@@ -86,7 +92,9 @@
     "connectTimeoutSeconds": 5,
     "transactionDelaySeconds": 0.2,
     "afterConnectionDelaySeconds": 3,
-    "reconnectDelaySeconds": 5
+    "reconnectDelaySeconds": 5,
+    "advancedChannelsEnabled": true,
+    "diagnosticsEnabled": true
   },
   "echarger": {
     "enabled": false,
@@ -105,7 +113,9 @@
     "timeoutSeconds": 10.0,
     "staleSeconds": 180.0,
     "homieId": "sma-echarger",
-    "commandsEnabled": false
+    "commandsEnabled": false,
+    "advancedChannelsEnabled": true,
+    "diagnosticsEnabled": true
   },
   "portal": {
     "enabled": false,
@@ -118,7 +128,8 @@
     "timeoutSeconds": 15.0,
     "staleSeconds": 180.0,
     "commandsEnabled": false,
-    "pollIntervalSeconds": 0
+    "pollIntervalSeconds": 0,
+    "diagnosticsEnabled": true
   },
   "commands": {
     "enabled": false,

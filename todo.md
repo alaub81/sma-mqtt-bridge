@@ -391,3 +391,17 @@ Entscheidungen, eingegangene Unterlagen, erledigte Arbeiten und Prüfergebnisse 
 - Erneuter TCP-Verbindungsversuch auf dem privat konfigurierten Home-Manager-Port weiterhin mit `ConnectionRefusedError` abgelehnt. Dadurch noch keine Identitäts-, Register-, Gerätezuordnungs- oder Grid-Guard-Zugriffsprüfung möglich. Übernahmezeit der Portaländerung, tatsächlichen Port und Geräteadresse prüfen; keine Netz- oder Gerätefehlfunktion als bewiesen behauptet.
 - Keine Geräte-Schreibaktion, keine Grid-Guard-Anmeldung und keine Änderung am laufenden Container oder privaten Zugangsdaten. Live-Abnahme bleibt offen.
 - Andreas fordert den lokalen Commit dieses Plan-/Portal-Meilensteins. Enthalten sind Schreibpfade, unabhängige Portal-Gates, 16 neue Offline-Protokolltests und öffentliche Dokumentation. Prüfstand: 117 Tests, vollständiger Linter, Compose-Parität und Diff-Hygiene bestanden. Private ENV und Referenzen bleiben ausgeschlossen; kein Push, Deployment oder Live-Schreibtest.
+
+### 2026-10-10 – Optionale Kanalgruppen pro Gerät
+
+- Benutzerwunsch umgesetzt: Advanced-Kanäle und Diagnosen separat per ENV/JSON abschaltbar, Standard jeweils eingeschaltet. Wechselrichter-Slots, Home Manager und eCharger unabhängig; Portal-Diagnosen separat.
+- Home Manager ohne Advanced: nur sechs Unit-2-Kernwerte; keine Zuordnungstabelle und keine delegierten Wechselrichterparameter. Identitätsprüfung bei Verbindungsaufbau bleibt verpflichtend.
+- Wechselrichterprofile unterstützen explizite Gruppen; interne Temperatur als Diagnose, Sunny-Boy-Typ/Leistungsgrenzen als Advanced. Messwerte, Ladeeinstellungen und Rückmeldungen bleiben verfügbar.
+- MQTT-Discovery/Werte enthalten keine ausgeschalteten Kanäle; bestehendes Topic-Manifest entfernt alte retained Topics. Interne Überwachung und Homie-Gerätestatus bleiben aktiv. HTTP-Bulkantworten müssen weiterhin sicher geparst werden.
+- Private ENV bleibt unverändert, daher weiterhin alles eingeschaltet. Produktivumschaltung braucht aktualisiertes Image und Container-Neuerstellung.
+- Validierung: gezielte Offline-Regressionen für entfallende Modbus-Abfragen, weiterhin wirksame Identitätsprüfung, unabhängige Flags und retained-Bereinigung ergänzt; alle 122 Offline-Tests und sämtliche Lint-Prüfungen erfolgreich. Keine neue Live-Prüfung oder Container-Umschaltung für diese Filter.
+
+### 2026-10-10 – Innentemperatur bleibt ein Messwert
+
+- Benutzerkorrektur: `internal-temperature` in allen drei Wechselrichterprofilen ausdrücklich der Basisgruppe zugeordnet; bleibt auch bei abgeschalteten Advanced-Kanälen und Diagnosen verfügbar. Frühere Zuordnung als Diagnose damit aufgehoben. Dokumentation entsprechend korrigiert.
+- Validierung: alle 122 Offline-Tests und vollständiger Lint-Lauf erfolgreich.

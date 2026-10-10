@@ -71,6 +71,7 @@ class SourceState:
     last_success: float | None = None
     last_timestamp: str = ""
     error: bool = False
+    diagnostics_enabled: bool = True
 
     @property
     def diagnostic_keys(self):

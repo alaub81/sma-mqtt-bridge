@@ -61,6 +61,8 @@ class MQTT(SafeRepr):
 
 @dataclass(frozen=True, repr=False)
 class Inverter(SafeRepr):
+    advanced_channels_enabled: bool = True
+    diagnostics_enabled: bool = True
     id: str = ""
     enabled: bool = False
     host: str = ""
@@ -77,6 +79,8 @@ class Inverter(SafeRepr):
 
 @dataclass(frozen=True, repr=False)
 class HomeManager(SafeRepr):
+    advanced_channels_enabled: bool = True
+    diagnostics_enabled: bool = True
     transport: str = "udp"
     profile: str = "sma-home-manager-2-modbus"
     modbus_port: int = 502
@@ -100,6 +104,8 @@ class HomeManager(SafeRepr):
 
 @dataclass(frozen=True, repr=False)
 class ECharger(SafeRepr):
+    advanced_channels_enabled: bool = True
+    diagnostics_enabled: bool = True
     enabled: bool = False
     host: str = ""
     port: int = 443
@@ -124,6 +130,7 @@ class ECharger(SafeRepr):
 
 @dataclass(frozen=True, repr=False)
 class Portal(SafeRepr):
+    diagnostics_enabled: bool = True
     enabled: bool = False
     base_url: str = "https://ennexos.sunnyportal.com"
     api_base_url: str = "https://uiapi.sunnyportal.com/api/v1"

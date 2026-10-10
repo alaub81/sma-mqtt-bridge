@@ -52,6 +52,47 @@ Home Manager requires a serial selector for both transports. `TRANSPORT=udp` (de
 
 eCharger requires a host and local account credentials. With the default TLS verification, supply a trusted certificate/CA unless system trust already covers it. `TLS_SERVER_NAME` optionally verifies the certificate's DNS name while connecting to the configured IP. An explicit `SMAB_ECHARGER_TLS_VERIFY=false` skips certificate/name verification and ignores the CA path. Its API and SEMP activation flags and schedules are separate. SEMP defaults to disabled. The portal remains separately enabled and uses separate credentials, plant/device IDs and session handling. It initially supplies minimum PV percentage for the configured eCharger Homie device, independently of local API availability. Home Manager remains the charging controller.
 
+## Optional channel groups
+
+All channel groups are enabled by default. Each inverter slot, Home Manager and eCharger supports
+`SMAB_<DEVICE>_ADVANCED_CHANNELS_ENABLED` and `SMAB_<DEVICE>_DIAGNOSTICS_ENABLED` (boolean, default `true`).
+The portal supports its own `SMAB_PORTAL_DIAGNOSTICS_ENABLED` flag. JSON equivalents are
+`advancedChannelsEnabled` and `diagnosticsEnabled` in the respective device section.
+
+For example, a reduced Home Manager production configuration is:
+
+```dotenv
+SMAB_HOME_MANAGER_ADVANCED_CHANNELS_ENABLED=false
+SMAB_HOME_MANAGER_DIAGNOSTICS_ENABLED=false
+```
+
+Use `INVERTER1`, `INVERTER2`, `INVERTER3` (or another configured slot), or `ECHARGER` in place of
+`HOME_MANAGER` to select another device independently. The eCharger flags apply to both API and SEMP;
+the independently configured portal retains its PV-share channels.
+
+| Group | Disabled behavior |
+| --- | --- |
+| Home Manager advanced | Skip Unit 1 metadata polling, assignment-table reads and all delegated `device-*` channels. Keep the six Unit 2 plant/grid readings. UDP currently exposes only basic readings. |
+| Inverter advanced | Omit published identity channels and explicitly tagged supplementary properties, including Sunny Boy type and power-limit parameters. Keep the existing energy, power, phase, battery, internal temperature and operating-status measurements. |
+| eCharger advanced | Omit firmware, duplicate vehicle-status code, SEMP control setpoints and raw parameter duplicates. Keep charging measurements, readable charging settings and command feedback. |
+| Diagnostics | Omit source status/last-success MQTT channels; also omit Home Manager rejected-block count, SEMP raw health/event/registration/mode codes. |
+
+Filters apply before Modbus scheduling and value decoding: blocks containing only disabled properties
+are not polled. Blocks shared with enabled values and mandatory identity checks are still read;
+disabled values are not decoded for publication. HTTP/SEMP APIs return bulk responses, so transport
+parsing and identity validation remain necessary, while disabled output values are not converted
+or advertised. No additional selective HTTP endpoint is assumed.
+
+Device identity gates, freshness checks, connection supervision, logs, Docker health checks and
+Homie `$state`/Last Will remain active. This setting never enables writes or changes command permissions.
+After changing ENV, recreate the container (a restart alone keeps its old environment); development
+also needs a rebuilt image for new code. On reconnect/startup, the persisted topic manifest removes
+previously owned retained values and metadata for disabled channels. Preserve the state volume.
+Consumers linked to intentionally disabled channels will stop receiving those values.
+
+Homie channel discovery is based on advertised properties; see the
+[official openHAB Homie binding documentation](https://www.openhab.org/addons/bindings/homie/).
+
 ## ENV options and defaults
 
 All names below include the `SMAB_` prefix. Empty strings are the default for optional strings and installation-specific values. Paths refer to the container except the Compose-only host paths. Boolean flags, integer ports/IDs/counts and numeric durations follow the validation above; other entries are strings.

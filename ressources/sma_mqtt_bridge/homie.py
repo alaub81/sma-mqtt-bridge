@@ -99,6 +99,8 @@ class HomiePublisher:
     def properties(self, states):
         props = [p for state in states for p in state.properties]
         for state in states:
+            if not state.diagnostics_enabled:
+                continue
             status_key, time_key = state.diagnostic_keys
             props += [Property(*status_key.split("/"), "Source availability", "enum", format="init,ready,stale,error"),
                       Property(*time_key.split("/"), "Last successful receipt (UTC)", "string")]
@@ -110,9 +112,10 @@ class HomiePublisher:
         result = {}
         for state in states:
             result.update(state.fresh_values(now))
-            result[state.diagnostic_keys[0]] = state.status(now)
-            if state.last_timestamp:
-                result[state.diagnostic_keys[1]] = state.last_timestamp
+            if state.diagnostics_enabled:
+                result[state.diagnostic_keys[0]] = state.status(now)
+                if state.last_timestamp:
+                    result[state.diagnostic_keys[1]] = state.last_timestamp
         status = "ready" if any(s.status(now) == "ready" for s in states) else "alert"
         return result, status
 

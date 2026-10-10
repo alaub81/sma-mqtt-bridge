@@ -108,7 +108,7 @@ def validate_mappings(poller_list, property_list):
             raise ConfigError("Invalid poller interval")
         pollers[poller["id"]] = poller
     for prop in property_list:
-        keys(prop, ("id", "node", "name", "poller", "offset", "type", "length", "byteOrder", "wordOrder", "scale", "unit", "invalid", "datatype"), ("valueMap", "minimum", "maximum", "format"))
+        keys(prop, ("id", "node", "name", "poller", "offset", "type", "length", "byteOrder", "wordOrder", "scale", "unit", "invalid", "datatype"), ("valueMap", "minimum", "maximum", "format", "channelGroup"))
         if not all(isinstance(prop[k], str) and ID.fullmatch(prop[k]) for k in ("id", "node")) or prop["id"] in properties:
             raise ConfigError("Invalid/duplicate profile property ID")
         if not isinstance(prop["name"], str) or not prop["name"] or not isinstance(prop["unit"], str):
@@ -127,6 +127,8 @@ def validate_mappings(poller_list, property_list):
             raise ConfigError("Invalid firmware format/encoding")
         if not isinstance(prop["invalid"], list) or any(type(v) not in (int, str) for v in prop["invalid"]):
             raise ConfigError("Explicit raw sentinels required")
+        if prop.get("channelGroup", "basic") not in ("basic", "advanced", "diagnostics"):
+            raise ConfigError("Invalid property channelGroup")
         if "valueMap" in prop and (not isinstance(prop["valueMap"], dict) or not prop["valueMap"] or any(not isinstance(k, str) or not isinstance(v, str) or not v for k, v in prop["valueMap"].items())):
             raise ConfigError("Invalid property valueMap")
         if prop["datatype"] in ("enum", "boolean") and "valueMap" not in prop:

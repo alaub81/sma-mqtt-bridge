@@ -66,10 +66,19 @@ class ModbusReader:
         self.interval_override = interval_override
         self.next_due = {}
         self.transaction = 0
+        self.definitions = [p for p in profile["properties"] if self.channel_enabled(p)]
+        active = {p["poller"] for p in self.definitions}
+        self.pollers = [p for p in profile["pollers"] if p["id"] in active]
         self.properties = tuple(Property(p["node"], p["id"], p["name"], p["datatype"], p["unit"],
                                          ",".join(dict.fromkeys(p.get("valueMap", {}).values())) if p["datatype"] == "enum" else "",
                                          max(settings.stale_seconds, 2 * self.interval(next(b for b in profile["pollers"] if b["id"] == p["poller"]))))
-                                for p in profile["properties"])
+                                for p in self.definitions)
+
+    def channel_enabled(self, prop):
+        group = prop.get("channelGroup", "advanced" if prop["node"] in ("identity", "parameters")
+                         else "diagnostics" if prop["node"] == "diagnostics" else "basic")
+        return ((group != "advanced" or self.settings.advanced_channels_enabled)
+                and (group != "diagnostics" or self.settings.diagnostics_enabled))
 
     def interval(self, poller):
         if self.interval_override:
@@ -78,7 +87,7 @@ class ModbusReader:
 
     def delay(self):
         now = time.monotonic()
-        return max(0, min(self.next_due.get(p["id"], now) for p in self.profile["pollers"]) - now)
+        return max(0, min((self.next_due.get(p["id"], now) for p in self.pollers), default=now + self.settings.poll_interval_seconds) - now)
 
     async def read_block(self, reader, writer, poller):
         self.transaction = (self.transaction + 1) % 65536
@@ -113,14 +122,14 @@ class ModbusReader:
                         values[p["id"]] = decode(blocks[p["poller"]], p)
                 verify_identity(self.profile, values, self.settings.expected_serial)
                 now, selected = time.monotonic(), set()
-                for poller in self.profile["pollers"]:
+                for poller in self.pollers:
                     if now >= self.next_due.get(poller["id"], 0):
                         if poller["id"] not in blocks:
                             blocks[poller["id"]] = await self.read_block(reader, writer, poller)
                         selected.add(poller["id"])
                 result = {p["node"] + "/" + p["id"]: decode(blocks[p["poller"]], p)
-                        for p in self.profile["properties"] if p["poller"] in selected}
-                for poller in self.profile["pollers"]:
+                        for p in self.definitions if p["poller"] in selected}
+                for poller in self.pollers:
                     if poller["id"] in selected:
                         self.next_due[poller["id"]] = now + self.interval(poller)
                 return result

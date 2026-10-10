@@ -27,8 +27,9 @@ def sources(config):
     for device in config.inverters:
         if device.enabled:
             reader = ModbusReader(device, config.profiles[device.id], device.id in config.interval_overrides)
-            interval = min(reader.interval(p) for p in reader.profile["pollers"])
-            result.append((SourceState(device.id, device.homie_id, reader.properties, device.stale_seconds), reader, interval))
+            interval = min((reader.interval(p) for p in reader.pollers), default=device.poll_interval_seconds)
+            result.append((SourceState(device.id, device.homie_id, reader.properties, device.stale_seconds,
+                                       diagnostics_enabled=device.diagnostics_enabled), reader, interval))
     hm, ec, portal = config.home_manager, config.echarger, config.portal
     if hm.enabled:
         if hm.transport == "modbus-tcp":
@@ -36,16 +37,20 @@ def sources(config):
             interval = hm.poll_interval_seconds
         else:
             reader, interval = MeterReader(hm), None
-        result.append((SourceState("home-manager", hm.homie_id, reader.properties, hm.stale_seconds), reader, interval))
+        result.append((SourceState("home-manager", hm.homie_id, reader.properties, hm.stale_seconds,
+                                       diagnostics_enabled=hm.diagnostics_enabled), reader, interval))
     if ec.enabled:
         reader = EChargerReader(ec, limit, include_base=not ec.semp_enabled)
-        result.append((SourceState("api", ec.homie_id, reader.properties, ec.stale_seconds), reader, ec.api_poll_interval_seconds))
+        result.append((SourceState("api", ec.homie_id, reader.properties, ec.stale_seconds,
+                                       diagnostics_enabled=ec.diagnostics_enabled), reader, ec.api_poll_interval_seconds))
     if ec.semp_enabled:
         reader = SempReader(ec, limit, include_settings=not ec.enabled)
-        result.append((SourceState("semp", ec.homie_id, reader.properties, ec.stale_seconds), reader, ec.semp_poll_interval_seconds))
+        result.append((SourceState("semp", ec.homie_id, reader.properties, ec.stale_seconds,
+                                       diagnostics_enabled=ec.diagnostics_enabled), reader, ec.semp_poll_interval_seconds))
     if portal.enabled:
         reader = PortalReader(portal, limit)
-        result.append((SourceState("portal", ec.homie_id, reader.properties, portal.stale_seconds), reader, portal.poll_interval_seconds))
+        result.append((SourceState("portal", ec.homie_id, reader.properties, portal.stale_seconds,
+                                       diagnostics_enabled=portal.diagnostics_enabled), reader, portal.poll_interval_seconds))
     return result
 
 
@@ -107,7 +112,7 @@ async def run(config, refresh_portal=False, stop=None, publisher_factory=HomiePu
         result_state = SourceState("commands", config.echarger.homie_id,
                                    (Property("commands", "local-result", "Local command result", "string"),
                                     Property("commands", "plan", "Confirmed charging plan", "string", settable=True)),
-                                   config.echarger.stale_seconds)
+                                   config.echarger.stale_seconds, diagnostics_enabled=config.echarger.diagnostics_enabled)
         states.append(result_state)
         api_reader = next(r for s, r, _ in readers if s.id == "api")
         local_controller = LocalCommands(config, api_state, result_state, reader=api_reader)
@@ -117,7 +122,7 @@ async def run(config, refresh_portal=False, stop=None, publisher_factory=HomiePu
                                         for p in portal_state.properties)
         result_state = SourceState("portal-commands", config.echarger.homie_id,
                                    (Property("commands", "portal-result", "Portal command result", "string"),),
-                                   config.portal.stale_seconds)
+                                   config.portal.stale_seconds, diagnostics_enabled=config.portal.diagnostics_enabled)
         states.append(result_state)
         portal_reader = next(r for s, r, _ in readers if s.id == "portal")
         portal_controller = PortalCommands(config, portal_state, result_state, reader=portal_reader)
