@@ -1,7 +1,7 @@
 .git
 .env
 .env.*
-!.env.sample
+!.env.example
 config.json
 docker-compose.yml
 data/
@@ -14,3 +14,5 @@ __pycache__/
 build/
 *.sarif
 .DS_Store
+.venv/
+*.egg-info/

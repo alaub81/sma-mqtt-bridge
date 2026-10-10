@@ -1,6 +1,5 @@
 {
   "schemaVersion": 1,
-  "status": "design-example-not-yet-implemented",
   "runtime": {
     "timezone": "Europe/Berlin",
     "logLevel": "INFO",
@@ -60,9 +59,9 @@
     "host": "",
     "port": 443,
     "tlsCaFile": "",
-    "sempEnabled": true,
+    "sempEnabled": false,
     "sempPort": 80,
-    "sempPath": "/semp/",
+    "sempPath": "/SEMP/",
     "homieId": "sma-echarger",
     "commandsEnabled": false
   },

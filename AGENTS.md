@@ -13,7 +13,8 @@ The private directory is deliberately excluded from Git and Docker build context
 - Follow `docs/CONFIGURATION.md`: use `SMAB_` for every project environment variable, with documented typed defaults and environment overrides for all operational settings.
 - Configure each inverter, Home Manager, eCharger and portal adapter independently: enabled flag, address where applicable, identity/profile, connection settings and intervals. Disabled adapters perform no device I/O. Do not infer device activation from an address or supplied credentials.
 - Select reusable inverter model profiles by configured ID, with bundled defaults and host file overrides under the profile directory; see `profiles/README.md`. New supported models must be addable through files without model-specific adapter code. Identity-only descriptors are not validated polling profiles; reject them for normal polling until their mappings are verified.
-- Store deployment configuration, per-device profiles, certificates and persistent state on the host under `./data/sma-mqtt-bridge/`, bind-mounted to `/data/sma-mqtt-bridge`. A minimal `.env` must suffice; additional JSON configuration is optional. Addresses, secrets and device identity have empty defaults and are required only for enabled adapters that need them.
+- Store the private `.env` in the repository root, next to the Compose files; document all supported variables in `.env.example`. Store optional JSON configuration, per-device profiles, certificates, password files and persistent state under `./data/sma-mqtt-bridge/`, bind-mounted to `/data/sma-mqtt-bridge`. A minimal `.env` must suffice; additional JSON configuration is optional. Addresses, secrets and device identity have empty defaults and are required only for enabled adapters that need them.
+- Keep both Compose files standalone with identical runtime settings. Development builds `Dockerfile-SMAB`; the example pulls the GHCR image. `tests/compose_check.py` verifies parity. Keep supplemental deployment files under `ressources/`; Compose, root ENV and `.dockerignore` remain at the project root.
 - Validate configuration before connecting. Use precedence built-in/profile defaults < optional JSON configuration < explicit environment values; never persist resolved credentials or environment secrets into generated configuration.
 - Maintain `todo.md` as the project diary: record decisions, inventory findings, all unresolved questions, pending tasks and validation results. Preserve earlier entries and mark resolved questions explicitly. Keep diary entries in German and omit private identifiers and secrets.
 - Prefer local measurements and local eCharger settings. Use the existing ennexOS web-portal API only where needed, initially the minimum PV percentage.
@@ -23,7 +24,7 @@ The private directory is deliberately excluded from Git and Docker build context
 
 ## Implementation and validation
 
-- This initial repository is a buildable scaffold, not a functioning SMA/MQTT runtime. Keep that distinction explicit until adapters are implemented and verified.
+- The Python read runtime is offline tested. Do not claim live SMA/MQTT acceptance or complete openHAB migration until verified. Bundled identity-only profiles remain blocked for polling.
 - The working openHAB JavaScript references are evidence and protocol examples. Port their behavior; they depend on the openHAB runtime and cannot run unchanged in the Python service.
 - Private references are read-only. Update public documentation and migration mappings, not original openHAB exports.
 - Only expose confirmed writable parameters through Homie `/set`. Read-only measurements remain non-settable. Do not expose every editable installer parameter automatically.

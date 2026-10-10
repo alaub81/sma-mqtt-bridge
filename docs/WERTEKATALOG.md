@@ -2,7 +2,7 @@
 
 Stand: 2026-10-10. Arbeitskatalog auf ausdrücklichen Wunsch mit deutschen Beschreibungen.
 
-Diese Datei sammelt alle in den vorliegenden Quellen identifizierten Messwerte, Einstellungen und Befehle sowie weitere dokumentierte Kandidaten. Sie ist die gemeinsame Grundlage für die spätere Implementierung und wird bei neuen Unterlagen oder Geräteantworten ergänzt. Die Bridge ist weiterhin ein Diagnosegrundgerüst: **Keines der hier geplanten Topics wird bereits durch einen funktionierenden SMA/MQTT-Adapter veröffentlicht.**
+Diese Datei sammelt alle in den vorliegenden Quellen identifizierten Messwerte, Einstellungen und Befehle sowie weitere dokumentierte Kandidaten. Sie ist die gemeinsame Grundlage für die spätere Implementierung und wird bei neuen Unterlagen oder Geräteantworten ergänzt. Das erste Python-Lesegrundgerüst einschließlich Homie ist implementiert und offline geprüft. **Kein Topic gilt damit als an der Installation abgenommen.** Die drei Wechselrichterprofile bleiben `identity-only` und für Abfragen gesperrt.
 
 Der vollständige Registerumfang ist derzeit nur für eine Sunny-Boy-Baureihe dokumentiert. Tripower und Sunny Boy Storage erhalten erst nach Modell- und Firmwareabgleich eigene vollständige Registerprofile. Eine allgemeine SMA-Adresse oder eine ähnliche Gerätebezeichnung beweist keine Unterstützung auf einem bestimmten Gerät.
 
@@ -1548,3 +1548,14 @@ Diagnose-Gesundheit und MQTT-Last-Will müssen unabhängig von fehlenden einzeln
 Bei jeder neuen Unterlage die Quelle/Version und Modellgeltung ergänzen, Register/Kanal, Zugriff, Datentyp, Skalierung, Unit, deutsche Bedeutung und Topic gemeinsam prüfen. Bestehende Topics möglichst stabil halten; erforderliche Änderungen ausdrücklich mit Migrationshinweis dokumentieren. Einen Kandidaten erst nach Nachweis zu D/B bzw. nach Adapter-/Live-Prüfung zu verifiziertem Laufzeitbestand hochstufen. Schreibfähigkeiten separat freigeben und rücklesen. Die ursprünglichen Dateien unter `private/` bleiben unverändert.
 
 Änderungsverlauf: 2026-10-10 — erster vollständiger Quellenkatalog mit lokaler/Portal-Trennung, Einheitenlücken, Topic-Vorschlägen und Firmware-/Modellabgleich. Laufzeitimplementierung und Geräte-Schreibtests sind weiterhin ausstehend.
+
+## Python-Lesestand vom 10.10.2026
+
+- Implementiert: Konfiguration/Profilprüfung, generischer Modbus-Leser, Home-Manager-Zählerdekodierung für die vier Bilanzwerte, lokale eCharger-API/SEMP, optionales ennexOS-Lesen und Homie 4. Synthetische Tests belegen Formatprüfung, Identitätsgrenzen, Missing-/Stale-Verhalten und MQTT-Lebenszyklus; keine Hardwareabnahme.
+- Wechselrichter: Alle 41 Channels bleiben im Ledger. Ohne validierte Modell-/Firmware-/Identitätszuordnung keinerlei Polling. Zusätzliche Register aus dieser Tabelle werden nicht automatisch aktiviert.
+- Home Manager: Bezugs-/Einspeiseleistung in W, Gesamtenergie in kWh. Private openHAB-Versatzprofile bleiben dort; keine doppelten Offsets oder Tageszählerrücksetzungen. Weitere OBIS-/Phasenwerte sowie verschlüsselte Telegramme bleiben offen.
+- eCharger: SEMP und API separat aktivierbar; Topic-IDs und bekannte Status-Maps erhalten. Lokal `Plan.En` und `StpWhenFlTm` nur mit passender API-Unit veröffentlichen. Die Portal-Unit bestätigt keine lokale Rohskalierung. Fehlende/veraltete Messzeitstempel machen Messwerte unverfügbar.
+- Portal: Mindest-PV-Anteil, daraus berechneter erlaubter Netzanteil, Rechte und Einstellmodus lesend implementiert. `pollIntervalSeconds=0` meldet sich nicht automatisch an; `--refresh-portal` fordert einmaliges Lesen an. Portal-Lesen bleibt unabhängig von API/SEMP.
+- Alle Properties bleiben `$settable=false`, ohne `/set`-Abonnement. Schreib-/Komfortbefehle, zusätzliche Diagnosezusammenfassungen und vollständige openHAB-Abnahme bleiben offen. Herkunftskennzeichen und Inventarzeilen werden durch Offline-Unterstützung nicht zu Live-Nachweisen.
+
+Siehe `docs/migration-coverage.csv` für den zeilenweisen Stand. Berechnungen, Regeln, Shelly-Quellen und InfluxDB-Historien bleiben in openHAB.

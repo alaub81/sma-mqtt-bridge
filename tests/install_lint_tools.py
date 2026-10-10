@@ -3,7 +3,6 @@
 
 import hashlib
 import json
-import os
 from pathlib import Path
 import platform
 import re
@@ -69,27 +68,6 @@ def install_binary(name, specification, target_platform):
         raise ValueError(f"Unexpected {name} version")
 
 
-def install_cppcheck(specification):
-    destination = BIN / "cppcheck"
-    if destination.exists() and has_version(destination, specification):
-        return
-    archive_path = TOOLS / "cppcheck-source.tar.gz"
-    download(specification["url"], specification["sha256"], archive_path)
-    with tarfile.open(archive_path) as archive:
-        archive.extractall(TOOLS, filter="data")
-    source = TOOLS / f"cppcheck-{specification['version']}"
-    subprocess.run(
-        ["make", "-C", str(source), f"-j{min(os.cpu_count() or 2, 4)}",
-         "MATCHCOMPILER=yes", f"FILESDIR={source}"], check=True,
-    )
-    if destination.is_symlink():
-        destination.unlink()
-    shutil.copyfile(source / "cppcheck", destination)
-    destination.chmod(0o755)
-    if not has_version(destination, specification):
-        raise ValueError("Unexpected Cppcheck version")
-
-
 def main():
     if sys.version_info < (3, 12):
         raise ValueError("Python 3.12 or newer is required to install lint tools")
@@ -100,8 +78,6 @@ def main():
     for name in ("shellcheck", "hadolint", "actionlint"):
         install_binary(name, specifications[name], target_platform)
         print(f"Ready: {name} {specifications[name]['version']}", flush=True)
-    install_cppcheck(specifications["cppcheck"])
-    print(f"Ready: cppcheck {specifications['cppcheck']['version']}", flush=True)
 
 
 if __name__ == "__main__":

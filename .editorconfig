@@ -24,9 +24,5 @@ indent_size = 2
 [Dockerfile*]
 indent_size = 2
 
-[*.php]
-indent_size = 4
-
-[Makefile]
-indent_style = tab
+[*.py]
 indent_size = 4

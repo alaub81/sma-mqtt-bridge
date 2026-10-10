@@ -1,14 +1,15 @@
 # Configuration contract
 
-Andreas requested this contract on 2026-10-10. It is binding for the Python implementation. **The current C++ diagnostic scaffold does not load these settings.** Compose already uses the host directory and `SMAB_` deployment variables; runtime validation and defaults are implementation work.
+Andreas requested this contract on 2026-10-10. It is binding for the Python implementation. **Implemented by the Python loader.** Read adapters and Homie are offline tested; hardware acceptance is pending. Bundled inverter descriptors still cannot be used for polling.
 
 ## Host files and precedence
 
-All installation files belong under `./data/sma-mqtt-bridge/` relative to the Compose project directory. Bind-mount that directory to `/data/sma-mqtt-bridge` in the container:
+The private `.env` belongs in the repository root next to the Compose files. `.env.example` documents every available variable, including its purpose, type and default. Store other installation files under `./data/sma-mqtt-bridge/` relative to the Compose project directory; bind-mount that directory to `/data/sma-mqtt-bridge` in the container:
 
 ```text
+.env                   # Explicit overrides and installation credentials, host only
+.env.example           # Public, fully commented variable reference
 data/sma-mqtt-bridge/
-  .env                 # Explicit overrides and installation credentials
   config.json          # Optional non-secret configuration
   profiles/            # Verified register profiles, one or more per inverter
   certs/               # CA certificates and optional client certificate/key
@@ -16,19 +17,19 @@ data/sma-mqtt-bridge/
   state/               # Heartbeat and necessary non-secret persistent state
 ```
 
-The directory is excluded from Git and Docker build contexts. Keep `.env`, secret files and private keys readable only by the owner/container user. Never generate a configuration file containing resolved passwords or session tokens. Do not rewrite user configuration automatically.
+The private `.env` and data directory are excluded from Git and Docker build contexts. Compose reads `.env` on the host and passes its values into the container; the file itself is not mounted. Keep `.env` readable only by its host owner, and secret files/private keys readable only by the owner/container user. Never generate a configuration file containing resolved passwords or session tokens. Do not rewrite user configuration automatically.
 
-The future loader uses built-in defaults and selected profile connection defaults, then optional `config.json`, then explicit `SMAB_` environment values. Resolve the profile selector from configuration/ENV first; its defaults never override explicit installation settings. Missing default `config.json` is valid; an explicitly selected missing file or invalid JSON is an error. Profiles supply protocol metadata and per-poller intervals, not credentials or device activation. A device-level interval explicitly set in JSON or ENV overrides all its pollers; otherwise preserve profile intervals and use the default only for pollers without an interval.
+The loader uses built-in defaults and selected profile connection defaults, then optional `config.json`, then explicit `SMAB_` environment values. Resolve the profile selector from configuration/ENV first; its defaults never override explicit installation settings. Missing default `config.json` is valid; an explicitly selected missing file or invalid JSON is an error. Profiles supply protocol metadata and per-poller intervals, not credentials or device activation. A device-level interval explicitly set in JSON or ENV overrides all its pollers; otherwise preserve profile intervals and use the default only for pollers without an interval.
 
 Every operational option must be overridable through ENV and documented with type, default and validation. Unknown runtime `SMAB_` keys, malformed values, duplicate device/Homie IDs and conflicting password/password-file settings must fail validation before any connection. Recognize Compose-only variables without treating them as runtime options. An absent variable uses the previous layer; an empty value clears only optional strings. Empty booleans or numbers are errors. Accept boolean `true`/`false` case-insensitively, validate finite positive durations, ports 1–65535 and Modbus unit IDs 1–247. Only portal polling accepts zero to mean no periodic polling.
 
-JSON is optional, not a second mandatory setup step. JSON names use camelCase as illustrated in [config.example.json](../config.example.json); runtime fields live under `runtime`, MQTT fields under `mqtt`, device fields under their respective sections, and global command settings under `commands`. Compose-only settings are not JSON fields. Credentials use ENV or optional password files.
+JSON is optional, not a second mandatory setup step. JSON names use camelCase as illustrated in [config.example.json](../ressources/config.example.json); runtime fields live under `runtime`, MQTT fields under `mqtt`, device fields under their respective sections, and global command settings under `commands`. Compose-only settings are not JSON fields. Credentials use ENV or optional password files.
 
 ## Minimal deployment overrides
 
 A broker address and each enabled device's required installation values suffice. All sources and write paths are disabled by default; setting a host or credentials does not enable a source. Enabling an adapter enables bridge access, not the physical inverter/charger itself. A disabled source creates no device sessions, polling, subscriptions to its commands or writes, and must not advertise its unavailable properties as fresh. A Homie device with no enabled sources must not be advertised as ready. Sources sharing one Homie device retain independent availability; disabling one does not implicitly enable or disable the other. Previously retained discovery/state must have an explicit retirement policy when a source is disabled.
 
-For one inverter, the future runtime needs only:
+For one inverter, the runtime configuration needs only (plus a validated host profile):
 
 ```dotenv
 SMAB_MQTT_HOST=mqtt.example.invalid
@@ -41,11 +42,11 @@ Add broker authentication/CA overrides if required by that installation. Select 
 
 Each inverter is independent. The first three slots default respectively to `sma-stp8-0-3av-40`, `sma-sbs3-7-10` and `sma-sb4-0-1av-41`, and each selection can be overridden. A profile is reusable across slots; slot number does not determine the connected model. Further slots use the same `SMAB_INVERTER<N>_` family, with an empty profile default requiring explicit selection, without another hard-coded adapter. A disabled slot does not require a host or profile. An enabled slot requires a host and validated matching profile; validate discovered device identity against the profile and an optional expected serial number before accepting data.
 
-For an ID, the planned resolver checks `<id>.json` under `SMAB_PROFILE_DIR` before the bundled resource. An invalid override must fail instead of silently falling back. `file:custom-name.json` selects only a host file, with no bundled fallback; reject directory traversal and absolute paths. Model profiles contain model/firmware compatibility evidence, protocol defaults, register definitions and Homie metadata, not installation credentials or addresses. Add future supported inverters as profile files rather than code branches. See the profile README for the draft schema and validation gate.
+For an ID, the resolver checks `<id>.json` under `SMAB_PROFILE_DIR` before the bundled resource. An invalid override must fail instead of silently falling back. `file:custom-name.json` selects only a host file, with no bundled fallback; reject directory traversal and absolute paths. Model profiles contain model/firmware compatibility evidence, protocol defaults, register definitions and Homie metadata, not installation credentials or addresses. Add future supported inverters as profile files rather than code branches. See the profile README for the version-1 schema and validation gate.
 
 Home Manager requires a serial selector to distinguish meter telegrams. Its host/IP is an optional additional sender filter; UDP reception does not establish a TCP connection to that host. Interface/bind address, multicast group and timeout remain configurable. Do not enable its NSD Modbus server merely to read meter data. Encrypted Speedwire support must be verified separately before promising compatibility.
 
-eCharger requires a host, local account credentials and a trusted certificate/CA, unless its certificate is already trusted by the system store. Its API and SEMP schedules are separate. The portal remains separately enabled and uses separate credentials, plant/device IDs and session handling. It initially supplies minimum PV percentage for the configured eCharger Homie device, independently of local API availability. Home Manager remains the charging controller.
+eCharger requires a host, local account credentials and a trusted certificate/CA, unless its certificate is already trusted by the system store. Its API and SEMP activation flags and schedules are separate. SEMP defaults to disabled, unlike the earlier parent-dependent design. The portal remains separately enabled and uses separate credentials, plant/device IDs and session handling. It initially supplies minimum PV percentage for the configured eCharger Homie device, independently of local API availability. Home Manager remains the charging controller.
 
 ## ENV options and defaults
 
@@ -55,7 +56,8 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 | --- | --- | --- |
 | `SMAB_BRIDGE_VERSION` | `latest` | Compose image tag; select a published version for deployment. No release exists yet. |
 | `SMAB_DATA_DIR` | `./data/sma-mqtt-bridge` | Compose host bind directory. |
-| `SMAB_ENV_FILE` | `./data/sma-mqtt-bridge/.env` | Compose service ENV file; optional for diagnostics. |
+| `SMAB_ENV_FILE` | `./.env` | Compose service ENV file; optional for diagnostics. |
+| `SMAB_UID`, `SMAB_GID` | `10001` | Compose-only integer user/group IDs; align file access with the host account. |
 | `SMAB_CONFIG_FILE` | `/data/sma-mqtt-bridge/config.json` | Optional JSON configuration. |
 | `SMAB_PROFILE_DIR` | `/data/sma-mqtt-bridge/profiles` | Verified device profile directory. |
 | `SMAB_STATE_DIR` | `/data/sma-mqtt-bridge/state` | Non-secret persistent state and heartbeat. |
@@ -65,6 +67,7 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 | `SMAB_HEALTH_STALE_SECONDS` | `60` | Heartbeat failure threshold; greater than heartbeat interval. |
 | `SMAB_SHUTDOWN_TIMEOUT_SECONDS` | `10` | Bounded graceful shutdown. |
 | `SMAB_RECONNECT_MIN_SECONDS` | `1` | Initial supervised reconnection delay, with jitter. |
+| `SMAB_MAX_RESPONSE_BYTES` | `1048576` | Positive integer HTTP response limit, including decompressed data. |
 | `SMAB_RECONNECT_MAX_SECONDS` | `60` | Maximum delay; at least the minimum. No uncertain write retries. |
 | `SMAB_COMMANDS_ENABLED` | `false` | Global gate for confirmed command allowlists. |
 | `SMAB_COMMAND_READBACK_TIMEOUT_SECONDS` | `30` | Time limit to confirm a command through readback. |
@@ -116,10 +119,11 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 | `HOST`, `USERNAME`, `PASSWORD`, `PASSWORD_FILE` | empty | Local address and credentials; choose password or a file. |
 | `PORT` | `443` | HTTPS port; local API always verifies TLS. |
 | `TLS_CA_FILE` | empty | Trusted local certificate/CA; system trust if omitted. |
-| `EXPECTED_SERIAL` | empty | Optional local device identity check. |
+| `EXPECTED_SERIAL` | empty | Required local API serial guard; optional additional SEMP guard. |
 | `API_POLL_INTERVAL_SECONDS` | `60` | Parameter/live-data schedule, separate from SEMP. |
-| `SEMP_ENABLED` | `true` | Enable local SEMP reads only when the parent source is enabled. |
-| `SEMP_PORT`, `SEMP_PATH` | `80`, `/semp/` | Local SEMP endpoint; validate response identity. |
+| `SEMP_ENABLED` | `false` | Independently enable SEMP reads, without API credentials or implicit activation. |
+| `SEMP_DEVICE_ID` | empty | Required SEMP identity selector when enabled. |
+| `SEMP_PORT`, `SEMP_PATH` | `80`, `/SEMP/` | Local SEMP endpoint; validate response identity. |
 | `SEMP_POLL_INTERVAL_SECONDS` | `30` | Local SEMP measurement schedule. |
 | `TIMEOUT_SECONDS`, `STALE_SECONDS` | `10`, `180` | HTTP timeout and freshness threshold. |
 | `HOMIE_ID` | `sma-echarger` | Shared charger identity for local and portal properties. |
@@ -128,23 +132,42 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 | Portal suffix after `SMAB_PORTAL_` | Default | Meaning / validation |
 | --- | --- | --- |
 | `ENABLED` | `false` | Separate optional ennexOS adapter. |
-| `BASE_URL` | `https://ennexos.sunnyportal.com` | HTTPS origin with mandatory certificate verification. |
+| `BASE_URL` | `https://ennexos.sunnyportal.com` | HTTPS portal origin with mandatory verification. |
+| `API_BASE_URL` | `https://uiapi.sunnyportal.com/api/v1` | Verified HTTPS API base. |
+| `AUTH_BASE_URL` | `https://login.sma.energy/auth/realms/SMA` | Verified HTTPS realm; login actions must stay on this origin/path. |
+| `CLIENT_ID` | `SPpbeOS` | Public OAuth client ID, not a developer credential. |
 | `USERNAME`, `PASSWORD`, `PASSWORD_FILE` | empty | Separate portal account; choose password or a file. |
 | `PLANT_ID`, `DEVICE_ID` | empty | Required installation selectors when enabled. |
 | `TIMEOUT_SECONDS` | `15` | Request timeout. |
 | `POLL_INTERVAL_SECONDS` | `0` | Explicit refresh by default; positive value enables periodic requests. |
-| `COMMANDS_ENABLED` | `false` | Additional gate for confirmed minimum PV percentage writes. |
+| `STALE_SECONDS` | `180` | Positive freshness limit for explicitly retrieved preferences. |
+| `COMMANDS_ENABLED` | `false` | Reserved gate; enabling it is rejected until command implementation. |
 
-The option list is expandable as adapters are implemented; add settings, their defaults and validation here and in `.env.sample` in the same change. Validate Homie IDs as lowercase letters, digits and internal hyphens; derive one MQTT connection/Last Will per advertised device. Command gates never override a missing allowlist, missing rights, invalid bounds or readback requirements. Do not expose an editable installer setting merely because its metadata is writable.
+The option list is expandable as adapters are implemented; add settings, their defaults and validation here and in `.env.example` in the same change. Validate Homie IDs as lowercase letters, digits and internal hyphens; derive one MQTT connection/Last Will per advertised device. Command gates never override a missing allowlist, missing rights, invalid bounds or readback requirements. Do not expose an editable installer setting merely because its metadata is writable.
 
 ## Compose usage
 
-Place only needed overrides in `data/sma-mqtt-bridge/.env`; no additional JSON file is mandatory. When preparing a fresh installation, copy `.env.sample` there and replace its placeholder broker host. Keep existing configuration intact. The service's `env_file` passes those values into the container, while `--env-file` also supplies Compose interpolation, for example the image tag or an alternative host directory:
+Place only needed overrides in the root `.env`; no additional JSON file is mandatory. On a fresh installation, copy `.env.example` to `.env` and replace its placeholder broker host. Keep existing configuration intact. Root `.env` supplies Compose interpolation automatically, and the service's `env_file` passes those values into the container. No `--env-file` flag is needed for the default layout:
 
 ```bash
-docker compose --env-file ./data/sma-mqtt-bridge/.env -f docker-compose.dev.yml run --rm sma-mqtt-bridge --project-status
+docker compose -f docker-compose.dev.yml run --rm sma-mqtt-bridge --check-config
+docker compose -f docker-compose.dev.yml up -d --build
 ```
 
-This remains a diagnostic command until the Python runtime is implemented. The optional service ENV file requires Docker Compose 2.24 or newer. Diagnostics can render templates without any private file. Home Manager multicast networking on the Raspberry Pi remains a separate deployment check; the bind mount alone does not establish UDP reachability.
+Both Compose files are standalone and carry identical runtime options. Development explicitly builds `Dockerfile-SMAB`; example uses the GHCR image instead. `python3 tests/compose_check.py` checks this parity with public settings and overrides. Use `--check-config` to validate all enabled sources without connecting. Starting without a diagnostic flag runs only explicitly enabled read sources. No command gate may be enabled in this milestone. The optional service ENV file requires Docker Compose 2.24 or newer. Diagnostics can render templates without any private file. To use another ENV file for both interpolation and service variables, set `SMAB_ENV_FILE` to that path in the shell and also pass `--env-file` with the same path. Home Manager multicast networking on the Raspberry Pi remains a separate deployment check; the bind mount alone does not establish UDP reachability.
 
 References: [Docker Compose ENV files](https://docs.docker.com/compose/how-tos/environment-variables/set-environment-variables/), [Compose bind mounts](https://docs.docker.com/reference/compose-file/services/#volumes), [Homie 4 convention](https://homieiot.github.io/specification/spec-core-v4_0_0/).
+
+## Implemented validation and lifecycle details
+
+JSON uses `schemaVersion: 1` and the documented camelCase fields. Unknown keys, duplicate keys, non-finite numbers, malformed types and duplicate slots/IDs are errors. Passwords and account usernames belong in ENV; password files are alternative secret sources. Disabled adapters do not load password files, TLS trust or host profile files. TLS/key and password-source conflicts still fail structural validation. Neither the loader nor the service rewrites configuration.
+
+Source activation is never inferred. No sources means no discovery as ready; the CLI exits with an actionable diagnostic unless a saved topic manifest needs MQTT retirement. That retirement requires broker configuration but performs no device I/O. The profile directory contains file-driven model metadata and verified polling definitions; it never supplies addresses, credentials or activation.
+
+MQTT QoS is 1 or 2. Each advertised Homie device has a unique client ID and retained `lost` Will. Sources sharing the charger device retain independent status. All properties have `$settable=false`; there are no `/set` subscriptions. Global/per-source command gates currently reject `true`. Source failures are isolated, authentication challenges block repeated login, and SIGTERM cancels pending readers after the configured grace period. The main-loop heartbeat distinguishes source freshness and MQTT availability from process liveness.
+
+Local API measurements require a recent timezone-qualified timestamp; missing or old timestamps yield unavailable data. SEMP parameters use the same check for measurements. Settings are observations of the last successful read. Local plan energy and stop delay need explicit matching `unit` metadata before publication. The local certificate must match the configured hostname; use its trusted DNS name and CA. The old JavaScript fingerprint/hostname exception has not been silently carried into Python.
+
+Retained retirement uses `state/mqtt-topics.json`, containing owned topics only. Removed properties/devices and previous prefixes are cleared on reconnect. Fresh values are reannounced; unavailable current values are cleared first. The manifest cannot retire another broker's data after changing `HOST`/port. Keep the original broker available for a separate retirement step; no automatic cross-broker access occurs.
+
+Every dataclass field in `sma_mqtt_bridge/config.py` has the documented ENV family and camelCase JSON name. `runtime` fields use `SMAB_`; `commands.enabled` maps to `SMAB_COMMANDS_ENABLED`, and its timeout maps to `SMAB_COMMAND_READBACK_TIMEOUT_SECONDS`. Numbered inverter IDs are JSON selectors, not ENV identity overrides. The Python CLI receives ENV from Compose; dotenv syntax is handled by Compose rather than a second parser.

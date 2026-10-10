@@ -110,8 +110,18 @@ No settings were saved, no rules were executed manually and no device commands w
 
 ## Coverage ledger
 
-`migration-coverage.csv` starts with every non-group Item from our current wallbox and portal packages. No runtime support is claimed yet. Extend it with every incoming inverter/Home Manager Item and derived capability.
+`migration-coverage.csv` starts with every non-group Item from our current wallbox and portal packages. Python read support is recorded separately from live acceptance. Extend it with every incoming inverter/Home Manager Item and derived capability.
 
 Required mapping fields: original Item/channel, data source, source register/channel, type/unit, scaling/invalid handling, read/write capability, proposed Homie topic, dependent rules/widgets/persistence, verification evidence and migration status.
 
 The bridge may publish all required raw values while an existing openHAB rule continues to calculate a derived value. Record that explicitly. A capability counts as migrated only after units, timestamps, behavior and dependencies are checked.
+
+## First Python read implementation, 2026-10-10
+
+All 100 ledger rows are preserved. `offline-read-implemented-pending-live` records a read path with synthetic coverage, not completed migration. `offline-read-tested-pending-live` covers the four meter values. `pending-validated-profile` keeps all 41 inverter channels blocked until complete model/firmware/identity mappings are available. `pending-local-unit-verification` keeps local plan energy/stop delay unavailable without explicit matching units. Commands, staging, convenience outcomes and additional diagnostics retain their outstanding status.
+
+SEMP reproduces baseline topics, vehicle/health/approval maps and session Wh-to-kWh conversion. Local API provides settings and additional measurements; when both are enabled, property ownership is separated. With SEMP disabled, baseline reads use the API. Portal preferences retain `portal/` topic IDs and are observations rather than measured grid share. Every Homie property is read-only.
+
+Runtime diagnostics are `diagnostics/<source>-status` and `diagnostics/<source>-last-success`, except portal uses `portal/status` and `portal/last-success`. Status is `init`, `ready`, `stale`, `error`. Convenience diagnostics such as option summaries, command outcomes and aggregate adapter status are not yet reproduced; their ledger rows remain pending. Existing openHAB calculations, offsets, persistence, String maps, staging rules and control remain in place. Do not remove old links or rename Items before parallel-value and dependency acceptance.
+
+No direct installation reads or writes were executed during implementation. Private original exports and host MQTT configuration remain unchanged.

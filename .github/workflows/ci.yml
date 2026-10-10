@@ -1,4 +1,4 @@
-name: CI (lint, build, scan, tests)
+name: Python CI (lint, tests, arm64 build)
 
 on:
   pull_request:
@@ -20,127 +20,58 @@ jobs:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
-      - name: Install pinned CLI linters
+          python-version: '3.14.8'
+      - name: Install pinned linters
         run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends g++ make
           python -m venv .lint-venv
           .lint-venv/bin/python -m pip install --requirement tests/requirements-lint.txt
           .lint-venv/bin/python tests/install_lint_tools.py
-          echo "$GITHUB_WORKSPACE/.lint-venv/bin" >> "$GITHUB_PATH"
-          echo "$GITHUB_WORKSPACE/.lint-tools/bin" >> "$GITHUB_PATH"
-      - name: Hadolint Debian
-        uses: hadolint/hadolint-action@v3.5.0
-        with:
-          dockerfile: Dockerfile-Debian
-          config: .hadolint.yaml
-          failure-threshold: warning
-      - name: Hadolint Alpine
-        uses: hadolint/hadolint-action@v3.5.0
-        with:
-          dockerfile: Dockerfile
-          config: .hadolint.yaml
-          failure-threshold: warning
-      - name: ShellCheck
-        uses: ludeeus/action-shellcheck@2.0.0
-        with:
-          scandir: .
-          version: v0.11.0
-          ignore_paths: .lint-tools .lint-venv
-      - name: Yamllint
-        uses: ibiqlik/action-yamllint@v3
-        with:
-          config_file: .yamllint.yaml
-          file_or_dir: .
-          strict: true
-      - name: Actionlint
-        run: actionlint -pyflakes=
-      - name: Ruff
-        shell: bash
-        run: |
-          mapfile -d '' sources < <(git ls-files -z '*.py')
-          test "${#sources[@]}" -gt 0
-          ruff check --config ruff.toml "${sources[@]}"
-      - name: Cppcheck
-        timeout-minutes: 3
-        shell: bash
-        run: |
-          mapfile -d '' sources < <(git ls-files -z '*.cpp' '*.cc' '*.cxx' '*.h' '*.hpp' ':(exclude)resources/src/json.hpp')
-          test "${#sources[@]}" -gt 0
-          cppcheck --std=c++17 --check-level=normal --report-progress \
-            --enable=warning,performance,portability --error-exitcode=1 \
-            --inline-suppr --max-configs=1 --suppress=missingIncludeSystem \
-            --suppress=toomanyconfigs --suppress=normalCheckLevelMaxBranches \
-            '--suppress=*:resources/src/json.hpp' "${sources[@]}"
-      - name: Markdown
-        shell: bash
-        run: |
-          mapfile -d '' docs < <(git ls-files -z '*.md')
-          test "${#docs[@]}" -gt 0
-          pymarkdown --config .pymarkdown.yaml --strict-config scan "${docs[@]}"
-      - name: Text, JSON and dotenv examples
-        run: |
-          python - <<'PY'
-          from tests.lint import check_dotenv, check_json, check_text, project_files
-          files = project_files()
-          results = [
-              check_text(files),
-              check_json([path for path in files if path.endswith('.json')]),
-              check_dotenv([path for path in files if path.endswith('.env.sample')]),
-          ]
-          raise SystemExit(0 if files and all(results) else 1)
-          PY
-
-  compose_config:
-    runs-on: ubuntu-24.04
-    steps:
-      - uses: actions/checkout@v7
-      - name: Validate Compose configuration
-        env:
-          SMAB_BRIDGE_VERSION: bootstrap
-        run: |
-          docker compose --env-file .env.sample -f docker-compose.example.yml config --quiet
-          docker compose --env-file .env.sample -f docker-compose.dev.yml config --quiet
-
-  build_and_scan:
-    runs-on: ubuntu-24.04
-    needs: [lint, compose_config]
-    steps:
-      - uses: actions/checkout@v7
-      - uses: docker/setup-buildx-action@v4
-      - name: Build bridge image
-        uses: docker/build-push-action@v7
-        with:
-          context: .
-          file: Dockerfile
-          platforms: linux/amd64
-          load: true
-          push: false
-          pull: true
-          tags: sma-mqtt-bridge:ci
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-      - name: Trivy image scan
-        uses: aquasecurity/trivy-action@v0.36.0
-        with:
-          image-ref: sma-mqtt-bridge:ci
-          format: table
-          severity: CRITICAL
-          ignore-unfixed: true
-          exit-code: '1'
+      - name: Run all repository linters
+        run: ./tests/linter-check.sh
 
   tests:
-    name: Offline regression tests
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-python@v6
         with:
-          python-version: '3.12'
-      - name: Install C++ test compiler
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y --no-install-recommends g++ jq openssl
-      - name: Run pre-deployment tests
+          python-version: '3.14.8'
+      - name: Install runtime libraries
+        run: python -m pip install --requirement requirements.txt
+      - name: Run offline Python regressions
         run: ./tests/test-check.sh
+      - name: Validate both Compose templates with public settings
+        run: python tests/compose_check.py
+
+  build_and_scan:
+    runs-on: ubuntu-24.04
+    needs: [lint, tests]
+    strategy:
+      matrix:
+        platform: [amd64, arm64]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: docker/setup-qemu-action@v4
+      - uses: docker/setup-buildx-action@v4
+      - name: Build Python image without publication
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          file: Dockerfile-SMAB
+          platforms: linux/${{ matrix.platform }}
+          load: true
+          push: false
+          tags: sma-mqtt-bridge:ci-${{ matrix.platform }}
+      - name: Container smoke checks and offline tests
+        run: |
+          docker run --rm sma-mqtt-bridge:ci-${{ matrix.platform }} --version
+          docker run --rm sma-mqtt-bridge:ci-${{ matrix.platform }} --check-config
+          docker run --rm --entrypoint python -v "$PWD/tests:/app/tests:ro" -v "$PWD/.env.example:/app/.env.example:ro" -v "$PWD/ressources/config.example.json:/app/ressources/config.example.json:ro" sma-mqtt-bridge:ci-${{ matrix.platform }} tests/run_tests.py
+      - name: Trivy image gate
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          image-ref: sma-mqtt-bridge:ci-${{ matrix.platform }}
+          format: table
+          severity: CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
