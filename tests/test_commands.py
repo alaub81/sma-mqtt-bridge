@@ -139,7 +139,7 @@ class CommandsTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ProtocolError):
             command_target('charging-release', 'ON', entry)
         metadata = discovery('homie', 'sma-echarger', (Property('settings', 'charging-release', 'Release', 'boolean', settable=True), Property('measurements', 'power', 'Power')))
-        self.assertEqual(metadata['homie/sma-echarger/settings/charging-release/$settable'], 'true')
+        self.assertEqual(metadata['homie/sma-echarger/settings/chargingrelease/$settable'], 'true')
         self.assertEqual(metadata['homie/sma-echarger/measurements/power/$settable'], 'false')
 
     async def test_http_put_transport_never_retries_lost_response(self):
@@ -202,10 +202,10 @@ class CommandsTests(unittest.IsolatedAsyncioTestCase):
         controller.handle = handle
         async def incoming():
             for topic, data, retained in [
-                (base + '/settings/led-brightness/set', b'5173', True),
+                (base + '/settings/ledbrightness/set', b'5173', True),
                 (base + '/measurements/power/set', b'1', False),
-                (base + '/settings/led-brightness/set', b'5190', False),
-                (base + '/settings/led-brightness/set', b'5173', False),
+                (base + '/settings/ledbrightness/set', b'5190', False),
+                (base + '/settings/ledbrightness/set', b'5173', False),
             ]:
                 yield SimpleNamespace(topic=topic, payload=data, retain=retained)
                 await asyncio.sleep(0)

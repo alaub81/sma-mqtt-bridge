@@ -12,26 +12,40 @@ import aiomqtt
 
 from .config import ID, ssl_context
 from .availability import Availability, is_timeout
-from .errors import StateError
+from .errors import ConfigError, StateError
+from .translation import load_translation
 from .model import Property
 from .storage import MISSING, read_state, write_state
 
 LOG = logging.getLogger(__name__)
 
 
-def discovery(prefix, device, properties):
+def wire_key(key):
+    """Keep internal protocol keys stable; expose compact Homie node/property IDs."""
+    return key.replace("-", "")
+
+
+def discovery(prefix, device, properties, labels=None, device_name=None):
+    labels = labels or {}
+    if len({wire_key(p.key) for p in properties}) != len(properties):
+        raise ConfigError("Compact Homie IDs collide")
     base = prefix + "/" + device
-    topics = {base + "/$homie": "4.0.0", base + "/$name": device, base + "/$state": "init",
+    topics = {base + "/$homie": "4.0.0", base + "/$name": labels.get(device, labels.get(device_name or device, device_name or device)), base + "/$state": "init",
               base + "/$extensions": ""}
     nodes = sorted({p.node for p in properties})
-    topics[base + "/$nodes"] = ",".join(nodes)
+    if len({wire_key(node) for node in nodes}) != len(nodes):
+        raise ConfigError("Compact Homie node IDs collide")
+    topics[base + "/$nodes"] = ",".join(wire_key(node) for node in nodes)
     for node in nodes:
-        root = base + "/" + node
-        topics[root + "/$name"] = node.replace("-", " ").title()
-        topics[root + "/$properties"] = ",".join(sorted(p.id for p in properties if p.node == node))
+        root = base + "/" + wire_key(node)
+        name = node.replace("-", " ").title()
+        if node.startswith("device-") and node[7:].isdigit():
+            name = labels.get("Device {number}", "Device {number}").replace("{number}", node[7:])
+        topics[root + "/$name"] = labels.get(name, name)
+        topics[root + "/$properties"] = ",".join(sorted(wire_key(p.id) for p in properties if p.node == node))
     for p in properties:
-        root = base + "/" + p.key
-        topics.update({root + "/$name": p.name, root + "/$datatype": p.datatype,
+        root = base + "/" + wire_key(p.key)
+        topics.update({root + "/$name": labels.get(p.name, p.name), root + "/$datatype": p.datatype,
                        root + "/$settable": str(p.settable).lower(), root + "/$retained": "true"})
         if p.unit:
             topics[root + "/$unit"] = p.unit
@@ -60,9 +74,21 @@ class HomiePublisher:
         self.path = Path(config.runtime.state_dir) / "mqtt-topics.json"
         self.owned = self.load_owned()
         self.command_controller = None
+        self.labels = load_translation(config.runtime.language, config.runtime.translate_dir)
+        for device in {s.device for s in states}:
+            self.metadata(device, self.properties([s for s in states if s.device == device]))
+
+    def metadata(self, device, properties):
+        states = [s for s in self.states if s.device == device]
+        inverter = next((s.id[8:] for s in states if s.id.startswith("inverter")), None)
+        role = "Home Manager" if any(s.id == "home-manager" for s in states) else (
+            "eCharger" if any(s.id in ("api", "semp", "portal") for s in states) else device)
+        if inverter is not None:
+            role = self.labels.get("Inverter", "Inverter") + " " + inverter
+        return discovery(self.config.mqtt.homie_prefix, device, properties, self.labels, role)
 
     async def receive_commands(self, client, base, properties):
-        topics = {base + "/" + p.key + "/set": p.id for p in properties if p.settable}
+        topics = {base + "/" + wire_key(p.key) + "/set": p.id for p in properties if p.settable}
         active = None
         try:
             async for message in client.messages:
@@ -155,16 +181,16 @@ class HomiePublisher:
         monitor = self.monitors.setdefault(device, Availability("MQTT " + device, runtime.failure_log_interval_seconds))
         base = mqtt.homie_prefix + "/" + device
         props = self.properties(states)
-        metadata = discovery(mqtt.homie_prefix, device, props) if states else {}
-        all_topics = set(metadata) | {base + "/" + p.key for p in props}
+        metadata = self.metadata(device, props) if states else {}
+        all_topics = set(metadata) | {base + "/" + wire_key(p.key) for p in props}
         previous = self.owned.get(device, set()).copy()
         self.owned[device] = previous | all_topics
         self.save_owned()  # Record ownership before any retained publication.
         attempt = 0
         while not stop.is_set():
             props = self.properties(states)
-            metadata = discovery(mqtt.homie_prefix, device, props) if states else {}
-            all_topics = set(metadata) | {base + "/" + p.key for p in props}
+            metadata = self.metadata(device, props) if states else {}
+            all_topics = set(metadata) | {base + "/" + wire_key(p.key) for p in props}
             previous = self.owned.get(device, set()).copy()
             self.owned[device] = previous | all_topics
             self.save_owned()
@@ -198,7 +224,7 @@ class HomiePublisher:
                     last_status = 0.0
                     # Clear every current value on reconnect before publishing fresh samples.
                     for p in props:
-                        await client.publish(base + "/" + p.key, b"", qos=mqtt.qos, retain=True)
+                        await client.publish(base + "/" + wire_key(p.key), b"", qos=mqtt.qos, retain=True)
                     self.owned[device] = all_topics
                     self.save_owned()
                     previous = all_topics.copy()
@@ -206,7 +232,7 @@ class HomiePublisher:
                     if self.command_controller is not None and any(p.settable for p in props):
                         for p in props:
                             if p.settable:
-                                await client.subscribe(base + "/" + p.key + "/set", qos=mqtt.qos)
+                                await client.subscribe(base + "/" + wire_key(p.key) + "/set", qos=mqtt.qos)
                         consumer = asyncio.create_task(self.receive_commands(client, base, props))
                     attempt = 0
                     try:
@@ -241,8 +267,8 @@ class HomiePublisher:
             if current != declared:
                 # Inventory changes require a new Homie description and retained retirement.
                 device = states[0].device
-                metadata = discovery(mqtt.homie_prefix, device, current)
-                topics = set(metadata) | {base + "/" + p.key for p in current}
+                metadata = self.metadata(device, current)
+                topics = set(metadata) | {base + "/" + wire_key(p.key) for p in current}
                 previous = self.owned.get(device, set())
                 self.owned[device] = previous | topics
                 self.save_owned()
@@ -253,7 +279,7 @@ class HomiePublisher:
                 old_keys = {p.key for p in declared}
                 for p in current:
                     if p.key not in old_keys:
-                        await client.publish(base + "/" + p.key, b"", qos=mqtt.qos, retain=True)
+                        await client.publish(base + "/" + wire_key(p.key), b"", qos=mqtt.qos, retain=True)
                 for topic, value in metadata.items():
                     await client.publish(topic, value, qos=mqtt.qos, retain=True)
                 self.owned[device] = topics
@@ -265,7 +291,7 @@ class HomiePublisher:
                     raise consumer.exception()
                 raise aiomqtt.MqttError("Command subscription stopped")
             values, state = self.snapshot(states)
-            desired = {base + "/" + key: value for key, value in values.items()}
+            desired = {base + "/" + wire_key(key): value for key, value in values.items()}
             desired[base + "/$state"] = state
             for topic in sent.keys() - desired.keys():
                 await client.publish(topic, b"", qos=mqtt.qos, retain=True)

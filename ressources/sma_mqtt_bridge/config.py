@@ -27,6 +27,8 @@ class SafeRepr:
 
 @dataclass(frozen=True, repr=False)
 class Runtime(SafeRepr):
+    language: str = "en"
+    translate_dir: str = DATA + "/translate"
     profile_dir: str = DATA + "/profiles"
     state_dir: str = DATA + "/state"
     timezone: str = "Europe/Berlin"
@@ -357,6 +359,9 @@ def load_config(environ=None, bundled_dir=None):
         raise ConfigError("Unsupported configuration schemaVersion")
     recognized = COMPOSE_KEYS | {"SMAB_CONFIG_FILE"}
     runtime = section(Runtime(), data.get("runtime", {}), env, "SMAB_", recognized)
+    from .translation import load_translation
+
+    load_translation(runtime.language, runtime.translate_dir)
     mqtt = section(MQTT(), data.get("mqtt", {}), env, "SMAB_MQTT_", recognized)
     hm = section(HomeManager(), data.get("homeManager", {}), env, "SMAB_HOME_MANAGER_", recognized)
     ec = section(ECharger(), data.get("echarger", {}), env, "SMAB_ECHARGER_", recognized)

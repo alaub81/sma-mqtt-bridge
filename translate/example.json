@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "labels": {
+    "Inverter": "Wechselrichter",
+    "Measurements": "Messwerte",
+    "DC power input": "DC-Eingangsleistung",
+    "Internal temperature": "Interne Temperatur",
+    "Device {number}": "Gerät {number}"
+  }
+}
