@@ -45,7 +45,7 @@ jobs:
           python-version: '3.14.8'
       - name: Verify Python runtime before release
         run: |
-          python -m pip install --requirement requirements.txt
+          python -m pip install --requirement ressources/requirements.txt
           ./tests/test-check.sh
 
       - name: Login to GHCR

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "sma-sbs3-7-10",
+  "device": {
+    "manufacturer": "SMA",
+    "models": [
+      "SBS3.7-10"
+    ],
+    "observedFirmware": [
+      "4.07.31.R"
+    ]
+  },
+  "protocol": {
+    "type": "modbus-tcp",
+    "defaults": {
+      "port": 502,
+      "unitId": 3
+    },
+    "addressing": "zero-based"
+  },
+  "validation": {
+    "status": "identity-only",
+    "reason": "Model and firmware observed in ennexOS; local identity and matching register definitions still require validation."
+  },
+  "pollers": [],
+  "properties": [],
+  "commands": []
+}

@@ -122,7 +122,7 @@ class ConfigTests(unittest.TestCase):
         self.assertFalse(load_config({"SMAB_DATA_DIR": "ignored", "SMAB_BRIDGE_VERSION": "dev", "SMAB_ENV_FILE": "ignored"}).has_sources)
 
     def test_public_json_and_complete_env_example(self):
-        load_config({"SMAB_CONFIG_FILE": str(ROOT / "ressources/config.example.json")})
+        load_config({"SMAB_CONFIG_FILE": str(ROOT / "config.example.json")})
         env = {}
         lines = (ROOT / ".env.example").read_text().splitlines()
         for index, line in enumerate(lines):

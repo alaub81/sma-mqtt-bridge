@@ -37,7 +37,7 @@ jobs:
         with:
           python-version: '3.14.8'
       - name: Install runtime libraries
-        run: python -m pip install --requirement requirements.txt
+        run: python -m pip install --requirement ressources/requirements.txt
       - name: Run offline Python regressions
         run: ./tests/test-check.sh
       - name: Validate both Compose templates with public settings
@@ -66,7 +66,7 @@ jobs:
         run: |
           docker run --rm sma-mqtt-bridge:ci-${{ matrix.platform }} --version
           docker run --rm sma-mqtt-bridge:ci-${{ matrix.platform }} --check-config
-          docker run --rm --entrypoint python -v "$PWD/tests:/app/tests:ro" -v "$PWD/.env.example:/app/.env.example:ro" -v "$PWD/ressources/config.example.json:/app/ressources/config.example.json:ro" sma-mqtt-bridge:ci-${{ matrix.platform }} tests/run_tests.py
+          docker run --rm --entrypoint python -v "$PWD/tests:/app/tests:ro" -v "$PWD/.env.example:/app/.env.example:ro" -v "$PWD/config.example.json:/app/config.example.json:ro" sma-mqtt-bridge:ci-${{ matrix.platform }} tests/run_tests.py
       - name: Trivy image gate
         uses: aquasecurity/trivy-action@v0.36.0
         with:

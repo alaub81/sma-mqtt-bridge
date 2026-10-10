@@ -124,7 +124,7 @@ def main():
           function=check_dotenv)
     check("ShellCheck", [p for p in files if p.endswith(".sh")], command=["shellcheck"])
     check("Hadolint", [p for p in files if Path(p).name.startswith("Dockerfile")],
-          command=["hadolint", "--config", "ressources/hadolint.yaml"])
+          command=["hadolint", "--config", ".hadolint.yaml"])
     check("YAML", [p for p in files if p.endswith((".yml", ".yaml"))],
           command=["yamllint", "--strict", "--config-file", ".yamllint.yaml"])
     check("GitHub Actions", [p for p in files if p.startswith(".github/workflows/") and p.endswith((".yml", ".yaml"))],

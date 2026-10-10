@@ -9,13 +9,14 @@ import tempfile
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
+SOURCE = ROOT / "ressources" if (ROOT / "ressources/sma_mqtt_bridge").is_dir() else ROOT
 
 
 class BootstrapTests(unittest.TestCase):
     def cli(self, *args, env=None):
         clean = {key: value for key, value in os.environ.items() if not key.startswith('SMAB_')}
         clean.update(env or {})
-        return subprocess.run([sys.executable, '-m', 'sma_mqtt_bridge', *args], cwd=ROOT,
+        return subprocess.run([sys.executable, '-m', 'sma_mqtt_bridge', *args], cwd=SOURCE,
                               env=clean, capture_output=True, text=True, timeout=5)
 
     def test_version_without_credentials(self):
