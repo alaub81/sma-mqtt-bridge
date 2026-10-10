@@ -20,6 +20,22 @@ class ModelTests(unittest.TestCase):
     def state(self):
         return SourceState('fixture', 'test-device', (Property('measurements', 'power', 'Power', unit='W'),), 5)
 
+    def test_inverter_night_availability_uses_fresh_status_not_power(self):
+        from sma_mqtt_bridge.adapters.modbus import ModbusReader
+        from sma_mqtt_bridge.config import DEFAULT_PROFILES, Inverter
+        from sma_mqtt_bridge.profiles import load_profile
+        for profile_id in DEFAULT_PROFILES:
+            reader = ModbusReader(Inverter(advanced_channels_enabled=False), load_profile(profile_id, "/nonexistent-smab-profile-fixture"))
+            state = SourceState('inverter1', 'fixture', reader.properties, 60)
+            self.assertEqual(state.required_keys, ('measurements/status',))
+            state.update({'measurements/status': 'Ok (Ok)'}, now=10)
+            self.assertEqual(state.status(11), 'ready')
+            self.assertEqual(state.missing_critical(11), [])
+            self.assertNotIn('measurements/active-power', state.fresh_values(11))
+            self.assertEqual(state.status(1000), 'stale')
+            state.error = True
+            self.assertEqual(state.status(11), 'error')
+
     def test_missing_stale_and_invalid_values_never_become_zero(self):
         state = self.state()
         self.assertEqual(state.status(0), 'init')
@@ -247,7 +263,37 @@ class AsyncRuntimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(len(clients), 2)
         self.assertTrue(any(t.endswith('/$homie') for t, _, _ in clients[1].messages))
 
-    async def test_stale_retained_measurement_is_deleted(self):
+    async def test_invalid_power_retains_last_value_then_recovers_without_alert(self):
+        state = SourceState('inverter1', 'test-device', (
+            Property('measurements', 'status', 'Status', 'string', required_for_ready=True),
+            Property('measurements', 'power', 'Power')), 60, diagnostics_enabled=False)
+        state.update({'measurements/status': 'Ok (Ok)', 'measurements/power': 10})
+        stop = asyncio.Event()
+        messages = []
+        phase = 0
+
+        class Client(FakeClient):
+            async def publish(self, topic, payload, **kwargs):
+                nonlocal phase
+                messages.append((topic, payload))
+                if topic.endswith('/$state') and payload == 'ready':
+                    if phase == 0:
+                        state.update({'measurements/status': 'Ok (Ok)', 'measurements/power': None})
+                    elif phase == 1:
+                        self.assert_ready = state.status()
+                        state.update({'measurements/status': 'Ok (Ok)', 'measurements/power': 12})
+                    phase += 1
+                if topic.endswith('/measurements/power') and payload == '12':
+                    stop.set()
+
+        client = Client()
+        publisher = HomiePublisher(self.config, [state], lambda *args, **kwargs: client)
+        await asyncio.wait_for(publisher.run(stop), 1)
+        self.assertEqual(client.assert_ready, 'ready')
+        self.assertEqual([v for t, v in messages if t.endswith('/measurements/power')], ['10', '12'])
+        self.assertFalse(any(v == 'alert' for t, v in messages if t.endswith('/$state')))
+
+    async def test_stale_retained_measurement_keeps_last_observation(self):
         state = SourceState('fixture', 'test-device', (Property('measurements', 'power', 'Power'),), 5)
         state.update({'measurements/power': 10})
         stop, clients = asyncio.Event(), []
@@ -265,7 +311,7 @@ class AsyncRuntimeTests(unittest.IsolatedAsyncioTestCase):
         publisher = HomiePublisher(self.config, [state], factory)
         await asyncio.wait_for(publisher.run(stop), .5)
         power = [(p, k) for t, p, k in clients[0].messages if t.endswith('/measurements/power')]
-        self.assertEqual([p for p, _ in power], [b'', '10', b''])
+        self.assertEqual([p for p, _ in power], ['10'])
 
     async def test_unacknowledged_shutdown_aborts_transport_for_will(self):
         from sma_mqtt_bridge.homie import mqtt_session

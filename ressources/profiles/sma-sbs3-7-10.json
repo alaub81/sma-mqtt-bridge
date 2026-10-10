@@ -163,7 +163,8 @@
         "303": "Aus (Off)",
         "307": "Ok (Ok)",
         "455": "Warnung (Wrn)"
-      }
+      },
+      "requiredForReady": true
     },
     {
       "id": "grid-contactor",
@@ -311,8 +312,7 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer",
-      "requiredForReady": true
+      "datatype": "integer"
     },
     {
       "id": "pres-batt-discharge",
@@ -329,8 +329,7 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer",
-      "requiredForReady": true
+      "datatype": "integer"
     },
     {
       "id": "internal-temperature",

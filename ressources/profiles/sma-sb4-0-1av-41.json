@@ -175,7 +175,8 @@
         "303": "Aus (Off)",
         "307": "Ok (Ok)",
         "455": "Warnung (Wrn)"
-      }
+      },
+      "requiredForReady": true
     },
     {
       "id": "grid-contactor",
@@ -369,8 +370,7 @@
       "invalid": [
         -2147483648
       ],
-      "datatype": "integer",
-      "requiredForReady": true
+      "datatype": "integer"
     },
     {
       "id": "power-l1",
