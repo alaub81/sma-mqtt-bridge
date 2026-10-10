@@ -179,7 +179,11 @@ class ConfigTests(unittest.TestCase):
                 value = getattr(section, field.name)
                 if key != "SMAB_MQTT_HOST":
                     if isinstance(value, bool):
-                        self.assertEqual(env[key], str(value).lower())
+                        if field.name in {"advanced_channels_enabled", "diagnostics_enabled"}:
+                            self.assertTrue(value)
+                            self.assertEqual(env[key], "false")
+                        else:
+                            self.assertEqual(env[key], str(value).lower())
                     elif isinstance(value, (int, float)):
                         self.assertEqual(float(env[key]), value)
                     else:
