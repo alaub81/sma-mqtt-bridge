@@ -48,3 +48,7 @@ GitHub upload and GHCR publication remain later tasks. The authorized cleanup ch
 ## Current installation step, 2026-10-10
 
 The inverter profile blocker is resolved for the original 41-channel read baseline: official model-specific lists, local identity checks and live MQTT publication are recorded in REGISTER_VALIDATION.md. Complete openHAB value/dependency comparison remains pending. SEMP is active; API/portal await private credentials. Home Manager is prepared but intentionally disabled on the Mac and awaits Pi-network acceptance. Explicit MQTT/local-wallbox TLS_VERIFY=false overrides are supported at Andreas' request; safe defaults and portal verification remain intact.
+
+## Initial local command implementation, 2026-10-10
+
+The first enum/boolean allowlist is now implemented behind global and local API gates, both false by default. It covers fast/PV/stop mode, release, approval requirement, stop-when-full, cable locking and status/ambient lighting. Target mode 4720, stop-delay writes, plan transactions and portal writes remain blocked. Fresh identity/rights/choice checks, serialized read/write access, exact reference PUT payload, confirmed readback, retained replay rejection and a durable uncertain-write journal are included. See CONFIGURATION.md. Offline tests do not certify a live action; the private installation remains read-only.

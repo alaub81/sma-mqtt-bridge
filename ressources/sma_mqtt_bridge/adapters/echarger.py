@@ -1,6 +1,7 @@
 """Known eCharger read channels, separate API/SEMP sessions and no setters."""
 
 from datetime import datetime, timezone
+import asyncio
 import time
 import xml.etree.ElementTree as ET
 
@@ -210,6 +211,7 @@ class EChargerReader:
         host = "[" + settings.host + "]" if ":" in settings.host else settings.host
         self.url = f"https://{host}:{settings.port}"
         self.token, self.expires = None, 0
+        self.lock = asyncio.Lock()
         props = [Property("settings", id, id.replace("-", " ").title(), datatype, unit, fmt)
                  for id, _, datatype, unit, _, fmt in SETTINGS]
         props += [Property("measurements", id, id.replace("-", " ").title(), unit=unit) for id, _, unit in EXTRA]
@@ -231,6 +233,10 @@ class EChargerReader:
         return token
 
     async def read(self):
+        async with self.lock:
+            return await self.read_locked()
+
+    async def read_locked(self):
         for attempt in range(2):
             token = await self.access_token()
             try:

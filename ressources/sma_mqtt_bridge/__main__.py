@@ -16,7 +16,7 @@ from .profiles import load_profile
 
 
 def main(argv=None):
-    parser = argparse.ArgumentParser(description="SMA read-only Homie 4 bridge")
+    parser = argparse.ArgumentParser(description="SMA Homie 4 bridge")
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--version", action="store_true")
     group.add_argument("--project-status", action="store_true")
@@ -45,7 +45,7 @@ def main(argv=None):
         if args.check_config:
             print(json.dumps({"valid": True, "enabledSources": sum(i.enabled for i in config.inverters)
                               + sum((config.home_manager.enabled, config.echarger.enabled,
-                                     config.echarger.semp_enabled, config.portal.enabled)), "readOnly": True}))
+                                     config.echarger.semp_enabled, config.portal.enabled)), "readOnly": not (config.commands.enabled and config.echarger.commands_enabled)}))
             return 0
         if args.refresh_portal and not config.portal.enabled:
             raise ConfigError("--refresh-portal requires an explicitly enabled portal adapter")

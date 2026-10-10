@@ -31,7 +31,7 @@ def discovery(prefix, device, properties):
     for p in properties:
         root = base + "/" + p.key
         topics.update({root + "/$name": p.name, root + "/$datatype": p.datatype,
-                       root + "/$settable": "false", root + "/$retained": "true"})
+                       root + "/$settable": str(p.settable).lower(), root + "/$retained": "true"})
         if p.unit:
             topics[root + "/$unit"] = p.unit
         if p.format:
@@ -57,6 +57,27 @@ class HomiePublisher:
         self.status = {}
         self.path = Path(config.runtime.state_dir) / "mqtt-topics.json"
         self.owned = self.load_owned()
+        self.command_controller = None
+
+    async def receive_commands(self, client, base, properties):
+        topics = {base + "/" + p.key + "/set": p.id for p in properties if p.settable}
+        active = None
+        try:
+            async for message in client.messages:
+                key = topics.get(str(message.topic))
+                if key is None:
+                    continue
+                if message.retain:
+                    self.command_controller.result("rejected-retained")
+                elif active is not None and not active.done():
+                    self.command_controller.result("rejected-busy")
+                else:
+                    active = asyncio.create_task(self.command_controller.handle(key, message.payload))
+        finally:
+            if active is not None:
+                if not active.done():
+                    active.cancel()
+                await asyncio.gather(active, return_exceptions=True)
 
     def load_owned(self):
         try:
@@ -114,6 +135,7 @@ class HomiePublisher:
                 tls_context=ssl_context(mqtt.tls_ca_file, mqtt.tls_cert_file, mqtt.tls_key_file, verify=mqtt.tls_verify) if mqtt.tls else None,
                 will=aiomqtt.Will(base + "/$state", "lost", qos=mqtt.qos, retain=True),
                 max_queued_outgoing_messages=mqtt.max_queue_messages,
+                max_queued_incoming_messages=mqtt.max_queue_messages,
             )
             transport = getattr(client, "_client", None)
             if transport is not None:
@@ -121,7 +143,6 @@ class HomiePublisher:
             try:
                 async with mqtt_session(client, mqtt.connect_timeout_seconds, runtime.shutdown_timeout_seconds):
                     self.status[device] = True
-                    # No /set subscriptions exist, so retained commands cannot be replayed.
                     for topic in sorted(previous - all_topics):
                         await client.publish(topic, b"", qos=mqtt.qos, retain=True)
                     if not states:
@@ -138,19 +159,19 @@ class HomiePublisher:
                     self.owned[device] = all_topics
                     self.save_owned()
                     previous = all_topics.copy()
-                    while not stop.is_set():
-                        values, state = self.snapshot(states)
-                        desired = {base + "/" + key: value for key, value in values.items()}
-                        desired[base + "/$state"] = state
-                        for topic in sent.keys() - desired.keys():
-                            await client.publish(topic, b"", qos=mqtt.qos, retain=True)
-                        for topic, value in desired.items():
-                            if sent.get(topic) != value or (topic == base + "/$state" and time.monotonic() - last_status >= min(runtime.health_interval_seconds, 1)):
-                                await client.publish(topic, value, qos=mqtt.qos, retain=True)
-                        last_status = time.monotonic()
-                        sent = desired
-                        attempt = 0
-                        await wait_stop(stop, min(runtime.health_interval_seconds, 1))
+                    consumer = None
+                    if self.command_controller is not None and any(p.settable for p in props):
+                        for p in props:
+                            if p.settable:
+                                await client.subscribe(base + "/" + p.key + "/set", qos=mqtt.qos)
+                        consumer = asyncio.create_task(self.receive_commands(client, base, props))
+                    attempt = 0
+                    try:
+                        await self.publish_values(client, base, states, stop, sent, last_status, consumer)
+                    finally:
+                        if consumer is not None:
+                            consumer.cancel()
+                            await asyncio.gather(consumer, return_exceptions=True)
                     # Publish waits for QoS acknowledgement. Timeout causes an abrupt close,
                     # leaving the broker's Will responsible for reporting loss.
                     await client.publish(base + "/$state", "disconnected", qos=mqtt.qos, retain=True,
@@ -165,6 +186,25 @@ class HomiePublisher:
                 attempt += 1
             finally:
                 self.status[device] = False
+
+    async def publish_values(self, client, base, states, stop, sent, last_status, consumer):
+        mqtt, runtime = self.config.mqtt, self.config.runtime
+        while not stop.is_set():
+            if consumer is not None and consumer.done():
+                if consumer.exception() is not None:
+                    raise consumer.exception()
+                raise aiomqtt.MqttError("Command subscription stopped")
+            values, state = self.snapshot(states)
+            desired = {base + "/" + key: value for key, value in values.items()}
+            desired[base + "/$state"] = state
+            for topic in sent.keys() - desired.keys():
+                await client.publish(topic, b"", qos=mqtt.qos, retain=True)
+            for topic, value in desired.items():
+                if sent.get(topic) != value or (topic == base + "/$state" and time.monotonic() - last_status >= min(runtime.health_interval_seconds, 1)):
+                    await client.publish(topic, value, qos=mqtt.qos, retain=True)
+            last_status = time.monotonic()
+            sent = desired
+            await wait_stop(stop, min(runtime.health_interval_seconds, 1))
 
     async def run(self, stop):
         devices = {s.device for s in self.states} | set(self.owned)

@@ -115,6 +115,7 @@
   },
   "commands": {
     "enabled": false,
-    "readbackTimeoutSeconds": 30.0
+    "readbackTimeoutSeconds": 30.0,
+    "readbackIntervalSeconds": 1.0
   }
 }

@@ -75,6 +75,7 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 | `SMAB_RECONNECT_MAX_SECONDS` | `60` | Maximum delay; at least the minimum. No uncertain write retries. |
 | `SMAB_COMMANDS_ENABLED` | `false` | Global gate for confirmed command allowlists. |
 | `SMAB_COMMAND_READBACK_TIMEOUT_SECONDS` | `30` | Time limit to confirm a command through readback. |
+| `SMAB_COMMAND_READBACK_INTERVAL_SECONDS` | `1` | Positive delay between command readback requests. |
 
 | MQTT suffix after `SMAB_MQTT_` | Default | Meaning / validation |
 | --- | --- | --- |
@@ -176,7 +177,7 @@ JSON uses `schemaVersion: 1` and the documented camelCase fields. Unknown keys, 
 
 Source activation is never inferred. No sources means no discovery as ready; the CLI exits with an actionable diagnostic unless a saved topic manifest needs MQTT retirement. That retirement requires broker configuration but performs no device I/O. The profile directory contains file-driven model metadata and verified polling definitions; it never supplies addresses, credentials or activation.
 
-MQTT QoS is 1 or 2. Each advertised Homie device has a unique client ID and retained `lost` Will. Sources sharing the charger device retain independent status. All properties have `$settable=false`; there are no `/set` subscriptions. Global/per-source command gates currently reject `true`. Source failures are isolated, authentication challenges block repeated login, and SIGTERM cancels pending readers after the configured grace period. The main-loop heartbeat distinguishes source freshness and MQTT availability from process liveness.
+MQTT QoS is 1 or 2. Each advertised Homie device has a unique client ID and retained `lost` Will. Sources sharing the charger device retain independent status. Measurements remain non-settable. With both `SMAB_COMMANDS_ENABLED=true` and `SMAB_ECHARGER_COMMANDS_ENABLED=true`, the enabled local API advertises and subscribes only to the supported enum/boolean controls listed below. Portal/inverter write gates still reject `true`. All write defaults remain false. Source failures are isolated, authentication challenges block repeated login, and SIGTERM cancels pending readers after the configured grace period. The main-loop heartbeat distinguishes source freshness and MQTT availability from process liveness.
 
 Local API measurements require a recent timezone-qualified timestamp; missing or old timestamps yield unavailable data. SEMP parameters use the same check for measurements. Settings are observations of the last successful read. Local plan energy and stop delay need matching `unit` metadata or the narrowly verified EVC22-3AC-20 / 2.6.37.R unit mapping documented in VALIDATION.md before publication. The local certificate must match the configured hostname; use its trusted DNS name and CA. The old JavaScript fingerprint/hostname exception has not been silently carried into Python.
 
@@ -189,3 +190,26 @@ Every dataclass field in `ressources/sma_mqtt_bridge/config.py` has the document
 Stop the bridge before copying state. Copy the existing `heartbeat.json` and `mqtt-topics.json` into the Compose volume `data_smab_state`, retaining their contents and restrictive file modes; assign them to the configured container UID/GID. Do not overwrite a volume already in use. Start the bridge and verify its heartbeat and Docker health status. Keep the former host files as an inactive backup until verification. A new empty volume does not automatically import the state hidden under the parent bind mount. Preserve `mqtt-topics.json` to retain ownership of old topics for cleanup.
 
 See [Docker volume lifecycle and migration](https://docs.docker.com/engine/storage/volumes/) and [Compose volume naming](https://docs.docker.com/reference/compose-file/volumes/).
+
+## Local eCharger command milestone
+
+The initial enum/boolean controls use `settings/<property>/set` under the configured charger Homie ID. Measurements, stop delay, energy/end-time planning and portal preference remain read-only at this milestone. Homie discovery and typed command payloads follow the official [openHAB Homie binding](https://www.openhab.org/addons/bindings/homie/) and [Homie 4 specification](https://homieiot.github.io/specification/spec-core-v4_0_0/).
+
+| Property | Non-retained payload |
+| --- | --- |
+| `charge-mode` | `4718` fast, `4719` optimized PV, `4721` stop; `4720` is rejected until plan transactions exist |
+| `charging-release` | `true` / `false` |
+| `approval-required` | `true` / `false` |
+| `stop-when-full` | `true` / `false` |
+| `cable-lock` | `true` / `false` |
+| `led-brightness` | `5191` low, `5190` medium, `5173` high |
+| `ambient-brightness` | `5191` low, `5190` medium, `5173` high |
+| `ambient-enabled` | `true` / `false` |
+
+There are eight MQTT control properties in this allowlist. Current local identity, `state=Confirmed`, `editable=true` and offered `possibleValues` are checked before each action. A target already reported by the device produces `already-confirmed` without writing. Polling and commands share one API lock/session; commands arriving during an active operation or poll are rejected as busy rather than queued. A maximum 64-byte command is decoded as strict UTF-8. No MQTT command, token or authenticated error body is logged.
+
+The bridge sends exactly one PUT in the working reference format and reads back until the exact target is `Confirmed`. HTTP success alone yields no confirmed property state. The command session disables aiohttp 3.14.4's internal persistent-connection PUT retry; a loopback regression verifies one server-side PUT when the response is lost. There is no command write on startup or reconnection. Stored retained MQTT commands are rejected. Send commands without retain; MQTT 3 cannot distinguish a retained publication delivered live from an ordinary live publication.
+
+`commands/local-result` reports `pending`, `confirmed`, `already-confirmed`, `rejected`, `rejected-retained`, `rejected-disabled`, `rejected-busy`, `uncertain` or `blocked-uncertain`. Before sending, a mode-0600 journal is atomically saved and synced at `state/echarger-command-pending.json`. It is removed only after confirmed readback. Uncertain response, cancellation or crash leaves the journal in place and blocks subsequent writes across restarts; startup never replays it. To resolve manually, stop the bridge, inspect the actual setting locally and the saved target, then archive the journal only after reconciling the action. Preserve this guard alongside the topic manifest when migrating state.
+
+Live command acceptance is still pending. The installation's private write gates were not enabled, and no device setting was changed. Home Manager remains the charging regulator; power limits, planned charging and portal writes are later milestones.
