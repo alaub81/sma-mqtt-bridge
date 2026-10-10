@@ -16,21 +16,38 @@ class LoginParser(HTMLParser):
     def __init__(self):
         super().__init__()
         self.actions = []
+        self.forms = []
+        self.current_form = None
         self.challenge = False
 
     def handle_starttag(self, tag, attrs):
         attrs = dict(attrs)
-        if tag == "form" and attrs.get("id") == "kc-form-login":
-            self.actions.append(attrs.get("action", ""))
+        if tag == "form":
+            self.current_form = {"action": attrs.get("action", ""), "inputs": set(),
+                                 "method": attrs.get("method", "").lower()}
+            self.forms.append(self.current_form)
+            if attrs.get("id") == "kc-form-login":
+                self.actions.append(attrs.get("action", ""))
+        if tag == "input" and self.current_form is not None:
+            self.current_form["inputs"].add((attrs.get("name"), attrs.get("type", "text").lower()))
         if tag == "input" and attrs.get("type") != "hidden" and attrs.get("name", "").lower() in {
             "otp", "totp", "otpcode", "captcha", "captcha_response", "password-new", "password-confirm"
         }:
             self.challenge = True
 
+    def handle_endtag(self, tag):
+        if tag == "form":
+            self.current_form = None
+
 
 def login_action(text, auth_base):
     parser = LoginParser()
     parser.feed(text)
+    # The current SMA login page has one credential form without an ID.
+    if not parser.actions and len(parser.forms) == 1:
+        form = parser.forms[0]
+        if form["method"] == "post" and {("username", "text"), ("password", "password")} <= form["inputs"]:
+            parser.actions.append(form["action"])
     if parser.challenge or len(parser.actions) != 1:
         raise AuthenticationError("Portal login needs an interactive step or its form changed")
     target = urljoin(auth_base + "/", parser.actions[0])
