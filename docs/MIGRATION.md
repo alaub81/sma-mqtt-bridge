@@ -153,3 +153,18 @@ All additional properties remain read-only; model-specific rejection and Grid Gu
 ## Plan and PV command milestone, 2026-10-10
 
 Local staging can submit a combined JSON plan to commands/plan/set only on explicit apply. Do not bind individual plan inputs to device setters. Target mode 4720 is activated only after both plan values are confirmed. Portal minimum PV uses portal/pv-minimum/set behind the independent portal write gate; allowed grid share remains read-only. These paths are offline-tested, not migrated/accepted live. Existing openHAB staging, control rules, offsets and persistence remain in place until explicitly switching command ownership; do not run duplicate command rules. Full protocol and uncertainty recovery are documented in CONFIGURATION.md.
+
+## Last-known observations and inverter night availability
+
+On the user's request, invalid or expired individual measurements now leave the last retained value
+unchanged, including MQTT reconnect and container restart. openHAB can therefore continue displaying
+the last observation. No missing value is converted to zero. Internal freshness checks and command
+readback still require current valid samples; retained values do not prove current device state.
+Explicit source/property retirement continues to remove owned retained topics.
+
+All three bundled inverter profiles use their fresh measurements/status for readiness rather than
+production or battery power. Missing nighttime power alone no longer publishes Homie alert.
+Communication errors or an expired required status still affect availability. The status channel
+continues to report device warnings/errors independently. Existing custom profiles and explicit
+READY_PROPERTIES overrides must be reconciled separately. Production night/day/outage acceptance
+remains pending; these changes are verified through offline regressions.

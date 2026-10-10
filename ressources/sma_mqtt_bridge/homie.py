@@ -222,9 +222,7 @@ class HomiePublisher:
                         await client.publish(topic, value, qos=mqtt.qos, retain=True)
                     sent = {}
                     last_status = 0.0
-                    # Clear every current value on reconnect before publishing fresh samples.
-                    for p in props:
-                        await client.publish(base + "/" + wire_key(p.key), b"", qos=mqtt.qos, retain=True)
+                    # Retained values remain the last known observation across reconnects.
                     self.owned[device] = all_topics
                     self.save_owned()
                     previous = all_topics.copy()
@@ -276,10 +274,6 @@ class HomiePublisher:
                 for topic in sorted(previous - topics):
                     await client.publish(topic, b"", qos=mqtt.qos, retain=True)
                     sent.pop(topic, None)
-                old_keys = {p.key for p in declared}
-                for p in current:
-                    if p.key not in old_keys:
-                        await client.publish(base + "/" + wire_key(p.key), b"", qos=mqtt.qos, retain=True)
                 for topic, value in metadata.items():
                     await client.publish(topic, value, qos=mqtt.qos, retain=True)
                 self.owned[device] = topics
@@ -293,8 +287,7 @@ class HomiePublisher:
             values, state = self.snapshot(states)
             desired = {base + "/" + wire_key(key): value for key, value in values.items()}
             desired[base + "/$state"] = state
-            for topic in sent.keys() - desired.keys():
-                await client.publish(topic, b"", qos=mqtt.qos, retain=True)
+            # Missing/expired values are not new observations; retain the last publication.
             for topic, value in desired.items():
                 if sent.get(topic) != value or (topic == base + "/$state" and time.monotonic() - last_status >= min(runtime.health_interval_seconds, 1)):
                     await client.publish(topic, value, qos=mqtt.qos, retain=True)
@@ -304,7 +297,7 @@ class HomiePublisher:
                 monitor.progress("publishing")
                 monitor.success()  # Only after the full batch's QoS acknowledgements.
                 monitor.observe("ready")
-            sent = desired
+            sent.update(desired)
             await wait_stop(stop, min(runtime.health_interval_seconds, 1))
 
     async def run(self, stop):

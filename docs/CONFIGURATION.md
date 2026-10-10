@@ -269,10 +269,10 @@ with active sources terminate the runtime, close sibling sessions and mark the h
 | Failure | Behavior |
 | --- | --- |
 | Device/network read failure | Only that source reports `error`; other sources continue. Retry with bounded exponential backoff and jitter, default 1–60 seconds. Valid receipt restores availability. |
-| Expired or missing measurement | Each property's own age is checked. Previously published retained values are deleted when they expire; never replace unavailable data with zero. |
+| Expired or missing measurement | Each property's own age is checked. Keep previously published retained observations when values expire or become invalid; never replace missing data with zero. Freshness remains tracked internally. |
 | Invalid credentials, denied access, MFA/login challenge | Source remains `error` without repeated logins until restart after resolving the cause. Local API and portal renew expired sessions independently. |
 | Portal login HTTP 408/429/5xx | Retryable service failure at every PKCE phase, rather than a permanent authentication block. Polling interval zero still disables automatic reads; requested refresh retries transient failures. |
-| Broker outage or lost publish acknowledgement | Rebuild each affected MQTT client after bounded backoff. The configured MQTT timeout (default 10 seconds) bounds acknowledgement waits as well as connection attempts. Reannounce discovery, retire owned obsolete topics, clear current retained values and publish only fresh samples. |
+| Broker outage or lost publish acknowledgement | Rebuild each affected MQTT client after bounded backoff. The configured MQTT timeout (default 10 seconds) bounds acknowledgement waits as well as connection attempts. Reannounce discovery, retire owned obsolete topics, preserve current retained observations and publish only fresh samples. |
 | Abrupt MQTT loss | Broker publishes retained `$state=lost` through the Last Will once it detects loss; graceful shutdown confirms `$state=disconnected`. Detection is not instantaneous. |
 | Uncertain command response | Preserve the durable uncertainty journal and block further writes; no automatic command replay on reconnect/restart. |
 
@@ -307,8 +307,8 @@ readings cannot mask expired critical measurements. Property-specific expiry int
 
 | Source | Default critical keys |
 | --- | --- |
-| Tripower / Sunny Boy profiles | `measurements/active-power` |
-| Sunny Boy Storage profile | `measurements/pres-bat-charge`, `measurements/pres-batt-discharge` |
+| Tripower / Sunny Boy profiles | `measurements/status` |
+| Sunny Boy Storage profile | `measurements/status` |
 | Home Manager UDP / Modbus | `measurements/power-import`, `measurements/power-export` |
 | eCharger SEMP | `measurements/power` |
 | eCharger API | `measurements/current-l1`, `measurements/voltage-l1`; also `measurements/power` when API owns baseline measurements without SEMP |
@@ -316,14 +316,17 @@ readings cannot mask expired critical measurements. Property-specific expiry int
 
 Bundled Modbus profiles mark these keys with boolean `requiredForReady`. Unmarked profiles default
 to all advertised `measurements/` properties. Without measurements or marks, any fresh value suffices.
-Unreadable nighttime power remains unavailable; a resulting stale status is intentional.
+Unreadable nighttime power does not affect inverter readiness while the identity-checked status is fresh.
+The last published power remains retained; no zero is synthesized. A stale status or communication
+error still changes availability. Status values such as warning/error remain visible on their channel;
+readiness describes communication availability, not fault-free equipment operation.
 
 Optional string variables `SMAB_INVERTER<N>_READY_PROPERTIES`, `SMAB_HOME_MANAGER_READY_PROPERTIES`,
 `SMAB_PORTAL_READY_PROPERTIES`, `SMAB_ECHARGER_API_READY_PROPERTIES` and
 `SMAB_ECHARGER_SEMP_READY_PROPERTIES` default to empty (the rules above). A nonempty comma-separated
 `node/property` list replaces defaults for that source. JSON uses `readyProperties`, or
 `apiReadyProperties` / `sempReadyProperties`. Duplicate, malformed, unknown or filtered keys fail
-before device I/O. Choose actual critical measurements when overriding this policy.
+before device I/O. Choose appropriate fresh status or measurement keys when overriding this policy.
 
 Outage/recovery transitions are logged immediately. Ongoing identical failures produce one summary
 per `SMAB_FAILURE_LOG_INTERVAL_SECONDS`: failure/consecutive-failure/timeout counts, outage duration
@@ -431,3 +434,17 @@ Preserve the state volume during upgrades. Update openHAB channel links and exte
 publishers to the compact IDs; changing language alone does not change any channel link.
 Existing customized openHAB Item labels are managed separately and are not rewritten by the bridge.
 Recreate the container after changing ENV or translation files; inspect discovery after startup.
+
+## Last-known retained observations
+
+Invalid or expired individual values cause no MQTT value publication and no retained deletion.
+Previously published observations stay on the broker across reconnects and container restarts.
+A never-valid property has no invented initial value. New valid observations update its topic.
+Consumers, including openHAB, may continue to display a historical value; use source status and
+freshness diagnostics to distinguish it from a current observation. Internal freshness and command
+preflight/readback still exclude invalid/expired samples. Commands never use retained broker values
+as proof of device state. Explicit channel/source retirement still removes owned retained values
+and metadata using the persistent manifest, including inventory changes and renamed IDs.
+Bundled inverter profiles now mark measurements/status as critical instead of production power.
+Host profile overrides and explicit READY_PROPERTIES selections retain their configured policy;
+update those files/selectors if they still require nighttime power.
