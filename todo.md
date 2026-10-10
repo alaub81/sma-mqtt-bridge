@@ -367,3 +367,27 @@ Entscheidungen, eingegangene Unterlagen, erledigte Arbeiten und Prüfergebnisse 
 
 - Andreas fordert den lokalen Commit der abgeschlossenen Modbus-Implementierung samt Profilen, Regressionstests und Dokumentation. Der vorherige Wallbox-Meilenstein ist bereits separat committed.
 - Prüfstand: 102 Offline-Tests, vollständiger Linter, Compose-Parität und `git diff --check` bestanden. Private ENV, Hostdaten und Originalreferenzen bleiben ausgeschlossen; keine Live-Abnahme, kein Push oder Release.
+
+## 10.10.2026 — Privater Home-Manager-Modbus-Test vorbereitet
+
+- Andreas liefert den Serienselektor hexadezimal und wünscht Modbus aktiv, Multicast-Konfiguration erhalten, Empfang deaktiviert. Selektor privat in Dezimaldarstellung übernommen; Modbus-Transport und Gerätequelle aktiviert, Multicast-Empfang ausgeschaltet. Keine privaten Identifikatoren im öffentlichen Tagebuch.
+- Beide Konfigurationen bleiben vorhanden; genau ein ausgewählter Transport besitzt die Messwerte. Rückwechsel zu UDP erfordert Transportauswahl und erneute Multicast-Freigabe. Kein automatischer Parallelbetrieb oder Fallback.
+- Kurzer ausdrücklich gewünschter Modbus-Lesetest vom Mac: TCP-Verbindung auf dem konfigurierten Standardport abgelehnt (`ConnectionRefusedError`). Keine Registerantwort und keine Identitäts-/Messwertabnahme möglich. NSD-Serverzustand, Port und Netzfreigabe auf Installation prüfen; ein abgelehnter TCP-Verbindungsaufbau belegt keinen Grid-Guard-Fehler.
+- Laufender Container unverändert; kein Geräte-Write, keine Grid-Guard-Anmeldung, kein Commit/Push/Release. Private ENV bleibt Git-ignoriert.
+
+## 10.10.2026 — Ladeplanung und Portal-PV-Schreiben
+
+- Andreas beauftragt die nächste Implementierung: gemeinsamer Energie-/Endzeitplan, danach Zielmodus; Portal-PV-Anteil mit Erhalt weiterer Optionen; Offline-Tests und anschließend ausdrücklich beauftragte Live-Abnahme. Kein konkreter Live-Schreibauftrag oder Zielwert erteilt.
+- Eigene Portal-Schalter bestätigt: PORTAL_ENABLED für den gesamten Adapter, PORTAL_COMMANDS_ENABLED für dessen Writes; globales COMMANDS_ENABLED bleibt zusätzlich erforderlich. Pollintervall 0 unterdrückt regelmäßige Abfragen, nicht ausdrücklich angeforderte Vorprüfung/Rücklesung. Private ENV unverändert.
+- Neuer gemeinsamer Homie-Stringbefehl commands/plan/set mit energyKWh und timezone-qualifizierter zukünftiger endTime. Einzelne Plan-Setter und direkter Zielmodus bleiben gesperrt. Metadaten, Identität, Rechte, Einheiten und vorhandene Bounds vorprüfen; verifizierter Firmware-Fallback für kWh/Epochsekunden. Keine Maximalgrenze erfinden, wenn das Gerät keine anbietet.
+- Geänderte Planfelder zusammen übertragen; beide Confirmed zurücklesen und erst danach Modus 4720 separat setzen. Deadline/Rechte vor Aktivierung erneut prüfen; Planwerte auch bei Modusbestätigung vergleichen. Journal bleibt über beide Phasen erhalten. Teilübernahme löst keinen Rollback oder Wiederholungswrite aus. Geänderte Pläne bei bereits aktivem Zielmodus ablehnen; zunächst ausdrücklich anderen Modus wählen. Ladefreigabe bleibt eigenständig.
+- Portal-PV-Setter prüft frische Identität/EVehicle/Edit-Rechte und vollständige Optionen. Kostenlimit und besondere Überschussoption blockieren; PUT enthält nur PV-Prozent plus unveränderte drei Optionen. Rücklesung aller vier Felder und eigenes dauerhaftes Unklarheitsjournal. Lokale und Portal-Session/Locks/Schreibgates getrennt; ein MQTT-Consumer routet nur angebotene Commands.
+- Offizielle openHAB-Homie-Dokumentation und Homie-4-Spezifikation sowie private funktionierende Referenzen konsultiert; private Originale unverändert. Öffentliche Verträge und Migrationshinweise aktualisiert. Keine Gerätewrites, keine Aktivierung/Deployment und keine Änderung bestehender openHAB-Links/Regeln.
+- Prüfstand: 117 integrierte Offline-Tests bestanden, davon 16 neue Plan-/Portal-Protokolltests; vollständiger Linter und Compose-Parität abschließend geprüft. Live-Abnahme für lokale Bedienung, Plan und Portal-PV bleibt offen. Maximale Ladeleistung und Stop-Delay-Setter gehören weiterhin nicht zu diesem Schritt.
+
+## 10.10.2026 — Modbus-Lesetest nach NSD-Aktivierung wiederholt
+
+- Andreas meldet die Aktivierung der lokalen Modbus-Schnittstelle im ennexOS-Portal und beauftragt die Wiederholung des Lesetests.
+- Erneuter TCP-Verbindungsversuch auf dem privat konfigurierten Home-Manager-Port weiterhin mit `ConnectionRefusedError` abgelehnt. Dadurch noch keine Identitäts-, Register-, Gerätezuordnungs- oder Grid-Guard-Zugriffsprüfung möglich. Übernahmezeit der Portaländerung, tatsächlichen Port und Geräteadresse prüfen; keine Netz- oder Gerätefehlfunktion als bewiesen behauptet.
+- Keine Geräte-Schreibaktion, keine Grid-Guard-Anmeldung und keine Änderung am laufenden Container oder privaten Zugangsdaten. Live-Abnahme bleibt offen.
+- Andreas fordert den lokalen Commit dieses Plan-/Portal-Meilensteins. Enthalten sind Schreibpfade, unabhängige Portal-Gates, 16 neue Offline-Protokolltests und öffentliche Dokumentation. Prüfstand: 117 Tests, vollständiger Linter, Compose-Parität und Diff-Hygiene bestanden. Private ENV und Referenzen bleiben ausgeschlossen; kein Push, Deployment oder Live-Schreibtest.

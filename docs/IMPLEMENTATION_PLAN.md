@@ -56,3 +56,7 @@ The first enum/boolean allowlist is now implemented behind global and local API 
 ## Home Manager Modbus read transport, 2026-10-10
 
 The requested alternative transport is implemented with all officially documented readable Unit 1/2 entries, the complete assignment table and delegated read parameter templates. Unit 1 identity, request pacing, persistent sessions, independent rejected-block handling and changing Homie inventory are offline tested. Select `SMAB_HOME_MANAGER_TRANSPORT=modbus-tcp` only with the independently enabled source, real host and serial. Default UDP selection is unchanged. [Home Manager Modbus](HOME_MANAGER_MODBUS.md) records access restrictions and the still-required Pi/firmware/openHAB acceptance; no NSD activation or Grid Guard write is performed automatically.
+
+## Combined planning and portal writes, 2026-10-10
+
+The combined plan command confirms both local targets before activating mode 4720. Portal minimum PV writes preserve the three related options and reject cost-limit/special-surplus modes. Independent source/write gates, shared per-source sessions, durable phase/portal journals and deterministic tests are implemented. All installation gates remain unchanged; live acceptance requires an explicit requested action and concrete values. See CONFIGURATION.md.
