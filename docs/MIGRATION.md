@@ -1,5 +1,9 @@
 # Existing openHAB capability migration
 
+> Current MQTT node/property IDs remove hyphens at the publication boundary. Internal profile and
+> readiness keys keep their spelling; historical examples below may use the former IDs. See
+> [compact IDs and display translations](CONFIGURATION.md#display-language-and-compact-channel-ids).
+
 The goal is to preserve the user's complete existing integration, including calculations and automation, not only a selection of dashboard values.
 
 ## Files to provide

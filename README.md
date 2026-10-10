@@ -73,3 +73,10 @@ GitHub publication, pushes and container releases remain later milestones. No pa
 ## License
 
 MIT. See [LICENSE](LICENSE). This project is not affiliated with SMA.
+
+Display labels support `SMAB_LANGUAGE=en` (default) or `de`, with bundled dictionaries and host
+overrides under `data/sma-mqtt-bridge/translate/`. See [translation templates](translate/README.md).
+Homie node/property IDs are compact lowercase names, such as `internaltemperature` and
+`settings/chargemode/set`; configured device IDs stay unchanged. On upgrade preserve the state
+volume for old retained-topic cleanup and update existing openHAB channel links and command
+publishers. Language changes affect labels only. See [configuration](docs/CONFIGURATION.md#display-language-and-compact-channel-ids).

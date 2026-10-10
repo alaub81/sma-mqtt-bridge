@@ -360,26 +360,26 @@ The initial enum/boolean controls use `settings/<property>/set` under the config
 
 | Property | Non-retained payload |
 | --- | --- |
-| `charge-mode` | `4718` fast, `4719` optimized PV, `4721` stop; `4720` is rejected until plan transactions exist |
-| `charging-release` | `true` / `false` |
-| `approval-required` | `true` / `false` |
-| `stop-when-full` | `true` / `false` |
-| `cable-lock` | `true` / `false` |
-| `led-brightness` | `5191` low, `5190` medium, `5173` high |
-| `ambient-brightness` | `5191` low, `5190` medium, `5173` high |
-| `ambient-enabled` | `true` / `false` |
+| `chargemode` | `4718` fast, `4719` optimized PV, `4721` stop; `4720` is rejected until plan transactions exist |
+| `chargingrelease` | `true` / `false` |
+| `approvalrequired` | `true` / `false` |
+| `stopwhenfull` | `true` / `false` |
+| `cablelock` | `true` / `false` |
+| `ledbrightness` | `5191` low, `5190` medium, `5173` high |
+| `ambientbrightness` | `5191` low, `5190` medium, `5173` high |
+| `ambientenabled` | `true` / `false` |
 
 There are eight MQTT control properties in this allowlist. Current local identity, `state=Confirmed`, `editable=true` and offered `possibleValues` are checked before each action. A target already reported by the device produces `already-confirmed` without writing. Polling and commands share one API lock/session; commands arriving during an active operation or poll are rejected as busy rather than queued. Enum/boolean commands accept at most 64 bytes decoded as strict UTF-8; the combined plan accepts at most 512 bytes. No MQTT command, token or authenticated error body is logged.
 
 The bridge sends exactly one PUT in the working reference format and reads back until the exact target is `Confirmed`. HTTP success alone yields no confirmed property state. The command session disables aiohttp 3.14.4's internal persistent-connection PUT retry; a loopback regression verifies one server-side PUT when the response is lost. There is no command write on startup or reconnection. Stored retained MQTT commands are rejected. Send commands without retain; MQTT 3 cannot distinguish a retained publication delivered live from an ordinary live publication.
 
-`commands/local-result` reports `pending`, `confirmed`, `already-confirmed`, `rejected`, `rejected-retained`, `rejected-disabled`, `rejected-busy`, `uncertain`, `blocked-uncertain` or `blocked-corrupt`. Existing guards are reported immediately when the command controller starts. Before sending, a mode-0600 journal is atomically saved and synced at `state/echarger-command-pending.json`. It is removed only after confirmed readback. Uncertain response, cancellation or crash leaves the journal in place and blocks subsequent writes across restarts; startup never replays it. To resolve manually, stop the bridge, inspect the actual setting locally and the saved target, then archive the journal only after reconciling the action. Preserve this guard alongside the topic manifest when migrating state.
+`commands/localresult` reports `pending`, `confirmed`, `already-confirmed`, `rejected`, `rejected-retained`, `rejected-disabled`, `rejected-busy`, `uncertain`, `blocked-uncertain` or `blocked-corrupt`. Existing guards are reported immediately when the command controller starts. Before sending, a mode-0600 journal is atomically saved and synced at `state/echarger-command-pending.json`. It is removed only after confirmed readback. Uncertain response, cancellation or crash leaves the journal in place and blocks subsequent writes across restarts; startup never replays it. To resolve manually, stop the bridge, inspect the actual setting locally and the saved target, then archive the journal only after reconciling the action. Preserve this guard alongside the topic manifest when migrating state.
 
 Live command acceptance is still pending. The installation's private write gates were not enabled, and no device setting was changed. Home Manager remains the charging regulator; Power limits and stop-delay writes remain later milestones; planned charging and minimum PV writes are described below.
 
 ## Combined charging plan and portal PV commands
 
-Planning uses `commands/plan/set` under the charger Homie ID. Its string payload is one JSON object containing exactly `energyKWh` (positive finite JSON number) and `endTime` (future ISO 8601 time with explicit timezone and whole seconds), for example `{"energyKWh":12.5,"endTime":"2030-01-01T07:00:00+01:00"}`. Choose an actual future deadline. Both global and local API command gates must be enabled. Individual `settings/plan-energy/set`, `settings/plan-end/set` and direct `charge-mode=4720` remain unsupported, so separate input edits cannot start charging.
+Planning uses `commands/plan/set` under the charger Homie ID. Its string payload is one JSON object containing exactly `energyKWh` (positive finite JSON number) and `endTime` (future ISO 8601 time with explicit timezone and whole seconds), for example `{"energyKWh":12.5,"endTime":"2030-01-01T07:00:00+01:00"}`. Choose an actual future deadline. Both global and local API command gates must be enabled. Individual `settings/planenergy/set`, `settings/planend/set` and direct `charge-mode=4720` remain unsupported, so separate input edits cannot start charging.
 
 The bridge validates both fields and mode permission against a fresh identity-checked catalog, including Confirmed/editable flags, every offered numeric bound and possible value, verified kWh and epoch-second units. The observed reference catalog has a minimum but no maximum; absent device bounds are not invented. Unitless metadata is accepted only for the locally verified EVC22-3AC-20 / 2.6.37.R mapping. Changed plan fields share one PUT with one timestamp; this does not assume atomic device acceptance. Both fields must then read back as Confirmed and equal before a separate PUT activates mode 4720. The deadline and current mode permission are checked again before activation. Activation readback must still match both plan fields and the mode.
 
@@ -391,11 +391,43 @@ Portal activation is independent of the local API:
 | --- | --- |
 | `SMAB_PORTAL_ENABLED=false` | No portal session, reads, subscriptions or writes. |
 | `SMAB_PORTAL_ENABLED=true`, `SMAB_PORTAL_COMMANDS_ENABLED=false` | Portal reads only. |
-| Both portal flags and `SMAB_COMMANDS_ENABLED=true` | Advertise `portal/pv-minimum/set`, accepting integer payloads 0–100. |
+| Both portal flags and `SMAB_COMMANDS_ENABLED=true` | Advertise `portal/pvminimum/set`, accepting integer payloads 0–100. |
 | `SMAB_PORTAL_POLL_INTERVAL_SECONDS=0` | Disable periodic reads; explicit refresh and command preflight/readback still read when requested. |
 
-`portal/pv-minimum/set` takes minimum PV share, not grid share. `portal/grid-share` remains read-only and equals 100 minus the confirmed minimum. A fresh device read verifies configured plant/device IDs, product 19143, EVehicle consumer type, optional-consumer state and edit permission. An empty edit-link array is valid. All four demand fields must be present. Cost-limit mode or `pvSurplusOnly=true` rejects the percentage write without changing modes.
+`portal/pvminimum/set` takes minimum PV share, not grid share. `portal/gridshare` remains read-only and equals 100 minus the confirmed minimum. A fresh device read verifies configured plant/device IDs, product 19143, EVehicle consumer type, optional-consumer state and edit permission. An empty edit-link array is valid. All four demand fields must be present. Cost-limit mode or `pvSurplusOnly=true` rejects the percentage write without changing modes.
 
-One PUT to `/optionalenergydemand` sends only `minPvPercentage`, preserved `pvSurplusOnly`, preserved `usePriceLimit` and preserved `priceLimit`. Feed-in limits and other settings are excluded. HTTP success does not confirm the action: readback must match all four fields before publication. Portal polling and commands share a separate portal session/lock; tokens and journals are independent of the local API. `commands/portal-result` uses the same outcome vocabulary as the local result. A separate synced mode-0600 `state/portal-command-pending.json` survives uncertain replies/cancellation/restarts and must be preserved during migration. Manual reconciliation follows the local journal procedure; startup never replays it.
+One PUT to `/optionalenergydemand` sends only `minPvPercentage`, preserved `pvSurplusOnly`, preserved `usePriceLimit` and preserved `priceLimit`. Feed-in limits and other settings are excluded. HTTP success does not confirm the action: readback must match all four fields before publication. Portal polling and commands share a separate portal session/lock; tokens and journals are independent of the local API. `commands/portalresult` uses the same outcome vocabulary as the local result. A separate synced mode-0600 `state/portal-command-pending.json` survives uncertain replies/cancellation/restarts and must be preserved during migration. Manual reconciliation follows the local journal procedure; startup never replays it.
 
 All write gates stay false by default. This milestone is offline-tested; live plan/PV actions still need an explicit user-requested test with concrete target values. No installation activation or deployment is implied by implementing the command paths.
+
+## Display language and compact channel IDs
+
+`SMAB_LANGUAGE` (string, default `en`; JSON `runtime.language`) selects bundled English or German
+(`de`) display labels. `SMAB_TRANSLATE_DIR` (container path, default
+`/data/sma-mqtt-bridge/translate`; JSON `runtime.translateDir`) selects host translation overrides.
+The image includes `ressources/translate/en.json` and `de.json`. Copy `translate/example.json` to
+`data/sma-mqtt-bridge/translate/de.json` to customize German labels, or to `fr.json` and select `fr`
+to add another language. The host directory is covered by the existing data bind mount; it is not
+created or overwritten automatically. The container user must be able to read the files.
+
+Files contain exactly `schemaVersion: 1` and `labels`, a dictionary mapping the original English
+label to its translated display text. These English source labels are translation keys; custom
+profiles can add their own labels without adapter changes. Loading precedence is bundled English,
+bundled selected language, then the selected host file. Missing keys fall back to English or the
+original profile label. `Device {number}` must retain its placeholder for assigned Home Manager
+nodes. Custom language names use lowercase language codes, optionally with hyphen-separated
+lowercase region subtags. Unavailable languages, duplicate JSON keys, invalid schemas, symlink
+files and files over 1 MiB are rejected before connections. Labels are nonempty single-line strings
+of at most 256 characters. Translation applies only to Homie `$name` metadata, including device and
+node names; property units, values, enums and command payloads are never translated.
+
+Homie node and property IDs now remove internal hyphens at the MQTT boundary: `power-a-input`
+becomes `powerainput`, `internal-temperature` becomes `internaltemperature`, `device-1` becomes
+`device1`, and `settings/charge-mode/set` becomes `settings/chargemode/set`. Configured device IDs
+and the Homie prefix stay unchanged. Internal profile IDs, ready-property selectors and adapter
+keys retain their original spelling. Colliding compact keys fail closed rather than merge values.
+The persistent topic manifest retires former retained values and metadata on the same broker.
+Preserve the state volume during upgrades. Update openHAB channel links and external command
+publishers to the compact IDs; changing language alone does not change any channel link.
+Existing customized openHAB Item labels are managed separately and are not rewritten by the bridge.
+Recreate the container after changing ENV or translation files; inspect discovery after startup.

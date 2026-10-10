@@ -1,5 +1,9 @@
 # SMA-Wertekatalog für die MQTT-Bridge
 
+> Current MQTT node/property IDs remove hyphens at the publication boundary. Internal profile and
+> readiness keys keep their spelling; historical examples below may use the former IDs. See
+> [compact IDs and display translations](CONFIGURATION.md#display-language-and-compact-channel-ids).
+
 Stand: 2026-10-10. Arbeitskatalog auf ausdrücklichen Wunsch mit deutschen Beschreibungen.
 
 Diese Datei sammelt alle in den vorliegenden Quellen identifizierten Messwerte, Einstellungen und Befehle sowie weitere dokumentierte Kandidaten. Sie ist die gemeinsame Grundlage für die spätere Implementierung und wird bei neuen Unterlagen oder Geräteantworten ergänzt. Das erste Python-Lesegrundgerüst einschließlich Homie ist implementiert und offline geprüft. **Kein Topic gilt damit als an der Installation abgenommen.** Die drei Wechselrichterprofile bleiben `identity-only` und für Abfragen gesperrt.

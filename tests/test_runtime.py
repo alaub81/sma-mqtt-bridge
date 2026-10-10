@@ -165,18 +165,18 @@ class AsyncRuntimeTests(unittest.IsolatedAsyncioTestCase):
                 state.properties = (Property('device-1', 'serial', 'Assigned serial', 'integer'),)
                 state.values.clear()
                 state.update({'device-1/serial': 123})
-            if topic.endswith('/device-1/serial') and payload == '123':
+            if topic.endswith('/device1/serial') and payload == '123':
                 stop.set()
         client.publish = publish
         await publisher.publish_values(client, 'homie/test-device', [state], stop, {}, 0, None, initial)
         messages = [(t, p) for t, p, _ in client.messages]
         self.assertIn(('homie/test-device/measurements/power/$name', b''), messages)
-        self.assertIn(('homie/test-device/device-1/serial/$settable', 'false'), messages)
-        self.assertIn(('homie/test-device/$nodes', 'device-1,diagnostics'), messages)
+        self.assertIn(('homie/test-device/device1/serial/$settable', 'false'), messages)
+        self.assertIn(('homie/test-device/$nodes', 'device1,diagnostics'), messages)
         self.assertNotIn('homie/test-device/measurements/power', publisher.owned['test-device'])
-        self.assertIn('homie/test-device/device-1/serial', publisher.owned['test-device'])
+        self.assertIn('homie/test-device/device1/serial', publisher.owned['test-device'])
         saved = __import__('json').loads((Path(self.tmp.name) / 'mqtt-topics.json').read_text())
-        self.assertIn('homie/test-device/device-1/serial', saved['devices']['test-device'])
+        self.assertIn('homie/test-device/device1/serial', saved['devices']['test-device'])
 
     async def test_fully_disabled_device_is_retired(self):
         clients = []

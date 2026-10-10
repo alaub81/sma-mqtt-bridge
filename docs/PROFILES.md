@@ -1,5 +1,9 @@
 # Inverter profiles
 
+> Current MQTT node/property IDs remove hyphens at the publication boundary. Internal profile and
+> readiness keys keep their spelling; historical examples below may use the former IDs. See
+> [compact IDs and display translations](CONFIGURATION.md#display-language-and-compact-channel-ids).
+
 The public JSON files under `ressources/profiles/` are packaged directly in the Docker image. They contain no installation addresses, serial numbers or credentials. **The three supplied profiles now cover the existing 41 read channels**, checked against official model-specific SMA lists and local model/firmware/serial reads. See [register validation](REGISTER_VALIDATION.md) for units, type corrections, source hashes and remaining parallel acceptance.
 
 | Profile ID | Model | Observed firmware | Default slot |

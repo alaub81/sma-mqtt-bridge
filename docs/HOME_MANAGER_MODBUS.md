@@ -1,5 +1,9 @@
 # Sunny Home Manager 2.0 Modbus reads
 
+> Current MQTT node/property IDs remove hyphens at the publication boundary. Internal profile and
+> readiness keys keep their spelling; historical examples below may use the former IDs. See
+> [compact IDs and display translations](CONFIGURATION.md#display-language-and-compact-channel-ids).
+
 Implemented and offline tested on 2026-10-10. Hardware/MQTT acceptance on the Home Manager and complete openHAB migration remain pending. The source is independently enabled and defaults to UDP; select Modbus TCP explicitly. The supported read inventory comes from [SMA HM-20-Modbus-NSD-TI-de-12, version 1.2](https://files.sma.de/downloads/HM-20-Modbus-NSD-TI-de-12.pdf), chapters 4–6. No newer revision was found during this work.
 
 ## Configuration and access
