@@ -98,7 +98,7 @@ jobs:
       - uses: actions/checkout@v7
       - name: Validate Compose configuration
         env:
-          SMA_BRIDGE_VERSION: bootstrap
+          SMAB_BRIDGE_VERSION: bootstrap
         run: |
           docker compose --env-file .env.sample -f docker-compose.example.yml config --quiet
           docker compose --env-file .env.sample -f docker-compose.dev.yml config --quiet

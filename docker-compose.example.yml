@@ -2,14 +2,13 @@
 # Bootstrap diagnostics: use docker-compose.dev.yml and an explicit CLI command.
 services:
   sma-mqtt-bridge:
-    image: ghcr.io/alaub81/sma-mqtt-bridge:${SMA_BRIDGE_VERSION:-latest}
+    image: ghcr.io/alaub81/sma-mqtt-bridge:${SMAB_BRIDGE_VERSION:-latest}
     env_file:
-      - path: .env
+      - path: ${SMAB_ENV_FILE:-./data/sma-mqtt-bridge/.env}
         required: false
     volumes:
-      - sma_bridge_state:/app/state
+      - type: bind
+        source: ${SMAB_DATA_DIR:-./data/sma-mqtt-bridge}
+        target: /data/sma-mqtt-bridge
     # Enable the normal restart policy after runtime adapters are implemented.
     restart: "no"
-
-volumes:
-  sma_bridge_state:

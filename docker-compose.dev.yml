@@ -7,6 +7,3 @@ services:
     build: .
     image: sma-mqtt-bridge:dev
     pull_policy: build
-
-volumes:
-  sma_bridge_state:

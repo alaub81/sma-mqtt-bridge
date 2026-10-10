@@ -36,7 +36,7 @@ class BootstrapTests(unittest.TestCase):
         self.assertFalse(status['paidSmaApisRequired'])
 
     def test_start_fails_clearly_without_exposing_credentials(self):
-        env = dict(os.environ, SMA_PORTAL_PASSWORD='test-do-not-log-this')
+        env = dict(os.environ, SMAB_PORTAL_PASSWORD='test-do-not-log-this')
         result = subprocess.run([str(self.binary)], env=env, capture_output=True, text=True)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn('not implemented yet', result.stderr)
@@ -48,7 +48,9 @@ class BootstrapTests(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0)
 
     def test_both_compose_templates_render_without_personal_configuration(self):
-        env = dict(os.environ, SMA_BRIDGE_VERSION='test')
+        env = dict(os.environ, SMAB_BRIDGE_VERSION='test',
+                   SMAB_ENV_FILE=str(ROOT / '.env.sample'))
+        env.pop('SMAB_DATA_DIR', None)
         for filename in ('docker-compose.example.yml', 'docker-compose.dev.yml'):
             with self.subTest(filename=filename):
                 result = subprocess.run(['docker', 'compose', '--env-file', '.env.sample',
@@ -56,9 +58,14 @@ class BootstrapTests(unittest.TestCase):
                                         cwd=ROOT, env=env, capture_output=True, text=True, check=True)
                 configuration = json.loads(result.stdout)
                 self.assertIn('sma-mqtt-bridge', configuration['services'])
-                self.assertIn('sma_bridge_state', configuration['volumes'])
-                self.assertFalse(any('BMB_' in key for key in
-                                     configuration['services']['sma-mqtt-bridge'].get('environment', {})))
+                service = configuration['services']['sma-mqtt-bridge']
+                mounts = service['volumes']
+                self.assertEqual(len(mounts), 1)
+                self.assertEqual(mounts[0]['type'], 'bind')
+                self.assertEqual(Path(mounts[0]['source']), ROOT / 'data/sma-mqtt-bridge')
+                self.assertEqual(mounts[0]['target'], '/data/sma-mqtt-bridge')
+                self.assertTrue(all(key.startswith('SMAB_') for key in
+                                    service.get('environment', {})))
 
 
 if __name__ == '__main__':
