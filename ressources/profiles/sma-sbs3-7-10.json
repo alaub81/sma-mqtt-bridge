@@ -190,7 +190,7 @@
     {
       "id": "day-yield",
       "node": "measurements",
-      "name": "-",
+      "name": "Daily yield",
       "poller": "yield",
       "offset": 20,
       "type": "uint32",
@@ -224,7 +224,7 @@
     {
       "id": "current-bat-stat-charge",
       "node": "measurements",
-      "name": "-",
+      "name": "Battery state of charge",
       "poller": "currentbatstatcharge",
       "offset": 0,
       "type": "uint32",
@@ -241,7 +241,7 @@
     {
       "id": "current-batcapacity",
       "node": "measurements",
-      "name": "-",
+      "name": "Battery capacity",
       "poller": "currentbatstatcharge",
       "offset": 2,
       "type": "uint32",
@@ -258,7 +258,7 @@
     {
       "id": "current-bat-temp",
       "node": "measurements",
-      "name": "-",
+      "name": "Battery temperature",
       "poller": "currentbattemppoller",
       "offset": 0,
       "type": "int32",
@@ -275,7 +275,7 @@
     {
       "id": "battery-status",
       "node": "measurements",
-      "name": "-",
+      "name": "Battery status",
       "poller": "batterystatus",
       "offset": 0,
       "type": "uint32",
@@ -299,7 +299,7 @@
     {
       "id": "pres-bat-charge",
       "node": "measurements",
-      "name": "-",
+      "name": "Battery charging power",
       "poller": "presbatcharge",
       "offset": 0,
       "type": "uint32",
@@ -317,7 +317,7 @@
     {
       "id": "pres-batt-discharge",
       "node": "measurements",
-      "name": "-",
+      "name": "Battery discharging power",
       "poller": "presbatcharge",
       "offset": 2,
       "type": "uint32",
