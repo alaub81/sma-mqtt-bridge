@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "sma-stp8-0-3av-40",
+  "device": {
+    "manufacturer": "SMA",
+    "models": [
+      "STP8.0-3AV-40"
+    ],
+    "observedFirmware": [
+      "4.10.10.R"
+    ]
+  },
+  "protocol": {
+    "type": "modbus-tcp",
+    "defaults": {
+      "port": 502,
+      "unitId": 3
+    },
+    "addressing": "zero-based"
+  },
+  "validation": {
+    "status": "identity-only",
+    "reason": "Model and firmware observed in ennexOS; local identity and matching register definitions still require validation."
+  },
+  "pollers": [],
+  "properties": [],
+  "commands": []
+}

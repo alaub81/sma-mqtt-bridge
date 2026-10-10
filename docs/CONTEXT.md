@@ -8,12 +8,14 @@ Create a self-hosted Docker SMA-to-Homie-MQTT bridge based on the existing BMW-M
 
 Use local sources for inverter/meter measurements and wallbox settings. Use the existing ennexOS portal web API for the minimum PV percentage. The user explicitly rejected paying for SMA Developer APIs. A completely local setter for the SMA PV-percentage slider has not been confirmed.
 
+Each source must be independently configurable and enabled/disabled. The chosen environment prefix is `SMAB_`; all operational options need defaults and ENV overrides so only installation basics are necessary. Host configuration, profiles, certificates and persistent state belong under `./data/sma-mqtt-bridge/`, including its `.env`. See [the binding configuration contract](CONFIGURATION.md). Compose prepares this layout; the Python configuration loader is not implemented yet.
+
 ## Known devices and software
 
 - openHAB 5.2.1.
 - SMA eCharger EVC22-3AC-20, firmware 2.6.37.R; distinct from the older EV Charger models.
-- Sunny Home Manager 2.0.
-- Three SMA inverters; models, firmware, addresses and Modbus register configurations have not yet been supplied.
+- Sunny Home Manager 2.0, portal-reported firmware 2.19.1.R.
+- Read-only ennexOS inventory confirmed STP8.0-3AV-40 (4.10.10.R), SBS3.7-10 (4.07.31.R) and SB4.0-1AV-41 (4.10.10.R). The original third-device comment says Sunny Boy 3.0; preserve that historical label until local Modbus identity/host mapping is reconciled. The exports contain 41 active data Things across 19 pollers.
 - Sunny Portal powered by ennexOS, normal App/Portal account.
 - Local wallbox administrator/installer access exists separately from portal credentials.
 
@@ -74,9 +76,19 @@ The reference checks whole-number percentages 0-100, refuses writes while cost-l
 
 ## Inverters and Home Manager
 
-The existing local Modbus mappings, channels and calculations are the acceptance baseline and are still pending. SMA devices do not share one universal documented configuration API. Home Manager meter data is available in local energy-meter telegrams; that does not expose every planning preference. Home Manager acting as a Modbus client for external devices does not imply that it serves all its own settings as Modbus registers.
+The supplied Modbus Things are the first part of the acceptance baseline. The five referenced transforms and additional SMA maps/energy transforms have now been supplied under `private/transform/` and inspected. Their legacy scaling and negative-value filters are recorded in `docs/MIGRATION.md`. The later MainUI inventory confirms 34 inverter Item links, four Home Manager Items and ten derived capabilities; raw units/sentinels and the complete rule/persistence/UI audit remain pending. Some additional transforms use private historical counter offsets, while the active Home Manager energy links use offset profiles; do not apply both. All three TCP bridges use port 502, unit ID 3 and input-register pollers. The exports use both signed and unsigned 32-bit decoding, so type and sentinel behavior must be preserved and checked against the actual models. SMA devices do not share one universal documented configuration API. Home Manager meter data is available in local energy-meter telegrams; that does not expose every planning preference. Home Manager acting as a Modbus client for external devices does not imply that it serves all its own settings as Modbus registers.
+
+The deployment target is a Raspberry Pi 5 with a 64-bit system (`linux/arm64` container target); OS/network details are still pending. Exact hardware designations were confirmed in ennexOS; matching complete register coverage remains pending. The separate read-only MainUI inventory received during catalogue work confirms the active house-day calculations through InfluxDB Flux, the Shelly wallbox day counter and selected consumption/aggregate rules. See `docs/MIGRATION.md` for their actual semantics and remaining continuity checks; they initially stay in openHAB.
 
 Local meter telegrams use UDP port 9522 and the SMA Energy Meter/Speedwire protocol. Network interface, multicast reachability, serial-number selection, phase channels and encrypted Speedwire applicability must be checked against the actual installation. Docker multicast reception needs deliberate Linux networking configuration; do not assume Docker Desktop behaves like a Linux host.
+
+## Value catalogue and portal inventory
+
+The user requested a maintained German Markdown catalogue with units, brief descriptions and eventual MQTT topics. [WERTEKATALOG.md](WERTEKATALOG.md) now covers all 198 rows of the supplied Sunny Boy -40 register list, its 63 SunSpec-mapped rows, all 85 local eCharger parameter metadata entries, all 25 supplied SEMP parameters, all 458 parameter rows from the five current portal exports, existing migration channels and additional Home Manager/portal candidates. Export values and identity headers were excluded. The -40 list targets firmware 01.03.24.R and is not a validated profile for the installed SB4.0-1AV-41, Tripower or Storage. Complete matching profiles remain an input dependency.
+
+The supplied HM-20 NSD document describes a real Home Manager Modbus server, separate from its client for external Modbus devices. Unit 1 exposes identification/assignment information; Unit 2 plant reads and delegated inverter parameters require Grid Guard according to that document. Pure write control registers are inventoried without Homie commands. The observed portal shows Modbus NSD input and the external-device Modbus client both disabled. Do not enable either or enter Grid Guard credentials for this inventory. Direct meter communication can replace multicast and needs an installation-specific check.
+
+The authorized authenticated portal inspection confirmed five devices in the active plant view. A second view contains the same Storage device, with matching private identity and no live data; it does not add another physical device. Read-only UI inventory includes energy flows/history, charging priority/PV preference, forecast and scheduled battery charging, peak shaving, optimization goal, tariffs and communications. These UI capabilities are candidates until their API fields, units, rights and timestamps are verified. Only the existing minimum-PV setter is in the initial portal command scope. No credentials, private IDs or raw authenticated responses were copied; no device command was executed.
 
 ## Earlier fixes worth preserving
 

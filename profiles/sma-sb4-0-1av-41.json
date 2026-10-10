@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "id": "sma-sb4-0-1av-41",
+  "device": {
+    "manufacturer": "SMA",
+    "models": [
+      "SB4.0-1AV-41"
+    ],
+    "observedFirmware": [
+      "4.10.10.R"
+    ]
+  },
+  "protocol": {
+    "type": "modbus-tcp",
+    "defaults": {
+      "port": 502,
+      "unitId": 3
+    },
+    "addressing": "zero-based"
+  },
+  "validation": {
+    "status": "identity-only",
+    "reason": "Model and firmware observed in ennexOS; local identity and matching register definitions still require validation."
+  },
+  "pollers": [],
+  "properties": [],
+  "commands": []
+}

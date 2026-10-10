@@ -1,32 +1,81 @@
 {
   "schemaVersion": 1,
   "status": "design-example-not-yet-implemented",
-  "mqtt": {
-    "hostEnv": "SMA_MQTT_HOST",
-    "portEnv": "SMA_MQTT_PORT",
-    "homieVersion": "4.0.0"
+  "runtime": {
+    "timezone": "Europe/Berlin",
+    "logLevel": "INFO",
+    "profileDir": "/data/sma-mqtt-bridge/profiles",
+    "stateDir": "/data/sma-mqtt-bridge/state"
   },
-  "inverters": [],
+  "mqtt": {
+    "host": "",
+    "port": 8883,
+    "clientId": "sma-mqtt-bridge",
+    "homiePrefix": "homie",
+    "tls": true,
+    "tlsVerify": true
+  },
+  "inverters": [
+    {
+      "id": "inverter1",
+      "enabled": false,
+      "host": "",
+      "port": 502,
+      "unitId": 3,
+      "profile": "sma-stp8-0-3av-40",
+      "homieId": "sma-inverter1"
+    },
+    {
+      "id": "inverter2",
+      "enabled": false,
+      "host": "",
+      "port": 502,
+      "unitId": 3,
+      "profile": "sma-sbs3-7-10",
+      "homieId": "sma-inverter2"
+    },
+    {
+      "id": "inverter3",
+      "enabled": false,
+      "host": "",
+      "port": 502,
+      "unitId": 3,
+      "profile": "sma-sb4-0-1av-41",
+      "homieId": "sma-inverter3"
+    }
+  ],
   "homeManager": {
     "enabled": false,
-    "serialNumber": "",
-    "interfaceAddress": ""
+    "host": "",
+    "serial": "",
+    "interfaceAddress": "0.0.0.0",
+    "bindAddress": "0.0.0.0",
+    "port": 9522,
+    "multicastEnabled": true,
+    "multicastGroup": "239.12.255.254",
+    "homieId": "sma-home-manager"
   },
-  "wallbox": {
+  "echarger": {
     "enabled": false,
-    "baseUrl": "https://wallbox.example.invalid",
-    "certificateFile": "",
-    "usernameEnv": "SMA_WALLBOX_USERNAME",
-    "passwordEnv": "SMA_WALLBOX_PASSWORD"
+    "host": "",
+    "port": 443,
+    "tlsCaFile": "",
+    "sempEnabled": true,
+    "sempPort": 80,
+    "sempPath": "/semp/",
+    "homieId": "sma-echarger",
+    "commandsEnabled": false
   },
   "portal": {
     "enabled": false,
+    "baseUrl": "https://ennexos.sunnyportal.com",
     "plantId": "",
     "deviceId": "",
-    "usernameEnv": "SMA_PORTAL_USERNAME",
-    "passwordEnv": "SMA_PORTAL_PASSWORD"
+    "pollIntervalSeconds": 0,
+    "commandsEnabled": false
   },
   "commands": {
-    "enabled": false
+    "enabled": false,
+    "readbackTimeoutSeconds": 30
   }
 }
