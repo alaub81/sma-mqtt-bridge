@@ -45,3 +45,9 @@ Validate local eCharger identity, metadata, measurement timestamps and units. Th
 The root `smab.example.env` lists every available variable with purpose/type/default. The optional `config.example.json` includes non-secret runtime/device options and documentation-only addresses; all sources remain disabled. It deliberately omits inverter interval overrides so per-poller intervals survive. Copy it to `data/sma-mqtt-bridge/config.json` only when needed; explicit ENV overrides still win. Account usernames/passwords use ENV or private password files.
 
 Bundled model files under `ressources/profiles/` are directly usable examples for host overrides: copy one to `data/sma-mqtt-bridge/profiles/`, preserve its ID, or select a renamed file with `file:custom-name.json`. Never put installation addresses or passwords in a reusable profile. Certificates are public trust material rather than configuration templates; obtain the actual trusted certificate instead of copying a fabricated example.
+
+## Authenticated read result on 2026-10-10
+
+Private credentials have now been supplied and API/portal sources explicitly enabled. Local TLS, model/serial validation and fresh current/voltage/total-energy reads passed. Portal identity and preference reads passed; selected values reached MQTT. The live API uses `time` for measurement timestamps. Plan energy/stop delay still lack local unit metadata and remain unavailable in engineering units.
+
+Portal polling remains zero. This test explicitly started the service with `--refresh-portal` through a temporary Compose command override. The current container repeats that explicit refresh on Docker restart; a regular Compose Up without the override restores the default command. One-shot portal values become stale after 180 seconds and disappear; they must not be treated as continuously refreshed settings. No command flags were enabled.

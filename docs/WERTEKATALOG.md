@@ -604,7 +604,7 @@ Die folgende **11er-Befehlsliste** entspricht P04/P02 und den berichteten Schrei
 | `Parameter.Sys.DevSigBri` | — | RW | Statuslicht: 5191 niedrig, 5190 mittel, 5173 hoch. | B/R P02–P04 | `homie/sma-echarger/settings/led-brightness` |
 | `Parameter.Sys.AmbLghtBri` | — | RW | Ambientelicht-Helligkeit; gleiche drei Stufen. | B/R P02–P04 | `homie/sma-echarger/settings/ambient-brightness` |
 | `Parameter.Sys.UseAmbLght` | — | RW | Ambientelicht aktivieren; 308 ein, 303 aus. | B/R P02–P04 | `homie/sma-echarger/settings/ambient-enabled` |
-| `Parameter.Chrg.Plan.En` | kWh Ziel; Rohunit offen | RW* | Für den Ladeplan gewünschte zu ladende Energie; kein Fahrzeug-SoC. | B/R P02–P04 | `homie/sma-echarger/settings/plan-energy` |
+| `Parameter.Chrg.Plan.En` | kWh; lokal 2.6.37.R verifiziert | RW* | Für den Ladeplan gewünschte zu ladende Energie; kein Fahrzeug-SoC. | B/R P02–P04 | `homie/sma-echarger/settings/plan-energy` |
 | `Parameter.Chrg.Plan.StopTm` | s → ISO 8601 | RW* | End-/Abfahrtszeit des Ladeplans; Zeitbasis und Zeitzone prüfen. | B/R P02–P04 | `homie/sma-echarger/settings/plan-end` |
 
 Ein Zielplan benötigt Energie und Endzeit gemeinsam sowie einen expliziten Übernahmebefehl; zwei nacheinander eintreffende Zustandswerte dürfen keine halbfertige Planung auslösen. Konkretes MQTT-Befehlsformat wird im Adapterentwurf festgelegt. Der Referenz-Slider beginnt teilweise bei 0, obwohl der Geräteexport für StopDelay mindestens 5 vorgibt: Geräte-Metadaten haben Vorrang. „Stopp“ ist eine lokale Moduswahl, kein sicherheitstechnischer Not-Aus.
@@ -640,7 +640,7 @@ Passwort-/WLAN-/FTP-/Identitäts-/Netzwerkwertfelder werden ausschließlich als 
 | `Parameter.Chrg.ChrgApv` | — | ja | Codes 5171, 5172 | Ladefreigabe/Sperrzustand. | RW | `homie/sma-echarger/settings/charging-release` |
 | `Parameter.Chrg.ChrgLok` | — | ja | Codes 1130, 1129 | Freigabe für Ladevorgänge erforderlich. | RW | `homie/sma-echarger/settings/approval-required` |
 | `Parameter.Chrg.Plan.DurTmm` | min? | ja | min 0 | Ladeplandauer; Zusammenhang mit Endzeit noch prüfen. | RO geplant | `homie/sma-echarger/parameters/chrg-plan-durtmm` |
-| `Parameter.Chrg.Plan.En` | kWh Ziel; Rohunit offen | ja | min 0 | Zielenergie für Ladeplan. | RW* | `homie/sma-echarger/settings/plan-energy` |
+| `Parameter.Chrg.Plan.En` | kWh; lokal 2.6.37.R verifiziert | ja | min 0 | Zielenergie für Ladeplan. | RW* | `homie/sma-echarger/settings/plan-energy` |
 | `Parameter.Chrg.Plan.StopTm` | s → ISO 8601 | ja | min 0 | Endzeit des Ladeplans. | RW* | `homie/sma-echarger/settings/plan-end` |
 | `Parameter.Chrg.StpWhenFl` | — | ja | Codes 1129, 1130 | Beenden bei vollem Fahrzeug. | RW | `homie/sma-echarger/settings/stop-when-full` |
 | `Parameter.Chrg.StpWhenFlTm` | min | ja | min 5; max 1440 | Wartezeit bis Beendigung. | RW | `homie/sma-echarger/settings/stop-delay` |
@@ -726,7 +726,7 @@ SEMP wird **lesend** über `/SEMP/` und `/SEMP/Parameters` ausgewertet. 25 Kanä
 | --- | --- | --- | --- | --- |
 | `Parameter.Chrg.ActChaMod` | — | RO über SEMP | Aktuell eingestellter Lademodus. | `homie/sma-echarger/settings/charge-mode` |
 | `Parameter.Chrg.Plan.StopTm` | s → ISO 8601 | RO über SEMP | Endzeit des Ladeplans. | `homie/sma-echarger/settings/plan-end` |
-| `Parameter.Chrg.Plan.En` | kWh Ziel; Rohunit offen | RO über SEMP | Zielenergie für Ladeplan. | `homie/sma-echarger/settings/plan-energy` |
+| `Parameter.Chrg.Plan.En` | kWh; lokal 2.6.37.R verifiziert | RO über SEMP | Zielenergie für Ladeplan. | `homie/sma-echarger/settings/plan-energy` |
 | `Parameter.Chrg.StpWhenFl` | — | RO über SEMP | Beenden bei vollem Fahrzeug. | `homie/sma-echarger/settings/stop-when-full` |
 | `Parameter.Chrg.StpWhenFlTm` | min | RO über SEMP | Wartezeit bis Beendigung. | `homie/sma-echarger/settings/stop-delay` |
 | `Parameter.Inverter.OutPhs` | — | RO über SEMP | Phasenkonfiguration; sechs Codes, automatische Zuordnung prüfen. | `homie/sma-echarger/parameters/inverter-outphs` |
@@ -1394,7 +1394,7 @@ Diese Tabellen sind der für das angemeldete Portal sichtbare Parameterbestand; 
 
 Die Portalexporte ergänzen die tatsächlichen aktuellen Geräteparameter, ersetzen aber keine Modbus-Adresse, keinen Rohdatentyp und keine geprüfte lokale Schnittstelle. Insbesondere das Sunny-Boy--40-Registerprofil wird dadurch nicht zum bestätigten -41-Profil. Bei Home-Manager-Funktionen wie Prognoseladen/Lastspitzenkappung sind technische Kanäle jetzt identifiziert; Zugriffs-Endpunkte und Schreibfreigabe bleiben offen. Eine API-Rolle kann einen Parameter als RO exportieren, obwohl dieselbe Oberfläche eine separate Bedienfunktion anbietet.
 
-Der eCharger-Portalexport nennt für `Parameter.Chrg.Plan.En` ausdrücklich kWh und für `Parameter.Chrg.StpWhenFlTm` min. Das bestätigt die Portal-Einheiten, ersetzt aber noch nicht den Rohunit-/Rückleseabgleich derselben Kanäle über die separate lokale API. `Parameter.Csmr.PriceLim` hat im Export keine Unit; daher weiterhin keine erfundene Preisunit im MQTT-Feld.
+Der eCharger-Portalexport nennt für `Parameter.Chrg.Plan.En` ausdrücklich kWh und für `Parameter.Chrg.StpWhenFlTm` min. Die lokale SMA-WebUI-Metadatenquelle bestätigt inzwischen dieselben Rohunits für EVC22-3AC-20 / 2.6.37.R ohne zusätzliche Skalierung; siehe VALIDATION.md. Geräte-Schreibabnahme bleibt offen. `Parameter.Csmr.PriceLim` hat im Export keine Unit; daher weiterhin keine erfundene Preisunit im MQTT-Feld.
 
 ## Erhalt der bestehenden openHAB-Funktionen
 
@@ -1422,7 +1422,7 @@ Eingabe-Items für Zielenergie, Endzeit und Netzanteil bleiben zunächst lokale 
 | `SMA_ECharger_CableLock` | Switch | — | RW vorgesehen | Ladekabel dauerhaft verriegeln; 308 ein, 303 aus. | `homie/sma-echarger/settings/cable-lock` |
 | `SMA_ECharger_PlanEnergyInput` | Number:Energy | kWh | Lokales Eingabe-Item | Energie vor PLAN vorbereiten; kein automatischer Gerätebefehl. | —: Vorbereitung bleibt in openHAB |
 | `SMA_ECharger_PlanEndInput` | DateTime | —; ISO 8601 | Lokales Eingabe-Item | Endzeit vor PLAN vorbereiten; Zeitzone erhalten. | —: Vorbereitung bleibt in openHAB |
-| `SMA_ECharger_PlanEnergy` | Number:Energy | kWh Ziel; Rohunit offen | RW* vorgesehen | Für den Ladeplan gewünschte zu ladende Energie; kein Fahrzeug-SoC. | `homie/sma-echarger/settings/plan-energy` |
+| `SMA_ECharger_PlanEnergy` | Number:Energy | kWh; lokal 2.6.37.R verifiziert | RW* vorgesehen | Für den Ladeplan gewünschte zu ladende Energie; kein Fahrzeug-SoC. | `homie/sma-echarger/settings/plan-energy` |
 | `SMA_ECharger_PlanEnd` | DateTime | s → ISO 8601 | RW* vorgesehen | End-/Abfahrtszeit des Ladeplans; Zeitbasis und Zeitzone prüfen. | `homie/sma-echarger/settings/plan-end` |
 | `SMA_ECharger_LedBrightness` | String | — | RW vorgesehen | Statuslicht: 5191 niedrig, 5190 mittel, 5173 hoch. | `homie/sma-echarger/settings/led-brightness` |
 | `SMA_ECharger_AmbientEnabled` | Switch | — | RW vorgesehen | Ambientelicht aktivieren; 308 ein, 303 aus. | `homie/sma-echarger/settings/ambient-enabled` |
@@ -1556,7 +1556,7 @@ Bei jeder neuen Unterlage die Quelle/Version und Modellgeltung ergänzen, Regist
 - Implementiert: Konfiguration/Profilprüfung, generischer Modbus-Leser, Home-Manager-Zählerdekodierung für die vier Bilanzwerte, lokale eCharger-API/SEMP, optionales ennexOS-Lesen und Homie 4. Synthetische Tests belegen Formatprüfung, Identitätsgrenzen, Missing-/Stale-Verhalten und MQTT-Lebenszyklus; keine Hardwareabnahme.
 - Wechselrichter: Alle 41 Channels bleiben im Ledger. Ohne validierte Modell-/Firmware-/Identitätszuordnung keinerlei Polling. Zusätzliche Register aus dieser Tabelle werden nicht automatisch aktiviert.
 - Home Manager: Bezugs-/Einspeiseleistung in W, Gesamtenergie in kWh. Private openHAB-Versatzprofile bleiben dort; keine doppelten Offsets oder Tageszählerrücksetzungen. Weitere OBIS-/Phasenwerte sowie verschlüsselte Telegramme bleiben offen.
-- eCharger: SEMP und API separat aktivierbar; Topic-IDs und bekannte Status-Maps erhalten. Lokal `Plan.En` und `StpWhenFlTm` nur mit passender API-Unit veröffentlichen. Die Portal-Unit bestätigt keine lokale Rohskalierung. Fehlende/veraltete Messzeitstempel machen Messwerte unverfügbar.
+- eCharger: SEMP und API separat aktivierbar; Topic-IDs und bekannte Status-Maps erhalten. Lokal `Plan.En` und `StpWhenFlTm` mit passender API-Unit oder der verifizierten Modell-/Firmwarezuordnung veröffentlichen. Die Portal-Unit bestätigt keine lokale Rohskalierung. Fehlende/veraltete Messzeitstempel machen Messwerte unverfügbar.
 - Portal: Mindest-PV-Anteil, daraus berechneter erlaubter Netzanteil, Rechte und Einstellmodus lesend implementiert. `pollIntervalSeconds=0` meldet sich nicht automatisch an; `--refresh-portal` fordert einmaliges Lesen an. Portal-Lesen bleibt unabhängig von API/SEMP.
 - Alle Properties bleiben `$settable=false`, ohne `/set`-Abonnement. Schreib-/Komfortbefehle, zusätzliche Diagnosezusammenfassungen und vollständige openHAB-Abnahme bleiben offen. Herkunftskennzeichen und Inventarzeilen werden durch Offline-Unterstützung nicht zu Live-Nachweisen.
 

@@ -15,6 +15,13 @@ VEHICLE = {"200111": "Nicht verbunden", "200112": "Verbunden / wartend", "200113
 HEALTH = {"307": "OK", "35": "Fehler", "455": "Warnung", "303": "Aus", "308": "Ein"}
 APPROVAL = {"5171": "Gesperrt", "5172": "Freigegeben"}
 
+# Verified from this firmware's local SMA WebUI metadata and scalar formatter.
+# See docs/VALIDATION.md; do not infer these units for other firmware versions.
+VERIFIED_LOCAL_UNITS = {
+    "Parameter.Chrg.Plan.En": "kWh",
+    "Parameter.Chrg.StpWhenFlTm": "min",
+}
+
 # Explicit read mapping from working references, not the entire installer catalog.
 SETTINGS = (
     ("charge-mode", "Parameter.Chrg.ActChaMod", "enum", "", None, "4718,4719,4720,4721"),
@@ -93,13 +100,17 @@ def parameter_catalog(reply, expected_serial):
 
 def settings_values(catalog):
     result = {}
+    verified_local = (catalog.get("Parameter.Nameplate.ModelStr", {}).get("value") == "EVC22-3AC-20"
+                      and catalog.get("Parameter.Nameplate.PkgRev", {}).get("value") == "2.6.37.R")
     for id, channel, datatype, unit, mapping, fmt in SETTINGS:
         entry = catalog.get(channel, {})
         raw = entry.get("value")
         value = mapping.get(str(raw)) if mapping is not None else raw
         if unit:
-            # Portal units alone do not verify local raw scaling.
-            value = number(raw) if entry.get("unit") == unit else None
+            source_unit = entry.get("unit")
+            if source_unit is None and verified_local:
+                source_unit = VERIFIED_LOCAL_UNITS.get(channel)
+            value = number(raw) if source_unit == unit else None
         if id == "plan-end":
             seconds = number(raw)
             try:
@@ -241,7 +252,10 @@ class EChargerReader:
                     entry = entries[0] if entries else {}
                     if not isinstance(entry, dict):
                         raise ProtocolError("Invalid live measurement entry")
-                    values[m["channelId"]] = current_measurement(entry.get("value"), entry.get("timestamp"), self.settings.stale_seconds)
+                    stamp = entry.get("timestamp", entry.get("time"))
+                    if "timestamp" in entry and "time" in entry and entry["timestamp"] != entry["time"]:
+                        raise ProtocolError("Conflicting live measurement timestamps")
+                    values[m["channelId"]] = current_measurement(entry.get("value"), stamp, self.settings.stale_seconds)
                 for id, channels, _ in EXTRA:
                     result["measurements/" + id] = next((number(values[c]) for c in channels if c in values and number(values[c]) is not None), None)
                 if self.include_base:

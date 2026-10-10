@@ -87,6 +87,25 @@ class DecodeTests(unittest.TestCase):
         with self.assertRaises(ProtocolError):
             parameter_catalog(reply, '999')
 
+    def test_verified_local_units_are_model_and_firmware_scoped(self):
+        catalog = {
+            'Parameter.Nameplate.ModelStr': {'value': 'EVC22-3AC-20'},
+            'Parameter.Nameplate.PkgRev': {'value': '2.6.37.R'},
+            'Parameter.Chrg.Plan.En': {'value': '12.5'},
+            'Parameter.Chrg.StpWhenFlTm': {'value': '15'},
+        }
+        values = settings_values(catalog)
+        self.assertEqual(values['settings/plan-energy'], Decimal('12.5'))
+        self.assertEqual(values['settings/stop-delay'], Decimal('15'))
+        for key, value in [('Parameter.Nameplate.PkgRev', 'unknown'),
+                           ('Parameter.Nameplate.ModelStr', 'other-model')]:
+            with self.subTest(key=key):
+                changed = catalog | {key: {'value': value}}
+                self.assertIsNone(settings_values(changed)['settings/plan-energy'])
+                self.assertIsNone(settings_values(changed)['settings/stop-delay'])
+        changed = catalog | {'Parameter.Chrg.Plan.En': {'value': '12500', 'unit': 'Wh'}}
+        self.assertIsNone(settings_values(changed)['settings/plan-energy'])
+
     def test_semp_settings_raw_units_and_stale_setpoints(self):
         channels = {'Parameter.Chrg.Plan.En': '3', 'Parameter.Chrg.StpWhenFlTm': '5',
                     'Parameter.Chrg.ChrgLok': '1129', 'Parameter.Chrg.CblLok': '308',
@@ -141,6 +160,17 @@ class DecodeTests(unittest.TestCase):
         for text in ('{"a":1,"a":2}', '{"value":NaN}', 'login HTML'):
             with self.subTest(text=text), self.assertRaises(ProtocolError):
                 json_data(text)
+
+    def test_portal_credential_form_without_id(self):
+        base = 'https://login.sma.energy/auth/realms/SMA'
+        form = '<form method="post" action="/auth/realms/SMA/login-actions/authenticate"><input name="username" type="text"><input name="password" type="password"></form>'
+        self.assertEqual(login_action(form, base), base + '/login-actions/authenticate')
+        for html in (form + form, form.replace('method="post"', 'method="get"'),
+                     form.replace('name="password"', 'name="other"'),
+                     form.replace('/auth/realms/SMA/login-actions/', 'https://evil.invalid/'),
+                     form + '<input name="otp" type="text">'):
+            with self.subTest(html=html), self.assertRaises(AuthenticationError):
+                login_action(html, base)
 
 
 class AsyncProtocolTests(unittest.IsolatedAsyncioTestCase):
@@ -226,16 +256,27 @@ class AsyncProtocolTests(unittest.IsolatedAsyncioTestCase):
                 {'channelId': 'Parameter.Nameplate.ModelStr', 'value': 'EVC22-3AC-20'},
                 {'channelId': 'Parameter.Chrg.ActChaMod', 'value': '4719'}]}],
             [{'channelId': 'Measurement.GridMs.A.phsA', 'values': [{'value': 4.5, 'timestamp': timestamp}]},
-             {'channelId': 'Measurement.GridMs.A.phsB', 'values': [{'value': 5, 'timestamp': '2000-01-01T00:00:00Z'}]}],
+             {'channelId': 'Measurement.GridMs.A.phsB', 'values': [{'value': 5, 'time': '2000-01-01T00:00:00Z'}]},
+             {'channelId': 'Measurement.GridMs.A.phsC', 'values': [{'value': -0.034, 'time': timestamp}]}],
         ])
         values = await adapter.read()
         self.assertEqual(values['settings/charge-mode'], '4719')
         self.assertEqual(values['measurements/current-l1'], Decimal('4.5'))
         self.assertIsNone(values['measurements/current-l2'])
+        self.assertEqual(values['measurements/current-l3'], Decimal('-0.034'))
         calls = adapter.http.get_json.call_args_list
         self.assertTrue(all(c.args[0] == 'POST' for c in calls))
         self.assertEqual(calls[1].kwargs['json'], {'queryItems': [{'componentId': 'IGULD:SELF'}]})
         self.assertNotIn('fixture-password', json.dumps(values, default=str))
+        adapter.http.get_json.side_effect = [
+            [{'componentId': 'IGULD:SELF', 'values': [
+                {'channelId': 'Parameter.Nameplate.SerNum', 'value': '123'},
+                {'channelId': 'Parameter.Nameplate.ModelStr', 'value': 'EVC22-3AC-20'}]}],
+            [{'channelId': 'Measurement.GridMs.A.phsA', 'values': [
+                {'value': 4.5, 'time': timestamp, 'timestamp': '2000-01-01T00:00:00Z'}]}],
+        ]
+        with self.assertRaises(ProtocolError):
+            await adapter.read()
         await adapter.close()
 
     async def test_full_portal_pkce_login_and_device_read(self):
