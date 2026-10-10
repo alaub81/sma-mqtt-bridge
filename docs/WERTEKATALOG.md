@@ -1521,7 +1521,7 @@ Für jedes der fünf vorgesehenen Homie-Geräte werden dieselben Quelldiagnosen 
 | Fehler in Folge | integer; Anzahl | Aufeinanderfolgende Quellenausfälle; keinen ganzen Dienst blind neu starten. | `homie/<device>/diagnostics/consecutive-errors` |
 | Unterstützte Properties | string; bereinigtes JSON | Nur freigegebene Fähigkeiten/Einheiten; keine ungefilterten Geräte-/Auth-Antworten. | `homie/<device>/diagnostics/capabilities` |
 | Property-Typ | string; — | Homie integer/float/boolean/string/enum/color gemäß tatsächlicher Nutzlast. | `homie/<device>/<node>/<property>/$datatype` |
-| Property-Einheit | string; — | Physikalische Einheit der normierten Nutzlast, z. B. W, kWh, A, V, Hz, °C, %.  | `homie/<device>/<node>/<property>/$unit` |
+| Property-Einheit | string; — | Physikalische Einheit der normierten Nutzlast, z. B. W, kWh, A, V, Hz, °C, %. | `homie/<device>/<node>/<property>/$unit` |
 | Property-Format | string; — | Enum-Optionen oder erlaubter Zahlenbereich, soweit bestätigt. | `homie/<device>/<node>/<property>/$format` |
 | Property schreibbar | boolean; — | Nur bei freigegebener und implementierter Befehlsfunktion true. | `homie/<device>/<node>/<property>/$settable` |
 

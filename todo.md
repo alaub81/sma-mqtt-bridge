@@ -292,3 +292,13 @@ Entscheidungen, eingegangene Unterlagen, erledigte Arbeiten und Prüfergebnisse 
 - Andreas ersetzt die frühere Hostablage des Laufzeitstatus durch ein benanntes Docker-Volume und präzisiert den Compose-Schlüssel zu `data_smab_state` (kein Token-Volume). Beide Compose-Dateien mounten es auf `/data/sma-mqtt-bridge/state`; JSON-Konfiguration, Profile, Zertifikate und Passwortdateien bleiben im Host-Bind-Mount. Containerpfad und Runtime-Defaults bleiben gleich.
 - Dockerfile deklariert nur noch das State-Volume; Compose-Paritätsprüfung prüft Volume-Deklaration, Projekt-Namensraum und schreibbaren State-Mount. Dokumentation und ENV-Vorlage beschreiben Persistenz, UID/GID und Migration. Vorhandene Topic-Liste wird bei gestoppter Bridge übernommen; alte Hostdateien bleiben zunächst als Sicherung erhalten. Frühere Ablageentscheidungen im Tagebuch bleiben als Historie erhalten.
 - Validierung: alle 75 lokalen Offline-Tests, vollständiger Linter über 73 Projektdateien und Compose-Parität einschließlich Datenpfad/UID/GID-Overrides bestanden. Image gebaut; frisches Testvolume bestätigt atomare Schreibrechte als UID 10001, Modus 0600 und Persistenz über Containerwechsel, anschließend Testvolume entfernt. Zwei vorhandene Zustandsdateien bytegleich ins Compose-Volume übernommen. Tatsächlicher Volume-Mount geprüft; Docker `healthy`, alle drei Wechselrichter und SEMP sowie MQTT wieder `ready`. Hostdateien bleiben als inaktive Sicherung. Private ENV und Referenzoriginale unverändert, keine Geräte-Schreibbefehle oder Veröffentlichung.
+
+### 2026-10-10: GitHub-CI – Markdown-Tabellenformat korrigiert
+
+- Gemeldeten MD060-Fehler in `docs/WERTEKATALOG.md` behoben: doppeltes Leerzeichen vor dem Spaltentrenner der Property-Einheit entfernt; Inhalt unverändert.
+- Validierung: vollständiger Linter über 73 Projektdateien bestanden; alle 75 Offline-Tests bestanden. Der lokale MQTT-Testserver benötigte eine Ausführung außerhalb der Socket-beschränkten Sandbox. `git diff --check` bestanden. Erneuter GitHub-CI-Lauf bleibt nach Upload der Korrektur offen.
+
+### 2026-10-10: GitHub-CI – inkompatibles multidict-Major-Update
+
+- CI-Protokoll verwendet multidict 7.0.0, obwohl aiohttp 3.14.4 multidict <7 benötigt. Lokaler Requirements-Stand bleibt bei der kompatiblen Version 6.9.1; komplette Neuauflösung mit Projekt-Python 3.14 erfolgreich geprüft.
+- Dependabot-Major-Updates für multidict vorerst ausgeschlossen; diese Einschränkung erneut prüfen, sobald aiohttp Version 7 unterstützt. Abweichenden GitHub-Branch bzw. Update-PR auf kompatiblen Pin zurückführen; Hosted-CI-Ergebnis bleibt offen.
