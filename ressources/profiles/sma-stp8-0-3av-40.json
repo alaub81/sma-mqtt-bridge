@@ -8,6 +8,9 @@
     ],
     "observedFirmware": [
       "4.10.10.R"
+    ],
+    "supportedFirmware": [
+      "4.10.10.R"
     ]
   },
   "protocol": {
@@ -19,10 +22,373 @@
     "addressing": "zero-based"
   },
   "validation": {
-    "status": "identity-only",
-    "reason": "Model and firmware observed in ennexOS; local identity and matching register definitions still require validation."
+    "status": "validated",
+    "reason": "Official model-specific register definitions reconciled with existing Things and read-only local model/firmware identity; parallel openHAB value acceptance remains pending.",
+    "evidence": "docs/REGISTER_VALIDATION.md; https://files.sma.de/downloads/Parameter-STP8-10-3AV-40_V13.zip"
   },
-  "pollers": [],
-  "properties": [],
-  "commands": []
+  "pollers": [
+    {
+      "id": "identity",
+      "function": 4,
+      "start": 30053,
+      "count": 8,
+      "intervalSeconds": 60
+    },
+    {
+      "id": "sma-status",
+      "function": 4,
+      "start": 30201,
+      "count": 36,
+      "intervalSeconds": 60.0
+    },
+    {
+      "id": "powerdrawn",
+      "function": 4,
+      "start": 30865,
+      "count": 4,
+      "intervalSeconds": 5.0
+    },
+    {
+      "id": "yield",
+      "function": 4,
+      "start": 30517,
+      "count": 36,
+      "intervalSeconds": 180.0
+    },
+    {
+      "id": "power-a",
+      "function": 4,
+      "start": 30769,
+      "count": 20,
+      "intervalSeconds": 3.0
+    },
+    {
+      "id": "power-b",
+      "function": 4,
+      "start": 30957,
+      "count": 8,
+      "intervalSeconds": 5.0
+    },
+    {
+      "id": "internaltemperature",
+      "function": 4,
+      "start": 34113,
+      "count": 2,
+      "intervalSeconds": 120.0
+    }
+  ],
+  "properties": [
+    {
+      "id": "model",
+      "node": "identity",
+      "name": "Device type",
+      "poller": "identity",
+      "offset": 0,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295,
+        16777213
+      ],
+      "datatype": "string",
+      "valueMap": {
+        "9347": "STP8.0-3AV-40"
+      }
+    },
+    {
+      "id": "serial",
+      "node": "identity",
+      "name": "Serial number",
+      "poller": "identity",
+      "offset": 4,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "firmware",
+      "node": "identity",
+      "name": "Firmware version",
+      "poller": "identity",
+      "offset": 6,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "string",
+      "format": "sma-firmware"
+    },
+    {
+      "id": "status",
+      "node": "measurements",
+      "name": "Condition",
+      "poller": "sma-status",
+      "offset": 0,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295,
+        16777213
+      ],
+      "datatype": "enum",
+      "valueMap": {
+        "35": "Fehler (Alm)",
+        "303": "Aus (Off)",
+        "307": "Ok (Ok)",
+        "455": "Warnung (Wrn)"
+      }
+    },
+    {
+      "id": "grid-contactor",
+      "node": "measurements",
+      "name": "Grid relay/contactor",
+      "poller": "sma-status",
+      "offset": 16,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295,
+        16777213
+      ],
+      "datatype": "enum",
+      "valueMap": {
+        "51": "Geschlossen (Cls)",
+        "311": "Offen (Opn)"
+      }
+    },
+    {
+      "id": "power-drawn",
+      "node": "measurements",
+      "name": "Power drawn",
+      "poller": "powerdrawn",
+      "offset": 0,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "power-grid-feed-in",
+      "node": "measurements",
+      "name": "Power grid feed-in",
+      "poller": "powerdrawn",
+      "offset": 2,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "day-yield",
+      "node": "measurements",
+      "name": "Daily yield",
+      "poller": "yield",
+      "offset": 20,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "kWh",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "total-yield",
+      "node": "measurements",
+      "name": "Total yield",
+      "poller": "yield",
+      "offset": 14,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "kWh",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "current-a-input",
+      "node": "measurements",
+      "name": "DC current input",
+      "poller": "power-a",
+      "offset": 0,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.001,
+      "unit": "A",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "float"
+    },
+    {
+      "id": "voltage-a-input",
+      "node": "measurements",
+      "name": "DC voltage input",
+      "poller": "power-a",
+      "offset": 2,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.01,
+      "unit": "V",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "float"
+    },
+    {
+      "id": "power-a-input",
+      "node": "measurements",
+      "name": "DC power input",
+      "poller": "power-a",
+      "offset": 4,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "active-power",
+      "node": "measurements",
+      "name": "Power",
+      "poller": "power-a",
+      "offset": 6,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "current-b-input",
+      "node": "measurements",
+      "name": "DC current input",
+      "poller": "power-b",
+      "offset": 0,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.001,
+      "unit": "A",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "float"
+    },
+    {
+      "id": "voltage-b-input",
+      "node": "measurements",
+      "name": "DC voltage input",
+      "poller": "power-b",
+      "offset": 2,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.01,
+      "unit": "V",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "float"
+    },
+    {
+      "id": "power-b-input",
+      "node": "measurements",
+      "name": "DC power input",
+      "poller": "power-b",
+      "offset": 4,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "internal-temperature",
+      "node": "measurements",
+      "name": "Internal temperature",
+      "poller": "internaltemperature",
+      "offset": 0,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.1,
+      "unit": "°C",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "float"
+    }
+  ],
+  "commands": [],
+  "identity": {
+    "model": "model",
+    "serial": "serial",
+    "firmware": "firmware"
+  }
 }

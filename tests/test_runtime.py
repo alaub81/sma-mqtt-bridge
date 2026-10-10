@@ -38,6 +38,14 @@ class ModelTests(unittest.TestCase):
         state.update({'measurements/a': 3}, now=14)
         self.assertEqual(state.fresh_values(16), {'measurements/a': '3'})
 
+    def test_slow_poller_expiry_does_not_extend_power_freshness(self):
+        state = SourceState('fixture', 'test-device',
+                            (Property('measurements', 'power', 'Power', stale_seconds=60),
+                             Property('measurements', 'energy', 'Energy', stale_seconds=360)), 60)
+        state.update({'measurements/power': 1, 'measurements/energy': 2}, now=0)
+        self.assertEqual(state.fresh_values(180), {'measurements/energy': '2'})
+        self.assertEqual(state.fresh_values(361), {})
+
     def test_homie_retained_metadata_read_only(self):
         metadata = discovery('homie', 'test-device', self.state().properties)
         self.assertEqual(metadata['homie/test-device/$homie'], '4.0.0')

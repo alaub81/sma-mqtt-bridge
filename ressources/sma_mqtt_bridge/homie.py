@@ -111,7 +111,7 @@ class HomiePublisher:
                 mqtt.host, mqtt.port, username=mqtt.username or None, password=mqtt.password or None,
                 identifier=mqtt.client_id + "-" + device, clean_session=True,
                 keepalive=mqtt.keepalive_seconds, timeout=mqtt.connect_timeout_seconds,
-                tls_context=ssl_context(mqtt.tls_ca_file, mqtt.tls_cert_file, mqtt.tls_key_file) if mqtt.tls else None,
+                tls_context=ssl_context(mqtt.tls_ca_file, mqtt.tls_cert_file, mqtt.tls_key_file, verify=mqtt.tls_verify) if mqtt.tls else None,
                 will=aiomqtt.Will(base + "/$state", "lost", qos=mqtt.qos, retain=True),
                 max_queued_outgoing_messages=mqtt.max_queue_messages,
             )

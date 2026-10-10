@@ -32,6 +32,13 @@ def decode(registers, prop):
         value = int.from_bytes(raw, "big", signed=kind.startswith("int"))
     if value in prop["invalid"] or str(value) in prop["invalid"]:
         return None
+    if prop.get("format") == "sma-firmware":
+        major, minor, build, release = value.to_bytes(4, "big")
+        if any(b >> 4 > 9 or b & 15 > 9 for b in (major, minor)):
+            return None
+        major, minor = ((b >> 4) * 10 + (b & 15) for b in (major, minor))
+        revision = ("N", "E", "A", "B", "R", "S")[release] if release <= 5 else str(release)
+        return f"{major}.{minor:02d}.{build:02d}.{revision}"
     if "valueMap" in prop:
         mapped = prop["valueMap"].get(str(value))
         return (mapped == "true") if prop["datatype"] == "boolean" and mapped is not None else mapped
@@ -52,7 +59,8 @@ class ModbusReader:
         self.next_due = {}
         self.transaction = 0
         self.properties = tuple(Property(p["node"], p["id"], p["name"], p["datatype"], p["unit"],
-                                         ",".join(dict.fromkeys(p.get("valueMap", {}).values())) if p["datatype"] == "enum" else "")
+                                         ",".join(dict.fromkeys(p.get("valueMap", {}).values())) if p["datatype"] == "enum" else "",
+                                         max(settings.stale_seconds, 2 * self.interval(next(b for b in profile["pollers"] if b["id"] == p["poller"]))))
                                 for p in profile["properties"])
 
     def interval(self, poller):

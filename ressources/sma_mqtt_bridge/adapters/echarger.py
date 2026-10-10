@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 import time
 import xml.etree.ElementTree as ET
 
-from ..config import ssl_context
+from ..config import echarger_ssl_context
 from ..errors import AuthenticationError, ProtocolError
 from ..model import Property, number
 from .http import HTTP
@@ -43,6 +43,19 @@ BASE = (
     Property("parameters", "nameplate-pkgrev", "Firmware", "string"),
     Property("settings", "charge-mode", "Charging mode", "enum", format="4718,4719,4720,4721"),
     Property("measurements", "manual-approval", "Manual approval", "string"),
+)
+SEMP_EXTRA = (
+    ("measurements", "health-code", "Measurement.Operation.Health"),
+    ("measurements", "vehicle-health", "Measurement.Operation.EVeh.Health"),
+    ("measurements", "event-code", "Measurement.Operation.Evt.Msg"),
+    ("measurements", "mode-switch-code", "Measurement.Chrg.ModSw"),
+    ("measurements", "auth-registration-code", "Measurement.Acs.AuthRegistStt"),
+    ("parameters", "inverter-outphs", "Parameter.Inverter.OutPhs"),
+    ("control", "active-charging-count", "Setpoint.PlantControl.PCC.ChrgActCnt"),
+    ("control", "power-setpoint-max-percent", "Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMaxNom"),
+    ("control", "power-setpoint-min-percent", "Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMinNom"),
+    ("parameters", "chrg-plan-en-raw", "Parameter.Chrg.Plan.En"),
+    ("parameters", "chrg-stpwhenfltm-raw", "Parameter.Chrg.StpWhenFlTm"),
 )
 
 
@@ -139,17 +152,25 @@ def semp_values(text, stale_seconds, now=None):
             raise ProtocolError("Missing/duplicate SEMP parameter channel")
         raw = p.findtext(f"{{{NS}}}value")
         stamp = p.findtext(f"{{{NS}}}timestamp")
-        if channel.startswith("Measurement."):
+        if channel.startswith(("Measurement.", "Setpoint.")):
             raw = current_measurement(raw, stamp, stale_seconds, now)
         catalog[channel] = raw
-    return base_values(catalog)
+    result = base_values(catalog)
+    result.update(settings_values({k: {"value": v} for k, v in catalog.items()}))
+    result.update({node + "/" + id: number(catalog.get(channel)) for node, id, channel in SEMP_EXTRA})
+    return result
 
 
 class SempReader:
     def __init__(self, settings, max_bytes, include_settings=True):
         self.settings, self.include_settings = settings, include_settings
         self.http = HTTP(settings.timeout_seconds, max_bytes)
-        self.properties = tuple(p for p in BASE if include_settings or p.node != "settings")
+        props = [p for p in BASE if p.node != "settings"]
+        if include_settings:
+            props += [Property("settings", id, id.replace("-", " ").title(), datatype, unit, fmt)
+                      for id, _, datatype, unit, _, fmt in SETTINGS]
+        props += [Property(node, id, channel + " (raw code/value)", "float") for node, id, channel in SEMP_EXTRA]
+        self.properties = tuple(props)
         host = "[" + settings.host + "]" if ":" in settings.host else settings.host
         self.url = f"http://{host}:{settings.semp_port}" + settings.semp_path.rstrip("/")
 
@@ -163,7 +184,7 @@ class SempReader:
             raise ProtocolError("SEMP parameter read failed")
         values = semp_values(body, self.settings.stale_seconds)
         if not self.include_settings:
-            values.pop("settings/charge-mode", None)
+            values = {k: v for k, v in values.items() if not k.startswith("settings/")}
         return values
 
     async def close(self):
@@ -173,7 +194,8 @@ class SempReader:
 class EChargerReader:
     def __init__(self, settings, max_bytes, include_base=True):
         self.settings, self.include_base = settings, include_base
-        self.http = HTTP(settings.timeout_seconds, max_bytes, ssl_context(settings.tls_ca_file))
+        self.http = HTTP(settings.timeout_seconds, max_bytes, echarger_ssl_context(settings),
+                         server_name=settings.tls_server_name or None)
         host = "[" + settings.host + "]" if ":" in settings.host else settings.host
         self.url = f"https://{host}:{settings.port}"
         self.token, self.expires = None, 0

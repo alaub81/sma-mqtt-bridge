@@ -25,9 +25,10 @@ def json_data(text):
 
 
 class HTTP:
-    def __init__(self, timeout, max_bytes, context=None, cookies=False):
+    def __init__(self, timeout, max_bytes, context=None, cookies=False, server_name=None):
         self.timeout, self.max_bytes, self.context = timeout, max_bytes, context
         self.cookies = cookies
+        self.server_name = server_name
         self.session = None
 
     async def request(self, method, url, *, token=None, data=None, json=None):
@@ -42,7 +43,7 @@ class HTTP:
         headers = {"Authorization": "Bearer " + token} if token else {}
         try:
             async with self.session.request(method, url, data=data, json=json, headers=headers,
-                                            allow_redirects=False) as response:
+                                            allow_redirects=False, server_hostname=self.server_name) as response:
                 parts, length = [], 0
                 async for chunk in response.content.iter_chunked(16384):
                     length += len(chunk)

@@ -15,9 +15,9 @@ def render(filename, overrides):
     if re.search(r"^\s*extends:", (ROOT / filename).read_text(), re.MULTILINE):
         raise ValueError("Compose files must be standalone without extends")
     env = {key: value for key, value in os.environ.items() if not key.startswith("SMAB_")}
-    env.update(SMAB_ENV_FILE=str(ROOT / ".env.example"), **overrides)
+    env.update(SMAB_ENV_FILE=str(ROOT / "smab.example.env"), **overrides)
     result = subprocess.run(
-        ["docker", "compose", "--env-file", str(ROOT / ".env.example"),
+        ["docker", "compose", "--env-file", str(ROOT / "smab.example.env"),
          "-f", filename, "config", "--format", "json"],
         cwd=ROOT, env=env, text=True, capture_output=True, timeout=30,
     )

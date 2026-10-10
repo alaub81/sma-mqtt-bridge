@@ -31,7 +31,7 @@ def main(argv=None):
             return 0
         if args.project_status:
             print(json.dumps({"runtimeImplemented": True, "liveVerified": False, "readOnly": True,
-                              "paidSmaApisRequired": False, "bundledPollingProfiles": 0}))
+                              "paidSmaApisRequired": False, "bundledPollingProfiles": 3}))
             return 0
         if args.healthcheck:
             # The same JSON/ENV precedence applies, but source configuration does no I/O.

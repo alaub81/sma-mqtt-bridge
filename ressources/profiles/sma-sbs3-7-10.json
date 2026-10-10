@@ -8,6 +8,9 @@
     ],
     "observedFirmware": [
       "4.07.31.R"
+    ],
+    "supportedFirmware": [
+      "4.07.31.R"
     ]
   },
   "protocol": {
@@ -19,10 +22,336 @@
     "addressing": "zero-based"
   },
   "validation": {
-    "status": "identity-only",
-    "reason": "Model and firmware observed in ennexOS; local identity and matching register definitions still require validation."
+    "status": "validated",
+    "reason": "Official model-specific register definitions reconciled with existing Things and read-only local model/firmware identity; parallel openHAB value acceptance remains pending.",
+    "evidence": "docs/REGISTER_VALIDATION.md; https://files.sma.de/downloads/MODBUS-HTML_SBS3.7-6.0-10-V13.zip"
   },
-  "pollers": [],
-  "properties": [],
-  "commands": []
+  "pollers": [
+    {
+      "id": "identity",
+      "function": 4,
+      "start": 30053,
+      "count": 8,
+      "intervalSeconds": 60
+    },
+    {
+      "id": "sma-status",
+      "function": 4,
+      "start": 30201,
+      "count": 36,
+      "intervalSeconds": 60.0
+    },
+    {
+      "id": "yield",
+      "function": 4,
+      "start": 30517,
+      "count": 36,
+      "intervalSeconds": 180.0
+    },
+    {
+      "id": "currentbatstatcharge",
+      "function": 4,
+      "start": 30845,
+      "count": 4,
+      "intervalSeconds": 30.0
+    },
+    {
+      "id": "currentbattemppoller",
+      "function": 4,
+      "start": 30849,
+      "count": 2,
+      "intervalSeconds": 120.0
+    },
+    {
+      "id": "batterystatus",
+      "function": 4,
+      "start": 30955,
+      "count": 4,
+      "intervalSeconds": 60.0
+    },
+    {
+      "id": "presbatcharge",
+      "function": 4,
+      "start": 31393,
+      "count": 4,
+      "intervalSeconds": 5.0
+    },
+    {
+      "id": "internaltemperature",
+      "function": 4,
+      "start": 34113,
+      "count": 2,
+      "intervalSeconds": 120.0
+    }
+  ],
+  "properties": [
+    {
+      "id": "model",
+      "node": "identity",
+      "name": "Model",
+      "poller": "identity",
+      "offset": 0,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295,
+        16777213
+      ],
+      "datatype": "string",
+      "valueMap": {
+        "9356": "SBS3.7-10"
+      }
+    },
+    {
+      "id": "serial",
+      "node": "identity",
+      "name": "SerNumSet, Serial Number, SerialNumber",
+      "poller": "identity",
+      "offset": 4,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "firmware",
+      "node": "identity",
+      "name": "Pkg.swRev",
+      "poller": "identity",
+      "offset": 6,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "string",
+      "format": "sma-firmware"
+    },
+    {
+      "id": "status",
+      "node": "measurements",
+      "name": "Op.Health",
+      "poller": "sma-status",
+      "offset": 0,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295,
+        16777213
+      ],
+      "datatype": "enum",
+      "valueMap": {
+        "35": "Fehler (Alm)",
+        "303": "Aus (Off)",
+        "307": "Ok (Ok)",
+        "455": "Warnung (Wrn)"
+      }
+    },
+    {
+      "id": "grid-contactor",
+      "node": "measurements",
+      "name": "Op.GriSwStt",
+      "poller": "sma-status",
+      "offset": 16,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295,
+        16777213
+      ],
+      "datatype": "enum",
+      "valueMap": {
+        "51": "Geschlossen (Cls)",
+        "311": "Offen (Opn)"
+      }
+    },
+    {
+      "id": "day-yield",
+      "node": "measurements",
+      "name": "-",
+      "poller": "yield",
+      "offset": 20,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "Wh",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "total-yield",
+      "node": "measurements",
+      "name": "E-Total",
+      "poller": "yield",
+      "offset": 14,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "Wh",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "current-bat-stat-charge",
+      "node": "measurements",
+      "name": "-",
+      "poller": "currentbatstatcharge",
+      "offset": 0,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "%",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "current-batcapacity",
+      "node": "measurements",
+      "name": "-",
+      "poller": "currentbatstatcharge",
+      "offset": 2,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "%",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "current-bat-temp",
+      "node": "measurements",
+      "name": "-",
+      "poller": "currentbattemppoller",
+      "offset": 0,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.1,
+      "unit": "°C",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "float"
+    },
+    {
+      "id": "battery-status",
+      "node": "measurements",
+      "name": "-",
+      "poller": "batterystatus",
+      "offset": 0,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295,
+        16777213
+      ],
+      "datatype": "enum",
+      "valueMap": {
+        "303": "Aus (Off)",
+        "2291": "Standby (BatWait)",
+        "2292": "laden (BatChaStt)",
+        "2293": "entladen (BatDschStt)"
+      }
+    },
+    {
+      "id": "pres-bat-charge",
+      "node": "measurements",
+      "name": "-",
+      "poller": "presbatcharge",
+      "offset": 0,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "pres-batt-discharge",
+      "node": "measurements",
+      "name": "-",
+      "poller": "presbatcharge",
+      "offset": 2,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "internal-temperature",
+      "node": "measurements",
+      "name": "Cab.TmpVal",
+      "poller": "internaltemperature",
+      "offset": 0,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.1,
+      "unit": "°C",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "float"
+    }
+  ],
+  "commands": [],
+  "identity": {
+    "model": "model",
+    "serial": "serial",
+    "firmware": "firmware"
+  }
 }
