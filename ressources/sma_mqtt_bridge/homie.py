@@ -2,7 +2,6 @@
 
 import asyncio
 from contextlib import asynccontextmanager
-import json
 import logging
 from pathlib import Path
 import random
@@ -12,8 +11,10 @@ import time
 import aiomqtt
 
 from .config import ID, ssl_context
-from .health import atomic_json
+from .availability import Availability, is_timeout
+from .errors import StateError
 from .model import Property
+from .storage import MISSING, read_state, write_state
 
 LOG = logging.getLogger(__name__)
 
@@ -55,6 +56,7 @@ class HomiePublisher:
     def __init__(self, config, states, client_factory=aiomqtt.Client):
         self.config, self.states, self.client_factory = config, states, client_factory
         self.status = {}
+        self.monitors = {}
         self.path = Path(config.runtime.state_dir) / "mqtt-topics.json"
         self.owned = self.load_owned()
         self.command_controller = None
@@ -80,21 +82,33 @@ class HomiePublisher:
                 await asyncio.gather(active, return_exceptions=True)
 
     def load_owned(self):
-        try:
-            data = json.loads(self.path.read_text())
-            if not isinstance(data, dict) or data.get("schemaVersion") != 1:
-                return {}
-            result = {}
-            for device, topics in data.get("devices", {}).items():
-                if ID.fullmatch(device) and isinstance(topics, list) and all(isinstance(t, str) and len(t.split("/")) >= 3 and ID.fullmatch(t.split("/")[0]) and t.split("/")[1] == device and not any(c in t for c in "+#\0") for t in topics):
-                    result[device] = set(topics)
-            return result
-        except (OSError, ValueError, TypeError, AttributeError):
+        data = read_state(self.path, self.config.runtime.max_state_bytes)
+        if data is MISSING:
             return {}
+        try:
+            if (not isinstance(data, dict) or set(data) != {"schemaVersion", "prefix", "devices"}
+                    or type(data["schemaVersion"]) is not int or data["schemaVersion"] != 1
+                    or not isinstance(data["prefix"], str) or not ID.fullmatch(data["prefix"])
+                    or not isinstance(data["devices"], dict)):
+                raise ValueError
+            result = {}
+            for device, topics in data["devices"].items():
+                if (not ID.fullmatch(device) or not isinstance(topics, list)
+                        or any(not isinstance(t, str) or len(t.split("/")) < 3
+                               or not ID.fullmatch(t.split("/")[0]) or t.split("/")[1] != device
+                               or any(not level for level in t.split("/")) or any(c in t for c in "+#")
+                               or any(ord(c) < 32 for c in t) for t in topics)
+                        or len(topics) != len(set(topics))):
+                    raise ValueError
+                result[device] = set(topics)
+            return result
+        except (ValueError, TypeError, AttributeError, KeyError):
+            raise StateError("MQTT topic manifest is corrupt; restore or reconcile it before startup") from None
 
     def save_owned(self):
-        atomic_json(self.path, {"schemaVersion": 1, "prefix": self.config.mqtt.homie_prefix,
-                               "devices": {d: sorted(t) for d, t in self.owned.items()}})
+        write_state(self.path, {"schemaVersion": 1, "prefix": self.config.mqtt.homie_prefix,
+                               "devices": {d: sorted(t) for d, t in self.owned.items()}},
+                    self.config.runtime.max_state_bytes)
 
     def properties(self, states):
         props = [p for state in states for p in state.properties]
@@ -104,9 +118,22 @@ class HomiePublisher:
             status_key, time_key = state.diagnostic_keys
             props += [Property(*status_key.split("/"), "Source availability", "enum", format="init,ready,stale,error"),
                       Property(*time_key.split("/"), "Last successful receipt (UTC)", "string")]
+            if state.monitor is not None:
+                props += [Property(*key.split("/"), "Source " + name, datatype, unit)
+                          for name, key, datatype, unit in self.metric_properties(state)]
         if len({p.key for p in props}) != len(props):
             raise ValueError("Duplicate Homie property ownership")
         return tuple(props)
+
+    @staticmethod
+    def metric_properties(state):
+        root = "portal/" if state.id == "portal" else "diagnostics/" + state.id + "-"
+        return (("failures", root + "failures", "integer", ""),
+                ("consecutiveFailures", root + "consecutive-failures", "integer", ""),
+                ("timeouts", root + "timeouts", "integer", ""),
+                ("outageSeconds", root + "outage-seconds", "float", "s"),
+                ("phase", root + "phase", "string", ""),
+                ("missingCritical", root + "missing-critical", "integer", ""))
 
     def snapshot(self, states, now=None):
         result = {}
@@ -116,11 +143,16 @@ class HomiePublisher:
                 result[state.diagnostic_keys[0]] = state.status(now)
                 if state.last_timestamp:
                     result[state.diagnostic_keys[1]] = state.last_timestamp
-        status = "ready" if any(s.status(now) == "ready" for s in states) else "alert"
+                if state.monitor is not None:
+                    metrics = state.monitor.snapshot(now) | {"missingCritical": len(state.missing_critical(now))}
+                    result.update({key: str(round(metrics[name], 1)) if datatype == "float" else str(metrics[name])
+                                   for name, key, datatype, _ in self.metric_properties(state)})
+        status = "ready" if any(s.contributes_availability and s.status(now) == "ready" for s in states) else "alert"
         return result, status
 
     async def serve_device(self, device, states, stop):
         mqtt, runtime = self.config.mqtt, self.config.runtime
+        monitor = self.monitors.setdefault(device, Availability("MQTT " + device, runtime.failure_log_interval_seconds))
         base = mqtt.homie_prefix + "/" + device
         props = self.properties(states)
         metadata = discovery(mqtt.homie_prefix, device, props) if states else {}
@@ -137,6 +169,7 @@ class HomiePublisher:
             self.owned[device] = previous | all_topics
             self.save_owned()
             self.status[device] = False
+            monitor.progress("connecting")
             client = self.client_factory(
                 mqtt.host, mqtt.port, username=mqtt.username or None, password=mqtt.password or None,
                 identifier=mqtt.client_id + "-" + device, clean_session=True,
@@ -152,6 +185,7 @@ class HomiePublisher:
             try:
                 async with mqtt_session(client, mqtt.connect_timeout_seconds, runtime.shutdown_timeout_seconds):
                     self.status[device] = True
+                    monitor.progress("discovery")
                     for topic in sorted(previous - all_topics):
                         await client.publish(topic, b"", qos=mqtt.qos, retain=True)
                     if not states:
@@ -185,12 +219,15 @@ class HomiePublisher:
                     # leaving the broker's Will responsible for reporting loss.
                     await client.publish(base + "/$state", "disconnected", qos=mqtt.qos, retain=True,
                                          timeout=runtime.shutdown_timeout_seconds)
+                    monitor.progress("stopped")
                     return
-            except (aiomqtt.MqttError, OSError, asyncio.TimeoutError):
+            except (aiomqtt.MqttError, OSError, asyncio.TimeoutError) as error:
                 self.status[device] = False
                 if stop.is_set():
                     return
-                LOG.warning("MQTT connection/publication failed; retrying with bounded backoff")
+                monitor.failure(is_timeout(error), type(error).__name__)
+                monitor.progress("retrying")
+                monitor.observe("lost")
                 await wait_stop(stop, backoff(attempt, runtime.reconnect_min_seconds, runtime.reconnect_max_seconds))
                 attempt += 1
             finally:
@@ -236,6 +273,11 @@ class HomiePublisher:
                 if sent.get(topic) != value or (topic == base + "/$state" and time.monotonic() - last_status >= min(runtime.health_interval_seconds, 1)):
                     await client.publish(topic, value, qos=mqtt.qos, retain=True)
             last_status = time.monotonic()
+            monitor = self.monitors.get(base.split("/")[1])
+            if monitor is not None:
+                monitor.progress("publishing")
+                monitor.success()  # Only after the full batch's QoS acknowledgements.
+                monitor.observe("ready")
             sent = desired
             await wait_stop(stop, min(runtime.health_interval_seconds, 1))
 

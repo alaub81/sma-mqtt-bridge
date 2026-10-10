@@ -9,8 +9,8 @@ from pathlib import Path
 from .adapters.echarger import EChargerReader, SETTINGS, parameter_catalog, settings_values
 from .errors import ProtocolError
 from .adapters.http import json_data
-from .health import atomic_json
 from .model import number, utc_timestamp
+from .storage import journal_status, write_state
 
 # Individual plan fields are never writable; mode 4720 needs the combined plan command.
 LOCAL_COMMANDS = {id: (channel, mapping, fmt) for id, channel, _, _, mapping, fmt in SETTINGS
@@ -98,6 +98,9 @@ class DurableCommands:  # pylint: disable=no-member
     def reject(self, key, status):
         self.result(status)
 
+    def guard(self):
+        return journal_status(self.journal, self.config.runtime.max_state_bytes)
+
     def sync_directory(self):
         fd = os.open(self.journal.parent, os.O_RDONLY)
         try:
@@ -116,6 +119,9 @@ class LocalCommands(DurableCommands):
         self.reader.http.allow_put = True
         self.journal = Path(config.runtime.state_dir) / "echarger-command-pending.json"
         self.lock = self.reader.lock
+        guard = self.guard()
+        if guard:
+            self.result(guard)
 
     def result(self, status):
         self.result_state.update({"commands/local-result": status})
@@ -140,8 +146,8 @@ class LocalCommands(DurableCommands):
                      if str(catalog[mode_channel].get("value")) != "4720" else {})
             if not values:
                 continue
-            atomic_json(self.journal, {"schemaVersion": 1, "property": "plan", "targets": targets,
-                                       "phase": phase, "timestamp": utc_timestamp()})
+            write_state(self.journal, {"schemaVersion": 1, "property": "plan", "targets": targets,
+                                       "phase": phase, "timestamp": utc_timestamp()}, self.config.runtime.max_state_bytes)
             self.sync_directory()
             self.result("pending")
             wrote = True
@@ -191,8 +197,9 @@ class LocalCommands(DurableCommands):
                 targets = plan_input(text) if key == "plan" else None
                 # Uncertainty survives MQTT reconnect and process/container restart.
                 # Reading/polling never clears this guard or replays the saved target.
-                if self.journal.exists():
-                    self.result("blocked-uncertain")
+                guard = self.guard()
+                if guard:
+                    self.result(guard)
                     return
                 catalog = await self.catalog()
                 if targets is not None:
@@ -203,8 +210,8 @@ class LocalCommands(DurableCommands):
                     self.api_state.update({"settings/" + key: settings_values(catalog)["settings/" + key]})
                     self.result("already-confirmed")
                     return
-                atomic_json(self.journal, {"schemaVersion": 1, "property": key, "target": target,
-                                           "timestamp": utc_timestamp()})
+                write_state(self.journal, {"schemaVersion": 1, "property": key, "target": target,
+                                           "timestamp": utc_timestamp()}, self.config.runtime.max_state_bytes)
                 self.sync_directory()
                 sent = True
                 self.result("pending")

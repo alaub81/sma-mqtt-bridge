@@ -7,8 +7,8 @@ import re
 from .adapters.portal import PortalReader, portal_values
 from .commands import DurableCommands
 from .errors import ProtocolError
-from .health import atomic_json
 from .model import utc_timestamp
+from .storage import write_state
 
 
 class PortalCommands(DurableCommands):
@@ -18,6 +18,9 @@ class PortalCommands(DurableCommands):
         self.reader.http.allow_put = True
         self.lock = self.reader.lock
         self.journal = Path(config.runtime.state_dir) / "portal-command-pending.json"
+        guard = self.guard()
+        if guard:
+            self.result(guard)
 
     def result(self, status):
         self.result_state.update({"commands/portal-result": status})
@@ -41,8 +44,9 @@ class PortalCommands(DurableCommands):
             try:
                 if key != "pv-minimum" or not isinstance(data, bytes) or not re.fullmatch(rb"(?:0|[1-9][0-9]?|100)", data):
                     raise ProtocolError("PV preference needs a whole percentage from 0 to 100")
-                if self.journal.exists():
-                    self.result("blocked-uncertain")
+                guard = self.guard()
+                if guard:
+                    self.result(guard)
                     return
                 target = int(data)
                 device = await self.reader.read_device()
@@ -58,8 +62,8 @@ class PortalCommands(DurableCommands):
                     self.portal_state.update(observed)
                     self.result("already-confirmed")
                     return
-                atomic_json(self.journal, {"schemaVersion": 1, "property": key, "target": expected,
-                                           "timestamp": utc_timestamp()})
+                write_state(self.journal, {"schemaVersion": 1, "property": key, "target": expected,
+                                           "timestamp": utc_timestamp()}, self.config.runtime.max_state_bytes)
                 self.sync_directory()
                 sent = True
                 self.result("pending")

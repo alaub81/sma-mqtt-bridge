@@ -10,7 +10,10 @@
     "shutdownTimeoutSeconds": 10.0,
     "reconnectMinSeconds": 1.0,
     "reconnectMaxSeconds": 60.0,
-    "maxResponseBytes": 1048576
+    "maxResponseBytes": 1048576,
+    "maxStateBytes": 1048576,
+    "readCycleTimeoutSeconds": 120.0,
+    "failureLogIntervalSeconds": 300.0
   },
   "mqtt": {
     "host": "mqtt.example.invalid",
@@ -41,7 +44,8 @@
       "staleSeconds": 60.0,
       "commandsEnabled": false,
       "advancedChannelsEnabled": true,
-      "diagnosticsEnabled": true
+      "diagnosticsEnabled": true,
+      "readyProperties": ""
     },
     {
       "id": "inverter2",
@@ -56,7 +60,8 @@
       "staleSeconds": 60.0,
       "commandsEnabled": false,
       "advancedChannelsEnabled": true,
-      "diagnosticsEnabled": true
+      "diagnosticsEnabled": true,
+      "readyProperties": ""
     },
     {
       "id": "inverter3",
@@ -71,7 +76,8 @@
       "staleSeconds": 60.0,
       "commandsEnabled": false,
       "advancedChannelsEnabled": true,
-      "diagnosticsEnabled": true
+      "diagnosticsEnabled": true,
+      "readyProperties": ""
     }
   ],
   "homeManager": {
@@ -94,7 +100,8 @@
     "afterConnectionDelaySeconds": 3,
     "reconnectDelaySeconds": 5,
     "advancedChannelsEnabled": true,
-    "diagnosticsEnabled": true
+    "diagnosticsEnabled": true,
+    "readyProperties": ""
   },
   "echarger": {
     "enabled": false,
@@ -115,7 +122,9 @@
     "homieId": "sma-echarger",
     "commandsEnabled": false,
     "advancedChannelsEnabled": true,
-    "diagnosticsEnabled": true
+    "diagnosticsEnabled": true,
+    "apiReadyProperties": "",
+    "sempReadyProperties": ""
   },
   "portal": {
     "enabled": false,
@@ -129,7 +138,8 @@
     "staleSeconds": 180.0,
     "commandsEnabled": false,
     "pollIntervalSeconds": 0,
-    "diagnosticsEnabled": true
+    "diagnosticsEnabled": true,
+    "readyProperties": ""
   },
   "commands": {
     "enabled": false,

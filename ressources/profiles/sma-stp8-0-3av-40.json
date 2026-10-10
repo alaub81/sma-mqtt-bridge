@@ -314,7 +314,8 @@
       "invalid": [
         -2147483648
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "requiredForReady": true
     },
     {
       "id": "current-b-input",

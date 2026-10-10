@@ -113,6 +113,9 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 | `SMAB_SHUTDOWN_TIMEOUT_SECONDS` | `10` | Bounded graceful shutdown. |
 | `SMAB_RECONNECT_MIN_SECONDS` | `1` | Initial supervised reconnection delay, with jitter. |
 | `SMAB_MAX_RESPONSE_BYTES` | `1048576` | Positive integer HTTP response limit, including decompressed data. |
+| `SMAB_MAX_STATE_BYTES` | `1048576` | Positive integer size limit per topic manifest/command journal; oversized state fails closed. |
+| `SMAB_READ_CYCLE_TIMEOUT_SECONDS` | `120` | Positive whole read-cycle watchdog in seconds; excludes poll/backoff/idle waits. |
+| `SMAB_FAILURE_LOG_INTERVAL_SECONDS` | `300` | Positive interval between repeated outage log summaries in seconds; transitions are immediate. |
 | `SMAB_RECONNECT_MAX_SECONDS` | `60` | Maximum delay; at least the minimum. No uncertain write retries. |
 | `SMAB_COMMANDS_ENABLED` | `false` | Global gate for confirmed command allowlists. |
 | `SMAB_COMMAND_READBACK_TIMEOUT_SECONDS` | `30` | Time limit to confirm a command through readback. |
@@ -254,9 +257,13 @@ preserve the topic manifest and command journals when upgrading.
 This is a **liveness** check, not confirmation that all sources or MQTT are available.
 The heartbeat separately records each source status and each Homie client's connection flag.
 A healthy process can be recovering from a complete broker or device outage.
-These connection flags do not certify delivery of every measurement. Network I/O has reader
-timeouts; the heartbeat does not independently detect every possible stuck coroutine while the
-main event loop continues running. Unexpected failed, cancelled or silently completed supervisors
+These connection flags do not certify delivery of every measurement. Each active read cycle has
+an additional configurable 120-second watchdog, including non-network waits. An expired cycle is
+cancelled, its read session is reset and polling resumes with bounded backoff. A session locked by
+an active command is never closed by this recovery; uncertain writes stay journal-blocked.
+Polling delays, authentication-blocked sources and an idle portal with interval zero are excluded.
+The watchdog needs a running event loop; a blocked event loop still requires external monitoring.
+Unexpected failed, cancelled or silently completed supervisors
 with active sources terminate the runtime, close sibling sessions and mark the heartbeat stopped.
 
 | Failure | Behavior |
@@ -270,6 +277,7 @@ with active sources terminate the runtime, close sibling sessions and mark the h
 | Uncertain command response | Preserve the durable uncertainty journal and block further writes; no automatic command replay on reconnect/restart. |
 
 Homie `$state` is `ready` if at least one source of that device is ready, otherwise `alert`.
+Command feedback does not contribute to availability; an old successful command cannot keep a device ready.
 For the eCharger, a ready SEMP reader therefore does not establish API/portal availability.
 Monitor individual source status/last-success topics when diagnostics are enabled.
 During a broker outage those topics cannot report new failures; monitor broker availability
@@ -283,10 +291,68 @@ must alert on this state; automatic recovery from an event-loop hang needs an ex
 Do not restart the bridge repeatedly merely because a device or broker is offline.
 See [Docker restart policy](https://docs.docker.com/reference/compose-file/services/#restart).
 
-State writes sync file contents and the parent directory after atomic rename. Run only one bridge
-instance against its state volume and keep the filesystem writable. Full production acceptance
+State writes sync file contents and the parent directory after atomic rename. A process-lifetime
+exclusive `state/bridge.lock` lease rejects a second runtime using the same state directory before
+device/MQTT I/O. The kernel releases it on process death; never delete/replace that file while running.
+This protects shared state, not separate volumes using duplicate MQTT client IDs. Keep the state
+filesystem writable. Full production acceptance
 still requires controlled target-host outage/recovery, broker restart, TLS trust, container shutdown
 and openHAB freshness/dependency comparisons. Offline tests do not certify those installation cases.
+
+### Critical freshness and diagnostics
+
+A source is ready only with fresh values and **all critical keys** fresh and valid. Partial updates
+never refresh omitted measurements. Invalid sentinels remove a value. Fresh metadata or slow energy
+readings cannot mask expired critical measurements. Property-specific expiry intervals remain in force.
+
+| Source | Default critical keys |
+| --- | --- |
+| Tripower / Sunny Boy profiles | `measurements/active-power` |
+| Sunny Boy Storage profile | `measurements/pres-bat-charge`, `measurements/pres-batt-discharge` |
+| Home Manager UDP / Modbus | `measurements/power-import`, `measurements/power-export` |
+| eCharger SEMP | `measurements/power` |
+| eCharger API | `measurements/current-l1`, `measurements/voltage-l1`; also `measurements/power` when API owns baseline measurements without SEMP |
+| Portal | `portal/pv-minimum` |
+
+Bundled Modbus profiles mark these keys with boolean `requiredForReady`. Unmarked profiles default
+to all advertised `measurements/` properties. Without measurements or marks, any fresh value suffices.
+Unreadable nighttime power remains unavailable; a resulting stale status is intentional.
+
+Optional string variables `SMAB_INVERTER<N>_READY_PROPERTIES`, `SMAB_HOME_MANAGER_READY_PROPERTIES`,
+`SMAB_PORTAL_READY_PROPERTIES`, `SMAB_ECHARGER_API_READY_PROPERTIES` and
+`SMAB_ECHARGER_SEMP_READY_PROPERTIES` default to empty (the rules above). A nonempty comma-separated
+`node/property` list replaces defaults for that source. JSON uses `readyProperties`, or
+`apiReadyProperties` / `sempReadyProperties`. Duplicate, malformed, unknown or filtered keys fail
+before device I/O. Choose actual critical measurements when overriding this policy.
+
+Outage/recovery transitions are logged immediately. Ongoing identical failures produce one summary
+per `SMAB_FAILURE_LOG_INTERVAL_SECONDS`: failure/consecutive-failure/timeout counts, outage duration
+and last exception class, never authenticated exception text. Counters reset on process restart.
+Missing-critical freshness is separate from transport failure counts.
+
+The heartbeat includes `sourceDiagnostics` and `mqttDiagnostics`: counters, outage duration,
+last success, phase and monotonic progress age; source entries also list missing critical keys.
+MQTT last-success timestamps advance only after the entire publication batch completes its QoS
+acknowledgements; this does not prove processing by openHAB. With diagnostics enabled, additional
+source properties use `diagnostics/<source>-` or `portal/`: `failures`, `consecutive-failures`,
+`timeouts`, `outage-seconds` (s), `phase`, `missing-critical` (count). Filtering these properties does
+not disable internal supervision or heartbeat diagnostics.
+
+### Corrupt persistent state
+
+Manifests/journals must be bounded regular JSON files without symlinks, duplicate keys or non-standard
+numbers. Missing files are distinct from JSON null and unreadable files. A malformed/unreadable/oversized
+`mqtt-topics.json` stops startup before connections; it is never replaced with an empty manifest.
+Restore a known-good manifest or reconcile its owned retained topics manually before restarting.
+Preserve the original file for investigation.
+Writes also enforce the size limit before replacing existing state or sending a device PUT.
+An undersized configured limit therefore rejects a command without sending it.
+
+An existing valid journal yields `blocked-uncertain`; a malformed/unreadable/oversized journal yields
+`blocked-corrupt` for the corresponding local/portal command source. Startup logs the guard even when
+writes are disabled. Telemetry can continue, but no command preflight, PUT or automatic journal deletion
+takes place. Stop the bridge, verify the actual device setting and reconcile the journal before archiving
+it. A corrupt journal is not permission to repeat its action.
 
 ## Local eCharger command milestone
 
@@ -307,7 +373,7 @@ There are eight MQTT control properties in this allowlist. Current local identit
 
 The bridge sends exactly one PUT in the working reference format and reads back until the exact target is `Confirmed`. HTTP success alone yields no confirmed property state. The command session disables aiohttp 3.14.4's internal persistent-connection PUT retry; a loopback regression verifies one server-side PUT when the response is lost. There is no command write on startup or reconnection. Stored retained MQTT commands are rejected. Send commands without retain; MQTT 3 cannot distinguish a retained publication delivered live from an ordinary live publication.
 
-`commands/local-result` reports `pending`, `confirmed`, `already-confirmed`, `rejected`, `rejected-retained`, `rejected-disabled`, `rejected-busy`, `uncertain` or `blocked-uncertain`. Before sending, a mode-0600 journal is atomically saved and synced at `state/echarger-command-pending.json`. It is removed only after confirmed readback. Uncertain response, cancellation or crash leaves the journal in place and blocks subsequent writes across restarts; startup never replays it. To resolve manually, stop the bridge, inspect the actual setting locally and the saved target, then archive the journal only after reconciling the action. Preserve this guard alongside the topic manifest when migrating state.
+`commands/local-result` reports `pending`, `confirmed`, `already-confirmed`, `rejected`, `rejected-retained`, `rejected-disabled`, `rejected-busy`, `uncertain`, `blocked-uncertain` or `blocked-corrupt`. Existing guards are reported immediately when the command controller starts. Before sending, a mode-0600 journal is atomically saved and synced at `state/echarger-command-pending.json`. It is removed only after confirmed readback. Uncertain response, cancellation or crash leaves the journal in place and blocks subsequent writes across restarts; startup never replays it. To resolve manually, stop the bridge, inspect the actual setting locally and the saved target, then archive the journal only after reconciling the action. Preserve this guard alongside the topic manifest when migrating state.
 
 Live command acceptance is still pending. The installation's private write gates were not enabled, and no device setting was changed. Home Manager remains the charging regulator; Power limits and stop-delay writes remain later milestones; planned charging and minimum PV writes are described below.
 

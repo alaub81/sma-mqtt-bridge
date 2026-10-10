@@ -41,7 +41,7 @@ The loader rejects unknown fields and non-standard JSON numbers. Required top-le
 | `validation` | `status` is `identity-only` or `validated`; nonempty `reason`; `evidence` required for validated profiles. |
 | `identity` | `model`, `firmware`, `serial` reference defined property IDs. Identity blocks are read and checked before measurement blocks on each TCP session. |
 | `pollers[]` | Unique `id`, read `function` 3 or 4, `start` 0–65535, `count` 1–125 with no address overflow; optional positive `intervalSeconds`. |
-| `properties[]` | Unique `id`, Homie `node`, `name`, `poller` reference, register `offset`, `length`, `type`, explicit `byteOrder`/`wordOrder`, finite `scale`, `unit`, raw `invalid` list, Homie `datatype`; optional `valueMap`, `minimum`, `maximum`, `format`. |
+| `properties[]` | Unique `id`, Homie `node`, `name`, `poller` reference, register `offset`, `length`, `type`, explicit `byteOrder`/`wordOrder`, finite `scale`, `unit`, raw `invalid` list, Homie `datatype`; optional `valueMap`, `minimum`, `maximum`, `format`, `channelGroup`, boolean `requiredForReady`. |
 | `commands` | Must be empty in the read-only runtime. |
 
 Register types: `uint16`, `int16`, `uint32`, `int32`, `uint64`, `int64`, `float32`, `string`. Numeric lengths must match the type; ASCII strings use their explicit register length. Order is `big` or `little`. Homie datatypes are `integer`, `float`, `string`, `boolean`, `enum`; enums/booleans require `valueMap`; boolean map values are `true`/`false`. Unknown enum codes are unavailable, never guessed. Maps can preserve existing openHAB status strings. Sentinel checks precede mapping/scaling; floating-point NaN is always unavailable. Bounds apply to scaled numbers.
@@ -61,6 +61,12 @@ Its schema has `schemaVersion`, `id`, `kind`, `evidence`, `identity`, `pollers`,
 `inventory` defines the assignment table start, number of four-register slots (at most 245), and positive `intervalSeconds`. `delegated` holds reusable poller/property templates without a fixed unit ID. Only assigned units 3–247 are queried, using the freshly read table; duplicate units follow SMA's first-slot rule. Both mapping sections use the documented numeric/enum/scaling/sentinel rules above. Unit 2 intervals can be explicitly overridden; identity, inventory and delegated intervals remain profile-defined. All mappings are read-only, including source registers documented RW. See [coverage and acceptance](HOME_MANAGER_MODBUS.md).
 
 ## Channel groups
+
+`requiredForReady=true` marks a critical fresh value for source availability. All enabled marked
+properties must be fresh for `ready`; slow metadata and optional readings cannot mask stale critical
+measurements. No marks means all enabled `measurements/` properties. Installation `READY_PROPERTIES`
+overrides replace this selection without changing register decoding or write rights. See
+[critical freshness](CONFIGURATION.md#critical-freshness-and-diagnostics).
 
 A property may specify `channelGroup`: `basic`, `advanced`, or `diagnostics`. Unknown groups fail
 validation. Without an explicit group, `identity` and `parameters` nodes are advanced, `diagnostics`

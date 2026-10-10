@@ -102,3 +102,26 @@ Local tests, Linux container tests, full lint, Compose parity and image-build re
 todo.md. These tests use synthetic fixtures, not the installation broker or devices. No running service
 was replaced and no live command was sent. Target-host outage/recovery and external unhealthy/broker
 alarm acceptance remain pending. Compose restarts exited processes, not still-running unhealthy containers.
+
+## Source progress, freshness and state protection, 2026-10-10
+
+The whole-read watchdog cancels expired reads, rejects a late result after swallowed cancellation,
+resets only unlocked read sessions and leaves command-owned sessions untouched. Authentication-blocked
+and idle portal sources are excluded from watchdog recovery. HTTP request timeouts are redacted,
+counted distinctly and remain retryable. Source/MQTT transition logs are rate-limited during ongoing
+outages; heartbeat diagnostics retain counters, duration, phases and completed-publication timestamps.
+
+Required critical properties determine source readiness independently of identity/energy freshness.
+Missing/invalid required samples and stale power cannot be masked by partial replies or fresh command
+feedback. Bundled profile mappings/units/registers are unchanged; boolean readiness marks select the
+existing primary measurements. Per-source ENV/JSON overrides are validated before device I/O.
+
+Strict bounded state loading rejects malformed, duplicate-key, deeply nested, oversized, null,
+foreign-topic, symlink and non-regular files. Corrupt manifests fail before MQTT connection; corrupt
+command journals report blocked-corrupt immediately and prevent command preflight/PUT without clearing
+the file. A real child-process regression verifies exclusion of a second state owner and automatic
+lease release after process death. No device action is replayed.
+
+Complete local and Linux test/build/lint results are recorded in todo.md. These are deterministic
+offline tests, not the deferred multi-hour fault test or external target-host monitoring acceptance.
+No private configuration or running deployment was changed.
