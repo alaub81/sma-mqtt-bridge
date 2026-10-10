@@ -55,6 +55,8 @@ python3.14 -m venv .lint-venv
 ./tests/linter-check.sh
 ```
 
+Python files are checked with Ruff and Pylint 4.1.2 (`--errors-only`, configured in `.pylintrc`). Pylint covers fatal/error diagnostics; convention, refactoring and warning messages are not enabled initially. The lint requirements include runtime libraries for import inference; CI uses the same runner and pins. Missing Pylint or a failed check fails the lint run.
+
 All repository files receive hygiene checks; Python, shell, Docker, YAML, Actions, JSON and Markdown receive their relevant linters. Offline tests require Python and runtime libraries, without a compiler, Docker, SMA devices or a broker. With Docker Compose installed, run `python3 tests/compose_check.py` to check both standalone files, runtime parity and deployment overrides using public settings only. CI runs that check and builds/tests amd64 and arm64 images. Local execution does not prove that GitHub CI or an image security scan has run.
 
 ## Repository layout

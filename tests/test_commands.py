@@ -59,7 +59,8 @@ class CommandsTests(unittest.IsolatedAsyncioTestCase):
                                     ('led-brightness', b'x' * 65, False)]:
             self.controller.catalog.side_effect = None
             self.controller.catalog.return_value = catalog()
-            await self.controller.handle(key, data, retained)
+            # Pylint also infers the two-argument replacement in a separate test.
+            await self.controller.handle(key, data, retained)  # pylint: disable=too-many-function-args
             self.controller.reader.http.request.assert_not_awaited()
         self.controller.config = replace(self.config, commands=replace(self.config.commands, enabled=False))
         await self.controller.handle('led-brightness', b'5190')

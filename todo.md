@@ -462,3 +462,10 @@ Entscheidungen, eingegangene Unterlagen, erledigte Arbeiten und Prüfergebnisse 
 - Auf Wunsch von Andreas `docs/BASELINE.md` und `docs/baseline-manifest.json` entfernt. Zusätzlich das ausschließlich zum entfernten C++-Grundgerüst gehörende `docs/archive/scaffold-validation.md` und dessen leeres Archivverzeichnis entfernt. Aktuelle Verweise und Projektvorgaben angepasst.
 - Bestandsprüfung: übrige öffentliche Dokumente und die beiden JSON-Inventare betreffen SMA-Konfiguration, Registervalidierung, Geräte-/Parameterinventar, Tests oder offene openHAB-Migration und bleiben erhalten. Frühere Tagebucheinträge bleiben als historischer Verlauf unverändert.
 - Validierung: `./tests/linter-check.sh` über 79 Projektdateien bestanden; `git diff --check` ohne Befund. Nur Dokumentationsbereinigung; Laufzeit unverändert.
+
+## 10.10.2026 — Pylint im gemeinsamen Linter-Test ergänzt
+
+- Bisher nur Ruff für Python; Pylint 4.1.2 mit festgelegten Abhängigkeiten ergänzt. Alle öffentlichen Python-Dateien werden zusätzlich im Fehlermodus geprüft; Warnungs-, Stil- und Refactoring-Regeln bleiben zunächst aus. `.pylintrc` setzt Python 3.14, Importpfade und deaktiviert gespeicherte Analyseergebnisse.
+- Bestehender CI-Lint-Job übernimmt die Prüfung über denselben Runner. Laufzeitbibliotheken werden in der Lint-Umgebung installiert, damit Importanalyse funktioniert; kein zusätzliches Paket im Produktionsimage. Fehlendes Pylint, Befunde oder Überschreiten des 180-Sekunden-Limits lassen den Linter fehlschlagen.
+- Zwei eng begrenzte Fehlalarme dokumentiert: Unterklassen liefern die Mitglieder von DurableCommands; eine isolierte Testmethode ersetzt handle mit anderer Signatur. Keine globale Unterdrückung dieser Fehlerklassen.
+- Validierung: vollständiger Linter einschließlich Pylint bestanden; absichtlich undefinierter Name in temporärer Datei korrekt mit E0602 abgelehnt. Alle 143 Tests im aktuellen gemeinsamen Arbeitsstand bestanden. Erster Testlauf durch drei Loopback-Listener in der Sandbox blockiert; erlaubte Wiederholung erfolgreich. Keine Geräteaktionen oder Veröffentlichung. Weitere Pylint-Warnungsregeln können später gezielt aktiviert werden.

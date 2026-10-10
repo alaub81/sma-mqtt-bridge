@@ -13,3 +13,12 @@ toolz==1.1.0
 typing_extensions==4.16.0
 wcwidth==0.9.1
 yamllint==1.38.0
+-r ../ressources/requirements.txt
+astroid==4.3.4
+dill==0.4.1
+isort==9.0.2
+mccabe==0.7.0
+mypy_extensions==1.1.0
+platformdirs==4.12.4
+pylint==4.1.2
+tomlkit==0.15.1
