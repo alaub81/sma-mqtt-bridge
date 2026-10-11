@@ -107,7 +107,8 @@ class WriteTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(json.loads(self.results.fresh_values()['commands/plan'])['energyKWh'], 12.5)
 
     async def test_partial_or_pending_plan_never_activates_target_mode(self):
-        for change in ({END: {'value': '0'}}, {ENERGY: {'state': 'Pending'}}):
+        for change in ({END: {'value': '0'}}, {ENERGY: {'state': 'Pending'}},
+                       {END: {'unit': 'ms'}}, {ENERGY: {'unit': 'Wh'}}):
             partial = deepcopy(self.confirmed)
             for key, fields in change.items():
                 partial[key].update(fields)
@@ -125,6 +126,22 @@ class WriteTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(self.api.fresh_values(), {})
             self.local.journal.unlink()  # Isolated fixture reset, never runtime recovery.
             self.local.reader.http.request.reset_mock()
+
+    async def test_mode_readback_with_wrong_plan_units_remains_uncertain(self):
+        invalid = deepcopy(self.active)
+        invalid[END]['unit'] = 'ms'
+        reads = 0
+        async def read(*args, **kwargs):
+            nonlocal reads
+            reads += 1
+            return self.reply(self.initial if reads == 1 else self.confirmed if reads == 2 else invalid)
+        self.local.reader.http.get_json.side_effect = read
+        await self.local.handle('plan', self.payload)
+        self.assertEqual(self.status(), 'uncertain')
+        self.assertEqual(self.local.reader.http.request.await_count, 2)
+        self.assertTrue(self.local.journal.exists())
+        self.assertEqual(self.api.fresh_values(), {})
+        self.assertNotIn('commands/plan', self.results.fresh_values())
 
     async def test_mode_loss_keeps_plan_guard_across_restart(self):
         self.local.reader.http.request.side_effect = [(200, {}, ''), ProtocolError('fixture response lost')]

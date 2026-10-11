@@ -64,7 +64,7 @@ class PowerMetadataTests(unittest.TestCase):
             command_target('max-charge-power', '4500', unknown)
         unknown[CHANNEL]['unit'] = 'W'
         self.assertEqual(command_target('max-charge-power', '4500', unknown)[1], '4500')
-        self.assertNotIn(KEY, settings_values(catalog(), include_api_only=False))
+        self.assertNotIn(KEY, settings_values(catalog(), from_api=False))
 
     def test_api_ownership_and_translated_integer_channel(self):
         api = EChargerReader(ECharger(), 4096)

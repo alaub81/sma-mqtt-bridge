@@ -8,9 +8,10 @@ import unittest
 from unittest.mock import AsyncMock
 
 from sma_mqtt_bridge.commands import LOCAL_COMMANDS, LocalCommands, command_target
+from sma_mqtt_bridge.adapters.echarger import settings_values
 from sma_mqtt_bridge.config import load_config
 from sma_mqtt_bridge.errors import ProtocolError
-from sma_mqtt_bridge.homie import discovery
+from sma_mqtt_bridge.homie import HomiePublisher, discovery
 from sma_mqtt_bridge.model import Property, SourceState
 
 
@@ -105,6 +106,42 @@ class CommandsTests(unittest.IsolatedAsyncioTestCase):
         newer.catalog.assert_not_awaited()
         await newer.close()
         await self.controller.close()
+
+    async def test_pending_poll_preserves_retained_observation_and_uncertain_guard(self):
+        self.addAsyncCleanup(self.controller.close)
+        key = 'settings/led-brightness'
+        self.api.update({key: settings_values(catalog())[key]})
+        publisher = HomiePublisher(self.config, [self.api, self.result])
+        stop, retained, sent = asyncio.Event(), {}, {}
+        async def publish(topic, value, **kwargs):
+            self.assertTrue(kwargs['retain'])
+            retained[topic] = value
+            stop.set()
+        client = AsyncMock()
+        client.publish.side_effect = publish
+        base = self.config.mqtt.homie_prefix + '/sma-echarger'
+        topic = base + '/settings/ledbrightness'
+        async def cycle():
+            stop.clear()
+            await publisher.publish_values(client, base, [self.api, self.result], stop, sent, 0, None)
+        await cycle()
+        self.assertEqual(retained[topic], '5191')
+        self.controller.reader.http.request.side_effect = ProtocolError('fixture response lost')
+        await self.controller.handle('led-brightness', b'5190')
+        self.assertEqual(self.status(), 'uncertain')
+        self.api.update({key: settings_values(catalog('5190', state='Pending'))[key]})
+        self.assertNotIn(key, self.api.fresh_values())
+        await cycle()
+        self.assertEqual(retained[topic], '5191')
+        self.assertTrue(self.controller.journal.exists())
+        self.api.update({key: settings_values(catalog('5190'))[key]})
+        await cycle()
+        self.assertEqual(retained[topic], '5190')
+        self.assertEqual(self.status(), 'uncertain')
+        await self.controller.handle('led-brightness', b'5190')
+        self.assertEqual(self.status(), 'blocked-uncertain')
+        self.controller.reader.http.request.assert_awaited_once()
+        self.assertTrue(self.controller.journal.exists())
 
     async def test_http_success_with_unconfirmed_readback_is_uncertain(self):
         self.controller.catalog.side_effect = None
