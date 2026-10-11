@@ -75,7 +75,16 @@ the independently configured portal retains its PV-share channels.
 | Home Manager advanced | Skip Unit 1 metadata polling, assignment-table reads and all delegated `device-*` channels. Keep the six Unit 2 plant/grid readings. UDP currently exposes only basic readings. |
 | Inverter advanced | Omit published identity channels and explicitly tagged supplementary properties, including Sunny Boy type and power-limit parameters. Keep the existing energy, power, phase, battery, internal temperature and operating-status measurements. |
 | eCharger advanced | Omit firmware, duplicate vehicle-status code, SEMP control setpoints and raw parameter duplicates. Keep charging measurements, readable charging settings and command feedback. |
-| Diagnostics | Omit source status/last-success MQTT channels; also omit Home Manager rejected-block count, SEMP raw health/event/registration/mode codes. |
+| Diagnostics | Keep operational source status channels regardless of this flag. Omit last-success timestamps and optional failure/timeout/outage metrics, Home Manager rejected-block count and SEMP raw health/event/registration/mode codes. |
+
+Operational availability is always advertised for enabled measurement sources, including
+`diagnostics#apistatus`, `diagnostics#sempstatus` and `portal#status` used by the garage widget.
+Existing Channel IDs and labels are preserved; the `diagnostics` node name does not make these
+status properties optional. They remain read-only and report `init`, `ready`, `stale` or `error`
+from the same freshness/error policy used by supervision. Disabled adapters still perform no I/O
+and do not advertise source status. Optional diagnostic channels are retired through the existing
+persistent topic manifest when disabled; operational status channels remain owned and published.
+Source readiness does not certify every property's timestamp or immediate broker reachability.
 
 Filters apply before Modbus scheduling and value decoding: blocks containing only disabled properties
 are not polled. Blocks shared with enabled values and mandatory identity checks are still read;
@@ -480,3 +489,11 @@ It reports each source status (`init`, `ready`, `stale`, `error`, or `disabled`)
 status without credentials or device addresses. This observation does not terminate the service
 or trigger device commands. A portal configured without periodic polling or an explicit refresh
 can remain `init`. Command result sources do not count as measurement readiness.
+
+## Wallbox total-energy unit
+
+`measurements/totalenergy` is a read-only float in kWh. The API's primary and fallback
+Wh counters are divided by 1000 once; no ENV scale override is needed. Update openHAB
+unit metadata and remove any duplicate Wh-to-kWh link conversion. Follow the
+[history migration guide](../openHAB/openHAB.md#wallbox-total-energy-migration-to-kwh)
+for retained values and persistence before deployment. Session-energy scaling is unchanged.

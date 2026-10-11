@@ -1579,3 +1579,11 @@ Home Manager bleibt auf dem Mac ausdrücklich deaktiviert, da dieser in einem an
 ## Home Manager Modbus implementation status, 2026-10-10
 
 The optional Modbus TCP transport now implements the complete readable inventory from HM-20-Modbus-NSD-TI-de-12, with documentation-backed mappings and deterministic offline tests. The authoritative implemented topic/type/unit table is [HOME_MANAGER_MODBUS.md](HOME_MANAGER_MODBUS.md): 16 core values, all 245 assignment slots and 16 parameter templates per valid assigned inverter. Earlier candidate topics in this catalogue remain planning evidence; use that table for current adapter discovery. Source RW entries remain read-only. Pure WO entries and undocumented phase-register guesses are excluded. Grid Guard access and firmware-specific live availability remain pending; no Home Manager value is accepted as migrated by this implementation alone.
+
+### Wallbox-Gesamtenergie: kWh-Umstellung am 11.10.2026
+
+Der lokale API-Gesamtzähler wird nun tatsächlich als Float in kWh unter
+`homie/sma-echarger/measurements/totalenergy` veröffentlicht. Beide Wh-Quellkanäle werden
+exakt einmal durch 1000 geteilt. Sessionenergie bleibt unverändert kWh. Frühere Tabellen
+mit Bindestrich sind historische Topic-Vorschläge; aktuelle Channel-ID ist
+`measurements#totalenergy`. Live-/Historienabgleich der Umstellung bleibt offen.

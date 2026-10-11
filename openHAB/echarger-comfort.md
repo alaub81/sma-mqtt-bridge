@@ -123,6 +123,8 @@ It is green while charging, gray otherwise, red for a reported charging-point er
 and orange if measurement-source readiness is unknown/stale. Iconify needs an online
 connection for uncached icons. Further settings use neutral gray (`#8e8e93`).
 
+The availability Items are regular operational values and remain published when the source
+DIAGNOSTICS_ENABLED flag is false. Their existing Channel IDs are unchanged.
 Source readiness is not per-property freshness or MQTT connection freshness.
 Last-known session/status values may be older than power. An absent/non-ready
 measurement source is marked as unknown/last values. A per-property age display

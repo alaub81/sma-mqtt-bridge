@@ -192,3 +192,15 @@ and durable uncertainty protection. Physical limiting and phase-switch behavior 
 unaccepted; no device setting or openHAB instance was changed. See
 [the investigation](ECHARGER_POWER_LIMIT.md) for why a 4.5 kW cap alone does not promise
 single-phase operation and why 4000 W is currently rejected.
+
+## Wallbox total-energy unit update, 2026-10-11
+
+The Python local API counter `measurements/totalenergy` now matches the original migration
+mapping: source Wh divided by 1000, published float kWh. Both primary and fallback channels
+use the same conversion; zero stays valid and stale/invalid samples remain unavailable.
+Channel/Item identity is unchanged. Session energy was already kWh. Follow the
+[deployment and history procedure](../openHAB/openHAB.md#wallbox-total-energy-migration-to-kwh)
+before changing persisted unit assumptions. Correct kWh history must not be rescaled;
+mixed Wh/kWh series require a verified timestamp boundary and service-specific treatment.
+No persistence data, legacy offsets, original exports or device counters were changed.
+Live readback and installation history inspection remain pending.

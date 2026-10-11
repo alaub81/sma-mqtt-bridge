@@ -41,7 +41,8 @@ alongside new Homie command links for the same settings.
    Existing calculations, offsets, maps and rules are not migrated by Homie discovery.
 
 A visible retained reading is a last-known observation, not proof of current communication.
-Check source-diagnostic Items as well as Thing status. An ONLINE Thing does not certify every
+Check source-availability Items as well as Thing status. These operational statuses remain
+published with diagnostics disabled; existing availability Channel IDs are unchanged. An ONLINE Thing does not certify every
 property's freshness. Missing values must not be replaced with invented zeros.
 
 ## Choose a MainUI widget
@@ -436,3 +437,54 @@ widgets:
 - [Homie percentage-channel implementation](https://github.com/openhab/openhab-addons/blob/5.2.1/bundles/org.openhab.binding.homie/src/main/java/org/openhab/binding/mqtt/homie/internal/homie300/Property.java)
 
 The local command result is shared by the combined plan and local settings commands, and may describe an earlier action. Portal commands have a separate result. Neither the last local result nor the last confirmed plan confirms the current unsent inputs.
+
+## Wallbox total-energy migration to kWh
+
+The local API total counter at `measurements#totalenergy` now publishes kWh with float
+metadata. Both API source channels (`Measurement.Metering.GridMs.TotWhIn.ChaSta` and
+`Measurement.Metering.GridMs.TotWhIn`) report Wh; the bridge divides the first fresh valid
+value by 1000 exactly once. For example, 1234567.89 Wh becomes 1234.56789 kWh. The primary
+channel retains priority; missing, invalid or stale values are not replaced with zero.
+Session energy was already in kWh and is unchanged. The counter is read-only; no device
+counter is reset and the existing MQTT topic, Channel UID and Item name can be retained.
+
+### Upgrade the live Item
+
+1. Record the deployment boundary, current counter and unit; back up the persistence store.
+   Inspect the actual Item, link transformations, persistence aliases and affected rules.
+2. During the update, pause affected persistence/rules or temporarily unlink the counter so
+   the old retained Wh number cannot be recorded as kWh after the metadata update. Keep the
+   MQTT topic manifest and state volume. Do not clear all retained topics or delete history.
+3. Rebuild/recreate the bridge container. Wait for a fresh valid API reading, then verify
+   MQTT `$unit=kWh` and the value divided by 1000 against the device's Wh counter. An old
+   retained number during a source outage is not evidence that conversion has completed.
+4. Keep the openHAB Item as `Number:Energy`, set Unit metadata to `kWh` and optionally set
+   the State Description pattern to `%.3f kWh`. Remove a link/rule transformation that divides
+   this new bridge value by 1000; retain unrelated historical offsets in their proper unit.
+   Check the linked Channel metadata after discovery updates before resuming persistence.
+5. Compare a new reading and a subsequent energy difference before resuming daily-energy
+   rules or charts. Do not interpret a scaling boundary as a reset or huge energy change.
+
+### Treat existing history according to its actual storage
+
+Changing Item metadata or the bridge unit does not perform a database migration. Inspect
+representative stored samples and the persistence service's unit configuration first:
+
+- If old samples were already stored as kWh, preserve them unchanged.
+- If old samples are raw Wh and new samples are kWh, normalize the old segment only, using
+  a recorded timestamp boundary. For a read-only chart/query divide that segment by 1000;
+  never apply the conversion to the entire mixed series or to new samples.
+- If storage keeps everything in Wh despite the live display unit, keep a consistent Wh
+  series and convert at query/display time rather than assuming a database unit change.
+- Incorrectly labeled samples require independent evidence of their numeric scale before
+  any correction. If the boundary is unknown, keep the original series and use a separate
+  normalized series/alias after checking rule and chart dependencies.
+
+Check `restoreOnStartup`, daily differences, offset calculations, Grafana/InfluxDB queries
+and rules that strip units using plain numbers. A last historic numeric value must not be
+restored with a different assumed scale. Query old/new endpoints in the same unit before
+calculating a difference. Preserve Item names/aliases and original records where possible.
+No database rewrite is performed by this bridge change. The installation-specific audit
+and any chosen migration remain pending until actual persistence samples are inspected.
+See official [Item units](https://www.openhab.org/docs/configuration/items.html) and
+[persistence](https://www.openhab.org/docs/configuration/persistence.html) documentation.
