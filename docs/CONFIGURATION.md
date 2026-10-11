@@ -4,11 +4,11 @@ Andreas requested this contract on 2026-10-10. It is binding for the Python impl
 
 ## Host files and precedence
 
-The private `smab.env` belongs in the repository root next to the Compose files. `smab.example.env` documents every available variable, including its purpose, type and default. Store other installation files under `./data/sma-mqtt-bridge/` relative to the Compose project directory; bind-mount that directory to `/data/sma-mqtt-bridge` in the container:
+The private `smab.env` belongs in the repository root next to the Compose files. Keep the agreed name `smab.env`; a leading dot only hides a file and does not protect secrets. A name such as `.smab.env` has no automatic Compose loading behavior. Only `.env` is automatically used for Compose interpolation; our service environment file is explicitly selected by `env_file`. `smab.example.env` documents every available variable, including its purpose, type and default. Store other installation files under `./data/sma-mqtt-bridge/` relative to the Compose project directory; bind-mount that directory to `/data/sma-mqtt-bridge` in the container:
 
 ```text
 smab.env               # Explicit overrides and installation credentials, host only
-smab.example.env       # Public, fully commented variable reference
+smab.example.env       # Public defaults reference with a broker placeholder
 data/sma-mqtt-bridge/
   config.json          # Optional non-secret configuration
   profiles/            # Verified register profiles, one or more per inverter
@@ -375,7 +375,7 @@ The initial enum/boolean controls use `settings/<property>/set` under the config
 
 | Property | Non-retained payload |
 | --- | --- |
-| `chargemode` | `4718` fast, `4719` optimized PV, `4721` stop; `4720` is rejected until plan transactions exist |
+| `chargemode` | `4718` fast, `4719` optimized PV, `4721` stop; direct `4720` is rejected; activate target charging through the combined plan command |
 | `chargingrelease` | `true` / `false` |
 | `approvalrequired` | `true` / `false` |
 | `stopwhenfull` | `true` / `false` |
@@ -383,14 +383,15 @@ The initial enum/boolean controls use `settings/<property>/set` under the config
 | `ledbrightness` | `5191` low, `5190` medium, `5173` high |
 | `ambientbrightness` | `5191` low, `5190` medium, `5173` high |
 | `ambientenabled` | `true` / `false` |
+| `maxchargepower` | Whole watts, e.g. `4500` or `11000`; current device min/max/step apply; `4000` is rejected by the observed three-phase configuration |
 
-There are eight MQTT control properties in this allowlist. Current local identity, `state=Confirmed`, `editable=true` and offered `possibleValues` are checked before each action. A target already reported by the device produces `already-confirmed` without writing. Polling and commands share one API lock/session; commands arriving during an active operation or poll are rejected as busy rather than queued. Enum/boolean commands accept at most 64 bytes decoded as strict UTF-8; the combined plan accepts at most 512 bytes. No MQTT command, token or authenticated error body is logged.
+There are nine MQTT control properties in this allowlist. The power limit additionally requires verified watts, fresh numeric bounds and any offered step. Current local identity, `state=Confirmed`, `editable=true` and offered `possibleValues` are checked before each action. A target already reported by the device produces `already-confirmed` without writing. Polling and commands share one API lock/session; commands arriving during an active operation or poll are rejected as busy rather than queued. Enum/boolean commands accept at most 64 bytes decoded as strict UTF-8; the combined plan accepts at most 512 bytes. No MQTT command, token or authenticated error body is logged.
 
 The bridge sends exactly one PUT in the working reference format and reads back until the exact target is `Confirmed`. HTTP success alone yields no confirmed property state. The command session disables aiohttp 3.14.4's internal persistent-connection PUT retry; a loopback regression verifies one server-side PUT when the response is lost. There is no command write on startup or reconnection. Stored retained MQTT commands are rejected. Send commands without retain; MQTT 3 cannot distinguish a retained publication delivered live from an ordinary live publication.
 
 `commands/localresult` reports `pending`, `confirmed`, `already-confirmed`, `rejected`, `rejected-retained`, `rejected-disabled`, `rejected-busy`, `uncertain`, `blocked-uncertain` or `blocked-corrupt`. Existing guards are reported immediately when the command controller starts. Before sending, a mode-0600 journal is atomically saved and synced at `state/echarger-command-pending.json`. It is removed only after confirmed readback. Uncertain response, cancellation or crash leaves the journal in place and blocks subsequent writes across restarts; startup never replays it. To resolve manually, stop the bridge, inspect the actual setting locally and the saved target, then archive the journal only after reconciling the action. Preserve this guard alongside the topic manifest when migrating state.
 
-Live command acceptance is still pending. The installation's private write gates were not enabled, and no device setting was changed. Home Manager remains the charging regulator; Power limits and stop-delay writes remain later milestones; planned charging and minimum PV writes are described below.
+Selected live actions have user-reported acceptance: status-light brightness, combined plan transmission/mode activation and portal PV changes. This does not certify every local command or completed target charging. Home Manager remains the charging regulator. The [maximum charging power command](ECHARGER_POWER_LIMIT.md) is offline tested with read-only installation mapping evidence; its physical effect and phase behavior remain pending live acceptance. Stop-delay writes remain a later milestone; planned charging and minimum PV writes are described below.
 
 ## Combined charging plan and portal PV commands
 
@@ -422,7 +423,7 @@ zero, observations still expire after the configured freshness limit.
 
 One PUT to `/optionalenergydemand` sends only `minPvPercentage`, preserved `pvSurplusOnly`, preserved `usePriceLimit` and preserved `priceLimit`. Feed-in limits and other settings are excluded. HTTP success does not confirm the action: readback must match all four fields before publication. Portal polling and commands share a separate portal session/lock; tokens and journals are independent of the local API. `commands/portalresult` uses the same outcome vocabulary as the local result. A separate synced mode-0600 `state/portal-command-pending.json` survives uncertain replies/cancellation/restarts and must be preserved during migration. Manual reconciliation follows the local journal procedure; startup never replays it.
 
-All write gates stay false by default. This milestone is offline-tested; live plan/PV actions still need an explicit user-requested test with concrete target values. No installation activation or deployment is implied by implementing the command paths.
+All write gates stay false by default. Plan transmission/mode activation and portal PV changes have user-reported live evidence in todo.md. Completed physical target charging and its session-energy semantics remain pending. Further live actions require explicit concrete targets. No installation activation or deployment is implied by implementing the command paths.
 
 ## Display language and compact channel IDs
 

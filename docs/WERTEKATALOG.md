@@ -666,7 +666,7 @@ Passwort-/WLAN-/FTP-/Identitäts-/Netzwerkwertfelder werden ausschließlich als 
 | `Parameter.Inverter.AcALim` | A? | ja | min 6; max 32 | Maximaler AC-Ladestrom; Installationsgrenze. | RO geplant | `homie/sma-echarger/parameters/inverter-acalim` |
 | `Parameter.Inverter.OutPhs` | — | ja | Codes 325, 327, 329, 326, 5194, 5195 | Phasenkonfiguration; sechs Codes, automatische Zuordnung prüfen. | RO geplant | `homie/sma-echarger/parameters/inverter-outphs` |
 | `Parameter.Inverter.WMax` | W? | ja | min 4500; max 22000 | Eingestellte maximale Wirkleistung. | RO geplant | `homie/sma-echarger/parameters/inverter-wmax` |
-| `Parameter.Inverter.WMaxIn` | W? | ja | min 4500; max 22000 | Maximale aufgenommene Leistung; Bedeutung gegenüber WMax prüfen. | RO geplant | `homie/sma-echarger/parameters/inverter-wmaxin` |
+| `Parameter.Inverter.WMaxIn` | W | ja | aktuell min 4500; max 22000 | Maximale Ladeleistung; lokale WebUI-Zuordnung bestätigt, Schreibwirkung noch nicht live abgenommen. | RW offline getestet; frische Grenzen/Rücklesung | `homie/sma-echarger/settings/maxchargepower` |
 | `Parameter.Inverter.WMaxInRtg` | W? | nein | nicht angegeben | Nennleistung für Leistungsaufnahme. | RO geplant | `homie/sma-echarger/parameters/inverter-wmaxinrtg` |
 | `Parameter.Mb.ScdInEna` | — | ja | Codes 308, 303 | Modbus-Steuereingang; genaue Betriebssemantik offen. | RO geplant | `homie/sma-echarger/parameters/mb-scdinena` |
 | `Parameter.Mb.TcpSrv.IsOn` | — | ja | Codes 1130, 1129 | Modbus-TCP-Server eingeschaltet; Profil separat benötigt. | RO geplant | `homie/sma-echarger/parameters/mb-tcpsrv-ison` |

@@ -1,8 +1,78 @@
-# openHAB eCharger controls
+# openHAB setup and eCharger controls
 
-These examples configure existing MainUI Items linked to the SMA bridge. Keep existing
-Item names, groups and persistence links. UI labels are German; the instructions are English.
-Do not run legacy HTTP control rules alongside the new Homie command links.
+This guide connects the SMA MQTT Bridge to openHAB through Homie discovery and configures
+MainUI widgets with your own Items. No generated `.items` file or sitemap is required.
+Item names and complete Thing/Channel UIDs belong to your installation; this guide never
+assumes a broker Thing ID. Keep existing names, groups, rules and persistence where possible.
+UI labels are German; repository instructions are English.
+
+## Before you start
+
+Use openHAB 5.2+ for the supplied file-defined widgets; the documented percentage mapping
+and MainUI behavior were checked with 5.2.1. The bridge must already publish to a broker
+reachable by openHAB. Bridge and openHAB each need their own broker connection settings.
+MQTT credentials, TLS trust and topic permissions are configured independently in each.
+See [bridge configuration](../docs/CONFIGURATION.md) for `smab.env` and source activation.
+
+Start with reads. All bridge sources and command gates default to disabled; providing an
+address or credentials never enables an adapter. Enable only the sources you have configured.
+Use `SMAB_LANGUAGE=de` for the German bridge labels used in the widget Item selectors.
+The Home Manager remains the charging regulator. Do not run legacy HTTP control rules
+alongside new Homie command links for the same settings.
+
+## Discover Things and link Items
+
+1. Install the **MQTT binding** in MainUI and configure an MQTT Broker Thing, or reuse your
+   existing broker Thing. Verify its connection before adding device Things.
+2. Start the bridge with the intended read sources enabled. Scan the MQTT binding in the
+   Inbox and add the discovered Homie devices under the correct broker. The default Homie
+   prefix is `homie`; match a changed prefix in the Homie configuration. Each inverter,
+   Home Manager and eCharger is a separate Homie device, even though one container serves them.
+3. Open **Settings → Things → the discovered device → Channels**. Link each needed channel
+   to a suitable existing Item, or create an Item through MainUI. The suffixes below identify
+   channels; copy the full UID from your actual Thing if it is needed elsewhere.
+4. Check a few readings before configuring controls. Confirm Item type, source unit and
+   update behavior. Use `Number:Power` for power and `Number:Energy` for energy. Display-unit
+   metadata can change presentation; do not add another transformation to values already
+   converted by the bridge. For inverter/Home Manager coverage use the
+   [value catalogue](../docs/WERTEKATALOG.md) and [migration guide](../docs/MIGRATION.md).
+5. Retain existing Item names and persistence history when migrating a link. Compare the old
+   and new readings before switching; avoid two active measurement links updating one Item.
+   Existing calculations, offsets, maps and rules are not migrated by Homie discovery.
+
+A visible retained reading is a last-known observation, not proof of current communication.
+Check source-diagnostic Items as well as Thing status. An ONLINE Thing does not certify every
+property's freshness. Missing values must not be replaced with invented zeros.
+
+## Choose a MainUI widget
+
+The [garage list widget](echarger-comfort.md) is the main integrated control/display option.
+It combines power, session energy, vehicle connection, charging release, mode buttons,
+PV preference, target charging and additional settings in one expandable entry.
+The standalone charging-plan card below is optional; install it only if you also want
+that separate dialog. Neither widget creates Items or channel links.
+
+For the garage widget:
+
+1. Copy [echarger-comfort.yml](yaml/widgets/echarger-comfort.yml) into
+   `$OPENHAB_CONF/yaml/widgets/echarger-comfort.yml`. In Docker use the host directory
+   mounted at `/openhab/conf`. Keep one definition per widget UID.
+2. Add `sma_echarger_comfort_list` to a list on your MainUI page. First use
+   `demoMode: true` and `enableControls: false` to inspect the layout without device I/O.
+3. Set `demoMode: false`, keep controls disabled and select your existing Items in the
+   widget properties. The complete 20-parameter mapping, German search labels and exact
+   channel suffixes are in the [Item mapping table](echarger-comfort.md#connect-existing-items-later).
+   In particular, distinguish measurement availability (SEMP or API), local API availability
+   and portal availability even when all three Items have the same German label.
+4. Enable controls only after checking the writable Item metadata below and the independent
+   bridge write gates. Local actions need `SMAB_COMMANDS_ENABLED=true`,
+   `SMAB_ECHARGER_ENABLED=true` and `SMAB_ECHARGER_COMMANDS_ENABLED=true`.
+   Portal PV actions need the global gate, `SMAB_PORTAL_ENABLED=true` and
+   `SMAB_PORTAL_COMMANDS_ENABLED=true`. The widget does not enable these gates itself.
+
+Use the Item selectors rather than copying another installation's Item names or broker UID.
+The YAML files are reusable after this explicit mapping; they are not a zero-configuration
+installation. Do not create duplicate definitions in both files and the MainUI widget editor.
 
 ## Item configuration in MainUI
 
@@ -15,6 +85,7 @@ channel link profile. The channel suffixes below follow the bridge's compact Hom
 | `settings#chargemode` | String | Charging mode |
 | `settings#ledbrightness` | String | Status LED brightness |
 | `settings#ambientbrightness` | String | Ambient brightness |
+| `settings#maxchargepower` | Number:Power | Maximum charging power, W; German channel label: Maximale Ladeleistung |
 | `portal#pvminimum` | Dimmer | Minimum PV percentage, integer 0–100 |
 | `commands#plan` | String | Combined plan command and confirmed plan JSON |
 | `commands#localresult` | String | Read-only local command feedback |
@@ -78,6 +149,39 @@ Select the existing PV Item in both widgets. Input `60` means 60% minimum PV and
 40% grid share. A Dimmer normally suggests a slider, but the input widget provides explicit
 submission and avoids sending every intermediate change. `autoupdate=false` remains required.
 
+### Maximum charging power
+
+After rebuilding/recreating the bridge, the existing charger Homie Thing exposes
+`settings#maxchargepower`, labeled **Maximale Ladeleistung** with `SMAB_LANGUAGE=de`.
+The local API must be enabled. The existing global/local write gates enable its setter;
+SEMP alone does not supply this parameter. Homie provides the channel automatically.
+If the running Thing keeps old channel metadata, disable/re-enable it and check again,
+preserving existing Item links.
+
+Link a **Number:Power** Item with Unit **W**, Auto-update **false**, and the Standard
+profile. Use label **Maximale Ladeleistung**, semantic **Setpoint**, and State Description
+pattern **`%.0f W`**. For the observed three-phase configuration, set minimum **4500**,
+maximum **22000**, step **1**. These UI bounds describe current installation evidence;
+the bridge validates fresh device bounds on every command.
+
+Default List Widget `oh-input-item` / Standalone Widget `oh-input-card`:
+
+```yaml
+type: number
+min: 4500
+max: 22000
+step: 1
+sendButton: true
+useDisplayState: false
+```
+
+Enter **4500** for 4.5 kW, **11000** for 11 kW. Keep the input unit W; display conversion
+alone is insufficient for a numeric input. No MAP/JS scaling is needed. The Homie
+integer channel sends whole watts. Confirm readback and `commands#localresult` rather
+than predicting success in openHAB. A 4 kW command is outside current device bounds.
+This is a persistent upper limit, not a promise of single-phase operation; see
+[the phase-switching investigation](../docs/ECHARGER_POWER_LIMIT.md).
+
 ## Install the charging-plan widgets
 
 Copy **only [charging-plan.yml](charging-plan.yml)** into `$OPENHAB_CONF/yaml/`.
@@ -139,7 +243,35 @@ The widget displays raw feedback and the confirmed JSON plan, rather than an opt
 
 Offline YAML/contract checks are separate from acceptance in a real MainUI. Verify file loading,
 parameter selection, popup rendering, input validation and timezone preview without pressing Send.
-A device write is a separate intentional user action. No live plan acceptance is claimed.
+A device write is a separate intentional user action. User tests confirmed this standalone
+widget's rendering and timezone preview, plan transmission/mode activation, and garage-widget
+PV changes. Completed physical target charging and the exact session-energy semantics remain
+pending; see [the project diary](../todo.md).
+
+## First checks and troubleshooting
+
+| Symptom | Check |
+| --- | --- |
+| No Homie devices in the Inbox | Broker Thing connection, matching Homie prefix, enabled bridge sources and retained discovery/topic permissions. |
+| Widget has placeholders | Selected Items, raw NULL/UNDEF states and the correct source-availability Items; installing YAML does not create links. |
+| Timezone preview says “Bitte Endzeit wählen” | Actually select a complete date/time. Native browser date segments can be visible before the widget has a value. Verify the ISO offset after selection. |
+| PV percentage differs by a factor of 100 | Use Dimmer with no Unit metadata, raw 0–100 values and the Standard link profile; do not compensate with another scale. |
+| PV slider shows an old draft | An open draft is intentionally preserved. Reopen the PV section to initialize from the latest valid Item state. |
+| Old `confirmed` result is visible | Local results are shared by local settings and plans; portal results are separate. Neither identifies a specific new command. Compare fresh readback to your intended values. |
+| Target mode disappears quickly | Check result and mode history plus already delivered session energy. The wallbox returns to PV mode after target completion; local API total-versus-additional semantics are not fully accepted yet. |
+| Apply is disabled | Check controls enabled, source readiness, mode, valid positive energy/future deadline and pending/uncertain/unknown feedback. Leave an active target plan explicitly before replacing it. |
+| PV submission reports HTTP 415 | Update both the installed widget and any old editor copy. The corrected command uses supported text concatenation, not the unavailable `String()` expression constructor. |
+| Command outcome is uncertain | Inspect actual device state and reconcile the durable journal as documented; do not resend or delete the guard blindly. |
+
+For a PV test, record the initial percentage, move the draft without submitting, verify that
+readback has not changed, then intentionally Apply one agreed value. Check portal feedback and
+actual readback, reopen the widget and finally restore the initial setting. The user-reported
+90 → 70 → 90 test passed, including initialization after reopening and no HTTP 415.
+
+For a plan test, use an agreed energy and future deadline with a vehicle able to accept charge.
+Verify both plan values and mode 4720, then observe actual charging and automatic return to PV.
+Charging permission is separate. Do not automatically add session energy to the target or
+repeatedly force target mode based on an old retained result.
 
 ## Widget source
 

@@ -1,4 +1,4 @@
-# eCharger garage list widget — first draft
+# eCharger garage list widget
 
 The garage entry shows vehicle connection, power and session energy (Ladesitzung:) together with
 charging permission (Ladeberechtigung) and checked mode buttons with icons beside the labels. Selecting PV reveals the staged PV
@@ -132,7 +132,7 @@ and immediate broker-offline detection remain future improvements.
 
 YAML lint and offline expression/command checks do not certify MainUI rendering.
 Review desktop/mobile layout, plan expansion and settings expansion in the actual openHAB instance,
-initially in demo mode. No live device command was executed for this draft.
+initially in demo mode. User-reported live PV acceptance covered 90 → 70 → 90, confirmed readback, draft initialization after reopening and absence of HTTP 415. This does not certify every control or remaining iOS layout checks.
 The existing BMW widget source was not supplied; exact visual matching remains pending.
 
 ## Official references

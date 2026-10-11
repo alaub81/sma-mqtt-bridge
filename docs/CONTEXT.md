@@ -152,3 +152,22 @@ At Andreas' explicit request, MQTT and local-wallbox TLS verification can each b
 At Andreas' request, Home Manager now has an explicitly selectable `modbus-tcp` read transport alongside the default UDP receiver. The separate file-driven profile implements all readable entries of official HM-20-Modbus-NSD-TI-de-12: 16 core Unit 1/2 values, all assignment slots, and 16 read templates per valid assigned inverter. Persistent paced sessions verify Unit 1 device type/class/manufacturer and both serial registers before plant reads; the document has no firmware identity register. Unsupported/restricted registers become unavailable independently. Dynamic assignment properties update Homie discovery and retained retirement through the persistent topic manifest.
 
 The adapter sends no Modbus writes, including Grid Guard login/logout. Access prerequisites and actual Unit 2/delegated firmware behavior remain unverified; no live Home Manager operation was performed for this work. UDP defaults, private installation activation and existing openHAB links/offsets/persistence remain unchanged. See [coverage, configuration and acceptance](HOME_MANAGER_MODBUS.md).
+
+## Maximum charging power mapping and phase investigation, 2026-10-11
+
+The user's winter objective is to reduce repeated automatic one-/three-phase changes.
+Read-only identity-checked API inspection confirms WMaxIn as editable/Confirmed with
+current bounds 4500–22000 W. Official local WebUI 1.46.0 connects maxChargePower to
+metadata 12195 / Parameter.Inverter.WMaxIn, W tag 18, precision 0 and no raw multiplier.
+WMax refers to output power and is not the chosen setter. The local API-only
+settings/maxchargepower property and German display label Maximale Ladeleistung now
+have offline-tested command support using the existing gates and uncertainty guards.
+No installation command or deployment was performed.
+
+SMA documents always-active automatic phase switching, approximately 4.14 kW at 6 A
+minimum current and 6.9 kW at 10 A. The present minimum limit of 4.5 kW therefore does
+not by itself establish a single-phase lock. A cap combined with a higher minimum
+current is an unverified trial candidate and raises the minimum one-phase charging
+power too. No AMinCha or phase-assignment setter was introduced. See
+[ECHARGER_POWER_LIMIT.md](ECHARGER_POWER_LIMIT.md) for official sources, exact mapping,
+tradeoffs and outstanding live acceptance. Home Manager remains the regulator.

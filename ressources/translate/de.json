@@ -68,6 +68,7 @@
     "Local command result": "Ergebnis des lokalen Befehls",
     "Manual approval": "Manuelle Freigabe",
     "Manufacturer": "Hersteller",
+    "Max Charge Power": "Maximale Ladeleistung",
     "Measurement.Acs.AuthRegistStt (raw code/value)": "Authentifizierungsstatus (Rohwert)",
     "Measurement.Chrg.ModSw (raw code/value)": "Modusschalter (Rohwert)",
     "Measurement.Operation.EVeh.Health (raw code/value)": "Fahrzeugzustand (Rohwert)",

@@ -5,15 +5,16 @@ from datetime import datetime, timezone
 import json
 import os
 from pathlib import Path
+import re
 
-from .adapters.echarger import EChargerReader, SETTINGS, parameter_catalog, settings_values
+from .adapters.echarger import API_SETTINGS, EChargerReader, parameter_catalog, parameter_unit, settings_values
 from .errors import ProtocolError
 from .adapters.http import json_data
 from .model import number, utc_timestamp
 from .storage import journal_status, write_state
 
 # Individual plan fields are never writable; mode 4720 needs the combined plan command.
-LOCAL_COMMANDS = {id: (channel, mapping, fmt) for id, channel, _, _, mapping, fmt in SETTINGS
+LOCAL_COMMANDS = {id: (channel, mapping, fmt) for id, channel, _, _, mapping, fmt in API_SETTINGS
                   if id not in {"plan-energy", "plan-end", "stop-delay"}}
 
 
@@ -24,6 +25,22 @@ def command_target(key, text, catalog):
     entry = catalog.get(channel, {})
     if entry.get("editable") is not True or entry.get("state") != "Confirmed":
         raise ProtocolError("Parameter is not confirmed and writable")
+    if key == "max-charge-power":
+        if not re.fullmatch(r"[1-9][0-9]{0,4}", text) or parameter_unit(catalog, channel) != "W":
+            raise ProtocolError("Power command requires whole watts and a verified W unit")
+        value, lower, upper = (number(v) for v in (text, entry.get("min"), entry.get("max")))
+        if (lower is None or upper is None or not 1380 <= lower <= upper <= 22000
+                or not lower <= value <= upper):
+            raise ProtocolError("Power target violates verified device bounds")
+        if "step" in entry:
+            step = number(entry["step"])
+            if step is None or step <= 0 or (value - lower) % step:
+                raise ProtocolError("Power target violates device step")
+        choices = entry.get("possibleValues")
+        if choices is not None and (not isinstance(choices, list) or
+                                   (choices and value not in [number(v) for v in choices])):
+            raise ProtocolError("Power target is not offered")
+        return channel, text
     if mapping is not None:
         if text not in {"true", "false"}:
             raise ProtocolError("Boolean command must be true or false")
@@ -37,6 +54,15 @@ def command_target(key, text, catalog):
     if not isinstance(choices, list) or target not in [str(v) for v in choices]:
         raise ProtocolError("Target is not offered by current parameter metadata")
     return channel, target
+
+
+def command_matches(key, channel, target, catalog):
+    entry = catalog.get(channel, {})
+    if entry.get("state") != "Confirmed":
+        return False
+    if key == "max-charge-power":
+        return parameter_unit(catalog, channel) == "W" and number(entry.get("value")) == number(target)
+    return str(entry.get("value")) == target
 
 
 def plan_input(text):
@@ -206,7 +232,7 @@ class LocalCommands(DurableCommands):
                     await self.apply_plan(targets, catalog)
                     return
                 channel, target = command_target(key, text, catalog)
-                if str(catalog[channel].get("value")) == target:
+                if command_matches(key, channel, target, catalog):
                     self.api_state.update({"settings/" + key: settings_values(catalog)["settings/" + key]})
                     self.result("already-confirmed")
                     return
@@ -225,8 +251,7 @@ class LocalCommands(DurableCommands):
                 async with asyncio.timeout(self.config.commands.readback_timeout_seconds):
                     while True:
                         catalog = await self.catalog()
-                        entry = catalog.get(channel, {})
-                        if entry.get("state") == "Confirmed" and str(entry.get("value")) == target:
+                        if command_matches(key, channel, target, catalog):
                             self.api_state.update({"settings/" + key: settings_values(catalog)["settings/" + key]})
                             self.journal.unlink()
                             self.sync_directory()

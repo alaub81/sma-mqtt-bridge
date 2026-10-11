@@ -125,3 +125,24 @@ lease release after process death. No device action is replayed.
 Complete local and Linux test/build/lint results are recorded in todo.md. These are deterministic
 offline tests, not the deferred multi-hour fault test or external target-host monitoring acceptance.
 No private configuration or running deployment was changed.
+
+## Maximum charging power checkpoint, 2026-10-11
+
+Read-only authenticated local inspection checked model/firmware and the configured
+private serial guard. Current WMaxIn metadata is confirmed/editable with min 4500 and
+max 22000; no explicit unit/step. Official WebUI assets connect the maxChargePower
+control to WMaxIn, W and integral display precision. No raw authenticated replies or
+private current values were placed in public fixtures. Details and asset versions:
+[ECHARGER_POWER_LIMIT.md](ECHARGER_POWER_LIMIT.md).
+
+All 171 offline regressions passed, including nine new power-limit cases: mapping,
+4000 W rejection, current bounds/steps/rights, firmware-scoped unit fallback, API/SEMP
+ownership, translated discovery, exactly one parameter PUT, numeric confirmed
+readback, pending/wrong-unit/wrong-value responses, idempotence, independent command
+gates, retained rejection and durable lost-response blocking. Full repository lint
+and diff hygiene passed. Loopback transport tests ran outside the socket-restricted
+sandbox and used deterministic fixtures.
+
+No power limit, minimum current, phase setting, activation gate, openHAB instance or
+running container was changed. Physical power limiting and prevention of phase
+switching remain unverified; implementation and source mapping do not certify them.

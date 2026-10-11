@@ -176,3 +176,19 @@ Storage (`sma-sbs3-7-10`, inverter2) day/total yield now publishes kWh instead o
 Rebuild/recreate the bridge to publish corrected retained `$unit` metadata for `measurements/dayyield` and `measurements/totalyield`. Apply the same correction to any host profile override. In openHAB, keep the existing Item names, groups, persistence and links; use `Number:Energy` with Unit metadata `kWh` and State Description pattern `%.0f %unit%` (or more display decimals if desired). Unit metadata controls quantity conversion; a display pattern alone does not correct a wrong source unit. Remove any workaround that compensates for the old Wh label by scaling the value. Check the next fresh update against the broker (raw 2 must become 2 kWh). If channel metadata remains stale, disable/re-enable the affected Homie Thing and verify again before considering rediscovery; preserve Item links.
 
 Historical samples stored under the wrong Wh interpretation are not repaired by this change. Determine the affected time window and actual persisted units before any database correction. Existing correctly recorded Modbus history must remain unchanged. Sources: [Homie binding](https://www.openhab.org/addons/bindings/homie/), [units of measurement](https://www.openhab.org/docs/concepts/units-of-measurement.html).
+
+## Maximum charging power command, 2026-10-11
+
+The local API now reads `Parameter.Inverter.WMaxIn` as integer W and exposes
+`settings/maxchargepower` under the existing charger identity. German discovery label:
+**Maximale Ladeleistung**; openHAB suffix `settings#maxchargepower`, Number:Power with
+Unit W and `autoupdate=false`. [Setup instructions](../openHAB/openHAB.md#maximum-charging-power)
+cover input bounds and explicit submission. This adds a setting without replacing
+existing Items, rules, SEMP control or persistence; all 100 migration ledger rows remain.
+
+WebUI mapping/unit and current 4500–22000 W rights/bounds have read-only installation
+evidence. The setter is offline tested behind existing gates with confirmed readback
+and durable uncertainty protection. Physical limiting and phase-switch behavior remain
+unaccepted; no device setting or openHAB instance was changed. See
+[the investigation](ECHARGER_POWER_LIMIT.md) for why a 4.5 kW cap alone does not promise
+single-phase operation and why 4000 W is currently rejected.
