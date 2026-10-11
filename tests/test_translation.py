@@ -78,6 +78,8 @@ class TranslationTests(unittest.TestCase):
         self.assertEqual(en.keys(), de.keys())
         self.assertEqual(de['homie/sma-wr1/$name'], 'Wechselrichter')
         self.assertEqual(de['homie/sma-wr1/device1/$name'], 'Gerät 1')
+        self.assertEqual(de['homie/sma-wr1/device1/$type'], 'device')
+        self.assertEqual(de['homie/sma-wr1/measurements/$type'], 'measurements')
         self.assertEqual(de['homie/sma-wr1/measurements/internaltemperature/$name'], 'Interne Temperatur')
         self.assertEqual(de['homie/sma-wr1/device1/$properties'], 'chargemode')
         self.assertEqual(de['homie/sma-wr1/$nodes'], 'device1,measurements')

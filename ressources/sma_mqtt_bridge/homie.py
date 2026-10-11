@@ -39,9 +39,12 @@ def discovery(prefix, device, properties, labels=None, device_name=None):
     for node in nodes:
         root = base + "/" + wire_key(node)
         name = node.replace("-", " ").title()
+        node_type = node
         if node.startswith("device-") and node[7:].isdigit():
+            node_type = "device"
             name = labels.get("Device {number}", "Device {number}").replace("{number}", node[7:])
         topics[root + "/$name"] = labels.get(name, name)
+        topics[root + "/$type"] = node_type
         topics[root + "/$properties"] = ",".join(sorted(wire_key(p.id) for p in properties if p.node == node))
     for p in properties:
         root = base + "/" + wire_key(p.key)

@@ -10,7 +10,7 @@ automated test. Full production acceptance and openHAB migration remain open.
 The documentation/widget cleanup preserved the bridge runtime and device configuration.
 The subsequent API fix changes confirmation and unit checks; it does not activate
 adapters or command gates.
-The current offline suite contains **181 tests**. Repository lint covers all public
+The current offline suite contains **182 tests**. Repository lint covers all public
 tracked and non-ignored files, including generated widget parity. Compose parity
 checks both standalone files and deployment overrides. Final cleanup results are
 recorded in [todo.md](../todo.md#2026-10-11--dokumente-und-widgetquellen-aufgeräumt).
@@ -19,7 +19,10 @@ uncertain-command polling, retained observations and contradictory plan readback
 Results are recorded in [the new diary entry](../todo.md#2026-10-11--review-1-api-bestätigung-und-plan-einheiten).
 The subsequent integer-payload fix adds two regressions for canonical formatting,
 signed 64-bit bounds, invalid inputs and unchanged float handling.
-Latest checks on 2026-10-11 passed full repository lint, all **181 offline tests**
+The subsequent node-metadata fix adds a required-attribute regression across normal,
+delegated and custom nodes. Existing translation and publisher tests also verify
+stable types, publication before readiness, retirement and manifest ownership.
+Latest checks on 2026-10-11 passed full repository lint, all **182 offline tests**
 and Compose parity. The two known MQTT future exceptions remain tracked separately.
 
 The 2026-10-11 code review passed configured lint and all 174 offline tests. Its
@@ -32,6 +35,7 @@ error/fatal diagnostics; broader style checks are a separate planned improvement
 | Capability | Latest evidence and date | Remaining acceptance |
 | --- | --- | --- |
 | Configuration and ENV | Offline validation; 144 documented options/defaults checked, 2026-10-11 | Target-host permissions and operational thresholds |
+| Homie node metadata | Required attributes, stable untranslated types, retained publication and dynamic retirement offline tested, 2026-10-11 | Deploy and verify actual broker/openHAB discovery |
 | Inverter baseline | Model-specific lists, local identities and MQTT publication for the original 41 channels, 2026-10-10; [register evidence](REGISTER_VALIDATION.md) | Aligned values/history/rules comparison; additional registers require separate verification |
 | Inverter energy/labels | Storage kWh values, log times and labels accepted by user, 2026-10-11; inverter rename/link migration reported complete | Remaining quantity metadata/history continuity |
 | Inverter sleep/wake | Evening behavior reported normal, 2026-10-11 | Morning autonomous wake-up; sleep versus outage |
@@ -58,15 +62,15 @@ No cleanup step connects to SMA devices, the portal or the installation broker.
 
 ## Open code-review findings
 
-The API confirmation/unit and integer-payload findings are resolved by offline
-regression evidence on 2026-10-11. Findings 3–5 and CLI capability reporting remain pending.
+The API confirmation/unit, integer-payload and node-metadata findings are resolved by
+offline regression evidence on 2026-10-11. Findings 4–5 and CLI capability reporting remain pending.
 The documentation portion of the sixth finding is resolved by the cleanup.
 
 | Finding | Required correction |
 | --- | --- |
 | API setting confirmation | Resolved offline: individually require Confirmed state, including manual-approval alias; preserve SEMP handling; validate plan-end units and command readback |
 | Homie integers | Resolved offline: integral values serialize without decimals, signed 64-bit bounds enforced, no rounding of fractional values |
-| Homie node metadata | Mandatory stable `$type` per node |
+| Homie node metadata | Resolved offline: mandatory stable `$type` per node, untranslated and covered by topic ownership/retirement |
 | Measurement freshness | Carry the device sample's remaining lifetime through source state |
 | MQTT disconnect cleanup | Consume failed futures correctly; make unexpected loop exceptions fail tests |
 | CLI status | Report optional write capabilities accurately; align module descriptions |

@@ -380,6 +380,17 @@ writes are disabled. Telemetry can continue, but no command preflight, PUT or au
 takes place. Stop the bridge, verify the actual device setting and reconcile the journal before archiving
 it. A corrupt journal is not permission to repeat its action.
 
+## Homie node discovery
+
+Every node publishes retained `$name`, `$type` and `$properties` metadata before
+the device becomes ready, as required by the
+[Homie 4 node contract](https://homieiot.github.io/specification/spec-core-v4_0_0/#node-attributes).
+The type is the stable internal node ID, such as `measurements`, `settings` or a
+custom profile node. Delegated Home Manager `device-<number>` nodes share type
+`device`; their slot number stays in the compact topic ID. Types are never translated.
+Display-name changes do not change types or Channel IDs. Existing topic-manifest
+ownership also covers `$type`, including retirement when nodes disappear.
+
 ## Homie integer payloads
 
 Integer properties publish canonical decimal whole numbers without a decimal point
