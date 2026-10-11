@@ -176,7 +176,11 @@ class HomiePublisher:
                     metrics = state.monitor.snapshot(now) | {"missingCritical": len(state.missing_critical(now))}
                     result.update({key: str(round(metrics[name], 1)) if datatype == "float" else str(metrics[name])
                                    for name, key, datatype, _ in self.metric_properties(state)})
-        status = "ready" if any(s.contributes_availability and s.status(now) == "ready" for s in states) else "alert"
+        available = [s for s in states if s.contributes_availability]
+        status = "ready" if any(s.status(now) == "ready" for s in available) else "alert"
+        # Keep the bounded paced initialization visible instead of reporting a premature outage.
+        if available and all(s.initialization_deadline is not None and s.status(now) == "init" for s in available):
+            status = "init"
         return result, status
 
     async def serve_device(self, device, states, stop):
