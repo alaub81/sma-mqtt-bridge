@@ -10,7 +10,7 @@ automated test. Full production acceptance and openHAB migration remain open.
 The documentation/widget cleanup preserved the bridge runtime and device configuration.
 The subsequent API fix changes confirmation and unit checks; it does not activate
 adapters or command gates.
-The current offline suite contains **201 tests**. Repository lint covers all public
+The current offline suite contains **203 tests**. Repository lint covers all public
 tracked and non-ignored files, including generated widget parity. Compose parity
 checks both standalone files and deployment overrides. Final cleanup results are
 recorded in [todo.md](../todo.md#2026-10-11--dokumente-und-widgetquellen-aufgeräumt).
@@ -23,7 +23,7 @@ The subsequent node-metadata fix adds a required-attribute regression across nor
 delegated and custom nodes. Existing translation and publisher tests also verify
 stable types, publication before readiness, retirement and manifest ownership.
 Latest checks on 2026-10-11 passed full repository lint over 107 public files, all
-**201 offline tests** and Compose parity. The two formerly unhandled MQTT future
+**203 offline tests** and Compose parity. The two formerly unhandled MQTT future
 exceptions are resolved offline; unexpected event-loop errors now fail the suite.
 
 The 2026-10-11 code review passed configured lint and all 174 offline tests. Its
@@ -46,14 +46,15 @@ Additional lint rules remain a separate planned improvement.
 | Home Manager UDP | Deterministic telegram tests; Mac attempt received no packets on a different network, 2026-10-10 | Actual Pi multicast/interface/VLAN and encryption applicability |
 | SEMP/API/portal reads | Local identity/TLS and authenticated reads; selected live values reached MQTT, 2026-10-10 | Full per-channel freshness, unavailable channels and production comparison |
 | Local setting units | Device WebUI metadata and MQTT kWh/min read publication, 2026-10-10 | Unknown models/firmware need their own unit evidence |
-| Local enum/boolean controls | Offline identity/rights/bounds/readback/replay tests; status-light command reported accepted, 2026-10-10; individual API Confirmed-state regression, 2026-10-11 | Every remaining command individually, if requested; deploy/accept the confirmation fix |
-| Combined charging plan | Offline transaction/uncertainty tests; 10-kWh plan and target-mode activation reported accepted, 2026-10-11 | Physical completion, cumulative/additional energy semantics and return mode |
+| Local enum/boolean controls | Offline identity/rights/bounds/readback/replay tests; status-light command reported accepted, 2026-10-10; individual API Confirmed-state regression and update-checklist setting readback reported accepted, 2026-10-11; updated value appeared after a noticeable delay | Tested setting and elapsed time not specified; Pending transition remains offline tested; every remaining command individually, if requested |
+| Combined charging plan | Offline transaction/uncertainty tests; 10-kWh plan and target-mode activation reported accepted; repeat plan transmission/readback after confirmation/unit fix reported accepted, 2026-10-11 | Physical completion, cumulative/additional energy semantics and return mode |
 | Portal minimum PV | Offline preserving write/readback tests; 90 → 70 → 90 and reopened widget value reported accepted, 2026-10-11 | Longer outage/uncertainty behavior; no extra portal setters accepted |
 | Portal freshness | Two normal polling cycles accepted by user, 2026-10-11 | Longer target-host operation and source-failure behavior |
-| Maximum charging power | Verified WMaxIn/W mapping and bounds; offline setter tests and canonical integer readback, 2026-10-11 | Physical limit/phase effect and deployment acceptance; [details](ECHARGER_POWER_LIMIT.md) |
+| Maximum charging power | Verified WMaxIn/W mapping and bounds; offline setter tests; canonical integer MQTT payload and openHAB display reported accepted, 2026-10-11 | Physical limit/phase effect; [details](ECHARGER_POWER_LIMIT.md) |
 | eCharger total energy | Wh-to-kWh API conversion and unchanged Channel ID offline tested, 2026-10-11 | Image update, actual Item metadata and persistence/history acceptance |
 | Controlled stop/start | Retained values, reconnection, healthy container and no replay accepted by user, 2026-10-11 | Abrupt failures, Last Will, broker/host restart and manifest details |
-| Source status/health | Independent operational status, watchdogs, heartbeat/state protection offline tested; Home Manager startup accepted by user | Diagnostics-disabled deployment, startup-summary logs, multi-hour faults and external alarms |
+| MQTT outage recovery | User-reported successful update check and supplied log, 2026-10-11: all five connections recovered autonomously in 11.0–28.5 seconds from their respective outage detection; errors/timeouts remained visible, no unhandled future exception in supplied excerpt | Longer outages, Last Will and broader production failure matrix |
+| Source status/health | Independent operational status, watchdogs, heartbeat/state protection offline tested; Home Manager startup accepted by user; supplied target-host startup summary shows all seven sources ready and all five MQTT connections connected, 2026-10-11 | Diagnostics-disabled deployment, multi-hour faults and external alarms |
 | Garage widget | PV operation/staging and iOS layout accepted by user, 2026-10-11; canonical source/export parity checked locally | Existing acceptance remains; future behavior changes need a new check |
 | openHAB migration | 100-row ledger, 34 linked inverter Items, four Home Manager Items and ten derived capabilities inventoried | Seven unidentified Item links; full rules/UI/units/offsets/persistence continuity |
 | Docker and publication | Prior local builds/offline image checkpoints in archive; workflows prepared for amd64/arm64 | Current target-host image acceptance, hosted CI/security scans and separately authorized release |
@@ -303,6 +304,29 @@ including the real loopback MQTT/HTTP cases and strict event-loop check. Final l
 over 107 public files, including formatter/import checks, and Compose parity passed.
 This is offline validation; no image deployment or new installation acceptance
 was performed. Private references and configuration were excluded from formatting.
+
+### Named eCharger setting definitions, 2026-10-11
+
+The six-position setting tuples are replaced by a small keyword-only frozen
+`SettingDefinition` with named ID, channel, datatype, unit, mapping and format fields.
+Boolean mappings are copied into read-only mapping proxies to prevent accidental
+mutation through either the definition or the original dictionary. Read property
+construction, API/SEMP decoding and the existing command allowlist use named fields;
+commands reuse the same definition instead of creating another positional tuple.
+No setting or writable capability was added.
+
+An independent before/after snapshot from the preceding commit compared all twelve
+definitions, the eleven SEMP definitions, nine command keys, eight confirmed/pending
+and unit-validation read variants, all properties/discovery topics of four API/SEMP
+ownership combinations, and 156 accepted/rejected command-target cases. The complete
+serialized snapshots match byte for byte. Plan and stop-delay fields remain excluded
+from individual setters; units, enum order, boolean mapping and metadata are unchanged.
+
+Two new tests enforce keyword-only construction and protect against mapping/field
+mutation. All 66 targeted read/command tests and all 203 offline tests passed, along
+with full lint over 107 public files and Compose parity. The final countercheck also
+confirms no remaining positional unpacking/index access for these setting definitions.
+No live commands, device queries or deployment were performed.
 
 Record date, tested image/version, source/transport, automated versus direct versus
 user-reported result, and remaining limits. Keep authenticated responses, private

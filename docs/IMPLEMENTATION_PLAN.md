@@ -84,8 +84,9 @@ no paid Developer API or replacement regulation is planned.
 ## 5. Simplify maintenance incrementally
 
 After correctness fixes, split large configuration/session/command functions into
-small named steps where this removes duplicated responsibilities. Consider a small
-immutable setting definition instead of positional tuples. Simplify repeated widget
+small named steps where this removes duplicated responsibilities. Named immutable
+setting definitions are implemented and checked against the previous mappings.
+Simplify repeated widget
 expressions only with preserved gating and visible behavior.
 
 Consider selected additional lint rules in focused changes; formatting and import

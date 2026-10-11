@@ -21,16 +21,17 @@ from .storage import journal_status, write_state
 
 # Individual plan fields are never writable; mode 4720 needs the combined plan command.
 LOCAL_COMMANDS = {
-    id: (channel, mapping, fmt)
-    for id, channel, _, _, mapping, fmt in API_SETTINGS
-    if id not in {"plan-energy", "plan-end", "stop-delay"}
+    setting.id: setting
+    for setting in API_SETTINGS
+    if setting.id not in {"plan-energy", "plan-end", "stop-delay"}
 }
 
 
 def command_target(key, text, catalog):
     if key not in LOCAL_COMMANDS:
         raise ProtocolError("Command property is not allowed")
-    channel, mapping, fmt = LOCAL_COMMANDS[key]
+    setting = LOCAL_COMMANDS[key]
+    channel = setting.channel
     entry = catalog.get(channel, {})
     if entry.get("editable") is not True or entry.get("state") != "Confirmed":
         raise ProtocolError("Parameter is not confirmed and writable")
@@ -55,12 +56,12 @@ def command_target(key, text, catalog):
         ):
             raise ProtocolError("Power target is not offered")
         return channel, text
-    if mapping is not None:
+    if setting.mapping is not None:
         if text not in {"true", "false"}:
             raise ProtocolError("Boolean command must be true or false")
-        target = next(k for k, v in mapping.items() if v == (text == "true"))
+        target = next(k for k, v in setting.mapping.items() if v == (text == "true"))
     else:
-        allowed = fmt.split(",")
+        allowed = setting.format.split(",")
         if text not in allowed or (key == "charge-mode" and text == "4720"):
             raise ProtocolError("Enum command is not supported; target charging needs a plan")
         target = text
