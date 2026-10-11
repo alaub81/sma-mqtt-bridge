@@ -16,10 +16,11 @@ VEHICLE = {"200111": "Nicht verbunden", "200112": "Verbunden / wartend", "200113
 HEALTH = {"307": "OK", "35": "Fehler", "455": "Warnung", "303": "Aus", "308": "Ein"}
 APPROVAL = {"5171": "Gesperrt", "5172": "Freigegeben"}
 
-# Verified from this firmware's local SMA WebUI metadata and scalar formatter.
+# Verified for this model/firmware from local metadata and working protocol references.
 # See docs/VALIDATION.md; do not infer these units for other firmware versions.
 VERIFIED_LOCAL_UNITS = {
     "Parameter.Chrg.Plan.En": "kWh",
+    "Parameter.Chrg.Plan.StopTm": "s",
     "Parameter.Chrg.StpWhenFlTm": "min",
     "Parameter.Inverter.WMaxIn": "W",
 }
@@ -126,19 +127,23 @@ def parameter_unit(catalog, channel):
     return VERIFIED_LOCAL_UNITS.get(channel) if unit is None and verified_local else unit
 
 
-def settings_values(catalog, include_api_only=True):
+def settings_values(catalog, *, from_api=True):
+    """Require confirmed API settings; SEMP provides raw parameters without API metadata."""
     result = {}
-    for id, channel, datatype, unit, mapping, fmt in API_SETTINGS if include_api_only else SETTINGS:
+    for id, channel, datatype, unit, mapping, fmt in API_SETTINGS if from_api else SETTINGS:
         entry = catalog.get(channel, {})
+        if from_api and entry.get("state") != "Confirmed":
+            result["settings/" + id] = None
+            continue
         raw = entry.get("value")
         value = mapping.get(str(raw)) if mapping is not None else raw
         if unit:
             value = number(raw) if parameter_unit(catalog, channel) == unit else None
-        if id == "max-charge-power" and (entry.get("state") != "Confirmed" or value is None
+        if id == "max-charge-power" and (value is None
                                          or value != value.to_integral_value() or not 1380 <= value <= 22000):
             value = None
         if id == "plan-end":
-            seconds = number(raw)
+            seconds = number(raw) if not from_api or parameter_unit(catalog, channel) == "s" else None
             try:
                 value = datetime.fromtimestamp(float(seconds), timezone.utc).isoformat() if seconds is not None and seconds > 0 else None
             except (OverflowError, OSError, ValueError):
@@ -193,7 +198,9 @@ def semp_values(text, stale_seconds, now=None, advanced=True, diagnostics=True):
             raw = current_measurement(raw, stamp, stale_seconds, now)
         catalog[channel] = raw
     result = base_values(catalog, advanced)
-    result.update(settings_values({k: {"value": v} for k, v in catalog.items()}, include_api_only=False))
+    # SEMP has no API confirmation/unit metadata; preserve its known raw-parameter contract.
+    result.update(settings_values({k: {"value": v} for k, v in catalog.items()},
+                                  from_api=False))
     result.update({node + "/" + id: number(catalog.get(channel)) for node, id, channel in extra_channels(advanced, diagnostics)})
     return result
 
@@ -294,7 +301,9 @@ class EChargerReader:
                     # Both total-energy channels report Wh; publish the engineering value in kWh.
                     result["measurements/" + id] = value / 1000 if id == "total-energy" and value is not None else value
                 if self.include_base:
-                    combined = {k: v.get("value") for k, v in catalog.items()}
+                    # Do not bypass confirmation through the manual-approval display alias.
+                    combined = {k: v.get("value") for k, v in catalog.items()
+                                if k.startswith("Parameter.Nameplate.") or v.get("state") == "Confirmed"}
                     combined.update(values)
                     baseline = base_values(combined, self.settings.advanced_channels_enabled)
                     baseline.pop("settings/charge-mode")

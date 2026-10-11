@@ -85,15 +85,12 @@ def plan_input(text):
 def validate_plan(catalog, targets):
     if number(targets["Parameter.Chrg.Plan.StopTm"]) <= number(datetime.now(timezone.utc).timestamp()):
         raise ProtocolError("Plan end has elapsed")
-    verified = (catalog.get("Parameter.Nameplate.ModelStr", {}).get("value") == "EVC22-3AC-20"
-                and catalog.get("Parameter.Nameplate.PkgRev", {}).get("value") == "2.6.37.R")
     for channel, target in targets.items():
         entry = catalog.get(channel, {})
         if entry.get("editable") is not True or entry.get("state") != "Confirmed":
             raise ProtocolError("Plan parameter is not confirmed and writable")
         expected_unit = "kWh" if channel.endswith(".En") else "s"
-        unit = entry.get("unit")
-        if unit != expected_unit and not (unit is None and verified):
+        if parameter_unit(catalog, channel) != expected_unit:
             raise ProtocolError("Plan unit is not verified")
         value = number(target)
         # Validate every offered bound; the working catalog offers min without max.
@@ -115,6 +112,7 @@ def validate_plan(catalog, targets):
 
 def plan_matches(catalog, targets):
     return all(catalog.get(channel, {}).get("state") == "Confirmed"
+               and parameter_unit(catalog, channel) == ("kWh" if channel.endswith(".En") else "s")
                and number(catalog[channel].get("value")) == number(target) for channel, target in targets.items())
 
 

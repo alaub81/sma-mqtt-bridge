@@ -77,8 +77,8 @@ class DecodeTests(unittest.TestCase):
         reply = [{'componentId': 'IGULD:SELF', 'values': [
             {'channelId': 'Parameter.Nameplate.SerNum', 'value': '123'},
             {'channelId': 'Parameter.Nameplate.ModelStr', 'value': 'EVC22-3AC-20'},
-            {'channelId': 'Parameter.Chrg.Plan.En', 'value': 3},
-            {'channelId': 'Parameter.Chrg.ChrgApv', 'value': '5172'}]}]
+            {'channelId': 'Parameter.Chrg.Plan.En', 'value': 3, 'state': 'Confirmed'},
+            {'channelId': 'Parameter.Chrg.ChrgApv', 'value': '5172', 'state': 'Confirmed'}]}]
         catalog = parameter_catalog(reply, '123')
         self.assertIsNone(settings_values(catalog)['settings/plan-energy'])
         self.assertIs(settings_values(catalog)['settings/charging-release'], True)
@@ -91,8 +91,8 @@ class DecodeTests(unittest.TestCase):
         catalog = {
             'Parameter.Nameplate.ModelStr': {'value': 'EVC22-3AC-20'},
             'Parameter.Nameplate.PkgRev': {'value': '2.6.37.R'},
-            'Parameter.Chrg.Plan.En': {'value': '12.5'},
-            'Parameter.Chrg.StpWhenFlTm': {'value': '15'},
+            'Parameter.Chrg.Plan.En': {'value': '12.5', 'state': 'Confirmed'},
+            'Parameter.Chrg.StpWhenFlTm': {'value': '15', 'state': 'Confirmed'},
         }
         values = settings_values(catalog)
         self.assertEqual(values['settings/plan-energy'], Decimal('12.5'))
@@ -103,12 +103,67 @@ class DecodeTests(unittest.TestCase):
                 changed = catalog | {key: {'value': value}}
                 self.assertIsNone(settings_values(changed)['settings/plan-energy'])
                 self.assertIsNone(settings_values(changed)['settings/stop-delay'])
-        changed = catalog | {'Parameter.Chrg.Plan.En': {'value': '12500', 'unit': 'Wh'}}
+        changed = catalog | {'Parameter.Chrg.Plan.En': {'value': '12500', 'unit': 'Wh', 'state': 'Confirmed'}}
         self.assertIsNone(settings_values(changed)['settings/plan-energy'])
+
+    def test_api_settings_require_individual_confirmed_state(self):
+        entries = {
+            'Parameter.Chrg.ActChaMod': ('4719', 'charge-mode', '4719'),
+            'Parameter.Chrg.ChrgApv': ('5172', 'charging-release', True),
+            'Parameter.Chrg.ChrgLok': ('1129', 'approval-required', True),
+            'Parameter.Chrg.StpWhenFl': ('1130', 'stop-when-full', False),
+            'Parameter.Chrg.StpWhenFlTm': ('15', 'stop-delay', Decimal('15')),
+            'Parameter.Chrg.CblLok': ('303', 'cable-lock', False),
+            'Parameter.Sys.DevSigBri': ('5191', 'led-brightness', '5191'),
+            'Parameter.Sys.AmbLghtBri': ('5173', 'ambient-brightness', '5173'),
+            'Parameter.Sys.UseAmbLght': ('308', 'ambient-enabled', True),
+            'Parameter.Chrg.Plan.En': ('12.5', 'plan-energy', Decimal('12.5')),
+            'Parameter.Chrg.Plan.StopTm': ('1791633600', 'plan-end', '2026-10-10T12:00:00+00:00'),
+            'Parameter.Inverter.WMaxIn': ('11000', 'max-charge-power', Decimal('11000')),
+        }
+        catalog = {
+            'Parameter.Nameplate.ModelStr': {'value': 'EVC22-3AC-20'},
+            'Parameter.Nameplate.PkgRev': {'value': '2.6.37.R'},
+            **{channel: {'value': raw, 'state': 'Confirmed'} for channel, (raw, _, _) in entries.items()},
+        }
+        expected = {'settings/' + key: value for _, key, value in entries.values()}
+        self.assertEqual(settings_values(catalog), expected)
+        for channel, (_, key, _) in entries.items():
+            for status in ('Pending', 'Rejected', 'confirmed', None, True, 1, []):
+                with self.subTest(channel=channel, state=status):
+                    changed = catalog | {channel: catalog[channel] | {'state': status}}
+                    self.assertEqual(settings_values(changed), expected | {'settings/' + key: None})
+            changed = catalog | {channel: {'value': catalog[channel]['value']}}
+            self.assertEqual(settings_values(changed), expected | {'settings/' + key: None})
+
+    def test_plan_end_requires_verified_epoch_seconds(self):
+        channel = 'Parameter.Chrg.Plan.StopTm'
+        catalog = {
+            'Parameter.Nameplate.ModelStr': {'value': 'EVC22-3AC-20'},
+            'Parameter.Nameplate.PkgRev': {'value': '2.6.37.R'},
+            channel: {'value': '1791633600', 'state': 'Confirmed'},
+        }
+        expected = '2026-10-10T12:00:00+00:00'
+        self.assertEqual(settings_values(catalog)['settings/plan-end'], expected)
+        for unit in ('ms', 'min', '', 34):
+            changed = catalog | {channel: catalog[channel] | {'unit': unit}}
+            with self.subTest(unit=unit):
+                self.assertIsNone(settings_values(changed)['settings/plan-end'])
+        for firmware in ('unknown', '2.6.38.R'):
+            changed = catalog | {'Parameter.Nameplate.PkgRev': {'value': firmware}}
+            self.assertIsNone(settings_values(changed)['settings/plan-end'])
+            changed[channel] = catalog[channel] | {'unit': 's'}
+            self.assertEqual(settings_values(changed)['settings/plan-end'], expected)
+        for value in ('NaN', '0', '-1', '1e100', True):
+            changed = catalog | {channel: catalog[channel] | {'value': value}}
+            with self.subTest(value=value):
+                self.assertIsNone(settings_values(changed)['settings/plan-end'])
 
     def test_semp_settings_raw_units_and_stale_setpoints(self):
         channels = {'Parameter.Chrg.Plan.En': '3', 'Parameter.Chrg.StpWhenFlTm': '5',
                     'Parameter.Chrg.ChrgLok': '1129', 'Parameter.Chrg.CblLok': '308',
+                    'Parameter.Chrg.ActChaMod': '4719', 'Parameter.Chrg.ChrgApv': '5172',
+                    'Parameter.Chrg.Plan.StopTm': '1791633600',
                     'Setpoint.PlantControl.PCC.ChrgActCnt': '1'}
         body = ''.join(f'<Parameter><channelId>{k}</channelId><timestamp>2026-10-10T10:00:00Z</timestamp><value>{v}</value></Parameter>'
                        for k, v in channels.items())
@@ -116,6 +171,10 @@ class DecodeTests(unittest.TestCase):
         values = semp_values(xml, 30, datetime(2026, 10, 10, 10, 1, tzinfo=timezone.utc))
         self.assertIs(values['settings/approval-required'], True)
         self.assertIs(values['settings/cable-lock'], True)
+        self.assertEqual(values['settings/charge-mode'], '4719')
+        self.assertIs(values['settings/charging-release'], True)
+        self.assertEqual(values['measurements/manual-approval'], 'Freigegeben')
+        self.assertEqual(values['settings/plan-end'], '2026-10-10T12:00:00+00:00')
         self.assertIsNone(values['settings/plan-energy'])
         self.assertIsNone(values['settings/stop-delay'])
         self.assertEqual(values['parameters/chrg-plan-en-raw'], 3)
@@ -308,7 +367,7 @@ class AsyncProtocolTests(unittest.IsolatedAsyncioTestCase):
             [{'componentId': 'IGULD:SELF', 'values': [
                 {'channelId': 'Parameter.Nameplate.SerNum', 'value': '123'},
                 {'channelId': 'Parameter.Nameplate.ModelStr', 'value': 'EVC22-3AC-20'},
-                {'channelId': 'Parameter.Chrg.ActChaMod', 'value': '4719'}]}],
+                {'channelId': 'Parameter.Chrg.ActChaMod', 'value': '4719', 'state': 'Confirmed'}]}],
             [{'channelId': 'Measurement.GridMs.A.phsA', 'values': [{'value': 4.5, 'timestamp': timestamp}]},
              {'channelId': 'Measurement.GridMs.A.phsB', 'values': [{'value': 5, 'time': '2000-01-01T00:00:00Z'}]},
              {'channelId': 'Measurement.GridMs.A.phsC', 'values': [{'value': -0.034, 'time': timestamp}]}],
@@ -332,6 +391,35 @@ class AsyncProtocolTests(unittest.IsolatedAsyncioTestCase):
         with self.assertRaises(ProtocolError):
             await adapter.read()
         await adapter.close()
+
+    async def test_api_pending_settings_do_not_leak_through_display_aliases(self):
+        from sma_mqtt_bridge.adapters.echarger import EChargerReader
+        adapter = EChargerReader(ECharger(expected_serial='123'), 10000)
+        self.addAsyncCleanup(adapter.close)
+        adapter.access_token = AsyncMock(return_value='fixture-token')
+        for status in ('Confirmed', 'Pending', None):
+            with self.subTest(state=status):
+                parameters = [
+                    {'channelId': 'Parameter.Nameplate.SerNum', 'value': '123'},
+                    {'channelId': 'Parameter.Nameplate.ModelStr', 'value': 'EVC22-3AC-20'},
+                    {'channelId': 'Parameter.Nameplate.PkgRev', 'value': '2.6.37.R'},
+                    {'channelId': 'Parameter.Chrg.ActChaMod', 'value': '4719'},
+                    {'channelId': 'Parameter.Chrg.ChrgApv', 'value': '5172'},
+                ]
+                if status is not None:
+                    for entry in parameters[-2:]:
+                        entry['state'] = status
+                reply = [{'componentId': 'IGULD:SELF', 'values': parameters}]
+                live = [{'channelId': 'Measurement.Metering.GridMs.TotWIn.ChaSta', 'values': [
+                    {'value': 950, 'time': datetime.now(timezone.utc).isoformat()}]}]
+                adapter.http.get_json = AsyncMock(side_effect=[reply, live])
+                values = await adapter.read()
+                self.assertEqual(values['settings/charge-mode'], '4719' if status == 'Confirmed' else None)
+                self.assertIs(values['settings/charging-release'], True if status == 'Confirmed' else None)
+                self.assertEqual(values['measurements/manual-approval'], 'Freigegeben' if status == 'Confirmed' else None)
+                self.assertEqual(values['parameters/nameplate-pkgrev'], '2.6.37.R')
+                self.assertEqual(values['measurements/power'], 950)
+                self.assertTrue(all(call.args[0] == 'POST' for call in adapter.http.get_json.call_args_list))
 
     async def test_full_portal_pkce_login_and_device_read(self):
         import json

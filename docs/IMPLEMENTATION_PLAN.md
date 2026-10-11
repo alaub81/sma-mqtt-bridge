@@ -10,18 +10,18 @@ questions. Earlier plans remain in the [archive](archive/README.md).
 Use deterministic regression cases before changing behavior. Preserve existing
 Channel IDs, retained last-known measurements and all uncertainty guards.
 
-1. Publish API settings only with confirmed state; handle SEMP without inventing
-   API metadata. Reject contradictory plan-end units. Exercise pending and
-   uncertain write/readback responses.
-2. Serialize Homie integers without a decimal point and enforce signed 64-bit
+The API confirmation/unit finding is resolved offline; see the acceptance matrix.
+The remaining review findings are:
+
+1. Serialize Homie integers without a decimal point and enforce signed 64-bit
    bounds. Correct the existing maximum-power regression expectation.
-3. Add mandatory, stable Homie node `$type` metadata and verify discovery against
+2. Add mandatory, stable Homie node `$type` metadata and verify discovery against
    the [Homie 4 specification](https://homieiot.github.io/specification/spec-core-v4_0_0/).
-4. Preserve remaining sample freshness from the device timestamp instead of
+3. Preserve remaining sample freshness from the device timestamp instead of
    restarting a full lifetime on receipt. Test near-expiry and partial samples.
-5. Resolve unhandled MQTT future exceptions during disconnect tests and fail tests
+4. Resolve unhandled MQTT future exceptions during disconnect tests and fail tests
    on unexpected event-loop exceptions. Do not merely suppress diagnostics.
-6. Correct CLI project-status capability reporting and module descriptions for
+5. Correct CLI project-status capability reporting and module descriptions for
    optional writes and configuration file I/O. The documentation portion is resolved.
 
 Run complete lint, offline tests and Compose parity. Record evidence and unresolved

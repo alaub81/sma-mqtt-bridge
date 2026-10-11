@@ -7,11 +7,17 @@ automated test. Full production acceptance and openHAB migration remain open.
 
 ## Local verification
 
-The documentation/widget cleanup changes no bridge runtime or device configuration.
-The current offline suite contains **174 tests**. Repository lint covers all public
+The documentation/widget cleanup preserved the bridge runtime and device configuration.
+The subsequent API fix changes confirmation and unit checks; it does not activate
+adapters or command gates.
+The current offline suite contains **179 tests**. Repository lint covers all public
 tracked and non-ignored files, including generated widget parity. Compose parity
 checks both standalone files and deployment overrides. Final cleanup results are
 recorded in [todo.md](../todo.md#2026-10-11--dokumente-und-widgetquellen-aufgeräumt).
+The subsequent API confirmation/unit fix adds five regression tests, including
+uncertain-command polling, retained observations and contradictory plan readback.
+Full repository lint, all 179 offline tests and Compose parity passed on 2026-10-11.
+Results are recorded in [the new diary entry](../todo.md#2026-10-11--review-1-api-bestätigung-und-plan-einheiten).
 
 The 2026-10-11 code review passed configured lint and all 174 offline tests. Its
 MQTT disconnect tests also emitted unhandled future exceptions: the passing test
@@ -31,7 +37,7 @@ error/fatal diagnostics; broader style checks are a separate planned improvement
 | Home Manager UDP | Deterministic telegram tests; Mac attempt received no packets on a different network, 2026-10-10 | Actual Pi multicast/interface/VLAN and encryption applicability |
 | SEMP/API/portal reads | Local identity/TLS and authenticated reads; selected live values reached MQTT, 2026-10-10 | Full per-channel freshness, unavailable channels and production comparison |
 | Local setting units | Device WebUI metadata and MQTT kWh/min read publication, 2026-10-10 | Unknown models/firmware need their own unit evidence |
-| Local enum/boolean controls | Offline identity/rights/bounds/readback/replay tests; status-light command reported accepted, 2026-10-10 | Every remaining command individually, if requested; API Pending-state review fix |
+| Local enum/boolean controls | Offline identity/rights/bounds/readback/replay tests; status-light command reported accepted, 2026-10-10; individual API Confirmed-state regression, 2026-10-11 | Every remaining command individually, if requested; deploy/accept the confirmation fix |
 | Combined charging plan | Offline transaction/uncertainty tests; 10-kWh plan and target-mode activation reported accepted, 2026-10-11 | Physical completion, cumulative/additional energy semantics and return mode |
 | Portal minimum PV | Offline preserving write/readback tests; 90 → 70 → 90 and reopened widget value reported accepted, 2026-10-11 | Longer outage/uncertainty behavior; no extra portal setters accepted |
 | Portal freshness | Two normal polling cycles accepted by user, 2026-10-11 | Longer target-host operation and source-failure behavior |
@@ -49,13 +55,13 @@ No cleanup step connects to SMA devices, the portal or the installation broker.
 
 ## Open code-review findings
 
-All six findings from 2026-10-11 remain tracked until their own regression evidence
-is recorded. The documentation portion of the sixth finding is resolved by this
-cleanup; CLI capability reporting is still pending.
+The API confirmation/unit finding is resolved by offline regression evidence on
+2026-10-11. Findings 2–5 and CLI capability reporting remain pending.
+The documentation portion of the sixth finding is resolved by the cleanup.
 
 | Finding | Required correction |
 | --- | --- |
-| API setting confirmation | Reject Pending/unconfirmed settings; preserve SEMP handling and reject contradictory plan-end units |
+| API setting confirmation | Resolved offline: individually require Confirmed state, including manual-approval alias; preserve SEMP handling; validate plan-end units and command readback |
 | Homie integers | Canonical integer payloads and signed 64-bit bounds |
 | Homie node metadata | Mandatory stable `$type` per node |
 | Measurement freshness | Carry the device sample's remaining lifetime through source state |
@@ -77,6 +83,12 @@ results and limitations are preserved in
 [the direct local verification](archive/2026-10-11/VALIDATION.md#direct-local-unit-and-channel-verification-on-2026-10-10).
 Maximum-power metadata, limits and phase questions remain in
 [ECHARGER_POWER_LIMIT.md](ECHARGER_POWER_LIMIT.md).
+
+The existing verified epoch-second plan-command mapping for EVC22-3AC-20 / 2.6.37.R
+is now shared with API plan-end reads. An explicit contradictory unit or unitless
+unknown firmware is unavailable. SEMP retains its reference epoch-second contract
+without synthesizing API Confirmed metadata. Offline readback tests also reject
+matching plan numbers with contradictory units; no new live write acceptance is claimed.
 
 API session/health samples can have old change timestamps. Two frequency channels
 were absent from the inspected live inventory even though generic WebUI metadata
