@@ -1,18 +1,30 @@
 """File-driven Modbus profiles; descriptors never authorize device polling."""
 
-from pathlib import Path
 import re
+from pathlib import Path
 
 from .config import ID, convert, read_json
 from .errors import ConfigError, ProtocolError
 
 BUNDLED = Path(__file__).resolve().parents[1] / "profiles"
-TYPES = {"uint16": 1, "int16": 1, "uint32": 2, "int32": 2,
-         "uint64": 4, "int64": 4, "float32": 2, "string": None}
+TYPES = {
+    "uint16": 1,
+    "int16": 1,
+    "uint32": 2,
+    "int32": 2,
+    "uint64": 4,
+    "int64": 4,
+    "float32": 2,
+    "string": None,
+}
 
 
 def keys(obj, required, optional=()):
-    if not isinstance(obj, dict) or set(required) - set(obj) or set(obj) - set(required) - set(optional):
+    if (
+        not isinstance(obj, dict)
+        or set(required) - set(obj)
+        or set(obj) - set(required) - set(optional)
+    ):
         raise ConfigError("Invalid profile object/schema fields")
 
 
@@ -37,13 +49,33 @@ def load_profile(selector, host_dir, bundled_dir=None, require_validated=False):
     if not explicit and profile["id"] != selector:
         raise ConfigError("Selected profile ID does not match the file")
     if require_validated and profile["validation"]["status"] != "validated":
-        raise ConfigError("Selected profile is identity-only; verified mappings are required for polling")
+        raise ConfigError(
+            "Selected profile is identity-only; verified mappings are required for polling"
+        )
     return profile
 
 
 def validate_profile(raw):
-    keys(raw, ("schemaVersion", "id", "device", "protocol", "validation", "pollers", "properties", "commands"), ("identity",))
-    if type(raw["schemaVersion"]) is not int or raw["schemaVersion"] != 1 or not isinstance(raw["id"], str) or not ID.fullmatch(raw["id"]):
+    keys(
+        raw,
+        (
+            "schemaVersion",
+            "id",
+            "device",
+            "protocol",
+            "validation",
+            "pollers",
+            "properties",
+            "commands",
+        ),
+        ("identity",),
+    )
+    if (
+        type(raw["schemaVersion"]) is not int
+        or raw["schemaVersion"] != 1
+        or not isinstance(raw["id"], str)
+        or not ID.fullmatch(raw["id"])
+    ):
         raise ConfigError("Unsupported profile version/ID")
     device = raw["device"]
     keys(device, ("manufacturer", "models", "observedFirmware"), ("supportedFirmware",))
@@ -51,7 +83,11 @@ def validate_profile(raw):
         raise ConfigError("Profile manufacturer must be SMA")
     for field in ("models", "observedFirmware", "supportedFirmware"):
         values = device.get(field, [])
-        if not isinstance(values, list) or any(not isinstance(v, str) or not v for v in values) or len(values) != len(set(values)):
+        if (
+            not isinstance(values, list)
+            or any(not isinstance(v, str) or not v for v in values)
+            or len(values) != len(set(values))
+        ):
             raise ConfigError("Invalid profile identity list")
     if not device["models"]:
         raise ConfigError("Profile must name a model")
@@ -59,12 +95,20 @@ def validate_profile(raw):
     keys(protocol, ("type", "defaults", "addressing"))
     if protocol["type"] != "modbus-tcp" or protocol["addressing"] != "zero-based":
         raise ConfigError("Unsupported profile protocol/addressing")
-    keys(protocol["defaults"], ("port", "unitId"), ("pollIntervalSeconds", "timeoutSeconds", "staleSeconds"))
+    keys(
+        protocol["defaults"],
+        ("port", "unitId"),
+        ("pollIntervalSeconds", "timeoutSeconds", "staleSeconds"),
+    )
     defaults = protocol["defaults"]
     if not integer(defaults["port"], 1, 65535) or not integer(defaults["unitId"], 1, 247):
         raise ConfigError("Invalid profile port/unit ID")
     normalized = {"port": defaults["port"], "unit_id": defaults["unitId"]}
-    for source, target in (("pollIntervalSeconds", "poll_interval_seconds"), ("timeoutSeconds", "timeout_seconds"), ("staleSeconds", "stale_seconds")):
+    for source, target in (
+        ("pollIntervalSeconds", "poll_interval_seconds"),
+        ("timeoutSeconds", "timeout_seconds"),
+        ("staleSeconds", "stale_seconds"),
+    ):
         if source in defaults:
             value = convert(defaults[source], float, "profile duration")
             if value <= 0:
@@ -72,7 +116,11 @@ def validate_profile(raw):
             normalized[target] = value
     validation = raw["validation"]
     keys(validation, ("status", "reason"), ("evidence",))
-    if validation["status"] not in ("identity-only", "validated") or not isinstance(validation["reason"], str) or not validation["reason"]:
+    if (
+        validation["status"] not in ("identity-only", "validated")
+        or not isinstance(validation["reason"], str)
+        or not validation["reason"]
+    ):
         raise ConfigError("Invalid profile validation status/reason")
     if not all(isinstance(raw[k], list) for k in ("pollers", "properties", "commands")):
         raise ConfigError("Profile mappings must be arrays")
@@ -82,8 +130,16 @@ def validate_profile(raw):
         if raw["pollers"] or raw["properties"] or "identity" in raw:
             raise ConfigError("Identity-only descriptors cannot contain polling mappings")
     else:
-        if not raw["pollers"] or not raw["properties"] or not device.get("supportedFirmware") or not isinstance(validation.get("evidence"), str) or not validation["evidence"]:
-            raise ConfigError("Validated profiles need mappings, firmware compatibility and evidence")
+        if (
+            not raw["pollers"]
+            or not raw["properties"]
+            or not device.get("supportedFirmware")
+            or not isinstance(validation.get("evidence"), str)
+            or not validation["evidence"]
+        ):
+            raise ConfigError(
+                "Validated profiles need mappings, firmware compatibility and evidence"
+            )
     _, properties = validate_mappings(raw["pollers"], raw["properties"])
     if validation["status"] == "validated":
         keys(raw.get("identity"), ("model", "firmware", "serial"))
@@ -100,42 +156,109 @@ def validate_mappings(poller_list, property_list):
     pollers, properties = {}, {}
     for poller in poller_list:
         keys(poller, ("id", "function", "start", "count"), ("intervalSeconds",))
-        if not isinstance(poller["id"], str) or not ID.fullmatch(poller["id"]) or poller["id"] in pollers:
+        if (
+            not isinstance(poller["id"], str)
+            or not ID.fullmatch(poller["id"])
+            or poller["id"] in pollers
+        ):
             raise ConfigError("Invalid/duplicate poller ID")
-        if type(poller["function"]) is not int or poller["function"] not in (3, 4) or not integer(poller["start"], 0, 65535) or not integer(poller["count"], 1, 125) or poller["start"] + poller["count"] > 65536:
+        if (
+            type(poller["function"]) is not int
+            or poller["function"] not in (3, 4)
+            or not integer(poller["start"], 0, 65535)
+            or not integer(poller["count"], 1, 125)
+            or poller["start"] + poller["count"] > 65536
+        ):
             raise ConfigError("Invalid Modbus read range/function")
-        if "intervalSeconds" in poller and convert(poller["intervalSeconds"], float, "poller interval") <= 0:
+        if (
+            "intervalSeconds" in poller
+            and convert(poller["intervalSeconds"], float, "poller interval") <= 0
+        ):
             raise ConfigError("Invalid poller interval")
         pollers[poller["id"]] = poller
     for prop in property_list:
-        keys(prop, ("id", "node", "name", "poller", "offset", "type", "length", "byteOrder", "wordOrder", "scale", "unit", "invalid", "datatype"), ("valueMap", "minimum", "maximum", "format", "channelGroup", "requiredForReady"))
+        keys(
+            prop,
+            (
+                "id",
+                "node",
+                "name",
+                "poller",
+                "offset",
+                "type",
+                "length",
+                "byteOrder",
+                "wordOrder",
+                "scale",
+                "unit",
+                "invalid",
+                "datatype",
+            ),
+            ("valueMap", "minimum", "maximum", "format", "channelGroup", "requiredForReady"),
+        )
         if "requiredForReady" in prop and type(prop["requiredForReady"]) is not bool:
             raise ConfigError("Profile requiredForReady must be boolean")
-        if not all(isinstance(prop[k], str) and ID.fullmatch(prop[k]) for k in ("id", "node")) or prop["id"] in properties:
+        if (
+            not all(isinstance(prop[k], str) and ID.fullmatch(prop[k]) for k in ("id", "node"))
+            or prop["id"] in properties
+        ):
             raise ConfigError("Invalid/duplicate profile property ID")
-        if not isinstance(prop["name"], str) or not prop["name"] or not isinstance(prop["unit"], str):
+        if (
+            not isinstance(prop["name"], str)
+            or not prop["name"]
+            or not isinstance(prop["unit"], str)
+        ):
             raise ConfigError("Invalid property name/unit")
-        if not isinstance(prop["poller"], str) or not isinstance(prop["type"], str) or prop["poller"] not in pollers or prop["type"] not in TYPES:
+        if (
+            not isinstance(prop["poller"], str)
+            or not isinstance(prop["type"], str)
+            or prop["poller"] not in pollers
+            or prop["type"] not in TYPES
+        ):
             raise ConfigError("Property references unknown poller/type")
-        if not integer(prop["offset"], 0, 124) or not integer(prop["length"], 1, 125) or prop["offset"] + prop["length"] > pollers[prop["poller"]]["count"]:
+        if (
+            not integer(prop["offset"], 0, 124)
+            or not integer(prop["length"], 1, 125)
+            or prop["offset"] + prop["length"] > pollers[prop["poller"]]["count"]
+        ):
             raise ConfigError("Property outside poller range")
         if TYPES[prop["type"]] is not None and prop["length"] != TYPES[prop["type"]]:
             raise ConfigError("Property length does not match its type")
-        if prop["byteOrder"] not in ("big", "little") or prop["wordOrder"] not in ("big", "little") or prop["datatype"] not in ("integer", "float", "string", "boolean", "enum"):
+        if (
+            prop["byteOrder"] not in ("big", "little")
+            or prop["wordOrder"] not in ("big", "little")
+            or prop["datatype"] not in ("integer", "float", "string", "boolean", "enum")
+        ):
             raise ConfigError("Invalid property encoding/Homie datatype")
         convert(prop["scale"], float, "property scale")
-        if "format" in prop and (prop["format"] != "sma-firmware" or prop["type"] != "uint32"
-                                  or prop["datatype"] != "string" or prop["scale"] != 1 or "valueMap" in prop):
+        if "format" in prop and (
+            prop["format"] != "sma-firmware"
+            or prop["type"] != "uint32"
+            or prop["datatype"] != "string"
+            or prop["scale"] != 1
+            or "valueMap" in prop
+        ):
             raise ConfigError("Invalid firmware format/encoding")
-        if not isinstance(prop["invalid"], list) or any(type(v) not in (int, str) for v in prop["invalid"]):
+        if not isinstance(prop["invalid"], list) or any(
+            type(v) not in (int, str) for v in prop["invalid"]
+        ):
             raise ConfigError("Explicit raw sentinels required")
         if prop.get("channelGroup", "basic") not in ("basic", "advanced", "diagnostics"):
             raise ConfigError("Invalid property channelGroup")
-        if "valueMap" in prop and (not isinstance(prop["valueMap"], dict) or not prop["valueMap"] or any(not isinstance(k, str) or not isinstance(v, str) or not v for k, v in prop["valueMap"].items())):
+        if "valueMap" in prop and (
+            not isinstance(prop["valueMap"], dict)
+            or not prop["valueMap"]
+            or any(
+                not isinstance(k, str) or not isinstance(v, str) or not v
+                for k, v in prop["valueMap"].items()
+            )
+        ):
             raise ConfigError("Invalid property valueMap")
         if prop["datatype"] in ("enum", "boolean") and "valueMap" not in prop:
             raise ConfigError("Enum/boolean property requires an explicit valueMap")
-        if prop["datatype"] == "boolean" and any(v not in ("true", "false") for v in prop["valueMap"].values()):
+        if prop["datatype"] == "boolean" and any(
+            v not in ("true", "false") for v in prop["valueMap"].values()
+        ):
             raise ConfigError("Boolean valueMap must use true/false")
         if prop["datatype"] == "enum" and any("," in v for v in prop["valueMap"].values()):
             raise ConfigError("Enum values must not contain commas")

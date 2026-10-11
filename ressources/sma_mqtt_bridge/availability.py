@@ -3,15 +3,18 @@
 import logging
 import time
 
-from .model import utc_timestamp
 from .errors import ProtocolTimeout
+from .model import utc_timestamp
 
 LOG = logging.getLogger(__name__)
 
 
 def is_timeout(error):
-    return (isinstance(error, (TimeoutError, ProtocolTimeout))
-            or isinstance(error.__cause__, TimeoutError) or isinstance(error.__context__, TimeoutError))
+    return (
+        isinstance(error, (TimeoutError, ProtocolTimeout))
+        or isinstance(error.__cause__, TimeoutError)
+        or isinstance(error.__context__, TimeoutError)
+    )
 
 
 class Availability:
@@ -48,18 +51,36 @@ class Availability:
             self.outage_since = now
         changed = status != self.previous
         if status == "ready" and self.outage_since is not None:
-            LOG.info("%s recovered after %.1fs; failures=%d", self.label, now - self.outage_since, self.failures)
+            LOG.info(
+                "%s recovered after %.1fs; failures=%d",
+                self.label,
+                now - self.outage_since,
+                self.failures,
+            )
             self.outage_since = None
         elif bad and (changed or self.last_log is None or now - self.last_log >= self.interval):
-            LOG.warning("%s unavailable (%s); outage=%.1fs failures=%d consecutive=%d timeouts=%d last-error=%s",
-                        self.label, status, now - self.outage_since, self.failures,
-                        self.consecutive_failures, self.timeouts, self.last_error or "none")
+            LOG.warning(
+                "%s unavailable (%s); outage=%.1fs failures=%d consecutive=%d timeouts=%d last-error=%s",
+                self.label,
+                status,
+                now - self.outage_since,
+                self.failures,
+                self.consecutive_failures,
+                self.timeouts,
+                self.last_error or "none",
+            )
             self.last_log = now
         self.previous = status
 
     def snapshot(self, now=None):
         now = time.monotonic() if now is None else now
-        return {"failures": self.failures, "consecutiveFailures": self.consecutive_failures,
-                "timeouts": self.timeouts, "outageSeconds": 0 if self.outage_since is None else max(0, now - self.outage_since),
-                "lastSuccess": self.last_success, "lastError": self.last_error, "phase": self.phase,
-                "progressAgeSeconds": max(0, now - self.last_progress)}
+        return {
+            "failures": self.failures,
+            "consecutiveFailures": self.consecutive_failures,
+            "timeouts": self.timeouts,
+            "outageSeconds": 0 if self.outage_since is None else max(0, now - self.outage_since),
+            "lastSuccess": self.last_success,
+            "lastError": self.last_error,
+            "phase": self.phase,
+            "progressAgeSeconds": max(0, now - self.last_progress),
+        }

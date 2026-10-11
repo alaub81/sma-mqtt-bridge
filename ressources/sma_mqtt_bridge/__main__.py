@@ -2,12 +2,12 @@
 
 import argparse
 import asyncio
-from datetime import datetime
 import json
 import logging
 import os
-from pathlib import Path
 import sys
+from datetime import datetime
+from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from . import __version__
@@ -25,7 +25,9 @@ class TimestampFormatter(logging.Formatter):
         self.timezone = ZoneInfo(timezone)
 
     def formatTime(self, record, datefmt=None):
-        return datetime.fromtimestamp(record.created, self.timezone).isoformat(timespec="milliseconds")
+        return datetime.fromtimestamp(record.created, self.timezone).isoformat(
+            timespec="milliseconds"
+        )
 
 
 def main(argv=None):
@@ -37,7 +39,11 @@ def main(argv=None):
     group.add_argument("--check-profile", metavar="PROFILE")
     group.add_argument("--check-home-manager-profile", metavar="PROFILE")
     group.add_argument("--healthcheck", action="store_true")
-    parser.add_argument("--refresh-portal", action="store_true", help="Explicitly request one portal read when periodic polling is zero")
+    parser.add_argument(
+        "--refresh-portal",
+        action="store_true",
+        help="Explicitly request one portal read when periodic polling is zero",
+    )
     args = parser.parse_args(argv)
     try:
         if args.version:
@@ -45,34 +51,83 @@ def main(argv=None):
             return 0
         if args.project_status:
             # Static code capabilities, independent of installation configuration or acceptance.
-            print(json.dumps({"runtimeImplemented": True, "liveVerified": False, "readOnly": False,
-                              "commandsEnabledByDefault": False,
-                              "paidSmaApisRequired": False, "bundledPollingProfiles": 3}))
+            print(
+                json.dumps(
+                    {
+                        "runtimeImplemented": True,
+                        "liveVerified": False,
+                        "readOnly": False,
+                        "commandsEnabledByDefault": False,
+                        "paidSmaApisRequired": False,
+                        "bundledPollingProfiles": 3,
+                    }
+                )
+            )
             return 0
         if args.healthcheck:
             # Resolve local configuration/files with normal precedence, without device connections.
             config = load_config()
-            return 0 if healthy(config.runtime.state_dir, config.runtime.health_stale_seconds) else 1
+            return (
+                0 if healthy(config.runtime.state_dir, config.runtime.health_stale_seconds) else 1
+            )
         if args.check_home_manager_profile:
             from .home_manager_profile import load_home_manager_profile
-            load_home_manager_profile(args.check_home_manager_profile, os.environ.get("SMAB_PROFILE_DIR", DATA + "/profiles"))
-            print(json.dumps({"validSchema": True, "documentedReadMappings": True, "liveVerified": False}))
+
+            load_home_manager_profile(
+                args.check_home_manager_profile,
+                os.environ.get("SMAB_PROFILE_DIR", DATA + "/profiles"),
+            )
+            print(
+                json.dumps(
+                    {"validSchema": True, "documentedReadMappings": True, "liveVerified": False}
+                )
+            )
             return 0
         if args.check_profile:
-            profile = load_profile(args.check_profile, os.environ.get("SMAB_PROFILE_DIR", DATA + "/profiles"))
-            print(json.dumps({"validSchema": True, "pollingValidated": profile["validation"]["status"] == "validated"}))
+            profile = load_profile(
+                args.check_profile, os.environ.get("SMAB_PROFILE_DIR", DATA + "/profiles")
+            )
+            print(
+                json.dumps(
+                    {
+                        "validSchema": True,
+                        "pollingValidated": profile["validation"]["status"] == "validated",
+                    }
+                )
+            )
             return 0
         config = load_config()
         if args.check_config:
-            print(json.dumps({"valid": True, "enabledSources": sum(i.enabled for i in config.inverters)
-                              + sum((config.home_manager.enabled, config.echarger.enabled,
-                                     config.echarger.semp_enabled, config.portal.enabled)), "readOnly": not (config.commands.enabled and (config.echarger.commands_enabled or config.portal.commands_enabled))}))
+            print(
+                json.dumps(
+                    {
+                        "valid": True,
+                        "enabledSources": sum(i.enabled for i in config.inverters)
+                        + sum(
+                            (
+                                config.home_manager.enabled,
+                                config.echarger.enabled,
+                                config.echarger.semp_enabled,
+                                config.portal.enabled,
+                            )
+                        ),
+                        "readOnly": not (
+                            config.commands.enabled
+                            and (config.echarger.commands_enabled or config.portal.commands_enabled)
+                        ),
+                    }
+                )
+            )
             return 0
         if args.refresh_portal and not config.portal.enabled:
             raise ConfigError("--refresh-portal requires an explicitly enabled portal adapter")
-        if not config.has_sources and not (Path(config.runtime.state_dir) / "mqtt-topics.json").exists():
+        if (
+            not config.has_sources
+            and not (Path(config.runtime.state_dir) / "mqtt-topics.json").exists()
+        ):
             raise ConfigError("No sources enabled; use --check-config for offline validation")
         from .runtime import run
+
         handler = logging.StreamHandler()
         handler.setFormatter(TimestampFormatter(config.runtime.timezone))
         logging.basicConfig(level=config.runtime.log_level, handlers=[handler])

@@ -1,12 +1,12 @@
 """Offline runtime, freshness, Homie lifecycle and shutdown regressions."""
 
 import asyncio
-from dataclasses import replace
-from decimal import Decimal
 import os
-from pathlib import Path
 import tempfile
 import unittest
+from dataclasses import replace
+from decimal import Decimal
+from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 from sma_mqtt_bridge.config import load_config
@@ -19,154 +19,215 @@ from sma_mqtt_bridge.runtime import log_startup_status, run, sources, supervise
 
 class ModelTests(unittest.TestCase):
     def test_homie_integer_payload_is_canonical_without_rounding(self):
-        prop = Property('settings', 'limit', 'Limit', 'integer')
-        cases = [(4500, '4500'), (4500.0, '4500'), (Decimal('4500.000'), '4500'),
-                 ('+004500.0', '4500'), (Decimal('4.5E3'), '4500'),
-                 (Decimal('-4500.000'), '-4500'), (Decimal('-0.0'), '0'),
-                 (0, '0'), (Decimal('-9.223372036854775808E18'), '-9223372036854775808'),
-                 (Decimal('9223372036854775807.000'), '9223372036854775807')]
+        prop = Property("settings", "limit", "Limit", "integer")
+        cases = [
+            (4500, "4500"),
+            (4500.0, "4500"),
+            (Decimal("4500.000"), "4500"),
+            ("+004500.0", "4500"),
+            (Decimal("4.5E3"), "4500"),
+            (Decimal("-4500.000"), "-4500"),
+            (Decimal("-0.0"), "0"),
+            (0, "0"),
+            (Decimal("-9.223372036854775808E18"), "-9223372036854775808"),
+            (Decimal("9223372036854775807.000"), "9223372036854775807"),
+        ]
         for value, expected in cases:
             with self.subTest(value=value):
                 self.assertEqual(payload(value, prop), expected)
-                self.assertRegex(payload(value, prop), r'^-?[0-9]+$')
-        self.assertEqual(payload(Decimal('4500.0'), replace(prop, datatype='float')), '4500.0')
-        self.assertEqual(payload(Decimal('-0.5'), replace(prop, datatype='float')), '-0.5')
+                self.assertRegex(payload(value, prop), r"^-?[0-9]+$")
+        self.assertEqual(payload(Decimal("4500.0"), replace(prop, datatype="float")), "4500.0")
+        self.assertEqual(payload(Decimal("-0.5"), replace(prop, datatype="float")), "-0.5")
 
     def test_homie_integer_rejects_out_of_range_fractional_and_invalid_values(self):
-        prop = Property('measurements', 'counter', 'Counter', 'integer')
-        for value in (-(2**63) - 1, 2**63, Decimal('1e1000000'), Decimal('-1e1000000'),
-                      Decimal('9223372036854775807.1'), Decimal('-9223372036854775808.1'),
-                      Decimal('4500.5'), Decimal('-0.5'), True, False, None, '', 'invalid',
-                      Decimal('NaN'), Decimal('sNaN'), Decimal('Infinity'), Decimal('-Infinity')):
+        prop = Property("measurements", "counter", "Counter", "integer")
+        for value in (
+            -(2**63) - 1,
+            2**63,
+            Decimal("1e1000000"),
+            Decimal("-1e1000000"),
+            Decimal("9223372036854775807.1"),
+            Decimal("-9223372036854775808.1"),
+            Decimal("4500.5"),
+            Decimal("-0.5"),
+            True,
+            False,
+            None,
+            "",
+            "invalid",
+            Decimal("NaN"),
+            Decimal("sNaN"),
+            Decimal("Infinity"),
+            Decimal("-Infinity"),
+        ):
             with self.subTest(value=value):
                 self.assertIsNone(payload(value, prop))
-        state = SourceState('fixture', 'test-device', (prop,), 5)
+        state = SourceState("fixture", "test-device", (prop,), 5)
         state.update({prop.key: 2**63 - 1}, now=10)
-        self.assertEqual(state.fresh_values(10)[prop.key], '9223372036854775807')
+        self.assertEqual(state.fresh_values(10)[prop.key], "9223372036854775807")
         state.update({prop.key: 2**63}, now=11)
         self.assertNotIn(prop.key, state.fresh_values(11))
 
     def state(self):
-        return SourceState('fixture', 'test-device', (Property('measurements', 'power', 'Power', unit='W'),), 5)
+        return SourceState(
+            "fixture", "test-device", (Property("measurements", "power", "Power", unit="W"),), 5
+        )
 
     def test_inverter_night_availability_uses_fresh_status_not_power(self):
         from sma_mqtt_bridge.adapters.modbus import ModbusReader
         from sma_mqtt_bridge.config import DEFAULT_PROFILES, Inverter
         from sma_mqtt_bridge.profiles import load_profile
+
         for profile_id in DEFAULT_PROFILES:
-            reader = ModbusReader(Inverter(advanced_channels_enabled=False), load_profile(profile_id, "/nonexistent-smab-profile-fixture"))
-            state = SourceState('inverter1', 'fixture', reader.properties, 60)
-            self.assertEqual(state.required_keys, ('measurements/status',))
-            state.update({'measurements/status': 'Ok (Ok)'}, now=10)
-            self.assertEqual(state.status(11), 'ready')
+            reader = ModbusReader(
+                Inverter(advanced_channels_enabled=False),
+                load_profile(profile_id, "/nonexistent-smab-profile-fixture"),
+            )
+            state = SourceState("inverter1", "fixture", reader.properties, 60)
+            self.assertEqual(state.required_keys, ("measurements/status",))
+            state.update({"measurements/status": "Ok (Ok)"}, now=10)
+            self.assertEqual(state.status(11), "ready")
             self.assertEqual(state.missing_critical(11), [])
-            self.assertNotIn('measurements/active-power', state.fresh_values(11))
-            self.assertEqual(state.status(1000), 'stale')
+            self.assertNotIn("measurements/active-power", state.fresh_values(11))
+            self.assertEqual(state.status(1000), "stale")
             state.error = True
-            self.assertEqual(state.status(11), 'error')
+            self.assertEqual(state.status(11), "error")
 
     def test_missing_stale_and_invalid_values_never_become_zero(self):
         state = self.state()
-        self.assertEqual(state.status(0), 'init')
+        self.assertEqual(state.status(0), "init")
         self.assertEqual(state.fresh_values(0), {})
-        state.update({'measurements/power': 0}, now=10)
-        self.assertEqual(state.fresh_values(11), {'measurements/power': '0'})
+        state.update({"measurements/power": 0}, now=10)
+        self.assertEqual(state.fresh_values(11), {"measurements/power": "0"})
         self.assertEqual(state.fresh_values(16), {})
-        self.assertEqual(state.status(16), 'stale')
-        state.update({'measurements/power': None}, now=17)
+        self.assertEqual(state.status(16), "stale")
+        state.update({"measurements/power": None}, now=17)
         self.assertEqual(state.fresh_values(17), {})
-        state.update({'measurements/power': float('nan')}, now=18)
+        state.update({"measurements/power": float("nan")}, now=18)
         self.assertEqual(state.fresh_values(18), {})
 
     def test_partial_update_does_not_refresh_older_properties(self):
-        state = SourceState('fixture', 'test-device', (Property('measurements', 'a', 'A'), Property('measurements', 'b', 'B')), 5)
-        state.update({'measurements/a': 1, 'measurements/b': 2}, now=10)
-        state.update({'measurements/a': 3}, now=14)
-        self.assertEqual(state.fresh_values(16), {'measurements/a': '3'})
+        state = SourceState(
+            "fixture",
+            "test-device",
+            (Property("measurements", "a", "A"), Property("measurements", "b", "B")),
+            5,
+        )
+        state.update({"measurements/a": 1, "measurements/b": 2}, now=10)
+        state.update({"measurements/a": 3}, now=14)
+        self.assertEqual(state.fresh_values(16), {"measurements/a": "3"})
 
     def test_slow_poller_expiry_does_not_extend_power_freshness(self):
-        state = SourceState('fixture', 'test-device',
-                            (Property('measurements', 'power', 'Power', stale_seconds=60),
-                             Property('measurements', 'energy', 'Energy', stale_seconds=360)), 60)
-        state.update({'measurements/power': 1, 'measurements/energy': 2}, now=0)
-        self.assertEqual(state.fresh_values(180), {'measurements/energy': '2'})
+        state = SourceState(
+            "fixture",
+            "test-device",
+            (
+                Property("measurements", "power", "Power", stale_seconds=60),
+                Property("measurements", "energy", "Energy", stale_seconds=360),
+            ),
+            60,
+        )
+        state.update({"measurements/power": 1, "measurements/energy": 2}, now=0)
+        self.assertEqual(state.fresh_values(180), {"measurements/energy": "2"})
         self.assertEqual(state.fresh_values(361), {})
 
     def test_homie_retained_metadata_read_only(self):
-        metadata = discovery('homie', 'test-device', self.state().properties)
-        self.assertEqual(metadata['homie/test-device/$homie'], '4.0.0')
-        self.assertEqual(metadata['homie/test-device/$nodes'], 'measurements')
-        self.assertEqual(metadata['homie/test-device/measurements/power/$unit'], 'W')
-        self.assertEqual(metadata['homie/test-device/measurements/power/$settable'], 'false')
-        self.assertFalse(any(t.endswith('/set') for t in metadata))
+        metadata = discovery("homie", "test-device", self.state().properties)
+        self.assertEqual(metadata["homie/test-device/$homie"], "4.0.0")
+        self.assertEqual(metadata["homie/test-device/$nodes"], "measurements")
+        self.assertEqual(metadata["homie/test-device/measurements/power/$unit"], "W")
+        self.assertEqual(metadata["homie/test-device/measurements/power/$settable"], "false")
+        self.assertFalse(any(t.endswith("/set") for t in metadata))
 
     def test_homie_discovery_has_required_attributes_for_every_node(self):
-        types = {'measurements': 'measurements', 'settings': 'settings',
-                 'parameters': 'parameters', 'diagnostics': 'diagnostics',
-                 'portal': 'portal', 'control': 'control', 'commands': 'commands',
-                 'device-1': 'device', 'device-2': 'device', 'custom-node': 'custom-node'}
-        props = tuple(Property(node, 'value', 'Value') for node in types)
-        metadata = discovery('homie', 'test-device', props)
-        base = 'homie/test-device'
-        for attribute in ('$homie', '$name', '$state', '$nodes', '$extensions'):
-            self.assertIn(base + '/' + attribute, metadata)
-        self.assertEqual(set(metadata[base + '/$nodes'].split(',')),
-                         {node.replace('-', '') for node in types})
+        types = {
+            "measurements": "measurements",
+            "settings": "settings",
+            "parameters": "parameters",
+            "diagnostics": "diagnostics",
+            "portal": "portal",
+            "control": "control",
+            "commands": "commands",
+            "device-1": "device",
+            "device-2": "device",
+            "custom-node": "custom-node",
+        }
+        props = tuple(Property(node, "value", "Value") for node in types)
+        metadata = discovery("homie", "test-device", props)
+        base = "homie/test-device"
+        for attribute in ("$homie", "$name", "$state", "$nodes", "$extensions"):
+            self.assertIn(base + "/" + attribute, metadata)
+        self.assertEqual(
+            set(metadata[base + "/$nodes"].split(",")), {node.replace("-", "") for node in types}
+        )
         for node, expected_type in types.items():
             with self.subTest(node=node):
-                root = base + '/' + node.replace('-', '')
-                for attribute in ('$name', '$type', '$properties'):
-                    self.assertIn(root + '/' + attribute, metadata)
-                    self.assertTrue(metadata[root + '/' + attribute])
-                self.assertEqual(metadata[root + '/$type'], expected_type)
-                for prop in metadata[root + '/$properties'].split(','):
-                    self.assertIn(root + '/' + prop + '/$name', metadata)
-                    self.assertIn(root + '/' + prop + '/$datatype', metadata)
+                root = base + "/" + node.replace("-", "")
+                for attribute in ("$name", "$type", "$properties"):
+                    self.assertIn(root + "/" + attribute, metadata)
+                    self.assertTrue(metadata[root + "/" + attribute])
+                self.assertEqual(metadata[root + "/$type"], expected_type)
+                for prop in metadata[root + "/$properties"].split(","):
+                    self.assertIn(root + "/" + prop + "/$name", metadata)
+                    self.assertIn(root + "/" + prop + "/$datatype", metadata)
 
     def test_heartbeat_atomic_freshness_and_stop(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / 'heartbeat.json'
-            atomic_json(path, {'schemaVersion': 2, 'status': 'running', 'pid': os.getpid(), 'monotonic': 10})
+            path = Path(tmp) / "heartbeat.json"
+            atomic_json(
+                path, {"schemaVersion": 2, "status": "running", "pid": os.getpid(), "monotonic": 10}
+            )
             self.assertTrue(healthy(tmp, 5, 14))
             self.assertFalse(healthy(tmp, 5, 16))
             self.assertFalse(healthy(tmp, 5, 9))
-            atomic_json(path, {'status': 'stopped'})
+            atomic_json(path, {"status": "stopped"})
             self.assertFalse(healthy(tmp, 5, 14))
-            self.assertFalse(path.with_name(path.name + '.tmp').exists())
+            self.assertFalse(path.with_name(path.name + ".tmp").exists())
 
     def test_heartbeat_rejects_dead_process_old_schema_and_invalid_fields(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / 'heartbeat.json'
-            valid = {'schemaVersion': 2, 'status': 'running', 'pid': os.getpid(), 'monotonic': 10}
-            for change in ({'schemaVersion': 1}, {'pid': 0}, {'pid': True}, {'pid': 10 ** 100},
-                           {'monotonic': True}, {'monotonic': 10 ** 1000}):
+            path = Path(tmp) / "heartbeat.json"
+            valid = {"schemaVersion": 2, "status": "running", "pid": os.getpid(), "monotonic": 10}
+            for change in (
+                {"schemaVersion": 1},
+                {"pid": 0},
+                {"pid": True},
+                {"pid": 10**100},
+                {"monotonic": True},
+                {"monotonic": 10**1000},
+            ):
                 atomic_json(path, valid | change)
                 self.assertFalse(healthy(tmp, 5, 14))
             atomic_json(path, valid)
-            with patch('sma_mqtt_bridge.health.os.kill', side_effect=ProcessLookupError):
+            with patch("sma_mqtt_bridge.health.os.kill", side_effect=ProcessLookupError):
                 self.assertFalse(healthy(tmp, 5, 14))
-            with patch('sma_mqtt_bridge.health.time.time', return_value=-100000):
+            with patch("sma_mqtt_bridge.health.time.time", return_value=-100000):
                 self.assertTrue(healthy(tmp, 5, 14))
 
     def test_health_is_liveness_even_when_source_and_mqtt_are_unavailable(self):
         with tempfile.TemporaryDirectory() as tmp:
-            config = load_config({'SMAB_STATE_DIR': tmp})
+            config = load_config({"SMAB_STATE_DIR": tmp})
             state = self.state()
             state.error = True
-            heartbeat(config, [state], {'test-device': False})
+            heartbeat(config, [state], {"test-device": False})
             self.assertTrue(healthy(tmp, 5))
-            data = __import__('json').loads((Path(tmp) / 'heartbeat.json').read_text())
-            self.assertEqual(data['sources'], {'fixture': 'error'})
-            self.assertEqual(data['mqtt'], {'test-device': False})
+            data = __import__("json").loads((Path(tmp) / "heartbeat.json").read_text())
+            self.assertEqual(data["sources"], {"fixture": "error"})
+            self.assertEqual(data["mqtt"], {"test-device": False})
 
     def test_bounded_backoff(self):
         for attempt in range(100):
-            delay = backoff(attempt, 1, 60, .5)
+            delay = backoff(attempt, 1, 60, 0.5)
             self.assertGreaterEqual(delay, 1)
             self.assertLessEqual(delay, 60)
 
     def test_disabled_sources_create_no_sessions(self):
-        with patch('sma_mqtt_bridge.runtime.ModbusReader', side_effect=AssertionError), patch('sma_mqtt_bridge.runtime.MeterReader', side_effect=AssertionError), patch('sma_mqtt_bridge.runtime.EChargerReader', side_effect=AssertionError), patch('sma_mqtt_bridge.runtime.PortalReader', side_effect=AssertionError):
+        with (
+            patch("sma_mqtt_bridge.runtime.ModbusReader", side_effect=AssertionError),
+            patch("sma_mqtt_bridge.runtime.MeterReader", side_effect=AssertionError),
+            patch("sma_mqtt_bridge.runtime.EChargerReader", side_effect=AssertionError),
+            patch("sma_mqtt_bridge.runtime.PortalReader", side_effect=AssertionError),
+        ):
             self.assertEqual(sources(load_config({})), [])
 
 
@@ -183,7 +244,7 @@ class FakeClient:
 
     async def publish(self, topic, payload, **kwargs):
         self.messages.append((topic, payload, kwargs))
-        if topic.endswith('/$state') and payload == 'ready' and self.stop is not None:
+        if topic.endswith("/$state") and payload == "ready" and self.stop is not None:
             self.stop.set()
 
 
@@ -191,87 +252,115 @@ class AsyncRuntimeTests(unittest.IsolatedAsyncioTestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.addCleanup(self.tmp.cleanup)
-        self.config = load_config({'SMAB_STATE_DIR': self.tmp.name})
-        self.config = replace(self.config, runtime=replace(self.config.runtime, health_interval_seconds=.01, shutdown_timeout_seconds=.1))
+        self.config = load_config({"SMAB_STATE_DIR": self.tmp.name})
+        self.config = replace(
+            self.config,
+            runtime=replace(
+                self.config.runtime, health_interval_seconds=0.01, shutdown_timeout_seconds=0.1
+            ),
+        )
 
     async def test_homie_will_retirement_and_graceful_shutdown(self):
-        state = SourceState('fixture', 'test-device', (Property('measurements', 'power', 'Power'),), 5)
-        state.update({'measurements/power': 12})
+        state = SourceState(
+            "fixture", "test-device", (Property("measurements", "power", "Power"),), 5
+        )
+        state.update({"measurements/power": 12})
         stop = asyncio.Event()
         clients = []
+
         def factory(*args, **kwargs):
             client = FakeClient(*args, **kwargs)
             client.stop = stop
             clients.append(client)
             return client
+
         publisher = HomiePublisher(self.config, [state], factory)
-        publisher.owned = {'test-device': {'homie/test-device/measurements/retired', 'homie/test-device/measurements/power'}}
+        publisher.owned = {
+            "test-device": {
+                "homie/test-device/measurements/retired",
+                "homie/test-device/measurements/power",
+            }
+        }
         await publisher.run(stop)
         client = clients[0]
-        self.assertEqual(client.kwargs['will'].topic, 'homie/test-device/$state')
-        self.assertEqual(client.kwargs['will'].payload, 'lost')
-        self.assertIn(('homie/test-device/measurements/retired', b''), [(t, p) for t, p, _ in client.messages])
-        self.assertIn(('homie/test-device/measurements/power', '12'), [(t, p) for t, p, _ in client.messages])
+        self.assertEqual(client.kwargs["will"].topic, "homie/test-device/$state")
+        self.assertEqual(client.kwargs["will"].payload, "lost")
+        self.assertIn(
+            ("homie/test-device/measurements/retired", b""), [(t, p) for t, p, _ in client.messages]
+        )
+        self.assertIn(
+            ("homie/test-device/measurements/power", "12"), [(t, p) for t, p, _ in client.messages]
+        )
         messages = [(t, p) for t, p, _ in client.messages]
-        self.assertIn(('homie/test-device/measurements/$type', 'measurements'), messages)
-        self.assertLess(messages.index(('homie/test-device/measurements/$type', 'measurements')),
-                        messages.index(('homie/test-device/$state', 'ready')))
-        self.assertEqual(client.messages[-1][1], 'disconnected')
-        self.assertTrue(all(k['retain'] for _, _, k in client.messages))
+        self.assertIn(("homie/test-device/measurements/$type", "measurements"), messages)
+        self.assertLess(
+            messages.index(("homie/test-device/measurements/$type", "measurements")),
+            messages.index(("homie/test-device/$state", "ready")),
+        )
+        self.assertEqual(client.messages[-1][1], "disconnected")
+        self.assertTrue(all(k["retain"] for _, _, k in client.messages))
 
     async def test_dynamic_inventory_discovery_retirement_and_manifest(self):
-        state = SourceState('home-manager', 'test-device', (Property('measurements', 'power', 'Power'),), 5)
-        state.update({'measurements/power': 12})
+        state = SourceState(
+            "home-manager", "test-device", (Property("measurements", "power", "Power"),), 5
+        )
+        state.update({"measurements/power": 12})
         stop = asyncio.Event()
         client = FakeClient()
         initial = None
         publisher = HomiePublisher(self.config, [state])
-        metadata = discovery('homie', 'test-device', state.properties)
-        publisher.owned = {'test-device': set(metadata) | {'homie/test-device/measurements/power'}}
+        metadata = discovery("homie", "test-device", state.properties)
+        publisher.owned = {"test-device": set(metadata) | {"homie/test-device/measurements/power"}}
         changed = False
+
         async def publish(topic, payload, **kwargs):
             nonlocal changed
             client.messages.append((topic, payload, kwargs))
-            if topic.endswith('/$state') and payload == 'ready' and not changed:
+            if topic.endswith("/$state") and payload == "ready" and not changed:
                 changed = True
-                state.properties = (Property('device-1', 'serial', 'Assigned serial', 'integer'),)
+                state.properties = (Property("device-1", "serial", "Assigned serial", "integer"),)
                 state.values.clear()
-                state.update({'device-1/serial': 123})
-            if topic.endswith('/device1/serial') and payload == '123':
+                state.update({"device-1/serial": 123})
+            if topic.endswith("/device1/serial") and payload == "123":
                 stop.set()
+
         client.publish = publish
-        await publisher.publish_values(client, 'homie/test-device', [state], stop, {}, 0, None, initial)
+        await publisher.publish_values(
+            client, "homie/test-device", [state], stop, {}, 0, None, initial
+        )
         messages = [(t, p) for t, p, _ in client.messages]
-        self.assertIn(('homie/test-device/measurements/power/$name', b''), messages)
-        self.assertIn(('homie/test-device/measurements/$type', b''), messages)
-        self.assertIn(('homie/test-device/device1/$type', 'device'), messages)
-        self.assertIn(('homie/test-device/device1/serial/$settable', 'false'), messages)
-        self.assertIn(('homie/test-device/$nodes', 'device1,diagnostics'), messages)
-        self.assertNotIn('homie/test-device/measurements/power', publisher.owned['test-device'])
-        self.assertIn('homie/test-device/device1/serial', publisher.owned['test-device'])
-        saved = __import__('json').loads((Path(self.tmp.name) / 'mqtt-topics.json').read_text())
-        self.assertIn('homie/test-device/device1/serial', saved['devices']['test-device'])
-        self.assertIn('homie/test-device/device1/$type', saved['devices']['test-device'])
-        self.assertNotIn('homie/test-device/measurements/$type', saved['devices']['test-device'])
+        self.assertIn(("homie/test-device/measurements/power/$name", b""), messages)
+        self.assertIn(("homie/test-device/measurements/$type", b""), messages)
+        self.assertIn(("homie/test-device/device1/$type", "device"), messages)
+        self.assertIn(("homie/test-device/device1/serial/$settable", "false"), messages)
+        self.assertIn(("homie/test-device/$nodes", "device1,diagnostics"), messages)
+        self.assertNotIn("homie/test-device/measurements/power", publisher.owned["test-device"])
+        self.assertIn("homie/test-device/device1/serial", publisher.owned["test-device"])
+        saved = __import__("json").loads((Path(self.tmp.name) / "mqtt-topics.json").read_text())
+        self.assertIn("homie/test-device/device1/serial", saved["devices"]["test-device"])
+        self.assertIn("homie/test-device/device1/$type", saved["devices"]["test-device"])
+        self.assertNotIn("homie/test-device/measurements/$type", saved["devices"]["test-device"])
 
     async def test_fully_disabled_device_is_retired(self):
         clients = []
+
         def factory(*args, **kwargs):
             c = FakeClient(*args, **kwargs)
             clients.append(c)
             return c
+
         publisher = HomiePublisher(self.config, [], factory)
-        publisher.owned = {'old-device': {'homie/old-device/$homie', 'homie/old-device/$state'}}
+        publisher.owned = {"old-device": {"homie/old-device/$homie", "homie/old-device/$state"}}
         await publisher.run(asyncio.Event())
-        self.assertTrue(all(payload == b'' for _, payload, _ in clients[0].messages))
-        self.assertNotIn('old-device', publisher.owned)
+        self.assertTrue(all(payload == b"" for _, payload, _ in clients[0].messages))
+        self.assertNotIn("old-device", publisher.owned)
 
     async def test_zero_portal_interval_performs_no_automatic_login(self):
         reader = AsyncMock()
         stop = asyncio.Event()
-        state = SourceState('portal', 'test-device', (), 5)
+        state = SourceState("portal", "test-device", (), 5)
         task = asyncio.create_task(supervise(state, reader, 0, self.config, stop))
-        await asyncio.sleep(.01)
+        await asyncio.sleep(0.01)
         reader.read.assert_not_awaited()
         stop.set()
         await task
@@ -279,91 +368,118 @@ class AsyncRuntimeTests(unittest.IsolatedAsyncioTestCase):
 
     async def test_authentication_failure_blocks_retry_storm(self):
         reader = AsyncMock()
-        reader.read.side_effect = AuthenticationError('Fixture authentication denied')
-        state = SourceState('api', 'test-device', (), 5)
+        reader.read.side_effect = AuthenticationError("Fixture authentication denied")
+        state = SourceState("api", "test-device", (), 5)
         stop = asyncio.Event()
-        task = asyncio.create_task(supervise(state, reader, .01, self.config, stop))
-        await asyncio.sleep(.03)
+        task = asyncio.create_task(supervise(state, reader, 0.01, self.config, stop))
+        await asyncio.sleep(0.03)
         self.assertEqual(reader.read.await_count, 1)
-        self.assertEqual(state.status(), 'error')
+        self.assertEqual(state.status(), "error")
         stop.set()
         await task
 
     def test_startup_summary_waits_for_sources_and_mqtt_then_reports(self):
-        state = SourceState('api', 'test-device', (Property('measurements', 'power', 'Power'),), 5)
-        with patch('sma_mqtt_bridge.runtime.LOG.info') as log:
+        state = SourceState("api", "test-device", (Property("measurements", "power", "Power"),), 5)
+        with patch("sma_mqtt_bridge.runtime.LOG.info") as log:
             self.assertFalse(log_startup_status(self.config, [state], {}, 20, now=10))
             log.assert_not_called()
-            state.update({'measurements/power': 1}, now=10)
+            state.update({"measurements/power": 1}, now=10)
             self.assertFalse(log_startup_status(self.config, [state], {}, 20, now=10))
-            self.assertTrue(log_startup_status(self.config, [state], {'test-device': True}, 20, now=10))
-            self.assertEqual(log.call_args.args[1], 'ready')
-            self.assertIn('api=ready', log.call_args.args[2])
-            self.assertIn('portal=disabled', log.call_args.args[2])
+            self.assertTrue(
+                log_startup_status(self.config, [state], {"test-device": True}, 20, now=10)
+            )
+            self.assertEqual(log.call_args.args[1], "ready")
+            self.assertIn("api=ready", log.call_args.args[2])
+            self.assertIn("portal=disabled", log.call_args.args[2])
 
     def test_startup_summary_reports_unavailable_sources_at_deadline(self):
-        state = SourceState('portal', 'test-device', (), 5)
-        with patch('sma_mqtt_bridge.runtime.LOG.info') as log:
+        state = SourceState("portal", "test-device", (), 5)
+        with patch("sma_mqtt_bridge.runtime.LOG.info") as log:
             self.assertTrue(log_startup_status(self.config, [state], {}, 20, now=20))
-            self.assertEqual(log.call_args.args[1], 'startup window elapsed')
-            self.assertIn('portal=init', log.call_args.args[2])
-            self.assertIn('test-device=disconnected', log.call_args.args[3])
+            self.assertEqual(log.call_args.args[1], "startup window elapsed")
+            self.assertIn("portal=init", log.call_args.args[2])
+            self.assertIn("test-device=disconnected", log.call_args.args[3])
 
     def test_homie_status_preserves_bounded_initialization_and_real_errors(self):
-        state = SourceState('home-manager', 'test-device',
-                            (Property('measurements', 'power', 'Power'),), 5,
-                            initialization_deadline=20)
+        state = SourceState(
+            "home-manager",
+            "test-device",
+            (Property("measurements", "power", "Power"),),
+            5,
+            initialization_deadline=20,
+        )
         publisher = HomiePublisher(self.config, [state])
-        self.assertEqual(publisher.snapshot([state], now=10)[1], 'init')
-        self.assertEqual(publisher.snapshot([state], now=20)[1], 'alert')
+        self.assertEqual(publisher.snapshot([state], now=10)[1], "init")
+        self.assertEqual(publisher.snapshot([state], now=20)[1], "alert")
         state.error = True
-        self.assertEqual(publisher.snapshot([state], now=10)[1], 'alert')
+        self.assertEqual(publisher.snapshot([state], now=10)[1], "alert")
         state.error = False
         state.initialization_deadline = None
-        self.assertEqual(publisher.snapshot([state], now=10)[1], 'alert')
-        state.update({'measurements/power': 12}, now=10)
-        self.assertEqual(publisher.snapshot([state], now=10)[1], 'ready')
-        self.assertEqual(publisher.snapshot([state], now=16)[1], 'alert')
+        self.assertEqual(publisher.snapshot([state], now=10)[1], "alert")
+        state.update({"measurements/power": 12}, now=10)
+        self.assertEqual(publisher.snapshot([state], now=10)[1], "ready")
+        self.assertEqual(publisher.snapshot([state], now=16)[1], "alert")
 
     async def test_main_loop_heartbeat_and_bounded_shutdown(self):
         stop = asyncio.Event()
+
         class FakePublisher:
             status = {}
+
             def __init__(self, *args):
                 pass
+
             async def run(self, stop):
                 await stop.wait()
+
         task = asyncio.create_task(run(self.config, stop=stop, publisher_factory=FakePublisher))
-        await asyncio.sleep(.03)
+        await asyncio.sleep(0.03)
         self.assertTrue(healthy(self.tmp.name, 5))
         stop.set()
-        await asyncio.wait_for(task, .5)
+        await asyncio.wait_for(task, 0.5)
         self.assertFalse(healthy(self.tmp.name, 5))
 
     async def test_mqtt_failure_rebuilds_client_and_reannounces(self):
         import aiomqtt
-        state = SourceState('fixture', 'test-device', (Property('measurements', 'power', 'Power'),), 5)
-        state.update({'measurements/power': 10})
+
+        state = SourceState(
+            "fixture", "test-device", (Property("measurements", "power", "Power"),), 5
+        )
+        state.update({"measurements/power": 10})
         stop, clients = asyncio.Event(), []
+
         def factory(*args, **kwargs):
             client = FakeClient(*args, **kwargs)
             if not clients:
-                client.publish = AsyncMock(side_effect=aiomqtt.MqttError('fixture failure'))
+                client.publish = AsyncMock(side_effect=aiomqtt.MqttError("fixture failure"))
             else:
                 client.stop = stop
             clients.append(client)
             return client
-        config = replace(self.config, runtime=replace(self.config.runtime, reconnect_min_seconds=.001, reconnect_max_seconds=.002))
+
+        config = replace(
+            self.config,
+            runtime=replace(
+                self.config.runtime, reconnect_min_seconds=0.001, reconnect_max_seconds=0.002
+            ),
+        )
         publisher = HomiePublisher(config, [state], factory)
-        await asyncio.wait_for(publisher.run(stop), .5)
+        await asyncio.wait_for(publisher.run(stop), 0.5)
         self.assertEqual(len(clients), 2)
-        self.assertTrue(any(t.endswith('/$homie') for t, _, _ in clients[1].messages))
+        self.assertTrue(any(t.endswith("/$homie") for t, _, _ in clients[1].messages))
 
     async def test_invalid_power_retains_last_value_then_recovers_without_alert(self):
-        state = SourceState('inverter1', 'test-device', (
-            Property('measurements', 'status', 'Status', 'string', required_for_ready=True),
-            Property('measurements', 'power', 'Power')), 60, diagnostics_enabled=False)
-        state.update({'measurements/status': 'Ok (Ok)', 'measurements/power': 10})
+        state = SourceState(
+            "inverter1",
+            "test-device",
+            (
+                Property("measurements", "status", "Status", "string", required_for_ready=True),
+                Property("measurements", "power", "Power"),
+            ),
+            60,
+            diagnostics_enabled=False,
+        )
+        state.update({"measurements/status": "Ok (Ok)", "measurements/power": 10})
         stop = asyncio.Event()
         messages = []
         phase = 0
@@ -372,161 +488,203 @@ class AsyncRuntimeTests(unittest.IsolatedAsyncioTestCase):
             async def publish(self, topic, payload, **kwargs):
                 nonlocal phase
                 messages.append((topic, payload))
-                if topic.endswith('/$state') and payload == 'ready':
+                if topic.endswith("/$state") and payload == "ready":
                     if phase == 0:
-                        state.update({'measurements/status': 'Ok (Ok)', 'measurements/power': None})
+                        state.update({"measurements/status": "Ok (Ok)", "measurements/power": None})
                     elif phase == 1:
                         self.assert_ready = state.status()
-                        state.update({'measurements/status': 'Ok (Ok)', 'measurements/power': 12})
+                        state.update({"measurements/status": "Ok (Ok)", "measurements/power": 12})
                     phase += 1
-                if topic.endswith('/measurements/power') and payload == '12':
+                if topic.endswith("/measurements/power") and payload == "12":
                     stop.set()
 
         client = Client()
         publisher = HomiePublisher(self.config, [state], lambda *args, **kwargs: client)
         await asyncio.wait_for(publisher.run(stop), 1)
-        self.assertEqual(client.assert_ready, 'ready')
-        self.assertEqual([v for t, v in messages if t.endswith('/measurements/power')], ['10', '12'])
-        self.assertFalse(any(v == 'alert' for t, v in messages if t.endswith('/$state')))
+        self.assertEqual(client.assert_ready, "ready")
+        self.assertEqual(
+            [v for t, v in messages if t.endswith("/measurements/power")], ["10", "12"]
+        )
+        self.assertFalse(any(v == "alert" for t, v in messages if t.endswith("/$state")))
 
     async def test_stale_retained_measurement_keeps_last_observation(self):
-        state = SourceState('fixture', 'test-device', (Property('measurements', 'power', 'Power'),), 5)
-        state.update({'measurements/power': 10})
+        state = SourceState(
+            "fixture", "test-device", (Property("measurements", "power", "Power"),), 5
+        )
+        state.update({"measurements/power": 10})
         stop, clients = asyncio.Event(), []
+
         class ExpiringClient(FakeClient):
             async def publish(self, topic, payload, **kwargs):
                 await super().publish(topic, payload, **kwargs)
-                if topic.endswith('/$state') and payload == 'ready':
-                    state.values = {k: (v, received - 10) for k, (v, received) in state.values.items()}
-                if topic.endswith('/$state') and payload == 'alert':
+                if topic.endswith("/$state") and payload == "ready":
+                    state.values = {
+                        k: (v, received - 10) for k, (v, received) in state.values.items()
+                    }
+                if topic.endswith("/$state") and payload == "alert":
                     stop.set()
+
         def factory(*args, **kwargs):
             client = ExpiringClient(*args, **kwargs)
             clients.append(client)
             return client
+
         publisher = HomiePublisher(self.config, [state], factory)
-        await asyncio.wait_for(publisher.run(stop), .5)
-        power = [(p, k) for t, p, k in clients[0].messages if t.endswith('/measurements/power')]
-        self.assertEqual([p for p, _ in power], ['10'])
+        await asyncio.wait_for(publisher.run(stop), 0.5)
+        power = [(p, k) for t, p, k in clients[0].messages if t.endswith("/measurements/power")]
+        self.assertEqual([p for p, _ in power], ["10"])
 
     async def test_unacknowledged_shutdown_aborts_transport_for_will(self):
-        from sma_mqtt_bridge.homie import mqtt_session
         from unittest.mock import MagicMock
+
+        from sma_mqtt_bridge.homie import mqtt_session
+
         client = FakeClient()
         client._client = MagicMock()
         with self.assertRaises(asyncio.TimeoutError):
-            async with mqtt_session(client, .1, .1):
+            async with mqtt_session(client, 0.1, 0.1):
                 raise asyncio.TimeoutError
         client._client.socket().shutdown.assert_called()
 
     async def test_completed_disconnect_failure_is_propagated(self):
         from aiomqtt import MqttError
+
         from sma_mqtt_bridge.homie import mqtt_session
+
         client = FakeClient()
         client._disconnected = asyncio.get_running_loop().create_future()
-        error = MqttError('Fixture disconnected')
+        error = MqttError("Fixture disconnected")
         with self.assertRaises(MqttError) as caught:
-            async with mqtt_session(client, .1, .1):
+            async with mqtt_session(client, 0.1, 0.1):
                 client._disconnected.set_exception(error)
         self.assertIs(caught.exception, error)
 
     async def test_disconnect_error_preserves_primary_publication_timeout(self):
         from aiomqtt import MqttError
+
         from sma_mqtt_bridge.homie import mqtt_session
+
         client = FakeClient()
         client._disconnected = asyncio.get_running_loop().create_future()
-        error = asyncio.TimeoutError('Fixture publication timeout')
+        error = asyncio.TimeoutError("Fixture publication timeout")
         with self.assertRaises(asyncio.TimeoutError) as caught:
-            async with mqtt_session(client, .1, .1):
-                client._disconnected.set_exception(MqttError('Fixture disconnected'))
+            async with mqtt_session(client, 0.1, 0.1):
+                client._disconnected.set_exception(MqttError("Fixture disconnected"))
                 raise error
         self.assertIs(caught.exception, error)
 
     async def test_late_disconnect_error_after_failed_cleanup_is_retrieved(self):
         from aiomqtt import MqttError
+
         from sma_mqtt_bridge.homie import mqtt_session
+
         client = FakeClient()
         client._disconnected = asyncio.get_running_loop().create_future()
         with self.assertRaises(asyncio.TimeoutError):
-            async with mqtt_session(client, .1, .1):
+            async with mqtt_session(client, 0.1, 0.1):
                 raise asyncio.TimeoutError
-        client._disconnected.set_exception(MqttError('Fixture late disconnect'))
+        client._disconnected.set_exception(MqttError("Fixture late disconnect"))
         await asyncio.sleep(0)  # Run the callback; the strict suite detects orphan errors.
 
     async def test_source_failure_does_not_stop_independent_supervisor(self):
         failing, working = AsyncMock(), AsyncMock()
-        failing.read.side_effect = OSError('Uncontrolled fixture error')
-        working.read.return_value = {'measurements/power': 42}
-        bad = SourceState('bad', 'bad-device', (Property('measurements', 'power', 'Power'),), 5)
-        good = SourceState('good', 'good-device', (Property('measurements', 'power', 'Power'),), 5)
+        failing.read.side_effect = OSError("Uncontrolled fixture error")
+        working.read.return_value = {"measurements/power": 42}
+        bad = SourceState("bad", "bad-device", (Property("measurements", "power", "Power"),), 5)
+        good = SourceState("good", "good-device", (Property("measurements", "power", "Power"),), 5)
         stop = asyncio.Event()
-        tasks = [asyncio.create_task(supervise(s, r, .01, self.config, stop)) for s, r in ((bad, failing), (good, working))]
-        await asyncio.sleep(.03)
-        self.assertEqual(good.status(), 'ready')
-        self.assertEqual(bad.status(), 'error')
+        tasks = [
+            asyncio.create_task(supervise(s, r, 0.01, self.config, stop))
+            for s, r in ((bad, failing), (good, working))
+        ]
+        await asyncio.sleep(0.03)
+        self.assertEqual(good.status(), "ready")
+        self.assertEqual(bad.status(), "error")
         stop.set()
         await asyncio.gather(*tasks)
 
     async def test_manifest_cleans_up_previous_prefix_after_restart(self):
-        atomic_json(Path(self.tmp.name) / 'mqtt-topics.json', {'schemaVersion': 1, 'prefix': 'previous',
-                    'devices': {'old-device': ['previous/old-device/$homie']}})
+        atomic_json(
+            Path(self.tmp.name) / "mqtt-topics.json",
+            {
+                "schemaVersion": 1,
+                "prefix": "previous",
+                "devices": {"old-device": ["previous/old-device/$homie"]},
+            },
+        )
         clients = []
+
         def factory(*args, **kwargs):
             c = FakeClient(*args, **kwargs)
             clients.append(c)
             return c
+
         publisher = HomiePublisher(self.config, [], factory)
         await publisher.run(asyncio.Event())
-        self.assertEqual(clients[0].messages[0][0], 'previous/old-device/$homie')
-        self.assertEqual(clients[0].messages[0][1], b'')
+        self.assertEqual(clients[0].messages[0][0], "previous/old-device/$homie")
+        self.assertEqual(clients[0].messages[0][1], b"")
 
     async def test_source_recovers_after_outage(self):
-        state = SourceState('fixture', 'test-device', (Property('measurements', 'power', 'Power'),), 5)
+        state = SourceState(
+            "fixture", "test-device", (Property("measurements", "power", "Power"),), 5
+        )
         stop = asyncio.Event()
         reader = AsyncMock()
-        reader.read.side_effect = [OSError('fixture outage'), {'measurements/power': 42}]
-        config = replace(self.config, runtime=replace(self.config.runtime, reconnect_min_seconds=.001,
-                                                    reconnect_max_seconds=.002))
+        reader.read.side_effect = [OSError("fixture outage"), {"measurements/power": 42}]
+        config = replace(
+            self.config,
+            runtime=replace(
+                self.config.runtime, reconnect_min_seconds=0.001, reconnect_max_seconds=0.002
+            ),
+        )
+
         async def delay(*args):
             if state.last_success is not None:
                 stop.set()
-        with patch('sma_mqtt_bridge.runtime.wait_stop', side_effect=delay):
-            await supervise(state, reader, .01, config, stop)
+
+        with patch("sma_mqtt_bridge.runtime.wait_stop", side_effect=delay):
+            await supervise(state, reader, 0.01, config, stop)
         self.assertEqual(reader.read.await_count, 2)
-        self.assertEqual(state.status(), 'ready')
+        self.assertEqual(state.status(), "ready")
         reader.close.assert_awaited_once()
 
     async def test_runtime_rejects_cancelled_or_silently_stopped_publisher(self):
-        state = SourceState('fixture', 'test-device', (), 5)
+        state = SourceState("fixture", "test-device", (), 5)
         for cancelled in (False, True):
             reader = AsyncMock()
-            reader.read.side_effect = OSError('fixture outage')
+            reader.read.side_effect = OSError("fixture outage")
+
             class BrokenPublisher:
                 status = {}
+
                 def __init__(self, *args):
                     pass
+
                 async def run(self, stop):
                     if cancelled:
                         raise asyncio.CancelledError
-            with patch('sma_mqtt_bridge.runtime.sources', return_value=[(state, reader, 1)]):
-                with self.assertRaisesRegex(RuntimeError, 'supervisor'):
-                    await asyncio.wait_for(run(self.config, publisher_factory=BrokenPublisher), .5)
+
+            with patch("sma_mqtt_bridge.runtime.sources", return_value=[(state, reader, 1)]):
+                with self.assertRaisesRegex(RuntimeError, "supervisor"):
+                    await asyncio.wait_for(run(self.config, publisher_factory=BrokenPublisher), 0.5)
             self.assertFalse(healthy(self.tmp.name, 5))
             reader.close.assert_awaited_once()
 
     async def test_mqtt_failure_cleans_up_other_device_sessions(self):
-        states = [SourceState('fixture', d, (), 5) for d in ('a', 'b')]
+        states = [SourceState("fixture", d, (), 5) for d in ("a", "b")]
         publisher = HomiePublisher(self.config, states)
         started, closed = asyncio.Event(), asyncio.Event()
+
         async def serve(device, states, stop):
-            if device == 'a':
+            if device == "a":
                 await started.wait()
-                raise RuntimeError('fixture failure')
+                raise RuntimeError("fixture failure")
             try:
                 started.set()
                 await asyncio.Event().wait()
             finally:
                 closed.set()
+
         publisher.serve_device = serve
         with self.assertRaises(RuntimeError):
             await publisher.run(asyncio.Event())

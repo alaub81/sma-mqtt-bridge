@@ -1,9 +1,10 @@
 """Run all offline regression tests; empty or partially skipped suites fail."""
-from pathlib import Path
+
 import asyncio
 import gc
 import sys
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
 
@@ -21,8 +22,12 @@ def main():
         loop = original_new_loop()
 
         def exception_handler(failed_loop, context):
-            loop_errors.append((context.get("message", "Unexpected asyncio failure"),
-                                type(context.get("exception")).__name__))
+            loop_errors.append(
+                (
+                    context.get("message", "Unexpected asyncio failure"),
+                    type(context.get("exception")).__name__,
+                )
+            )
             failed_loop.default_exception_handler(context)
 
         loop.set_exception_handler(exception_handler)

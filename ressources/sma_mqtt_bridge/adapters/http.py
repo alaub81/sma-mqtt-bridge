@@ -11,6 +11,7 @@ from ..errors import AuthenticationError, ProtocolError, ProtocolTimeout
 def json_data(text):
     def constant(_):
         raise ValueError
+
     def pairs(items):
         result = {}
         for k, v in items:
@@ -18,14 +19,17 @@ def json_data(text):
                 raise ValueError
             result[k] = v
         return result
+
     try:
         return json.loads(text, parse_constant=constant, object_pairs_hook=pairs)
-    except (ValueError, TypeError):
+    except ValueError, TypeError:
         raise ProtocolError("Invalid JSON protocol response") from None
 
 
 class HTTP:
-    def __init__(self, timeout, max_bytes, context=None, cookies=False, server_name=None, allow_put=False):
+    def __init__(
+        self, timeout, max_bytes, context=None, cookies=False, server_name=None, allow_put=False
+    ):
         self.timeout, self.max_bytes, self.context = timeout, max_bytes, context
         self.cookies = cookies
         self.server_name = server_name
@@ -37,10 +41,14 @@ class HTTP:
             raise ProtocolError("HTTP device write methods are disabled")
         if self.session is None:
             self.session = aiohttp.ClientSession(
-                timeout=aiohttp.ClientTimeout(total=self.timeout), trust_env=False,
+                timeout=aiohttp.ClientTimeout(total=self.timeout),
+                trust_env=False,
                 cookie_jar=aiohttp.CookieJar() if self.cookies else aiohttp.DummyCookieJar(),
-                connector=aiohttp.TCPConnector(ssl=self.context if self.context is not None else True),
-                headers={"Accept": "application/json", "Accept-Encoding": "identity"})
+                connector=aiohttp.TCPConnector(
+                    ssl=self.context if self.context is not None else True
+                ),
+                headers={"Accept": "application/json", "Accept-Encoding": "identity"},
+            )
             if self.allow_put:
                 # aiohttp 3.14.4 may retry PUT after a lost persistent connection.
                 # Disable that pinned implementation feature for command sessions.
@@ -50,8 +58,15 @@ class HTTP:
                 self.session._retry_connection = False
         headers = {"Authorization": "Bearer " + token} if token else {}
         try:
-            async with self.session.request(method, url, data=data, json=json, headers=headers,
-                                            allow_redirects=False, server_hostname=self.server_name) as response:
+            async with self.session.request(
+                method,
+                url,
+                data=data,
+                json=json,
+                headers=headers,
+                allow_redirects=False,
+                server_hostname=self.server_name,
+            ) as response:
                 parts, length = [], 0
                 async for chunk in response.content.iter_chunked(16384):
                     length += len(chunk)
@@ -65,7 +80,7 @@ class HTTP:
                 return response.status, dict(response.headers), text
         except asyncio.TimeoutError:
             raise ProtocolTimeout("HTTP request timed out") from None
-        except (aiohttp.ClientError, OSError):
+        except aiohttp.ClientError, OSError:
             raise ProtocolError("HTTP connection failed; check network/TLS and clock") from None
 
     async def get_json(self, method, url, **kwargs):

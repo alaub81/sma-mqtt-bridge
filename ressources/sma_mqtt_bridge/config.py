@@ -1,13 +1,13 @@
 """Strict defaults < profile < JSON < ENV precedence and local file reads, without network I/O."""
 
-from dataclasses import dataclass, fields, replace
 import ipaddress
 import json
 import math
 import os
-from pathlib import Path
 import re
 import ssl
+from dataclasses import dataclass, fields, replace
+from pathlib import Path
 from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
@@ -181,8 +181,13 @@ class Config(SafeRepr):
 
     @property
     def has_sources(self):
-        return (any(i.enabled for i in self.inverters) or self.home_manager.enabled
-                or self.echarger.enabled or self.echarger.semp_enabled or self.portal.enabled)
+        return (
+            any(i.enabled for i in self.inverters)
+            or self.home_manager.enabled
+            or self.echarger.enabled
+            or self.echarger.semp_enabled
+            or self.portal.enabled
+        )
 
 
 def camel(name):
@@ -192,6 +197,7 @@ def camel(name):
 
 def read_json(path):
     """Reject ambiguous keys and non-standard numbers without echoing file data."""
+
     def pairs(items):
         result = {}
         for key, value in items:
@@ -206,7 +212,7 @@ def read_json(path):
     try:
         with Path(path).open(encoding="utf-8") as stream:
             return json.load(stream, object_pairs_hook=pairs, parse_constant=constant)
-    except (OSError, ValueError, UnicodeError):
+    except OSError, ValueError, UnicodeError:
         raise ConfigError("Cannot read a valid JSON configuration/profile file") from None
 
 
@@ -235,7 +241,7 @@ def convert(value, kind, key, env=False):
         if kind is str and any(ord(c) < 32 for c in value):
             raise ValueError
         return value
-    except (ValueError, TypeError, AttributeError, OverflowError):
+    except ValueError, TypeError, AttributeError, OverflowError:
         raise ConfigError(f"Invalid type/value for {key}") from None
 
 
@@ -269,13 +275,27 @@ def section(defaults, data, env, prefix, recognized):
                 minimum, maximum = 1, 247
             elif field.name == "qos":
                 minimum, maximum = 1, 2
-            elif field.name in ("max_queue_messages", "max_response_bytes", "max_state_bytes", "keepalive_seconds"):
+            elif field.name in (
+                "max_queue_messages",
+                "max_response_bytes",
+                "max_state_bytes",
+                "keepalive_seconds",
+            ):
                 minimum = 1
             elif field.name == "timestamp_diagnostics_max_bytes":
                 minimum, maximum = 4096, 16777216
-            elif not ((isinstance(defaults, Portal) and field.name == "poll_interval_seconds")
-                      or (isinstance(defaults, HomeManager) and field.name in
-                          ("transaction_delay_seconds", "after_connection_delay_seconds", "reconnect_delay_seconds"))):
+            elif not (
+                (isinstance(defaults, Portal) and field.name == "poll_interval_seconds")
+                or (
+                    isinstance(defaults, HomeManager)
+                    and field.name
+                    in (
+                        "transaction_delay_seconds",
+                        "after_connection_delay_seconds",
+                        "reconnect_delay_seconds",
+                    )
+                )
+            ):
                 if value <= 0:
                     raise ConfigError(f"Positive number required for {key}")
             if value < minimum or (maximum is not None and value > maximum):
@@ -283,8 +303,10 @@ def section(defaults, data, env, prefix, recognized):
         values[field.name] = value
         if field.name.endswith("ready_properties") and value:
             entries = value.split(",")
-            if (len(set(entries)) != len(entries)
-                    or any(len(k.split("/")) != 2 or not all(ID.fullmatch(p) for p in k.split("/")) for k in entries)):
+            if len(set(entries)) != len(entries) or any(
+                len(k.split("/")) != 2 or not all(ID.fullmatch(p) for p in k.split("/"))
+                for k in entries
+            ):
                 raise ConfigError("Readiness properties must be unique node/property keys")
     return replace(defaults, **values)
 
@@ -307,9 +329,15 @@ def require_host(value, label):
 def https_url(value):
     try:
         parsed = urlsplit(value)
-        return (parsed.scheme == "https" and parsed.hostname and not parsed.username
-                and not parsed.password and not parsed.query and not parsed.fragment
-                and parsed.port in (None, 443))
+        return (
+            parsed.scheme == "https"
+            and parsed.hostname
+            and not parsed.username
+            and not parsed.password
+            and not parsed.query
+            and not parsed.fragment
+            and parsed.port in (None, 443)
+        )
     except ValueError:
         return False
 
@@ -323,7 +351,7 @@ def ssl_context(ca="", cert="", key="", *, verify=True):
         if cert:
             context.load_cert_chain(cert, key)
         return context
-    except (OSError, ValueError, ssl.SSLError):
+    except OSError, ValueError, ssl.SSLError:
         raise ConfigError("Cannot load configured TLS trust/client certificate") from None
 
 
@@ -340,7 +368,7 @@ def password(settings, active):
             value = Path(settings.password_file).read_text(encoding="utf-8").rstrip("\r\n")
             if not value or "\n" in value or "\r" in value:
                 raise ValueError
-        except (OSError, ValueError, UnicodeError):
+        except OSError, ValueError, UnicodeError:
             raise ConfigError("Cannot read configured password file") from None
         settings = replace(settings, password=value)
     return settings
@@ -357,10 +385,19 @@ def load_config(environ=None, bundled_dir=None):
     explicit = "SMAB_CONFIG_FILE" in env
     data = read_json(filename) if explicit or Path(filename).exists() else {}
     if not isinstance(data, dict) or set(data) - {
-        "schemaVersion", "runtime", "mqtt", "inverters", "homeManager", "echarger", "portal", "commands"
+        "schemaVersion",
+        "runtime",
+        "mqtt",
+        "inverters",
+        "homeManager",
+        "echarger",
+        "portal",
+        "commands",
     }:
         raise ConfigError("Unknown JSON configuration section")
-    if "schemaVersion" in data and (type(data["schemaVersion"]) is not int or data["schemaVersion"] != 1):
+    if "schemaVersion" in data and (
+        type(data["schemaVersion"]) is not int or data["schemaVersion"] != 1
+    ):
         raise ConfigError("Unsupported configuration schemaVersion")
     recognized = COMPOSE_KEYS | {"SMAB_CONFIG_FILE"}
     runtime = section(Runtime(), data.get("runtime", {}), env, "SMAB_", recognized)
@@ -377,14 +414,20 @@ def load_config(environ=None, bundled_dir=None):
     if "SMAB_COMMAND_ENABLED" in env:
         raise ConfigError("Use SMAB_COMMANDS_ENABLED")
     if "SMAB_COMMANDS_ENABLED" in env:
-        commands = replace(commands, enabled=convert(env["SMAB_COMMANDS_ENABLED"], bool,
-                                                     "SMAB_COMMANDS_ENABLED", True))
+        commands = replace(
+            commands,
+            enabled=convert(env["SMAB_COMMANDS_ENABLED"], bool, "SMAB_COMMANDS_ENABLED", True),
+        )
     raw_inverters = data.get("inverters", [])
     if not isinstance(raw_inverters, list):
         raise ConfigError("inverters must be an array")
     indexed = {}
     for item in raw_inverters:
-        if not isinstance(item, dict) or not isinstance(item.get("id"), str) or not SLOT.fullmatch(item["id"]):
+        if (
+            not isinstance(item, dict)
+            or not isinstance(item.get("id"), str)
+            or not SLOT.fullmatch(item["id"])
+        ):
             raise ConfigError("Each inverter needs a numbered id")
         if item["id"] in indexed:
             raise ConfigError("Duplicate inverter slot")
@@ -398,14 +441,23 @@ def load_config(environ=None, bundled_dir=None):
     for number in sorted(slots):
         slot = f"inverter{number}"
         prefix = f"SMAB_INVERTER{number}_"
-        default = Inverter(id=slot, homie_id=f"sma-{slot}",
-                           profile=DEFAULT_PROFILES[number - 1] if number <= 3 else "")
+        default = Inverter(
+            id=slot,
+            homie_id=f"sma-{slot}",
+            profile=DEFAULT_PROFILES[number - 1] if number <= 3 else "",
+        )
         device_data = indexed.get(slot, {})
         selector = env.get(prefix + "PROFILE", device_data.get("profile", default.profile))
-        enabled = convert(env[prefix + "ENABLED"], bool, prefix + "ENABLED", True) if prefix + "ENABLED" in env else device_data.get("enabled", False)
+        enabled = (
+            convert(env[prefix + "ENABLED"], bool, prefix + "ENABLED", True)
+            if prefix + "ENABLED" in env
+            else device_data.get("enabled", False)
+        )
         # Disabled devices do not read installation profile files.
         if enabled is True:
-            profile = load_profile(selector, runtime.profile_dir, bundled_dir, require_validated=True)
+            profile = load_profile(
+                selector, runtime.profile_dir, bundled_dir, require_validated=True
+            )
             profiles[slot] = profile
             default = replace(default, **profile["protocol"]["defaults"])
         device = section(default, device_data, env, prefix, recognized)
@@ -422,7 +474,7 @@ def load_config(environ=None, bundled_dir=None):
         raise ConfigError("Invalid SMAB_LOG_LEVEL")
     try:
         ZoneInfo(runtime.timezone)
-    except (ValueError, ZoneInfoNotFoundError):
+    except ValueError, ZoneInfoNotFoundError:
         raise ConfigError("Invalid SMAB_TIMEZONE") from None
     ids = [i.homie_id for i in inverters] + [hm.homie_id, ec.homie_id]
     if any(not ID.fullmatch(i) for i in ids) or len(ids) != len(set(ids)):
@@ -431,12 +483,16 @@ def load_config(environ=None, bundled_dir=None):
         raise ConfigError("Invalid MQTT prefix/client ID")
     if bool(mqtt.tls_cert_file) != bool(mqtt.tls_key_file):
         raise ConfigError("MQTT client certificate and key must be configured together")
-    config = Config(runtime, mqtt, tuple(inverters), hm, ec, portal, commands, profiles, frozenset(intervals))
+    config = Config(
+        runtime, mqtt, tuple(inverters), hm, ec, portal, commands, profiles, frozenset(intervals)
+    )
     mqtt_needed = config.has_sources or (Path(runtime.state_dir) / "mqtt-topics.json").exists()
     if mqtt_needed:
         require_host(mqtt.host, "MQTT")
         if mqtt.tls:
-            ssl_context(mqtt.tls_ca_file, mqtt.tls_cert_file, mqtt.tls_key_file, verify=mqtt.tls_verify)
+            ssl_context(
+                mqtt.tls_ca_file, mqtt.tls_cert_file, mqtt.tls_key_file, verify=mqtt.tls_verify
+            )
     mqtt = password(mqtt, mqtt_needed)
     for inverter in inverters:
         if inverter.enabled:
@@ -452,13 +508,18 @@ def load_config(environ=None, bundled_dir=None):
         raise ConfigError("Home Manager transport must be udp or modbus-tcp")
     if hm.enabled and hm.transport == "modbus-tcp":
         from .home_manager_profile import load_home_manager_profile
+
         require_host(hm.host, "Home Manager Modbus")
-        profiles["home-manager"] = load_home_manager_profile(hm.profile, runtime.profile_dir, bundled_dir)
-        if "SMAB_HOME_MANAGER_POLL_INTERVAL_SECONDS" in env or "pollIntervalSeconds" in data.get("homeManager", {}):
+        profiles["home-manager"] = load_home_manager_profile(
+            hm.profile, runtime.profile_dir, bundled_dir
+        )
+        if "SMAB_HOME_MANAGER_POLL_INTERVAL_SECONDS" in env or "pollIntervalSeconds" in data.get(
+            "homeManager", {}
+        ):
             intervals.add("home-manager")
         config = replace(config, interval_overrides=frozenset(intervals))
     if hm.enabled:
-        if not hm.serial.isdecimal() or not 0 < int(hm.serial) <= 0xffffffff:
+        if not hm.serial.isdecimal() or not 0 < int(hm.serial) <= 0xFFFFFFFF:
             raise ConfigError("Home Manager requires a numeric serial selector")
         if hm.host and hm.transport == "udp":
             try:
@@ -477,12 +538,18 @@ def load_config(environ=None, bundled_dir=None):
         echarger_ssl_context(ec)
     if ec.semp_enabled and not ec.semp_device_id:
         raise ConfigError("SEMP requires a configured device ID")
-    if not ec.semp_path.startswith("/") or any(c in ec.semp_path for c in "?#") or ".." in ec.semp_path:
+    if (
+        not ec.semp_path.startswith("/")
+        or any(c in ec.semp_path for c in "?#")
+        or ".." in ec.semp_path
+    ):
         raise ConfigError("Invalid SEMP path")
     for value in (portal.base_url, portal.api_base_url, portal.auth_base_url):
         if not https_url(value):
             raise ConfigError("Portal endpoints require a verified HTTPS origin")
-    if portal.enabled and not all((portal.username, portal.password, portal.plant_id, portal.device_id)):
+    if portal.enabled and not all(
+        (portal.username, portal.password, portal.plant_id, portal.device_id)
+    ):
         raise ConfigError("Portal requires separate credentials and plant/device selectors")
     if any(i.commands_enabled for i in inverters):
         raise ConfigError("Inverter command paths are not implemented")

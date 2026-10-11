@@ -2,8 +2,8 @@
 """Export the canonical file widget for manual MainUI import without reformatting."""
 
 import argparse
-from pathlib import Path
 import sys
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "openHAB/yaml/widgets/echarger-comfort.yml"
@@ -16,7 +16,7 @@ def render(source):
     wrapper = f"version: 1\nwidgets:\n  {UID}:\n"
     if not source.startswith(wrapper):
         raise ValueError("Expected version 1 with only the configured garage widget")
-    lines = source[len(wrapper):].splitlines(keepends=True)
+    lines = source[len(wrapper) :].splitlines(keepends=True)
     if not lines or any(line.strip() and not line.startswith("    ") for line in lines):
         raise ValueError("Expected one nonempty widget body indented by four spaces")
     body = "".join(line[4:] if line.startswith("    ") else line for line in lines)
@@ -34,8 +34,10 @@ def main():
         expected = render(SOURCE.read_text(encoding="utf-8"))
         if args.check:
             if not OUTPUT.is_file() or OUTPUT.read_text(encoding="utf-8") != expected:
-                print("Widget import is stale; run python3 tools/export_openhab_widget.py",
-                      file=sys.stderr)
+                print(
+                    "Widget import is stale; run python3 tools/export_openhab_widget.py",
+                    file=sys.stderr,
+                )
                 return 1
             print("Widget import matches the canonical source.")
         else:

@@ -3,8 +3,8 @@
 import json
 import math
 import os
-from pathlib import Path
 import time
+from pathlib import Path
 
 
 def atomic_json(path, data):
@@ -27,14 +27,24 @@ def atomic_json(path, data):
 
 
 def heartbeat(config, states, mqtt, mqtt_diagnostics=None):
-    atomic_json(Path(config.runtime.state_dir) / "heartbeat.json", {
-        "schemaVersion": 2, "status": "running", "pid": os.getpid(), "timestamp": time.time(),
-        "monotonic": time.monotonic(),
-        "sources": {s.id: s.status() for s in states}, "mqtt": dict(mqtt),
-        "sourceDiagnostics": {s.id: {**s.monitor.snapshot(), "missingCritical": s.missing_critical()}
-                              for s in states if s.monitor is not None},
-        "mqttDiagnostics": mqtt_diagnostics or {},
-    })
+    atomic_json(
+        Path(config.runtime.state_dir) / "heartbeat.json",
+        {
+            "schemaVersion": 2,
+            "status": "running",
+            "pid": os.getpid(),
+            "timestamp": time.time(),
+            "monotonic": time.monotonic(),
+            "sources": {s.id: s.status() for s in states},
+            "mqtt": dict(mqtt),
+            "sourceDiagnostics": {
+                s.id: {**s.monitor.snapshot(), "missingCritical": s.missing_critical()}
+                for s in states
+                if s.monitor is not None
+            },
+            "mqttDiagnostics": mqtt_diagnostics or {},
+        },
+    )
 
 
 def healthy(state_dir, stale_seconds, now=None):
@@ -43,7 +53,12 @@ def healthy(state_dir, stale_seconds, now=None):
         if data["schemaVersion"] != 2 or data["status"] != "running":
             return False
         pid, received = data["pid"], data["monotonic"]
-        if type(pid) is not int or pid <= 0 or type(received) not in (int, float) or not math.isfinite(received):
+        if (
+            type(pid) is not int
+            or pid <= 0
+            or type(received) not in (int, float)
+            or not math.isfinite(received)
+        ):
             return False
         elapsed = (time.monotonic() if now is None else now) - received
         if not 0 <= elapsed <= stale_seconds:
@@ -51,5 +66,5 @@ def healthy(state_dir, stale_seconds, now=None):
         # The probe runs in the bridge's PID namespace and as the same user.
         os.kill(pid, 0)
         return True
-    except (OSError, ValueError, TypeError, KeyError, OverflowError):
+    except OSError, ValueError, TypeError, KeyError, OverflowError:
         return False

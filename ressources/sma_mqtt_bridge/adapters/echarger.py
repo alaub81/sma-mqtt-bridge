@@ -1,9 +1,9 @@
 """Known eCharger read channels, separate API/SEMP sessions and no setters."""
 
-from datetime import datetime, timezone
 import asyncio
 import time
 import xml.etree.ElementTree as ET
+from datetime import datetime, timezone
 
 from ..config import echarger_ssl_context
 from ..errors import AuthenticationError, ProtocolError
@@ -11,8 +11,13 @@ from ..model import Property, number
 from .http import HTTP
 
 NS = "http://www.sma.de/communication/schema/SEMP/v1"
-VEHICLE = {"200111": "Nicht verbunden", "200112": "Verbunden / wartend", "200113": "Lädt",
-           "5169": "Gesperrt", "200115": "Fehler am Ladepunkt"}
+VEHICLE = {
+    "200111": "Nicht verbunden",
+    "200112": "Verbunden / wartend",
+    "200113": "Lädt",
+    "5169": "Gesperrt",
+    "200115": "Fehler am Ladepunkt",
+}
 HEALTH = {"307": "OK", "35": "Fehler", "455": "Warnung", "303": "Aus", "308": "Ein"}
 APPROVAL = {"5171": "Gesperrt", "5172": "Freigegeben"}
 
@@ -28,9 +33,30 @@ VERIFIED_LOCAL_UNITS = {
 # Explicit read mapping from working references, not the entire installer catalog.
 SETTINGS = (
     ("charge-mode", "Parameter.Chrg.ActChaMod", "enum", "", None, "4718,4719,4720,4721"),
-    ("charging-release", "Parameter.Chrg.ChrgApv", "boolean", "", {"5172": True, "5171": False}, ""),
-    ("approval-required", "Parameter.Chrg.ChrgLok", "boolean", "", {"1129": True, "1130": False}, ""),
-    ("stop-when-full", "Parameter.Chrg.StpWhenFl", "boolean", "", {"1129": True, "1130": False}, ""),
+    (
+        "charging-release",
+        "Parameter.Chrg.ChrgApv",
+        "boolean",
+        "",
+        {"5172": True, "5171": False},
+        "",
+    ),
+    (
+        "approval-required",
+        "Parameter.Chrg.ChrgLok",
+        "boolean",
+        "",
+        {"1129": True, "1130": False},
+        "",
+    ),
+    (
+        "stop-when-full",
+        "Parameter.Chrg.StpWhenFl",
+        "boolean",
+        "",
+        {"1129": True, "1130": False},
+        "",
+    ),
     ("stop-delay", "Parameter.Chrg.StpWhenFlTm", "integer", "min", None, ""),
     ("cable-lock", "Parameter.Chrg.CblLok", "boolean", "", {"308": True, "303": False}, ""),
     ("led-brightness", "Parameter.Sys.DevSigBri", "enum", "", None, "5191,5190,5173"),
@@ -44,10 +70,18 @@ SETTINGS = (
 API_SETTINGS = SETTINGS + (
     ("max-charge-power", "Parameter.Inverter.WMaxIn", "integer", "W", None, ""),
 )
-EXTRA = [("total-energy", ("Measurement.Metering.GridMs.TotWhIn.ChaSta", "Measurement.Metering.GridMs.TotWhIn"), "kWh")]
+EXTRA = [
+    (
+        "total-energy",
+        ("Measurement.Metering.GridMs.TotWhIn.ChaSta", "Measurement.Metering.GridMs.TotWhIn"),
+        "kWh",
+    )
+]
 for i, phase in enumerate("ABC", 1):
-    EXTRA += [(f"current-l{i}", (f"Measurement.GridMs.A.phs{phase}",), "A"),
-              (f"voltage-l{i}", (f"Measurement.GridMs.PhV.phs{phase}",), "V")]
+    EXTRA += [
+        (f"current-l{i}", (f"Measurement.GridMs.A.phs{phase}",), "A"),
+        (f"voltage-l{i}", (f"Measurement.GridMs.PhV.phs{phase}",), "V"),
+    ]
 EXTRA.append(("frequency", ("Measurement.GridMs.Hz",), "Hz"))
 BASE = (
     Property("measurements", "power", "Charging power", unit="W", required_for_ready=True),
@@ -67,8 +101,16 @@ SEMP_EXTRA = (
     ("measurements", "auth-registration-code", "Measurement.Acs.AuthRegistStt"),
     ("parameters", "inverter-outphs", "Parameter.Inverter.OutPhs"),
     ("control", "active-charging-count", "Setpoint.PlantControl.PCC.ChrgActCnt"),
-    ("control", "power-setpoint-max-percent", "Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMaxNom"),
-    ("control", "power-setpoint-min-percent", "Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMinNom"),
+    (
+        "control",
+        "power-setpoint-max-percent",
+        "Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMaxNom",
+    ),
+    (
+        "control",
+        "power-setpoint-min-percent",
+        "Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMinNom",
+    ),
     ("parameters", "chrg-plan-en-raw", "Parameter.Chrg.Plan.En"),
     ("parameters", "chrg-stpwhenfltm-raw", "Parameter.Chrg.StpWhenFlTm"),
 )
@@ -89,9 +131,15 @@ def base_values(catalog, advanced=True):
     vehicle = catalog.get("Measurement.Operation.EVeh.ChaStt")
     result = {
         "measurements/power": number(catalog.get("Measurement.Metering.GridMs.TotWIn.ChaSta")),
-        "measurements/session-energy": None if number(catalog.get("Measurement.ChaSess.WhIn")) is None else number(catalog["Measurement.ChaSess.WhIn"]) / 1000,
-        "measurements/vehicle-status": VEHICLE.get(str(vehicle), "Unbekannter Fahrzeugstatus") if vehicle is not None else None,
-        "measurements/health": HEALTH.get(str(catalog.get("Measurement.Operation.Health"))) if catalog.get("Measurement.Operation.Health") is not None else None,
+        "measurements/session-energy": None
+        if number(catalog.get("Measurement.ChaSess.WhIn")) is None
+        else number(catalog["Measurement.ChaSess.WhIn"]) / 1000,
+        "measurements/vehicle-status": VEHICLE.get(str(vehicle), "Unbekannter Fahrzeugstatus")
+        if vehicle is not None
+        else None,
+        "measurements/health": HEALTH.get(str(catalog.get("Measurement.Operation.Health")))
+        if catalog.get("Measurement.Operation.Health") is not None
+        else None,
         "settings/charge-mode": catalog.get("Parameter.Chrg.ActChaMod"),
         "measurements/manual-approval": APPROVAL.get(str(catalog.get("Parameter.Chrg.ChrgApv"))),
     }
@@ -110,7 +158,11 @@ def parameter_catalog(reply, expected_serial):
         raise ProtocolError("Missing/ambiguous eCharger parameter component")
     catalog = {}
     for p in components[0]["values"]:
-        if not isinstance(p, dict) or not isinstance(p.get("channelId"), str) or p["channelId"] in catalog:
+        if (
+            not isinstance(p, dict)
+            or not isinstance(p.get("channelId"), str)
+            or p["channelId"] in catalog
+        ):
             raise ProtocolError("Invalid/duplicate eCharger parameter metadata")
         catalog[p["channelId"]] = p
     if str(catalog.get("Parameter.Nameplate.SerNum", {}).get("value")) != expected_serial:
@@ -122,8 +174,10 @@ def parameter_catalog(reply, expected_serial):
 
 def parameter_unit(catalog, channel):
     unit = catalog.get(channel, {}).get("unit")
-    verified_local = (catalog.get("Parameter.Nameplate.ModelStr", {}).get("value") == "EVC22-3AC-20"
-                      and catalog.get("Parameter.Nameplate.PkgRev", {}).get("value") == "2.6.37.R")
+    verified_local = (
+        catalog.get("Parameter.Nameplate.ModelStr", {}).get("value") == "EVC22-3AC-20"
+        and catalog.get("Parameter.Nameplate.PkgRev", {}).get("value") == "2.6.37.R"
+    )
     return VERIFIED_LOCAL_UNITS.get(channel) if unit is None and verified_local else unit
 
 
@@ -139,14 +193,21 @@ def settings_values(catalog, *, from_api=True):
         value = mapping.get(str(raw)) if mapping is not None else raw
         if unit:
             value = number(raw) if parameter_unit(catalog, channel) == unit else None
-        if id == "max-charge-power" and (value is None
-                                         or value != value.to_integral_value() or not 1380 <= value <= 22000):
+        if id == "max-charge-power" and (
+            value is None or value != value.to_integral_value() or not 1380 <= value <= 22000
+        ):
             value = None
         if id == "plan-end":
-            seconds = number(raw) if not from_api or parameter_unit(catalog, channel) == "s" else None
+            seconds = (
+                number(raw) if not from_api or parameter_unit(catalog, channel) == "s" else None
+            )
             try:
-                value = datetime.fromtimestamp(float(seconds), timezone.utc).isoformat() if seconds is not None and seconds > 0 else None
-            except (OverflowError, OSError, ValueError):
+                value = (
+                    datetime.fromtimestamp(float(seconds), timezone.utc).isoformat()
+                    if seconds is not None and seconds > 0
+                    else None
+                )
+            except OverflowError, OSError, ValueError:
                 value = None
         result["settings/" + id] = value
     return result
@@ -180,11 +241,13 @@ def current_measurement(value, timestamp, stale_seconds, now=None):
         measured = datetime.fromisoformat((timestamp or "").replace("Z", "+00:00"))
         age = (now - measured).total_seconds()
         return value if 0 <= age <= stale_seconds else None
-    except (TypeError, ValueError, AttributeError):
+    except TypeError, ValueError, AttributeError:
         return None
 
 
-def semp_values(text, stale_seconds, now=None, advanced=True, diagnostics=True, timestamp_observer=None):
+def semp_values(
+    text, stale_seconds, now=None, advanced=True, diagnostics=True, timestamp_observer=None
+):
     root = xml_root(text)
     catalog = {}
     now = datetime.now(timezone.utc) if now is None else now
@@ -201,9 +264,13 @@ def semp_values(text, stale_seconds, now=None, advanced=True, diagnostics=True, 
         catalog[channel] = raw
     result = base_values(catalog, advanced)
     # SEMP has no API confirmation/unit metadata; preserve its known raw-parameter contract.
-    result.update(settings_values({k: {"value": v} for k, v in catalog.items()},
-                                  from_api=False))
-    result.update({node + "/" + id: number(catalog.get(channel)) for node, id, channel in extra_channels(advanced, diagnostics)})
+    result.update(settings_values({k: {"value": v} for k, v in catalog.items()}, from_api=False))
+    result.update(
+        {
+            node + "/" + id: number(catalog.get(channel))
+            for node, id, channel in extra_channels(advanced, diagnostics)
+        }
+    )
     return result
 
 
@@ -212,11 +279,20 @@ class SempReader:
         self.settings, self.include_settings = settings, include_settings
         self.timestamp_observer = timestamp_observer
         self.http = HTTP(settings.timeout_seconds, max_bytes)
-        props = [p for p in base_properties(settings.advanced_channels_enabled) if p.node != "settings"]
+        props = [
+            p for p in base_properties(settings.advanced_channels_enabled) if p.node != "settings"
+        ]
         if include_settings:
-            props += [Property("settings", id, id.replace("-", " ").title(), datatype, unit, fmt)
-                      for id, _, datatype, unit, _, fmt in SETTINGS]
-        props += [Property(node, id, channel + " (raw code/value)", "float") for node, id, channel in extra_channels(settings.advanced_channels_enabled, settings.diagnostics_enabled)]
+            props += [
+                Property("settings", id, id.replace("-", " ").title(), datatype, unit, fmt)
+                for id, _, datatype, unit, _, fmt in SETTINGS
+            ]
+        props += [
+            Property(node, id, channel + " (raw code/value)", "float")
+            for node, id, channel in extra_channels(
+                settings.advanced_channels_enabled, settings.diagnostics_enabled
+            )
+        ]
         self.properties = tuple(props)
         host = "[" + settings.host + "]" if ":" in settings.host else settings.host
         self.url = f"http://{host}:{settings.semp_port}" + settings.semp_path.rstrip("/")
@@ -229,8 +305,13 @@ class SempReader:
         status, _, body = await self.http.request("GET", self.url + "/Parameters")
         if status != 200:
             raise ProtocolError("SEMP parameter read failed")
-        values = semp_values(body, self.settings.stale_seconds, advanced=self.settings.advanced_channels_enabled,
-                             diagnostics=self.settings.diagnostics_enabled, timestamp_observer=self.timestamp_observer)
+        values = semp_values(
+            body,
+            self.settings.stale_seconds,
+            advanced=self.settings.advanced_channels_enabled,
+            diagnostics=self.settings.diagnostics_enabled,
+            timestamp_observer=self.timestamp_observer,
+        )
         if not self.include_settings:
             values = {k: v for k, v in values.items() if not k.startswith("settings/")}
         return values
@@ -243,31 +324,61 @@ class EChargerReader:
     def __init__(self, settings, max_bytes, include_base=True, timestamp_observer=None):
         self.settings, self.include_base = settings, include_base
         self.timestamp_observer = timestamp_observer
-        self.http = HTTP(settings.timeout_seconds, max_bytes, echarger_ssl_context(settings),
-                         server_name=settings.tls_server_name or None)
+        self.http = HTTP(
+            settings.timeout_seconds,
+            max_bytes,
+            echarger_ssl_context(settings),
+            server_name=settings.tls_server_name or None,
+        )
         host = "[" + settings.host + "]" if ":" in settings.host else settings.host
         self.url = f"https://{host}:{settings.port}"
         self.token, self.expires = None, 0
         self.lock = asyncio.Lock()
-        props = [Property("settings", id, id.replace("-", " ").title(), datatype, unit, fmt)
-                 for id, _, datatype, unit, _, fmt in API_SETTINGS]
-        props += [Property("measurements", id, id.replace("-", " ").title(), unit=unit,
-                           required_for_ready=id in ("current-l1", "voltage-l1")) for id, _, unit in EXTRA]
+        props = [
+            Property("settings", id, id.replace("-", " ").title(), datatype, unit, fmt)
+            for id, _, datatype, unit, _, fmt in API_SETTINGS
+        ]
+        props += [
+            Property(
+                "measurements",
+                id,
+                id.replace("-", " ").title(),
+                unit=unit,
+                required_for_ready=id in ("current-l1", "voltage-l1"),
+            )
+            for id, _, unit in EXTRA
+        ]
         if include_base:
-            props += [p for p in base_properties(settings.advanced_channels_enabled) if p.node != "settings"]
+            props += [
+                p
+                for p in base_properties(settings.advanced_channels_enabled)
+                if p.node != "settings"
+            ]
         self.properties = tuple(props)
 
     async def access_token(self):
         if self.token and time.monotonic() < self.expires:
             return self.token
-        reply = await self.http.get_json("POST", self.url + "/api/v1/token",
-                                         data={"grant_type": "password", "username": self.settings.username,
-                                               "password": self.settings.password})
+        reply = await self.http.get_json(
+            "POST",
+            self.url + "/api/v1/token",
+            data={
+                "grant_type": "password",
+                "username": self.settings.username,
+                "password": self.settings.password,
+            },
+        )
         lifetime = number(reply.get("expires_in")) if isinstance(reply, dict) else None
         token = reply.get("access_token") if isinstance(reply, dict) else None
-        if not isinstance(token, str) or not token or any(c.isspace() for c in token) or lifetime is None or lifetime <= 0:
+        if (
+            not isinstance(token, str)
+            or not token
+            or any(c.isspace() for c in token)
+            or lifetime is None
+            or lifetime <= 0
+        ):
             raise AuthenticationError("Local login did not return a valid token/lifetime")
-        self.token, self.expires = token, time.monotonic() + max(0, float(lifetime) * .9 - 5)
+        self.token, self.expires = token, time.monotonic() + max(0, float(lifetime) * 0.9 - 5)
         return token
 
     async def read(self):
@@ -278,17 +389,29 @@ class EChargerReader:
         for attempt in range(2):
             token = await self.access_token()
             try:
-                reply = await self.http.get_json("POST", self.url + "/api/v1/parameters/search", token=token,
-                                                 json={"queryItems": [{"componentId": "IGULD:SELF"}]})
+                reply = await self.http.get_json(
+                    "POST",
+                    self.url + "/api/v1/parameters/search",
+                    token=token,
+                    json={"queryItems": [{"componentId": "IGULD:SELF"}]},
+                )
                 catalog = parameter_catalog(reply, self.settings.expected_serial)
                 result = settings_values(catalog)
-                live = await self.http.get_json("POST", self.url + "/api/v1/measurements/live", token=token,
-                                                json=[{"componentId": "IGULD:SELF"}])
+                live = await self.http.get_json(
+                    "POST",
+                    self.url + "/api/v1/measurements/live",
+                    token=token,
+                    json=[{"componentId": "IGULD:SELF"}],
+                )
                 if not isinstance(live, list):
                     raise ProtocolError("Unexpected live-measurement response")
                 values = {}
                 for m in live:
-                    if not isinstance(m, dict) or not isinstance(m.get("channelId"), str) or m["channelId"] in values:
+                    if (
+                        not isinstance(m, dict)
+                        or not isinstance(m.get("channelId"), str)
+                        or m["channelId"] in values
+                    ):
                         raise ProtocolError("Invalid/duplicate live measurement")
                     entries = m.get("values", [])
                     if not isinstance(entries, list) or len(entries) > 1:
@@ -297,21 +420,45 @@ class EChargerReader:
                     if not isinstance(entry, dict):
                         raise ProtocolError("Invalid live measurement entry")
                     stamp = entry.get("timestamp", entry.get("time"))
-                    if "timestamp" in entry and "time" in entry and entry["timestamp"] != entry["time"]:
+                    if (
+                        "timestamp" in entry
+                        and "time" in entry
+                        and entry["timestamp"] != entry["time"]
+                    ):
                         raise ProtocolError("Conflicting live measurement timestamps")
                     now = datetime.now(timezone.utc)
-                    values[m["channelId"]] = current_measurement(entry.get("value"), stamp, self.settings.stale_seconds, now)
+                    values[m["channelId"]] = current_measurement(
+                        entry.get("value"), stamp, self.settings.stale_seconds, now
+                    )
                     if self.timestamp_observer is not None:
-                        self.timestamp_observer.observe("api", m["channelId"], entry.get("value"), stamp,
-                                                        self.settings.stale_seconds, now)
+                        self.timestamp_observer.observe(
+                            "api",
+                            m["channelId"],
+                            entry.get("value"),
+                            stamp,
+                            self.settings.stale_seconds,
+                            now,
+                        )
                 for id, channels, _ in EXTRA:
-                    value = next((number(values[c]) for c in channels if c in values and number(values[c]) is not None), None)
+                    value = next(
+                        (
+                            number(values[c])
+                            for c in channels
+                            if c in values and number(values[c]) is not None
+                        ),
+                        None,
+                    )
                     # Both total-energy channels report Wh; publish the engineering value in kWh.
-                    result["measurements/" + id] = value / 1000 if id == "total-energy" and value is not None else value
+                    result["measurements/" + id] = (
+                        value / 1000 if id == "total-energy" and value is not None else value
+                    )
                 if self.include_base:
                     # Do not bypass confirmation through the manual-approval display alias.
-                    combined = {k: v.get("value") for k, v in catalog.items()
-                                if k.startswith("Parameter.Nameplate.") or v.get("state") == "Confirmed"}
+                    combined = {
+                        k: v.get("value")
+                        for k, v in catalog.items()
+                        if k.startswith("Parameter.Nameplate.") or v.get("state") == "Confirmed"
+                    }
                     combined.update(values)
                     baseline = base_values(combined, self.settings.advanced_channels_enabled)
                     baseline.pop("settings/charge-mode")
