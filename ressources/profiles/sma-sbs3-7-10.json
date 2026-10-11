@@ -23,7 +23,7 @@
   },
   "validation": {
     "status": "validated",
-    "reason": "Official model-specific register definitions reconciled with existing Things and read-only local model/firmware identity; parallel openHAB value acceptance remains pending.",
+    "reason": "Official model-specific register definitions reconciled with existing Things and read-only local model/firmware identity; Energy registers 30531/30537 intentionally use whole kWh based on user-reported installation observations on 2026-10-11, overriding the official list's Wh labels; parallel openHAB value acceptance remains pending.",
     "evidence": "docs/REGISTER_VALIDATION.md; https://files.sma.de/downloads/MODBUS-HTML_SBS3.7-6.0-10-V13.zip"
   },
   "pollers": [
@@ -199,7 +199,7 @@
       "byteOrder": "big",
       "wordOrder": "big",
       "scale": 1,
-      "unit": "Wh",
+      "unit": "kWh",
       "invalid": [
         4294967295
       ],
@@ -216,7 +216,7 @@
       "byteOrder": "big",
       "wordOrder": "big",
       "scale": 1,
-      "unit": "Wh",
+      "unit": "kWh",
       "invalid": [
         4294967295
       ],

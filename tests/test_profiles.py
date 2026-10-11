@@ -37,11 +37,17 @@ class ProfileTests(unittest.TestCase):
         inventory = json.loads((root / "reference/inverter-things-inventory.json").read_text())
         for device, selector, unit in zip(inventory['devices'],
                                          ("sma-stp8-0-3av-40", "sma-sbs3-7-10", "sma-sb4-0-1av-41"),
-                                         ("kWh", "Wh", "kWh")):
+                                         ("kWh", "kWh", "kWh")):
             p = load_profile(selector, self.tmp.name, require_validated=True)
             self.assertEqual([(b['function'], b['start'], b['count'], b['intervalSeconds']) for b in p['pollers'][1:]],
                              [(b['function'], b['start'], b['count'], b['intervalSeconds']) for b in device['pollers']])
             self.assertEqual(len(p['properties']) - 3, sum(len(b['channels']) for b in device['pollers']))
+            for energy_id in ('day-yield', 'total-yield'):
+                energy = next(x for x in p['properties'] if x['id'] == energy_id)
+                self.assertEqual(energy['unit'], unit)
+                self.assertEqual(energy['datatype'], 'integer')
+                self.assertEqual(energy['scale'], 1)
+                self.assertEqual(decode([0] * energy['offset'] + [0, 2], energy), 2)
             prop = next(x for x in p['properties'] if x['id'] == 'total-yield')
             self.assertEqual(prop['unit'], unit)
             self.assertEqual(prop['type'], 'uint32')

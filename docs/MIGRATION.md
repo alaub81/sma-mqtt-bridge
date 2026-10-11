@@ -168,3 +168,11 @@ Communication errors or an expired required status still affect availability. Th
 continues to report device warnings/errors independently. Existing custom profiles and explicit
 READY_PROPERTIES overrides must be reconciled separately. Production night/day/outage acceptance
 remains pending; these changes are verified through offline regressions.
+
+## Storage energy unit correction, 2026-10-11
+
+Storage (`sma-sbs3-7-10`, inverter2) day/total yield now publishes kWh instead of Wh. This deliberately overrides the official V13 labels based on the user's installation comparison; see REGISTER_VALIDATION.md. Raw numbers, scale 1, U32/FIX0 and Homie integer remain unchanged. No division or multiplication is applied.
+
+Rebuild/recreate the bridge to publish corrected retained `$unit` metadata for `measurements/dayyield` and `measurements/totalyield`. Apply the same correction to any host profile override. In openHAB, keep the existing Item names, groups, persistence and links; use `Number:Energy` with Unit metadata `kWh` and State Description pattern `%.0f %unit%` (or more display decimals if desired). Unit metadata controls quantity conversion; a display pattern alone does not correct a wrong source unit. Remove any workaround that compensates for the old Wh label by scaling the value. Check the next fresh update against the broker (raw 2 must become 2 kWh). If channel metadata remains stale, disable/re-enable the affected Homie Thing and verify again before considering rediscovery; preserve Item links.
+
+Historical samples stored under the wrong Wh interpretation are not repaired by this change. Determine the affected time window and actual persisted units before any database correction. Existing correctly recorded Modbus history must remain unchanged. Sources: [Homie binding](https://www.openhab.org/addons/bindings/homie/), [units of measurement](https://www.openhab.org/docs/concepts/units-of-measurement.html).

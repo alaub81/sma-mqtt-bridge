@@ -26,7 +26,7 @@ The [official SMA Modbus interface description](https://files.sma.de/downloads/S
 
 Unsigned values formerly decoded as signed in some Things now use the documented U32 type. A counter above 2³¹ must remain valid. U32 invalid is 0xFFFFFFFF; S32 invalid is 0x80000000; unavailable status is 0xFFFFFD. Invalid or unsupported values remain unavailable rather than becoming zero. Existing German condition/contactor/battery strings are preserved. Genuine negative signed measurements remain signed, so their old negative-to-zero/UNDEF transforms must be reviewed during parallel acceptance.
 
-**Energy units differ by model:** Tripower and Sunny Boy addresses 30531/30537 are whole kWh; Storage documents these addresses in Wh. Storage retains Wh on MQTT, allowing openHAB quantity conversion to kWh. The Tripower parameter UI leaves some measurement-unit cells blank: current/voltage/power/temperature dimensions are reconciled with the identified source channel, format and existing quantity Items; no new register is inferred from another model.
+**Energy units (corrected 2026-10-11):** All three bundled inverter profiles publish addresses 30531/30537 as whole kWh, with U32/FIX0, scale 1 and Homie integer. The Storage V13 list labels both registers Wh. This is an intentional deviation based on Andreas' installation observation: daily raw value 2 corresponds to 2 kWh discharged from the battery, and total-energy values also match kWh. The previous Wh metadata was incorrect for this installation; do not divide the raw values by 1000. This user-reported evidence does not establish behavior for other firmware or the adjacent 30535/30539 registers. Complete independent parallel acceptance remains pending. The Tripower parameter UI leaves some measurement-unit cells blank: current/voltage/power/temperature dimensions are reconciled with the identified source channel, format and existing quantity Items.
 
 Each original FC04 block and 3–180-second poller interval is preserved. Each property expires after the larger of its configured stale threshold and twice its effective poller interval; slower energy polls do not extend the freshness of fast power channels.
 
@@ -50,8 +50,8 @@ Each original FC04 block and 3–180-second poller interval is preserved. Each p
 | inverter1 | internal-temperature | 34113 | int32 | 0.1 | °C | 120.0 |
 | inverter2 | status | 30201 | uint32 | 1 | — | 60.0 |
 | inverter2 | grid-contactor | 30217 | uint32 | 1 | — | 60.0 |
-| inverter2 | day-yield | 30537 | uint32 | 1 | Wh | 180.0 |
-| inverter2 | total-yield | 30531 | uint32 | 1 | Wh | 180.0 |
+| inverter2 | day-yield | 30537 | uint32 | 1 | kWh | 180.0 |
+| inverter2 | total-yield | 30531 | uint32 | 1 | kWh | 180.0 |
 | inverter2 | current-bat-stat-charge | 30845 | uint32 | 1 | % | 30.0 |
 | inverter2 | current-batcapacity | 30847 | uint32 | 1 | % | 30.0 |
 | inverter2 | current-bat-temp | 30849 | int32 | 0.1 | °C | 120.0 |

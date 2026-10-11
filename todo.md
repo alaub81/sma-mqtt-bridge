@@ -555,3 +555,16 @@ Entscheidungen, eingegangene Unterlagen, erledigte Arbeiten und Prüfergebnisse 
 - [ ] Host-Profil-Overrides und explizite READY_PROPERTIES auf alte leistungsbasierte Kriterien prüfen. API/SEMP-, Home-Manager- und Portal-Kriterien einschließlich deaktivierter periodischer Portalabfragen separat beurteilen.
 - [ ] openHAB-Regeln, Berechnungen, Persistence und Anzeigen auf historische Werte prüfen, besonders Energiezähler/Offsets und Nachtleistung. Kein Einsatz alter retained Werte als frische Befehlsbestätigung; Live-Schreibtests nur nach konkretem Auftrag.
 - Abnahme ausdrücklich offen; die bisherigen 158 Offline-Tests ersetzen diese Produktionsprüfung nicht. Lokaler Commit auf Andreas' Wunsch; kein Push oder Deployment.
+
+### 2026-10-11 – Tagesertrag: Einheit und Datentyp nachgeprüft
+
+- Andreas meldet dayyield=2 mit Homie unit=Wh und datatype=integer; die Geräte-ID ist im Bild nicht sichtbar. Die gebündelten Profile verwenden bei Register 30537 für Tripower/Sunny Boy kWh, beim Storage Wh, jeweils uint32, scale=1 und Homie integer.
+- Offizielle Storage-Liste MODBUS-HTML_SBS3.7-6.0-10-V13.zip erneut heruntergeladen und geprüft: 30537 steht ausdrücklich mit zwei Registern, U32, FIX0 und Wh in der deutschen und englischen Tabelle. Auch 30535/30539 tragen dort Wh; ein möglicher Dokumentationsfehler bzw. abweichendes Geräteverhalten bleibt ohne Vergleich offen. U32/FIX0 bestätigt ganzzahlige Rohwerte, nicht IEEE-Float.
+- Offen: Gerätezuordnung des Screenshots und Vergleich des Tageszählers mit Geräteanzeige/openHAB. Falls der Storage tatsächlich ganze kWh liefert, benötigt die Abweichung von der veröffentlichten Liste einen dokumentierten Messnachweis. Keine Einheit oder Skalierung auf Verdacht geändert, kein Geräte-I/O oder Deployment. Reine Nachprüfung, daher keine Laufzeitänderung und kein erneuter Testlauf.
+
+### 2026-10-11 – Storage-Tages-/Gesamtenergie bewusst auf kWh korrigiert
+
+- Vorherige offene Gerätezuordnung geklärt: Andreas beschreibt die Batterieentladung und bestätigt Tagesrohwert 2 als 2 kWh sowie zur kWh-Einheit passende Gesamtenergie. Die Korrektur betrifft daher das SBS3.7-10-Storage-Profil (inverter2), nicht das bereits mit kWh konfigurierte SB4.0-PV-Profil.
+- Auf ausdrücklichen Wunsch beide Register 30537/30531 auf kWh geändert. Bewusste Abweichung von Wh in der offiziellen Storage-V13-Liste in Profilvalidierung, REGISTER_VALIDATION, Wertekatalog, Migrationsledger und MIGRATION dokumentiert. U32/FIX0, scale=1 und Homie integer bleiben erhalten; keine Umrechnung des Zahlenwerts. Historische Tagebucheinträge bleiben als damaliger Kenntnisstand erhalten.
+- Bestehende Profilregression erweitert: Tages-/Gesamtenergie aller drei Profile müssen kWh/integer/scale=1 haben und Rohwert 2 unverändert decodieren. openHAB-Anpassung und historische Fehlerwerte in MIGRATION beschrieben. Unabhängiger Livevergleich, Image-Update und Übernahme der Metadaten in openHAB bleiben offen; keine private Originalreferenz oder ENV geändert.
+- Validierung abgeschlossen: vollständiger Linter über 91 Dateien und alle 158 Offline-Tests bestanden; Diff-Hygiene bestanden. Erster Testlauf scheiterte ausschließlich an vier sandboxgesperrten Loopback-Socket-Tests, erlaubter Wiederholungslauf vollständig erfolgreich. Kein Deployment oder Push.
