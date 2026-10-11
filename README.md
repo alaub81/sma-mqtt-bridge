@@ -80,3 +80,6 @@ Homie node/property IDs are compact lowercase names, such as `internaltemperatur
 `settings/chargemode/set`; configured device IDs stay unchanged. On upgrade preserve the state
 volume for old retained-topic cleanup and update existing openHAB channel links and command
 publishers. Language changes affect labels only. See [configuration](docs/CONFIGURATION.md#display-language-and-compact-channel-ids).
+
+For MainUI charger Item metadata and a deployable charging-plan dialog, see
+[the openHAB setup guide](openHAB/openHAB.md).

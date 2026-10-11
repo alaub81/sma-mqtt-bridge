@@ -7,6 +7,7 @@ Das erste Python-Lesegrundgerüst einschließlich Homie ist implementiert und of
 - [ ] Eine Beispiel-Sitemap auf Basis der Beispiel-Items erstellen.
 - [ ] `README.md` aktualisieren und an den aktuellen Projektstand anpassen.
 - [ ] `.env` und `.env.example` abgleichen (im aktuellen Projekt `smab.env` und `smab.example.env`): Variablennamen, Vollständigkeit, Standardwerte und veraltete Einträge prüfen. Private Werte und Zugangsdaten nicht in die Beispieldatei übernehmen.
+- [ ] Die vorhandenen privaten ENV-Dateien zusammenführen und gegebenenfalls `.smab.env` als einheitlichen Dateinamen verwenden. Doppelte und widersprüchliche Einträge klären; Compose-Verweise, Git-/Docker-Ausschlüsse, Tests und Dokumentation anpassen. Die öffentliche Beispieldatei weiterhin getrennt und ohne Zugangsdaten halten.
 - [ ] Bei Home-Manager-Modbus-Betrieb beide Compose-Dateien vom Host-Netzwerk auf ein normales Docker-Bridge-Netzwerk umstellen. Ausgehende Verbindungen zu SMA-Geräten, MQTT und Portal sowie DNS/TLS auf dem Zielhost prüfen; keine eingehenden Portfreigaben für die Bridge erforderlich. UDP-Multicast als optionale Alternative dokumentieren und dessen gesonderte Netzwerkvoraussetzungen erhalten. Compose-Parität sicherstellen.
 - [x] Reconnect-Fähigkeit offline prüfen und härten: unabhängige Quellen, begrenzte Wiederholungsintervalle, Portal-Login-Dienstausfälle und echte MQTT-Bibliothek bei Verbindungsabbruch vor Empfangsbestätigung geprüft. Keine Befehlswiederholung. Am 10.10.2026 erledigt; reale Ausfallabnahme bleibt unten offen.
 - [ ] Produktionsabnahme auf dem Zielhost: Geräte-/Netzwerkausfälle, Broker-Neustart, TLS-Vertrauen, Container-Stop und Wiederanlauf kontrolliert prüfen; openHAB-Frische und Abhängigkeiten vergleichen. Externe Alarmierung für Broker-Ausfall und Docker-unhealthy einrichten; Compose startet einen noch laufenden unhealthy-Container allein nicht neu.
@@ -548,6 +549,7 @@ Entscheidungen, eingegangene Unterlagen, erledigte Arbeiten und Prüfergebnisse 
 
 - [ ] Alle Quellen prüfen: drei Wechselrichter, Home Manager, eCharger API/SEMP und Portal; Geräteverfügbarkeit, Einzelwert-Frische und Docker-Healthcheck getrennt bewerten.
 - [ ] PV-Nachtbetrieb, Sonnenaufgang und Tagesbetrieb vergleichen: frischer Status hält das Thing erreichbar; fehlende Produktion erzeugt weder künstliche Nullwerte noch CONFIGURATION_ERROR. Neue gültige Werte müssen den letzten retained Wert wieder aktualisieren.
+- [ ] Schlafmodus der Wechselrichter berücksichtigen: laut Andreas liefern untätige Geräte während des Schlafens möglicherweise keine Werte mehr, auch keinen frischen Status. Die aktuelle Status-Frischeprüfung allein genügt deshalb nicht. Pro Modell verifizieren, wie erwartetes Schlafen zuverlässig von Kommunikationsausfall unterschieden werden kann; fehlende Antworten oder Uhrzeit allein gelten nicht als Bestätigung. Homie sleeping und dessen openHAB-Darstellung prüfen, letzte retained Werte erhalten und Übergänge Einschlafen/Aufwachen sowie unerwarteter Ausfall im Schlafzustand abnehmen. Erkennungslogik und eventuelle zusätzliche SMAB_-Betriebsparameter erst anhand bestätigter Gerätebeobachtungen festlegen; Umsetzung bleibt offen.
 - [ ] Ungültige/fehlende/veraltete Einzelwerte einschließlich DC-Werten, Temperatur, Energie, Batteriewerten und Portalpräferenz prüfen: letzte gültige Werte bleiben in MQTT und openHAB sichtbar; nie gültige Werte erhalten keinen erfundenen Startwert. Diagnose muss das tatsächliche Alter bzw. die fehlende Frische weiterhin erkennen lassen.
 - [ ] Geräte-/Netzwerkausfall, Statusablauf, Gerätefehler/Warnung und Erholung prüfen: echte Ausfälle bleiben erkennbar, obwohl alte Messwerte erhalten bleiben. Ein ONLINE-Thing bzw. letzter Messwert allein darf nicht als aktuelle Messung verstanden werden.
 - [ ] MQTT-Ausfall, Wiederverbindung, Container-Neustart und openHAB-Neustart prüfen: Werterhaltung ohne Leer-Publikationen; Last Will/Status und Topic-Manifest bleiben korrekt. Frühere disposed-Handler-Warnungen und ONLINE mit CONFIGURATION_ERROR gezielt auf Wiederauftreten prüfen.
@@ -555,6 +557,19 @@ Entscheidungen, eingegangene Unterlagen, erledigte Arbeiten und Prüfergebnisse 
 - [ ] Host-Profil-Overrides und explizite READY_PROPERTIES auf alte leistungsbasierte Kriterien prüfen. API/SEMP-, Home-Manager- und Portal-Kriterien einschließlich deaktivierter periodischer Portalabfragen separat beurteilen.
 - [ ] openHAB-Regeln, Berechnungen, Persistence und Anzeigen auf historische Werte prüfen, besonders Energiezähler/Offsets und Nachtleistung. Kein Einsatz alter retained Werte als frische Befehlsbestätigung; Live-Schreibtests nur nach konkretem Auftrag.
 - Abnahme ausdrücklich offen; die bisherigen 158 Offline-Tests ersetzen diese Produktionsprüfung nicht. Lokaler Commit auf Andreas' Wunsch; kein Push oder Deployment.
+
+### 2026-10-10 – openHAB-Charger-Items und Ladeplan-Widget
+
+- openHAB/openHAB.md und direkt kopierbare openHAB/charging-plan.yml angelegt. Anleitung dokumentiert MainUI-Metadaten für Lademodus, LED-/Ambient-Helligkeit, PV-Anteil, Befehlsrückmeldungen und Ladeplan, ohne bestehende Item-Namen, Gruppen oder Persistence vorzugeben. Öffentliche Anleitung auf Englisch, Widget-Beschriftungen Deutsch; README verlinkt den Ordner.
+- PV-Anteil: Andreas bestätigt die erfolgreiche Korrektur von Number:Dimensionless auf Dimmer. Der schreibbare Homie-%-Channel verwendet in openHAB 5.2.1 PercentageValue; die vorherigen Formatierungsversuche lösten den Skalierungsfehler nicht. Für den Dimmer keine Unit-Metadaten, direkte numerische Eingabe 0–100, useDisplayState=false, ausdrücklicher Senden-Button und autoupdate=false dokumentiert. Die bisherigen 0,6-%-Werte sind keine korrekte historische 60-%-Messung; eventuell vorhandene Persistence-Daten müssen separat bewertet werden.
+- Wiederverwendbare Ladeplan-Karte und Listenzeile mit Popup in einer version:1-YAML-Datei. Drei Item-Parameter statt privater UIDs; Installation unter dem openHAB-Konfigurationsordner yaml/. Positive endliche Zielenergie und zukünftige Endzeit werden nur in lokalen Widget-Variablen vorbereitet. ISO-Zeit mit Sekunden und Browser-Zeitzone wird angezeigt; ausdrücklicher Button plus Bestätigungsdialog sendet genau ein kombiniertes JSON. Kein separater Parameter-/Modussetter, keine Aktion beim Laden oder Eingabefeldwechsel. Aktiver Planmodus, unbekannte Modi/Rückmeldungen und pending/uncertain/blocked-Zustände sperren die UI-Aktion; initial NULL/UNDEF-Rückmeldung wird zugelassen. Geräteprüfung und Frische bleiben Aufgabe der Bridge.
+- Validierung: vollständiger Linter über 91 Dateien bestanden. Offline-Prüfung der tatsächlichen Widget-Ausdrücke mit Node/Day.js bestätigt Zahlenpayload, ganze Sekunden, Sommer-/Winter-Offsets für Europe/Berlin sowie Sperren bei ungültiger Energie, abgelaufener Endzeit, aktivem Plan und unklaren/laufenden Befehlen. YAML-Code in der Anleitung entspricht der deploybaren Datei. Vollständige bestehende Offline-Tests bestanden. Diese Prüfungen ersetzen keine Ausführung im MainUI-Renderer.
+- Offen: Datei auf dem Zielsystem laden, drei Item-Parameter auswählen, Popup/Darstellung und Browser-Zeitzone in MainUI prüfen. Sommerzeit-Sprung und doppelte lokale Uhrzeiten besonders beachten. Live-Ladeplan-/Readback-Abnahme bleibt eine separate ausdrücklich beauftragte Schreibaktion. Kein Gerätebefehl, produktives Deployment, Commit oder Push erfolgt.
+
+### 2026-10-10 – Ladeplan-Eingabeliste im Item-Detail korrigiert
+
+- Andreas meldet einen gerenderten Dialog ohne sämtliche Listenfelder. Liste auf die native f7-list umgestellt und explizite config-Maps an allen Komponenten ergänzt. Die bisherige oh-list besitzt einen eigenen MainUI-Editorpfad, der auf die Config des Elternknotens zugreift; fehlende Eltern-Config wurde im offiziellen 5.2.1-Quellcode als problematischer Zugriff gefunden. Doppelte Kartenüberschrift entfernt. Dokumentierter YAML-Code synchron aktualisiert.
+- Eingabevariablen, JSON-Befehl und Guards unverändert. YAML/Linter und bestehende Offline-Tests werden erneut geprüft; Rendering-Abnahme auf dem Zielsystem bleibt offen. Keine Geräteaktion.
 
 ### 2026-10-11 – Tagesertrag: Einheit und Datentyp nachgeprüft
 
@@ -595,3 +610,198 @@ Entscheidungen, eingegangene Unterlagen, erledigte Arbeiten und Prüfergebnisse 
 - Auf ausdrücklichen Wunsch bleibt ausschließlich die Home-Manager-Modbus-Quelle beim ersten Einlesen init. Begrenzung durch bestehendes SMAB_READ_CYCLE_TIMEOUT_SECONDS (Standard 120 Sekunden) ab Quellenerstellung. Vollständige frische Readiness beendet die Initialisierung; Fristablauf wird stale, Anfragefehler sofort error und beenden die Startphase. Keine erneute Schonfrist bei Wiederverbindung, keine Änderung an Messwert-Frischegrenzen oder Gerätebefehlen.
 - Regression prüft Teilantworten ohne falsche Ausfall-/Erholungslogs, erste Readiness, späteren Ablauf, ausbleibende Anfangswerte und unmittelbare Fehlerpriorität. Zielsystem-Abnahme mit neu gebautem Image bleibt offen. Validierung folgt.
 - Validierung abgeschlossen: vollständiger Linter über 91 Dateien und alle 160 Offline-Tests bestanden; nach Ergänzung des Abbruchs bei ausschließlich unbrauchbaren Antworten alle 20 Stabilitätstests erneut bestanden. Diff-Hygiene bestanden. Kein Geräte-I/O, Deployment oder Push; Änderung noch nicht committet.
+
+### 2026-10-11 – Rückmeldung zur Storage-Energie und Ladeplan-Abnahme
+
+- Andreas bestätigt den beschriebenen Storage-Energievergleich als passend: Tages-/Gesamtenergie in kWh mit unverändertem Zahlenwert. Dieser Prüfschritt ist laut Nutzerrückmeldung erledigt; kein zusätzlicher eigener Livevergleich durchgeführt.
+- Ladeplan: Andreas meldet, dass der Plan an der Wallbox ankommt, der Modus jedoch nicht aktiviert wird. Offen: Befehlsrückmeldung und Modusverlauf prüfen, um ausbleibende Aktivierung von unmittelbarer Rückkehr auf PV-Modus zu unterscheiden. Der kombinierte Planpfad soll nach bestätigtem Rücklesen beider Planwerte separat Modus 4720 aktivieren; Ladefreigabe bleibt separat. Vollständige Ladeabnahme weiterhin offen; kein weiterer Gerätebefehl ausgeführt.
+- Ergänzende Nutzerrückmeldung: Fahrzeug angeschlossen, PV-Modus und Ladefreigabe aktiv; Plan mit 1 kWh und Endzeit heute 15 Uhr bei bereits 8,82 kWh Sitzungsenergie gesendet. Ein bereits erfülltes sitzungsbezogenes Ziel bleibt die plausible Erklärung, ist aber ohne Modus-/Befehlsverlauf oder Vergleich in frischer Sitzung nicht bestätigt. Offizielle SMA-Anleitung bestätigt nur den automatischen PV-Rückwechsel nach Zielerreichung, nicht ausdrücklich die Bezugsbasis der lokalen API. Keine automatische Addition oder erneute Modusaktivierung vorgenommen.
+- Weiterer Nutzertest: Nach Eingabe von 10 kWh meldet Andreas aktives „Laden mit Zielvorgabe“. Damit ist die Modusaktivierung für diesen Versuch laut Nutzerrückmeldung bestätigt. Zusammen mit 8,82 kWh zuvor geladener Sitzungsenergie und dem nicht bestehenbleibenden 1-kWh-Ziel spricht dies für ein Gesamtziel der laufenden Sitzung. Noch offen: tatsächlicher Energiezuwachs, Sitzungszähler bei Zielerreichung und automatischer Rückwechsel auf PV-Modus; zusätzliche 10 kWh sind damit nicht ausgeschlossen bzw. die Bezugsbasis noch nicht abschließend abgenommen. Kein eigener Gerätebefehl oder Laufzeitänderung.
+
+### 2026-10-11 – Vorschlag für eCharger-Garagenwidget
+
+- Andreas möchte zunächst relevante Anzeigen und Einstellmöglichkeiten für ein persönliches openHAB-List-Widget abstimmen, orientiert an der SMA Energy App und neben den vorhandenen BMW-Fahrzeugwidgets. Noch kein Widget implementiert und keine Geräteaktion angefordert.
+- Vorschlag zur Abstimmung: kompakte Zeile mit Fahrzeug-/Ladestatus, Leistung, Lademodus und Sitzungsenergie; Detailansicht mit Schnellladen/PV/Zielladen/Ladestopp, separater Ladefreigabe, geplantem Energie-/Zeit-Ziel sowie PV-Mindestanteil. Kabelverriegelung, Freigabepflicht, Licht und Stop-bei-voll in einen nachgeordneten Einstellbereich.
+- Offizielle SMA-App-Seite, eCharger-Lademodus-Anleitung, Home-Manager-Verbraucherkonfiguration und openHAB-oh-list-item-Dokumentation konsultiert. Repository bestätigt lokale Mess-/Einstellkanäle, getrennte Portal-PV-Einstellung und kombinierte Planbefehle. Private CONTEXT.local.md und reference-Verzeichnis sind in diesem Checkout nicht vorhanden; keine Originalreferenzen verändert.
+- Fachliche Grenzen: PV-Mindestanteil ist eine Vorgabe, keine gemessene Solarquote; Ladefreigabe ist vom Lademodus getrennt; Ladeziel-kWh ist kein Fahrzeug-SoC. Semantik des Plans bei bereits geladener Sitzungsenergie bleibt offen. Veraltete Messwerte sichtbar kennzeichnen; Sitzungsenergie nicht ungeprüft als Planfortschritt verwenden. Stop-Verzögerung derzeit nur lesbar, keine freie Leistungsbegrenzung im bestätigten Bedienumfang.
+- Offen: gewünschter Umfang der kompakten Zeile/Detailansicht, tatsächliche openHAB-Item-Zuordnung und visuelle Abstimmung mit dem BMW-Widget. Die YAML-Quelle des BMW-Widgets wurde in dieser Sitzung nicht bereitgestellt. Live-Abnahme der einzelnen Schreibfunktionen bleibt separat erforderlich.
+- Validierung: reine Bestandsaufnahme und Konzept, keine Laufzeitänderung und daher kein neuer Linter-/Testlauf; keine Geräte-/MQTT-Kommunikation, kein Deployment oder Push.
+
+### 2026-10-11 – Logs/Anzeigenamen bestätigt und Ladeplan-Darstellung korrigiert
+
+- Andreas bestätigt Logs und Anzeigenamen als passend; diese Zielsystem-Prüfschritte sind laut Nutzerrückmeldung erledigt.
+- Screenshot zeigt fehlende Untertitel für Endzeit mit Zeitzone, bestätigten Plan und Rückmeldung sowie überlappenden Hinweistext. Eingaben bleiben in einer eigenen normalen f7-list; Ausgaben erhalten eine separate mediaList für Untertitel. Hinweis als Block mit Zeilenhöhe und Abstand zum Button formatiert. Deploybare YAML und Anleitung synchronisiert; Befehlsausdrücke unverändert.
+- Erneute Darstellung im tatsächlichen MainUI-Renderer bleibt zu prüfen; keine Geräteaktion oder produktive Installation durchgeführt. Vollständiger Linter über 91 Dateien, alle 160 Offline-Tests und Diff-Hygiene bestanden. Vier Loopback-Tests benötigten den erlaubten Wiederholungslauf außerhalb der Socket-Sandbox.
+
+## 2026-10-11 – Untersuchung des aktuellen Lademixes
+
+- Andreas beauftragt die Prüfung des in der SMA Energy App angezeigten aktuellen PV-/Batterie-/Netzanteils.
+- Portal-Anmeldung und konfigurierte Wallbox-Identität lesend geprüft. Öffentlichen offiziellen Portal-Code für die Endpunktanalyse untersucht; keine Befehle gesendet.
+- Bestätigt: E-Mobilitäts-Livewidget liefert Leistung, Sitzungsenergie, Status und letzten Kontakt, aber keinen Lademix.
+- Bestätigt: Anlagen-Verbrauchsbilanz liefert für die konfigurierte Wallbox `pvPercentage`, `batteryPercentage` und `gridPercentage` unter den Zeitraum-Summen. Das sind historische Energieanteile; keine Bestätigung des aktuellen Lademixes. Abfrage ohne Zeitraum abgewiesen.
+- Offen: tatsächlichen Leseendpunkt der mobilen App samt Aktualität, Einheiten und Gerätezuordnung ermitteln. Tagesanteile und Mindest-PV-Einstellung dürfen nicht als aktueller Lademix veröffentlicht werden.
+- Keine Laufzeitänderung, zusätzliche regelmäßige Abfrage, MQTT-Veröffentlichung oder Änderung privater Originalreferenzen. Keine Zugangsdaten, privaten Kennungen oder Rohantworten übernommen.
+- Validierung: Linter vollständig bestanden; alle 160 Offline-Tests bestanden. Vier Loopback-Tests benötigten wegen der Sandbox-Socketbeschränkung einen erneuten Lauf außerhalb der Sandbox.
+
+### 2026-10-11 – Abstand und Rahmen der Ladeplan-Eingaben
+
+- Andreas bestätigt verbesserte Untertitel-Darstellung; Datum/Uhrzeit sitzen im Screenshot noch zu dicht an der Ausgabe. Safari als Ursache nicht belegt. Beide Eingaben erhalten den dokumentierten outline-Modus, 48px Eingabehöhe und eigene vertikale Abstände; Abstand zwischen Eingabe- und Ausgabeliste vergrößert. Anleitung synchronisiert.
+- Sichtbare Datumssegmente bei gleichzeitig „Bitte Endzeit wählen“ beweisen keine gesetzte Widget-Variable; mögliche native Platzhalterdarstellung oder noch nicht übernommene Eingabe weiterhin am Browser prüfen. Keine Zeitvorgabe automatisch eingesetzt und keine Befehlslogik verändert. MainUI-/Safari-Darstellung bleibt zur Abnahme offen.
+- Validierung: vollständiger Linter über 91 Dateien, alle 160 Offline-Tests und Diff-Hygiene bestanden. Keine produktive Installation oder Geräteaktion.
+
+### 2026-10-11 – Ladeplan kompakter und Rückmeldung eingeordnet
+
+- Eingabehöhe auf 36px und vertikale Abstände auf 0/8px reduziert; Listenzeilen erhalten 4px vertikalen Innenabstand. Rahmen bleiben erhalten. Darstellung erneut in MainUI prüfen.
+- Rückmeldung ist commands/local-result: gemeinsam für lokale Einstellungen und Ladeplan, nicht Portal. Portal verwendet eine eigene Rückmeldung. Alte lokale Rückmeldung kann von einem anderen Befehl stammen; Beschriftung macht dies ausdrücklich sichtbar und bestätigt keine aktuelle Eingabe. Plananzeige als zuletzt bestätigten Plan bezeichnet. Keine Auftragskorrelation vorgetäuscht und keine Befehlslogik geändert. Anleitung synchronisiert.
+- Validierung: vollständiger Linter und alle 160 Offline-Tests bestanden; Diff-Hygiene bestanden. Kein Deployment oder Gerätebefehl.
+- Andreas klärt die Endzeit-Anzeige: Nach tatsächlicher Auswahl der Zeit erscheint der Wert mit Zeitzone. Kein nachgewiesener Fehler der Eingabeübernahme; weitere Korrektur dafür nicht erforderlich. Kompakte Darstellung laut Nutzer vorerst akzeptiert. Frühere Vermutung einer defekten Kontrollanzeige damit geklärt.
+- Abschließende MainUI-Rückmeldung: Andreas bestätigt die Darstellung als passend. Screenshot belegt gewählte lokale Endzeit 11:38 und passende Kontrollanzeige 2026-10-11T11:38:00+02:00. Darstellung und Endzeit-Anzeige damit laut Nutzer live geprüft; dies bestätigt keinen neuen Ladeplanauftrag oder Abschluss der physischen Ladeabnahme.
+
+### 2026-10-11 – Erster eCharger-List-Widget-Entwurf
+
+- Auf Andreas’ Wunsch eigenständigen Entwurf mit UID sma_echarger_comfort_list und Detail-Popup sma_echarger_details unter openHAB/ erstellt. Enthält kompakte Status-/Modus-/Leistungs-/Sitzungsenergiezeile, grüne Detailkarte, große Modusschaltflächen, separate Freigabe, kombinierten Ladeplan, vorbereiteten PV-Regler und aufklappbare Komforteinstellungen.
+- Lieferung als gemeinsame Datei echarger-comfort.yml für openHAB-conf/yaml sowie zwei identische native MainUI-Editorquellen; Import, Garage-Ergänzung und vollständige Item-/Kanalzuordnung in echarger-comfort.md beschrieben. Vorhandene Ladeplanbeispiele und fremde Arbeitsänderungen erhalten.
+- Demo standardmäßig aktiv, echte Bedienung standardmäßig deaktiviert. Im Demo-Modus nur lokale Variablen; keine Gerätebefehle. Echte lokale/Portalbedienung benötigt unabhängig passenden ready-Status und bekannte, nicht unsichere Befehlsrückmeldung. Eingaben/Regler sind ausschließlich Variablen; Plan/PV erst nach explizitem Übernehmen, kein direkter 4720- oder Einzelplan-Setter. Keine Bridge-Gates oder Bestands-Items geändert.
+- Offizielle openHAB-Dokumentation für persönliche/file-defined Widgets, List Item, Eingaben, Slider, Variablen und Aktionen konsultiert. Anzeige verwendet vorhandene Quantity-DisplayStates; unbekannte Werte bleiben Platzhalter. Quellenstatus ist keine garantierte Einzelwert-/Broker-Frische; entsprechende Grenze dokumentiert. Planfortschritt wird wegen offener Sitzungssemantik nicht erfunden.
+- Validierung: Bundle und native Editorquellen strukturell identisch; 752 JavaScript-Auswertungen in acht synthetischen Szenarien erfolgreich, einschließlich Demo, fehlender Items, Anzeige-Modus, normaler Bedienung, pending/uncertain, veralteter Quellen, ungültiger Eingaben und aktivem Plan. Datums-Fassade prüft nur Ausdruckszweige, keine MainUI-Zeitzonenakzeptanz. Vollständiger Linter über 95 Dateien bestanden, Diff-Hygiene bestanden. Alle 160 Offline-Tests erfolgreich nach erlaubter Wiederholung für vier sandboxgesperrte Loopback-Tests; aiomqtt meldet im absichtlichen Verbindungsabbruchtest zusätzlich eine Future-Warnung ohne Testfehler.
+- Offen: visuelle Abnahme im echten Desktop-/Mobil-MainUI, Popup/Akkordeon/Slider-Verhalten und tatsächliche Item-Auswahl. BMW-Widgetquelle fehlt weiterhin zur exakten Stilabstimmung. Keine Installation in openHAB, kein Gerätebefehl, Deployment, Commit oder Push ausgeführt.
+
+### 2026-10-11 – Garagenwidget als einzelne YAML-Datei bereitgestellt
+
+- Andreas möchte Dateiinstallation unter yaml/widgets statt manueller MainUI-Imports. Vorhandenes vollständiges Widget-Bundle nach openHAB/yaml/widgets/echarger-comfort.yml verschoben; eine Datei enthält version=1 und beide Widgetdefinitionen. Installationsanleitung auf genau diesen Zielpfad angepasst. Die optionalen nativen Editorquellen bleiben erhalten, sind für die Dateiinstallation aber nicht erforderlich.
+- Offizielle openHAB-YAML-Dokumentation bestätigt rekursives Einlesen von Unterverzeichnissen. Kopierziel: OPENHAB_CONF/yaml/widgets/echarger-comfort.yml bzw. Docker-Konfigurationsmount /openhab/conf/yaml/widgets/. Kein manuelles Anlegen der beiden Widgets erforderlich; doppelte UIDs vermeiden.
+- Widgetinhalt, Demo-Modus und Befehlsverhalten unverändert. Keine openHAB-Installation oder Geräteaktion ausgeführt. Validierung folgt.
+- Verpackung validiert: beide Definitionen identisch mit dem bereits geprüften Entwurf; vollständiger Linter über 95 Dateien und alle 160 Offline-Tests erfolgreich, Diff-Hygiene erfolgreich. Visuelle MainUI-Abnahme bleibt offen.
+
+### 2026-10-11 – Ladefreigabe und Modus direkt im Garageneintrag
+
+- Auf Andreas’ Wunsch Basisbedienung aus dem ausschließlich per Popup erreichbaren Bereich direkt in den List-Widget-Eintrag gezogen. Ladefreigabe mit markiertem Freigeben/Sperren und vier Modus-Schaltflächen sind immer präsent; aktive Modi tragen eine Haken-Markierung. Zielladen öffnet weiterhin den kombinierten Plan-Dialog, ohne direkten 4720-Befehl.
+- Bei PV-Modus 4719 erscheint unmittelbar darunter der Prozentregler einschließlich vorbereitetem PV-/Netzanteil und explizitem Übernehmen. Schnellladen, Zielladen und Stopp blenden diesen Bereich aus; zusätzlicher Aktionsschutz verhindert PV-Befehle außerhalb des PV-Modus. Echte Markierungen/Sichtbarkeit folgen dem bestätigten Item-Zustand, nicht einer optimistischen Umschaltung.
+- Demo-Freigabe nun tatsächlich umschaltbar. oh-context isoliert Inline-/Popup-Variablen je Instanz und initialisiert den PV-Entwurf aus der vorhandenen Vorgabe. Garageneintrag als HTML-li mit explizitem Details-Link aufgebaut, damit Bedientasten keinen übergeordneten Popup-Klick auslösen. Detail-Popup übernimmt dieselben Markierungen und bedingte PV-Anzeige. Dateiinstallation und Widget-UIDs unverändert; native Editorquellen synchron gehalten.
+- Offizielle openHAB-Referenzen für List/HTML-Komponenten, Slider, oh-context und Variablen konsultiert. Installations-/Verhaltensdokumentation angepasst. Bediengates, Staging, unabhängige Portalprüfung und Bridge-Readback bleiben erhalten; kein Gerätebefehl ausgeführt.
+- Validierung: Bundle/Editor-Parität, 1544 JavaScript-Auswertungen über acht synthetische Szenarien sowie gezielte Sichtbarkeits-/Aktionsprüfungen aller vier Modi und beider Freigabezustände erfolgreich. Vollständiger Linter über 95 Dateien und alle 160 Offline-Tests erfolgreich; Diff-Hygiene erfolgreich. Darstellung und Touch-Verhalten im tatsächlichen MainUI bleiben zur Nutzerabnahme offen.
+
+### 2026-10-11 – Zielladen inline, separates Widget-Popup entfernt
+
+- Andreas stimmt der vollständig inline bedienbaren Variante zu. Zielladen-Schaltfläche klappt Energie-/Abfahrtsformular im Garageneintrag auf; Öffnen verändert nur planOpen, nicht den Gerätemodus. Entwurf wird ausdrücklich vom tatsächlich aktiven Zielladen unterschieden. Erst explizites Übernehmen sendet den bestehenden kombinierten Ladeplan.
+- Aktiver Modus 4720 hält das Formular sichtbar; zum Ersetzen eines aktiven Plans weiterhin erst ausdrücklich auf PV/Schnellladen/Stopp wechseln. Diese Modusschaltflächen schließen manuell geöffnete Planentwürfe. PV-Regler bleibt für bestätigten PV-Modus verfügbar. Weitere Einstellungen klappen direkt im Eintrag auf; beide getrennten Befehlsrückmeldungen sind inline zugänglich.
+- Eigenes Detail-Popup und alle actionModal-Verweise aus dem Bundle entfernt, obsolete native Detail-Editorquelle gelöscht. Die eine Datei unter openHAB/yaml/widgets/echarger-comfort.yml enthält jetzt ausschließlich sma_echarger_comfort_list; vorhandene Garage-Einbindung unverändert. Bestehende unabhängige smabChargingPlan-Beispiele erhalten.
+- Offizielle openHAB-Referenzen für Variablen und clearVariable konsultiert. Installations-/Verhaltensdokumentation und native List-Editorquelle synchronisiert. Keine Geräteaktion, openHAB-Installation oder Bridge-Konfigurationsänderung vorgenommen.
+- Validierung: Bundle/Editor-Parität und Abwesenheit eigener Popup-Aktionen geprüft; 680 JavaScript-Auswertungen über acht Szenarien sowie gezielte PV-/Freigabe-/Plan-Sichtbarkeitsprüfungen aller vier Modi erfolgreich. Öffnen/Schließen des Formulars sendet keinen Befehl; aktiver Plan bleibt sichtbar. Vollständiger Linter über 94 Dateien und alle 160 Offline-Tests erfolgreich; Diff-Hygiene erfolgreich. Visuelle MainUI-Abnahme bleibt offen.
+
+### 2026-10-11 – Garagenwidget textlich reduziert und Iconify ergänzt
+
+- Andreas wünscht Ladestationssymbol mit Auswahl, klare Unterscheidung von Ladefreigabe/Sperren/Ladestopp, dezente Rückmeldung und wesentlich weniger Text bei PV/Zielladen. Standard auf Iconify mdi:ev-station geändert; chargerIcon erlaubt tabler:charging-pile und mdi:ev-plug-type2 als Alternativen. Grün beim Laden, Grau sonst, Rot bei Ladepunktfehler, Orange bei unbekannter/veralteter Messquelle. Demo-Sperren setzt Status/Leistung jetzt konsistent auf gesperrt/0 kW.
+- Ladefreigabebereich heißt Ladeberechtigung, Schaltflächen Erlauben/Sperren mit kurzen Tooltips. Offizielle SMA-Dokumentation bestätigt Autorisierung/Zugriffsschutz separat vom Lademodus. Ladestopp beendet den Ladevorgang, während Autorisierung und Modus unabhängig bleiben; keine automatische gemeinsame Geräteaktion hinzugefügt.
+- Großen Rückmeldekasten entfernt. PV zeigt nur Prozentwert, Regler und Übernehmen; lange bestätigte PV-/Netzanteiltexte und Portalabsätze entfernt. Zielladen auf Zielenergie, Abfahrtszeit mit kompaktem UTC-Offset im Eingabetitel, kurze Aktiv-/Entwurfsanzeige und Übernehmen reduziert. Weitere Einstellungen und Headerlink in neutralem Grau #8e8e93 mit dezent grauem Hintergrund.
+- Kleine Haken neben Übernehmen verlangen frische Quellen, confirmed/already-confirmed und passende aktuelle Eingaben/Gerätewerte. Plan zusätzlich nur bei aktivem 4720 mit passender kWh-/Wh-Energie und identischem Zielzeitpunkt. Änderungen am Entwurf oder falsche Einheiten entfernen den Haken; alte shared-result-Bestätigung allein reicht nicht. Demo-Haken sind ausdrücklich als Demo markiert und an den lokal übernommenen Entwurf gebunden. Unsicherheit/Fehler bleiben als kurze Hinweise erhalten, Bediengates und kein automatisches Wiederholen unverändert.
+- Offizielle openHAB-oh-icon-Dokumentation und drei Iconify-Symbolseiten konsultiert; Iconify-Cache-/Onlineabhängigkeit dokumentiert. Bundle/native Editorquelle synchronisiert und Installationsdatei/Widget-UID unverändert. Keine Bestands-Items, Geräte oder Bridge-Konfiguration geändert.
+- Validierung: Bundle/Editor-Parität, 680 JavaScript-Auswertungen über acht synthetische Szenarien, gezielte Plan-/PV-/Freigabeprüfungen sowie Haken bei übereinstimmenden Werten, Entfernen nach Änderungen/falschen Einheiten, Unsicherheitsanzeige und alle vier Iconfarben erfolgreich. Vollständiger Linter über 94 Dateien und alle 160 Offline-Tests bestanden; Diff-Hygiene bestanden. Echtes MainUI-Rendering einschließlich Iconify und Geräteaktionen weiterhin nicht abgenommen.
+
+### 2026-10-11 – Mobile Button-Anordnung und Fahrzeuganschlussanzeige
+
+- Auf Andreas’ Wunsch bleibt die Zielladen-Schaltfläche immer kurz mit Zielladen beschriftet. Entwurf steht nur noch im geöffneten Formular und kennzeichnet dort noch nicht übernommene Eingaben.
+- Testlayout mit Icons links und mittig gesetzten Texten für alle Schaltflächen umgesetzt. Dokumentierten default-Slot von oh-button verwendet; 44 px Höhe, symmetrischer Textabstand und responsives Raster für Ladeberechtigung/Modi. Weitere Einstellungen behält eine konstante Beschriftung.
+- Neue Anschlussanzeige mit iconify:mdi:ev-plug-type2 nutzt das vorhandene Fahrzeugstatus-Item: Verbunden / wartend und Lädt bedeuten angeschlossen (grün), Nicht verbunden bedeutet kein Auto angeschlossen (grau). Gesperrt, Fehler, unbekannte Zustände oder nicht bereite Messquelle zeigen Anschluss unbekannt (orange); keine Ableitung aus Ladeberechtigung oder Leistung. Quellenstatus garantiert weiterhin keine Einzelwertfrische. demoConnected erlaubt eine getrennte Demo ohne angeschlossenes Fahrzeug.
+- Offizielle openHAB-Referenzen für oh-button/default-Slot und oh-icon konsultiert. Bundle/native Editorquelle und Anleitung synchronisiert. Befehlsaktionen und Bediengates erhalten; keine Geräteaktion oder Installation ausgeführt.
+- Validierung: Bundle/Editor-Parität, 688 JavaScript-Auswertungen über acht Szenarien und gezielte Anschluss-/Demo-/Buttonprüfungen bestanden. Vollständiger Linter über 94 Dateien, alle 160 Offline-Tests und Diff-Hygiene bestanden. Visuelle Abnahme auf iOS einschließlich größerer Schrift und tatsächlichem MainUI-Rendering bleibt offen.
+
+### 2026-10-11 – PV-Regler beim Öffnen von Zielladen ausblenden
+
+- Andreas meldet, dass der PV-Mindestanteil beim Öffnen des Zielladeformulars stehen bleibt. Ursache: Sichtbarkeit prüfte ausschließlich den Gerätemodus, der bis zum Übernehmen weiterhin PV sein kann. Sichtbarkeit ergänzt um nicht geöffneten Planentwurf; nach Schließen erscheint der Regler bei weiterhin aktivem PV wieder.
+- Bundle und native Editorquelle synchronisiert. Offizielle openHAB-Dokumentation zur bedingten Komponenten-Sichtbarkeit konsultiert. Gezielte Prüfung für geöffneten/geschlossenen Planentwurf in Demo und Echtmodus über alle vier Modi sowie 688 Ausdrucksauswertungen erfolgreich. Keine Gerätebefehle ausgeführt.
+- Abschlussvalidierung: vollständiger Linter über 94 Dateien und alle 160 Offline-Tests bestanden; vier sandboxgesperrte Loopback-Tests nach erlaubter Wiederholung erfolgreich. Markdown und Diff-Hygiene bestanden. MainUI-Sichtprüfung durch Andreas bleibt offen.
+
+### 2026-10-11 – Kompakte Buttons und Ladestopp zuletzt
+
+- Auf Andreas’ Wunsch Reihenfolge der Modi auf PV-Überschuss, Schnellladen, Zielladen, Ladestopp geändert. Vollständige Button-Blöcke verschoben; Aktionen und Bediengates bleiben erhalten.
+- Icons und Texte bilden jetzt eine gemeinsam zentrierte Gruppe mit 6 px Abstand. Absolute Iconposition und breite Textpolster entfernt. Ladeberechtigung/Modi verwenden zwei gleich breite Spalten ohne Mindestbreite, damit auf schmalen iPhone-Displays zwei Buttons nebeneinander passen. Touchhöhe bleibt 44 px; lange Texte erhalten weiterhin einen Überlaufschutz.
+- Bundle/native Editorquelle und Anleitung synchronisiert. 688 Ausdrucksauswertungen, zusätzliche Reihenfolge-/Layoutprüfungen und Parität erfolgreich. Tatsächliche iOS-Darstellung bleibt zur Nutzerprüfung offen; keine Gerätebefehle ausgeführt.
+- Abschlussvalidierung: vollständiger Linter über 94 Dateien, alle 160 Offline-Tests, Markdownprüfung und Diff-Hygiene bestanden.
+
+### 2026-10-11 – Einstellungseinrückung reduziert, Buttons kleiner und PV-Skala
+
+- Andreas zeigt einen iPhone-Screenshot: Einstellungszeilen verlieren durch die verschachtelte Listendarstellung unnötig Breite. Lokale Framework7-Variablen für List-in-List-Einrückung, horizontale Item-/Media-Abstände auf null gesetzt; keine globale UI-Stiländerung.
+- Schaltflächenhöhe von 44 auf 40 px, Beschriftung von 13 auf 12 px und Button-Icons von 18 auf 16 px reduziert. Zweispaltige Modusanordnung und Aktionen erhalten.
+- Native PV-Skala wieder aktiviert mit zehn Intervallen (Markierungen 0 bis 100 in 10-%-Abständen); Eingabeschritt bleibt 1 %. Offizielle openHAB-Slider-/List-/CSS-Referenzen und Framework7-Dokumentation/Skalenimplementierung konsultiert. Bundle/native Editorquelle und Anleitung synchronisiert.
+- 688 Ausdrucksauswertungen und Parität erfolgreich. Optische Abnahme der Einrückung und Skala in der iOS-App bleibt offen. Keine Geräteaktion ausgeführt.
+- Abschlussvalidierung: vollständiger Linter über 94 Dateien, alle 160 Offline-Tests, Markdownprüfung und Diff-Hygiene bestanden.
+
+### 2026-10-11 – Zielladen-Auswahl in Demo korrekt markieren
+
+- Andreas meldet weiterhin grün gefülltes PV beim Öffnen von Zielladen in der Demo. Die Demo-Buttondarstellung berücksichtigt jetzt planOpen: Zielladen erhält Füllung/Haken, alle anderen Modi eine Umrandung. Beim Schließen wird wieder der vorherige Demo-Modus markiert; nach Übernehmen bleibt das bestätigte Demo-Zielladen aktiv.
+- Ausschließlich Demo-Auswahloptik angepasst. Im Echtbetrieb zeigen Füllung/Haken weiterhin den bestätigten Gerätemodus; Formularöffnung sendet unverändert keinen Befehl. Native Editorquelle und Bundle synchronisiert.
+- 688 Ausdrucksauswertungen, Parität sowie zusätzliche Füllungs-/Umrandungs-/Iconprüfungen aller vier Modi mit offenem/geschlossenem Formular in Demo und Echtbetrieb erfolgreich. Keine Geräteaktion ausgeführt.
+- Abschlussvalidierung: vollständiger Linter über 94 Dateien, alle 160 Offline-Tests, Markdownprüfung und Diff-Hygiene bestanden. Visuelle Demo-Abnahme in MainUI bleibt offen.
+
+### 2026-10-11 – Zielladen-Eingabefelder etwa ein Drittel niedriger
+
+- Auf Andreas’ Wunsch Zielenergie- und Abfahrtszeiteingabe kompakter gestaltet: lokale Input-/Outline-Höhe 28 px und vertikale Item-Abstände 8 px, horizontale Outline-Abstände 8 px. Breite, Schriftgröße und Eingabe-/Befehlsverhalten bleiben erhalten. Offizielle openHAB-Input-Referenz und Framework7-CSS-Variablen konsultiert.
+- Bundle/native Editorquelle synchronisiert; Parität und 688 Ausdrucksauswertungen inklusive Zielladen-Auswahlprüfungen erfolgreich. Tatsächliche Feldhöhe und Datumseingabe auf iOS bleiben zur visuellen Abnahme offen. Keine Geräteaktion ausgeführt.
+- Abschlussvalidierung: vollständiger Linter über 94 Dateien, alle 160 Offline-Tests, Markdownprüfung und Diff-Hygiene bestanden.
+
+### 2026-10-11 – Item-Auswahl an deutsche Bridge-Übersetzungen angepasst
+
+- Andreas möchte passende Items anhand ihrer deutschen Namen suchen. Alle 20 Item-Parameterbeschriftungen exakt an ressources/translate/de.json ausgerichtet, etwa Energie der Ladesitzung, Geplante Ladeenergie, Geplantes Ladeende, Minimaler PV-Anteil und Helligkeit der Umgebungsbeleuchtung. Kanal-IDs in den Auswahldialog-Beschreibungen durch deutsche Zweck-/Typangaben ersetzt.
+- Die drei Diagnose-Items heißen laut Übersetzung jeweils Verfügbarkeit der Datenquelle. Deutsche Beschreibungen unterscheiden Messquelle (SEMP oder lokale API), lokale API für Befehle und Portal. Die tatsächlich vorhandenen Items werden nicht umbenannt; abweichende manuelle/Host-Übersetzungen bleiben möglich.
+- Installationsanleitung um deutsche Suchbegriffe in der Zuordnungstabelle ergänzt. Bundle/native Editorquelle synchronisiert; sämtliche Labels gegen die Übersetzungsdatei und Parität geprüft. Laufzeit-/Befehlsausdrücke unverändert; keine Geräteaktion ausgeführt.
+- Abschlussvalidierung: vollständiger Linter über 94 Dateien, alle 160 Offline-Tests, Markdownprüfung und Diff-Hygiene bestanden.
+
+### 2026-10-11 – PV-Regler aus aktuellem Item-Zustand initialisieren
+
+- Andreas meldet PV-Anzeige — %, während das ausgewählte Dimmer-Item 100 % zeigt, und liefert die passende Item-Definition. Dimmer-Typ, Kanalzuordnung und Prozentformat sind passend; Portalwert wird bereits als Ganzzahl 0–100 ohne Skalierung publiziert. Keine Umrechnung ändern.
+- Ursache im Widget: PV-Variable wurde im äußeren oh-context einmalig vor eventuell verspätet verfügbarem Item-Zustand initialisiert. Laut offizieller openHAB-Referenz werden Kontextvariablen nur beim Mounten ausgewertet. Öffentlicher Kontext-/Slider-/Variablenquellcode und bedingtes Rendering geprüft.
+- PV-Eingaben jetzt in eigenem Kontext, der erst bei gültigem Prozentwert angelegt wird. Startwert ist dann der aktuelle rohe Item-Zustand; verspätetes NULL/UNDEF zu 100 initialisiert korrekt. Fehlende/ungültige Werte zeigen Platzhalter ohne Regler; 0 ist gültig. Demo startet weiterhin bei 70. Benutzerentwurf bleibt während der Eingabe von späteren Item-Updates unberührt; erneutes Öffnen initialisiert aus aktuellem Zustand. Regler bleibt ausschließlich variablengebunden und sendet nur bei explizitem Übernehmen.
+- Bundle/native Editorquelle und Anleitung synchronisiert. Parität, 704 Ausdrucksauswertungen und gezielte verspätete Initialisierung, 0/100, fehlende/ungültige Werte und Erhalt geänderter Entwürfe erfolgreich. Keine Geräteaktion ausgeführt; tatsächliches MainUI-Mount-/Reglerverhalten bleibt zur Nutzerprüfung offen.
+- Abschlussvalidierung: vollständiger Linter über 94 Dateien, alle 160 Offline-Tests und Diff-Hygiene bestanden.
+
+### 2026-10-11 – Übernehmen-Buttons mit einheitlichen Größenbegrenzungen
+
+- Andreas meldet optisch größere Übernehmen-Buttons. Sämtliche Buttons einschließlich PV-/Zielladen-Übernehmen erhalten zusätzlich zur bisherigen Höhe 40 px feste Mindest-/Maximalhöhe, einheitliche Zeilenhöhe und lokale Framework7-Variablen für 40 px Höhe, 12 px Schrift und 8 px horizontales Padding. Damit Größenvererbung der umgebenden Komponenten begrenzen; tatsächliche iOS-Darstellung bleibt zur Nutzerprüfung offen.
+- Andreas fragt nach zusätzlicher Bestätigung. Vorhandene actionConfirmation für echte PV-/Planbefehle erklärt; Demo ohne Rückfrage. Kein Auftrag zum Entfernen, daher unverändert erhalten.
+- Bundle/native Editorquelle synchronisiert; Parität und 704 Ausdrucksauswertungen bestanden. Keine Geräteaktion ausgeführt.
+- Abschlussvalidierung: vollständiger Linter über 94 Dateien, alle 160 Offline-Tests, Markdownprüfung und Diff-Hygiene bestanden.
+
+### 2026-10-11 – Zusätzliche Bestätigung entfernt und PV-Befehlstext korrigiert
+
+- Andreas autorisiert Entfernen der zusätzlichen Rückfrage bei PV und Zielladen. Beide actionConfirmation entfernt; explizites Übernehmen, Eingabeprüfung, Quellen-/Rückmeldungsgates und Bridge-Readback bleiben erhalten.
+- Nutzerlog meldet HTTP 415 mit application/octet-stream beim Übernehmen von 90 %. Widget verwendete String(vars.pv * 1), obwohl String im offiziellen MainUI-Ausdruckskontext nicht bereitgestellt wird. Öffentliche openHAB-Dokumentation und Kontext-/Aktionsquellcode bestätigen den eingeschränkten Kontext und Rückgabe eines Fehlerobjekts bei Ausdrucksfehlern. Dies erklärt einen nicht textförmigen REST-Body; kein Prozent-Umrechnungsfehler belegt.
+- PV-actionCommand auf unterstützte Verkettung mit leerem Text geändert. Lokaler Regressionstest mit tatsächlichem jse-eval-Parser (nur temporär heruntergeladen) reproduziert Fehler des alten Ausdrucks bei fehlendem String und bestätigt Textbefehle 0/70/90/100 einschließlich numerischer Texte. Frühere Tests mit vollständigem JavaScript hatten diesen MainUI-Kontextunterschied nicht erfasst.
+- Bundle/native Editorquelle synchronisiert; Parität und 688 weitere Ausdrucksauswertungen bestanden. Kein echter Portal-/Gerätebefehl ausgeführt; tatsächliche HTTP-/Portalübernahme bleibt zur Nutzerprüfung offen.
+- Abschlussvalidierung: vollständiger Linter über 94 Dateien, alle 160 Offline-Tests, Markdownprüfung und Diff-Hygiene bestanden. Anleitung ergänzt.
+
+### 2026-10-11 – Kopfzeile ohne doppelte Status-/Modusanzeige
+
+- Andreas möchte redundantes Verbunden / wartend und PV-Überschuss über der Sitzungsenergie entfernen. Bisherige Textzeile kam aus Fahrzeugstatus plus Lademodus; beide Items bleiben für Anschlussanzeige, Iconfarbe und Modusbedienung erforderlich. Keine zusätzliche Verbindungsmessung verwendet.
+- Kopfzeile zeigt nun Geladen: vor Energie der Ladesitzung, etwa Geladen: 18 kWh. Das ist die geladene Energie der aktuellen Ladesitzung, kein Gesamtzähler oder Fahrzeug-SoC. Hinweise auf Demo/veraltete Quellen erhalten.
+- Bundle/native Editorquelle synchronisiert. Parität und 680 Ausdrucksauswertungen erfolgreich. Keine Geräteaktion ausgeführt.
+- Abschlussvalidierung: vollständiger Linter über 94 Dateien, alle 160 Offline-Tests, Markdownprüfung und Diff-Hygiene bestanden. Anleitung aktualisiert.
+
+### 2026-10-11 – Auto vor Typ-2-Stecker ergänzt
+
+- Andreas möchte Anschlussanzeige direkt als Auto mit Ladestecker erkennen. Iconify mdi:car-outline vor vorhandenen mdi:ev-plug-type2 gesetzt; kompakte gemeinsam ausgerichtete Gruppe mit 2 px Abstand. Beide Icons nutzen denselben bestätigten Anschlussstatus und dieselben Farben (grün angeschlossen, grau getrennt, orange unbekannt), Text bleibt zur eindeutigen Unterscheidung erhalten. Kein neues Item erforderlich.
+- Offizielle Iconify-Symbolseite geprüft. Bundle/native Editorquelle und Anleitung synchronisiert. Parität und 688 Ausdrucksauswertungen einschließlich bestehender Anschluss-/Frischeprüfungen bestanden. Keine Geräteaktion ausgeführt; tatsächliche MainUI-Darstellung zur Nutzerprüfung offen.
+- Abschlussvalidierung: vollständiger Linter über 94 Dateien, alle 160 Offline-Tests, Markdownprüfung und Diff-Hygiene bestanden.
+
+### 2026-10-11 – Kleinere Übernehmen-Buttons mit Abstand zur PV-Skala
+
+- Andreas zeigt auf iOS einen Übernehmen-Button zu dicht an den Skalenbeschriftungen. PV-Regler erhält 24 px unteren Abstand, damit die nach außen ragende native Skala vor der Aktionszeile Platz hat.
+- Beide Übernehmen-Buttons von 40 auf 32 px Höhe reduziert; Mindest-/Maximalhöhe und Framework7-Höhe gleichgezogen, Text 11 px und Icons 14 px. Übrige Modus-/Freigabebuttons bleiben 40 px. Screenshot zeigt außerdem ältere Kopfzeile/Steckeranzeige; aktuelle Datei enthält bereits Geladen-Beschriftung und Auto-Icon.
+- Bundle/native Editorquelle und Anleitung synchronisiert; Parität, 688 Ausdrucksauswertungen sowie echter Parsertest für PV-Befehlstext bestanden. Keine Geräteaktion ausgeführt. Tatsächlicher Skalenabstand und Darstellung auf iOS bleiben zur Nutzerprüfung offen.
+- Abschlussvalidierung: vollständiger Linter über 94 Dateien, alle 160 Offline-Tests, Markdownprüfung und Diff-Hygiene bestanden.
+
+### 2026-10-11 – Ein/Aus statt ON/OFF in Einstellungen
+
+- Andreas möchte deutsche Zustandsanzeigen in den Einstellungen. Vier Switch-Zeilen (Freigabe erforderlich, Kabelverriegelung, Beenden bei vollem Fahrzeug, Ambientelicht) übersetzen rohe ON/OFF-Werte ausdrücklich in Ein/Aus, unabhängig vom Item-displayState. Demo und Optionsauswahl ebenfalls auf Ein/Aus vereinheitlicht; gesendete Befehle bleiben ON/OFF. Fehlende Werte bleiben Platzhalter.
+- Bundle/native Editorquelle synchronisiert; Parität, 688 Ausdrucksauswertungen sowie tatsächlicher MainUI-Parsertest der vier Anzeigen bei ON/OFF/NULL/UNDEF bestanden. Keine Geräteaktion ausgeführt.
+- Abschlussvalidierung: alle 160 Offline-Tests, Markdownprüfung und Diff-Hygiene bestanden; Anzeigen mit einfachen ternären Ausdrücken im tatsächlichen Parser erfolgreich geprüft.
+
+### 2026-10-11 – Energieanzeige als Ladesitzung beschriftet
+
+- Auf Andreas’ Wunsch Geladen: durch Ladesitzung: ersetzt, damit auch 0 kWh beim Beginn einer neuen Sitzung verständlich ist. Bundle/native Editorquelle und Anleitung synchronisiert; ausschließlich Beschriftung geändert.
+- YAML-Syntax und Quellenparität geprüft; keine Geräteaktion ausgeführt.
+
+### 2026-10-11 – Offene Änderungen gemeinsam zum Commit vorbereitet
+
+- Andreas autorisiert einen lokalen Commit aller offenen Änderungen. Umfang: openHAB-Anleitung, eigenständiger Ladeplandialog, Garagenwidget einschließlich nativer Editorquelle, README-Verweis, dokumentierte Lademix-Untersuchung und bisherige Tagebucheinträge. Private ENV-/Referenzdateien nicht Bestandteil; keine Veröffentlichung oder Geräteaktion.
+- Abschlussprüfung: vollständiger Linter über 94 Dateien, alle 160 Offline-Tests und Diff-Hygiene bestanden. Widget-Sichtabnahme und verbleibende Live-Akzeptanzgrenzen bleiben wie dokumentiert offen.

@@ -1,5 +1,13 @@
 # Collected SMA integration findings
 
+## Charging mix investigation, 2026-10-11
+
+Read-only authenticated probes validated the configured eCharger identity before examining the official portal application's measurement endpoints. `GET /api/v1/widgets/emobility?componentId={deviceId}` returned power, session energy, charging/vehicle status and last contact, but no PV/battery/grid mix. The same widget with the plant component also returned no mix.
+
+The official portal consumer-balance module uses `GET /api/v1/measurements/{plantId}/consumerbalance/consumption?dateBeginLocal=YYYY-MM-DD&interval=Day&loadTimeframes=false`. Its `total.consumers` contained exactly one entry matching the configured charger, with `sources.pvPercentage`, `sources.batteryPercentage` and `sources.gridPercentage`. These are period energy shares, not verified instantaneous charging shares. Other source fields can be null. A request without the date/interval was rejected with HTTP 400. The device-level consumer-balance request was also rejected; this is a plant-level endpoint requiring explicit consumer identity selection.
+
+The current charging mix shown in the SMA Energy mobile app remains unverified. Do not publish the period shares or the configured minimum PV preference as current charging mix. No runtime change, polling activation, MQTT publication or device command was performed. The next evidence needed is the mobile app's actual read endpoint and its timestamp, units and device association; authenticated headers and raw replies must stay out of logs and public fixtures.
+
 Evidence date: 2026-10-10. This document distinguishes observed behavior from planned or unverified capabilities. See `private/CONTEXT.local.md` for installation-specific addresses and identifiers.
 
 ## Scope chosen by the user
