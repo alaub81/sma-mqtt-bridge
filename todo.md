@@ -224,6 +224,14 @@ Aktuellen Abnahmestand ausschließlich in VALIDATION.md pflegen; CONTEXT.md enth
 - CI lädt die Tag-Historie, übergibt die ermittelte Version für beide Architekturen und prüft die CLI-Ausgabe. Release verwendet die stabile Tag-Version für Vorab-/Multiarch-Build und prüft die Vorab-Image-CLI vor Veröffentlichung.
 - Zwei neue Regressionstests für saubere Tags, Abstand/dirty, ungültige Tags, Git-Ausfall und Image-Metadaten ohne Git. Vollständiger Linter und alle 205 Offline-Tests bestanden; Docker-Build und GitHub-Ausführung der neuen Versionskette bleiben separat zu prüfen. Kein Commit, Push oder Release ausgelöst.
 
+## 2026-10-11 – Vier HIGH-Trivy-Befunde im Laufzeit-Image behoben
+
+- Andreas beauftragt die Behebung des fehlgeschlagenen amd64-Scans: msgpack GHSA-6v7p-g79w-8964, setuptools CVE-2025-47273 und urllib3 CVE-2026-97687/CVE-2026-97689. Lokale Paket-/Vendor-Prüfung bestätigt: sämtliche betroffenen Versionen werden von pip 26.2.1 intern mitgeliefert; keine Bridge-Laufzeitabhängigkeit benötigt diese Pakete. Separates Installieren neuer Top-Level-Pakete würde die vendorten Kopien nicht ersetzen.
+- Dockerfile prüft nach Installation pip check, entfernt danach pip und das stdlib-ensurepip samt eingebettetem pip-Wheel. Runtime-Abhängigkeiten bleiben identisch gepinnt. CI prüft auf beiden Architekturen zusätzlich das Fehlen dieser Build-Werkzeuge. README dokumentiert Paketänderungen durch Image-Neubau.
+- Beide Images lokal gebaut (arm64 und amd64), CLI-Version und check-config erfolgreich, sämtliche 205 Offline-Tests im nativen arm64- und emulierten amd64-Container bestanden. Automatische Versionsübernahme beim Docker-Build dabei bestätigt.
+- Offizielles Trivy 0.75.0 temporär geladen und SHA-256-Prüfsumme verifiziert. Nachscan beider Images mit severity HIGH,CRITICAL / ignore-unfixed / exit-code 1: jeweils 0 gefilterte Schwachstellen und 0 Secrets, Exit 0. Niedrigere Schweregrade und Befunde ohne Fix damit nicht pauschal ausgeschlossen. Reports außerhalb des Repositorys gespeichert.
+- Vollständiger Linter und 205 Host-Offline-Tests bestanden. Kein Produktionswechsel, Gerätezugriff, Commit, Push oder Release. GitHub-Lauf und ausgerolltes Release-Image weiterhin separat prüfen.
+
 ## 2026-10-11 – Betriebsgrenzen und gezielte Ausfallprüfungen
 
 - Auftrag: verfügbare Intervalle/Timeouts erfassen, vorhandene Tests prüfen und fehlende automatisierte Prüfungen ergänzen. Im Worktree vorhandene Build-/Release-/Versionsänderungen bleiben unberührt.

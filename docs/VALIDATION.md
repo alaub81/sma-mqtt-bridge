@@ -364,8 +364,24 @@ Native calls derive clean release or development versions from local Git; immuta
 image metadata takes precedence. Builds without Git-derived arguments or embedded
 metadata report 0.0.0+unknown. CI checks CLI equality on both architectures; the
 release checks its pre-publication image against the stable tag. Full lint and
-205 offline tests passed, including Git failure and Git-free image cases. Actual
-Docker build and hosted execution of this new version chain remain pending.
+205 offline tests passed, including Git failure and Git-free image cases. Local arm64/amd64 Docker builds and CLI version propagation subsequently passed;
+hosted execution of this new version chain remains pending.
+
+### Removal of vulnerable build-only installers, 2026-10-11
+
+The supplied failed amd64 Trivy report identified four HIGH findings in pip
+26.2.1 vendored msgpack, setuptools and urllib3. Local image metadata confirmed
+those copies are installer internals rather than bridge runtime dependencies.
+The image now runs pip check after installation, then removes pip and the stdlib
+ensurepip bootstrap wheel/package. Runtime requirements remain unchanged. Both
+CI architecture jobs assert installer absence.
+
+Local arm64 and amd64 builds, CLI/version/config smoke checks and all 205 offline
+tests in each container passed (amd64 emulated). Checksum-verified Trivy 0.75.0
+scanned both images with HIGH,CRITICAL and ignore-unfixed: zero filtered findings
+and zero secrets, exit 0. Lower severities and unfixed vulnerabilities are outside
+this gate. Host lint and all 205 host tests passed. No production deployment or
+publication was performed; the hosted/released image still needs its own scan.
 
 ### Operational limits and focused outage simulation, 2026-10-11
 

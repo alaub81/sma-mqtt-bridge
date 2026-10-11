@@ -102,3 +102,7 @@ builds to embed that version without sending Git or private files to Docker.
 Plain Compose/Docker builds without `SMAB_BUILD_VERSION` report `0.0.0+unknown`.
 Release builds receive the version from their stable tag and verify the CLI output
 before publication. An embedded image version takes precedence over local Git.
+
+The runtime image removes build-only `pip` and its `ensurepip` bootstrap copy after
+installing and validating the pinned dependencies. Install dependency changes by
+rebuilding the image; package installation inside a running container is unsupported.
