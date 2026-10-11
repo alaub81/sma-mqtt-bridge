@@ -184,7 +184,7 @@ def current_measurement(value, timestamp, stale_seconds, now=None):
         return None
 
 
-def semp_values(text, stale_seconds, now=None, advanced=True, diagnostics=True):
+def semp_values(text, stale_seconds, now=None, advanced=True, diagnostics=True, timestamp_observer=None):
     root = xml_root(text)
     catalog = {}
     now = datetime.now(timezone.utc) if now is None else now
@@ -195,6 +195,8 @@ def semp_values(text, stale_seconds, now=None, advanced=True, diagnostics=True):
         raw = p.findtext(f"{{{NS}}}value")
         stamp = p.findtext(f"{{{NS}}}timestamp")
         if channel.startswith(("Measurement.", "Setpoint.")):
+            if timestamp_observer is not None:
+                timestamp_observer.observe("semp", channel, raw, stamp, stale_seconds, now)
             raw = current_measurement(raw, stamp, stale_seconds, now)
         catalog[channel] = raw
     result = base_values(catalog, advanced)
@@ -206,8 +208,9 @@ def semp_values(text, stale_seconds, now=None, advanced=True, diagnostics=True):
 
 
 class SempReader:
-    def __init__(self, settings, max_bytes, include_settings=True):
+    def __init__(self, settings, max_bytes, include_settings=True, timestamp_observer=None):
         self.settings, self.include_settings = settings, include_settings
+        self.timestamp_observer = timestamp_observer
         self.http = HTTP(settings.timeout_seconds, max_bytes)
         props = [p for p in base_properties(settings.advanced_channels_enabled) if p.node != "settings"]
         if include_settings:
@@ -227,7 +230,7 @@ class SempReader:
         if status != 200:
             raise ProtocolError("SEMP parameter read failed")
         values = semp_values(body, self.settings.stale_seconds, advanced=self.settings.advanced_channels_enabled,
-                             diagnostics=self.settings.diagnostics_enabled)
+                             diagnostics=self.settings.diagnostics_enabled, timestamp_observer=self.timestamp_observer)
         if not self.include_settings:
             values = {k: v for k, v in values.items() if not k.startswith("settings/")}
         return values
@@ -237,8 +240,9 @@ class SempReader:
 
 
 class EChargerReader:
-    def __init__(self, settings, max_bytes, include_base=True):
+    def __init__(self, settings, max_bytes, include_base=True, timestamp_observer=None):
         self.settings, self.include_base = settings, include_base
+        self.timestamp_observer = timestamp_observer
         self.http = HTTP(settings.timeout_seconds, max_bytes, echarger_ssl_context(settings),
                          server_name=settings.tls_server_name or None)
         host = "[" + settings.host + "]" if ":" in settings.host else settings.host
@@ -295,7 +299,11 @@ class EChargerReader:
                     stamp = entry.get("timestamp", entry.get("time"))
                     if "timestamp" in entry and "time" in entry and entry["timestamp"] != entry["time"]:
                         raise ProtocolError("Conflicting live measurement timestamps")
-                    values[m["channelId"]] = current_measurement(entry.get("value"), stamp, self.settings.stale_seconds)
+                    now = datetime.now(timezone.utc)
+                    values[m["channelId"]] = current_measurement(entry.get("value"), stamp, self.settings.stale_seconds, now)
+                    if self.timestamp_observer is not None:
+                        self.timestamp_observer.observe("api", m["channelId"], entry.get("value"), stamp,
+                                                        self.settings.stale_seconds, now)
                 for id, channels, _ in EXTRA:
                     value = next((number(values[c]) for c in channels if c in values and number(values[c]) is not None), None)
                     # Both total-energy channels report Wh; publish the engineering value in kWh.

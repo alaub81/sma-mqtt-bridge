@@ -115,6 +115,9 @@ class ECharger(SafeRepr):
     semp_ready_properties: str = ""
     advanced_channels_enabled: bool = True
     diagnostics_enabled: bool = True
+    timestamp_diagnostics_enabled: bool = False
+    timestamp_diagnostics_max_bytes: int = 1048576
+    timestamp_diagnostics_summary_interval_seconds: float = 300.0
     enabled: bool = False
     host: str = ""
     port: int = 443
@@ -268,6 +271,8 @@ def section(defaults, data, env, prefix, recognized):
                 minimum, maximum = 1, 2
             elif field.name in ("max_queue_messages", "max_response_bytes", "max_state_bytes", "keepalive_seconds"):
                 minimum = 1
+            elif field.name == "timestamp_diagnostics_max_bytes":
+                minimum, maximum = 4096, 16777216
             elif not ((isinstance(defaults, Portal) and field.name == "poll_interval_seconds")
                       or (isinstance(defaults, HomeManager) and field.name in
                           ("transaction_delay_seconds", "after_connection_delay_seconds", "reconnect_delay_seconds"))):

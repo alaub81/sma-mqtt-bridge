@@ -20,6 +20,7 @@ from .health import atomic_json, heartbeat
 from .homie import HomiePublisher, backoff, wait_stop
 from .model import Property, SourceState
 from .storage import journal_status, state_lock
+from .timestamp_diagnostics import TimestampDiagnostics
 
 LOG = logging.getLogger(__name__)
 
@@ -34,6 +35,9 @@ def sources(config):
             result.append((SourceState(device.id, device.homie_id, reader.properties, device.stale_seconds,
                                        diagnostics_enabled=device.diagnostics_enabled), reader, interval))
     hm, ec, portal = config.home_manager, config.echarger, config.portal
+    timestamp_observer = (TimestampDiagnostics(config.runtime.state_dir, ec.timestamp_diagnostics_max_bytes,
+                                              ec.timestamp_diagnostics_summary_interval_seconds)
+                          if ec.timestamp_diagnostics_enabled and (ec.enabled or ec.semp_enabled) else None)
     if hm.enabled:
         if hm.transport == "modbus-tcp":
             reader = HomeManagerModbusReader(hm, config.profiles["home-manager"], "home-manager" in config.interval_overrides)
@@ -43,11 +47,11 @@ def sources(config):
         result.append((SourceState("home-manager", hm.homie_id, reader.properties, hm.stale_seconds,
                                        diagnostics_enabled=hm.diagnostics_enabled), reader, interval))
     if ec.enabled:
-        reader = EChargerReader(ec, limit, include_base=not ec.semp_enabled)
+        reader = EChargerReader(ec, limit, include_base=not ec.semp_enabled, timestamp_observer=timestamp_observer)
         result.append((SourceState("api", ec.homie_id, reader.properties, ec.stale_seconds,
                                        diagnostics_enabled=ec.diagnostics_enabled), reader, ec.api_poll_interval_seconds))
     if ec.semp_enabled:
-        reader = SempReader(ec, limit, include_settings=not ec.enabled)
+        reader = SempReader(ec, limit, include_settings=not ec.enabled, timestamp_observer=timestamp_observer)
         result.append((SourceState("semp", ec.homie_id, reader.properties, ec.stale_seconds,
                                        diagnostics_enabled=ec.diagnostics_enabled), reader, ec.semp_poll_interval_seconds))
     if portal.enabled:
