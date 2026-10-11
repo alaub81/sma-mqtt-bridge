@@ -84,6 +84,13 @@ def check_dotenv(files):
     return passed
 
 
+def check_widget_export(_files):
+    return subprocess.run(
+        [sys.executable, "tools/export_openhab_widget.py", "--check"], cwd=ROOT,
+        check=False,
+    ).returncode == 0
+
+
 def main():
     if len(sys.argv) != 1:
         print("Usage: ./tests/linter-check.sh (read-only; no arguments)", file=sys.stderr)
@@ -122,6 +129,9 @@ def main():
           function=check_json)
     check("Dotenv examples", [p for p in files if Path(p).name == "smab.example.env"],
           function=check_dotenv)
+    check("openHAB widget export",
+          [p for p in files if p == "openHAB/yaml/widgets/echarger-comfort.yml"],
+          function=check_widget_export)
     check("ShellCheck", [p for p in files if p.endswith(".sh")], command=["shellcheck"])
     check("Hadolint", [p for p in files if Path(p).name.startswith("Dockerfile")],
           command=["hadolint", "--config", ".hadolint.yaml"])
