@@ -208,7 +208,7 @@
     {
       "id": "total-yield",
       "node": "measurements",
-      "name": "E-Total",
+      "name": "Total yield",
       "poller": "yield",
       "offset": 14,
       "type": "uint32",
