@@ -1,0 +1,21 @@
+# Working-document archive
+
+These snapshots preserve earlier SMA project notes, decisions, review findings and
+validation evidence. They are historical records; later entries can supersede earlier
+statements. Use the current documents for configuration, status and next actions.
+Relative Markdown links were adjusted for the archive location; the earlier content
+and diary entries are retained. Archived `todo.md` remains in German.
+
+## 2026-10-11 documentation cleanup
+
+| Snapshot | Current document and purpose |
+| --- | --- |
+| [CONTEXT.md](2026-10-11/CONTEXT.md) | [Architecture and decisions](../CONTEXT.md) |
+| [IMPLEMENTATION_PLAN.md](2026-10-11/IMPLEMENTATION_PLAN.md) | [Future milestones](../IMPLEMENTATION_PLAN.md) |
+| [VALIDATION.md](2026-10-11/VALIDATION.md) | [Current acceptance matrix](../VALIDATION.md) |
+| [MAC_TEST.md](2026-10-11/MAC_TEST.md) | [Installation acceptance procedure](../MAC_TEST.md) |
+| [todo.md](2026-10-11/todo.md) | [Active tasks and German diary](../../todo.md) |
+
+Do not add credentials, installation identifiers, raw authenticated responses or
+private reference copies here. This archive does not restore the removed BMW
+sources, attribution records or scaffold validation archive.

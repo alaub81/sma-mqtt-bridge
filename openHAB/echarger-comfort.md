@@ -6,6 +6,25 @@ percentage slider directly below the modes. Target charging expands the energy/d
 settings expand in the same entry; there is no custom popup. UI labels are German. No Items, links, rules,
 bridge settings or device settings are created by installing the widgets.
 
+## Source and manual import
+
+[echarger-comfort.yml](yaml/widgets/echarger-comfort.yml) is the only editable source.
+[sma_echarger_comfort_list.yaml](sma_echarger_comfort_list.yaml) is generated for
+manual import into MainUI's widget editor. Both represent the same widget UID,
+properties and behavior. Install one version per openHAB instance.
+
+After editing the source, regenerate the import file from the repository root:
+
+```sh
+python3 tools/export_openhab_widget.py
+python3 tools/export_openhab_widget.py --check
+```
+
+The exporter changes only the YAML wrapper and indentation; expressions and layout
+remain unchanged. The repository linter checks that the generated file is current.
+For manual import, paste the generated file into the MainUI widget editor instead
+of also installing the file configuration below.
+
 ## Install for a first visual review
 
 Copy the single file [echarger-comfort.yml](yaml/widgets/echarger-comfort.yml) to

@@ -1,53 +1,98 @@
-# First installation test on macOS
+# Installation acceptance on macOS and the target host
 
-The first installation test runs on the Mac. Inverter and SEMP values have reached the installation broker; authenticated API/portal, full parallel acceptance and device commands are still pending. Keep the current openHAB integration running for value comparison. Do not remove links, rules or persistence.
+Use this procedure for the next installation checks. The
+[current acceptance matrix](VALIDATION.md) records already completed checks; it
+supersedes earlier activation assumptions in the [archived Mac notes](archive/2026-10-11/MAC_TEST.md).
+Keep the current openHAB integration running for aligned comparisons until migration
+is accepted. Use actual configured device IDs and Channel UIDs.
 
 ## Prepare private configuration
 
-Preserve the existing root `smab.env` and its MQTT settings. Add only missing installation values. Store local API credentials separately from portal credentials and use a password file when preferred. Never paste credentials into chat or protocol fixtures.
+Preserve root `smab.env`; add only necessary changes using
+[smab.example.env](../smab.example.env) and [CONFIGURATION.md](CONFIGURATION.md).
+Do not copy an example over an existing private file. Configure each source and
+transport explicitly. Local eCharger and portal credentials are separate. Addresses,
+serials and passwords belong only in private configuration or password files.
 
-For eCharger HTTPS reads, configure `SMAB_ECHARGER_HOST`, `SMAB_ECHARGER_USERNAME`, `SMAB_ECHARGER_PASSWORD` or `SMAB_ECHARGER_PASSWORD_FILE`, and `SMAB_ECHARGER_EXPECTED_SERIAL`. Copy the trusted local certificate into `data/sma-mqtt-bridge/certificates/` and set `SMAB_ECHARGER_TLS_CA_FILE` to its container path under `/data/sma-mqtt-bridge/certificates/`. The certificate must match HOST or the explicitly configured `SMAB_ECHARGER_TLS_SERVER_NAME`. The current private setup uses the trusted certificate's DNS name while connecting to the wallbox IP; a real TLS handshake passed. An explicit `SMAB_ECHARGER_TLS_VERIFY=false` needs no certificate file and skips verification while retaining TLS encryption. Only enable `SMAB_ECHARGER_ENABLED=true` after credentials are ready.
+TLS verification defaults to true. Supply actual trusted CA/certificate files and
+matching hostnames where needed. Local wallbox and MQTT accept their explicit
+`SMAB_ECHARGER_TLS_VERIFY=false` / `SMAB_MQTT_TLS_VERIFY=false` overrides; portal
+verification remains mandatory. An ENV change requires container recreation.
 
-SEMP is independent and additionally requires its known device ID through `SMAB_ECHARGER_SEMP_DEVICE_ID`; use `SMAB_ECHARGER_SEMP_ENABLED` only when testing that reader. Home Manager requires `SMAB_HOME_MANAGER_SERIAL` and suitable UDP delivery. **Leave `SMAB_HOME_MANAGER_ENABLED=false` on this Mac:** it runs on a different network from the meter. Finish serial/interface configuration and multicast acceptance on the Pi in the device network. The three bundled inverter profiles now cover the existing Things channels; private hosts and serial guards are configured, and all three are enabled for this test.
+For read acceptance, leave all command gates false in the test configuration.
+Use one service instance per state directory. Preserve `data_smab_state`, including
+its topic manifest and uncertainty journals; do not start parallel runtimes sharing
+that state. Existing source credentials do not imply activation or write permission.
 
-Keep all command flags false. Local credentials alone never activate a source or enable a write.
+## Check network and configuration
 
-## Prepared inverter and SEMP test
+Home Manager Modbus TCP requires direct host/serial configuration and device-side
+access. It does not depend on receiving UDP multicast. The UDP transport instead
+requires the correct meter network, interface, serial and multicast delivery. A Mac
+in another network cannot establish Pi UDP acceptance.
 
-The independently enabled SEMP reader uses local HTTP and needs no charger API login or HTTPS trust. The private charger host, device ID and serial are prepared; `SMAB_ECHARGER_SEMP_ENABLED=true` and all three inverter flags are enabled. Local API and portal stay disabled until their credentials are supplied. SEMP additionally reads confirmed settings and raw diagnostic codes, with unverified energy/delay units exposed only on explicitly named raw properties. It does not test authenticated additional measurements or device commands.
+The current Compose files use host networking. Docker Desktop host networking must
+be enabled when using this setup; its TCP/UDP support does not establish native
+interface or multicast behavior. See [Docker host networking](https://docs.docker.com/engine/network/drivers/host/).
+The proposed Docker bridge-network change for Modbus remains planned work.
 
-MQTT TLS verification defaults to true. Use a trusted broker CA under `data/sma-mqtt-bridge/certificates/` and its container path, or system trust. For this installation Andreas explicitly requested `SMAB_MQTT_TLS_VERIFY=false`; the private `smab.env` now uses it and real broker publication passed. TLS encryption, username/password authentication and local-wallbox/portal verification remain separate. Changing a TLS flag requires recreating the container, not merely restarting it.
-
-## Validate and start
-
-The Compose service uses host networking. On Docker Desktop 4.34 or later, enable **Settings > Resources > Network > Enable host networking**, then restart Desktop. Docker documents TCP/UDP support but no direct access to native host interfaces; independently verify LAN multicast reception. See [Docker host networking](https://docs.docker.com/engine/network/drivers/host/).
-
-Once configuration is ready, run from the repository root:
+From the repository root, validate without device or broker network I/O:
 
 ```sh
-docker compose -f docker-compose.dev.yml run --rm --build sma-mqtt-bridge --check-config
-docker compose -f docker-compose.dev.yml up --build -d
-docker compose -f docker-compose.dev.yml logs --tail=100 -f
+docker compose --env-file smab.env -f docker-compose.dev.yml build
+docker compose --env-file smab.env -f docker-compose.dev.yml run --rm sma-mqtt-bridge --check-config
 ```
 
-The first command validates configuration without device or broker I/O. The second starts live read/publish activity for explicitly enabled sources. With all sources disabled, configuration validation succeeds but the runtime exits with an actionable message. A running container alone does not establish adapter acceptance. Runtime files now live in the named Docker volume `data_smab_state`, mounted at `/data/sma-mqtt-bridge/state`; inspect the heartbeat inside the container rather than reading a former host `state/` directory. Preserve the volume and use the [state migration instructions](CONFIGURATION.md#migrating-existing-state-from-a-bind-mount) for existing deployments.
+If the intended container is already running, inspect its loaded configuration with
+`docker compose --env-file smab.env -f docker-compose.dev.yml exec sma-mqtt-bridge python -m sma_mqtt_bridge --check-config`.
+The CLI validates mounted files and the container environment, but does not print
+resolved credentials or connect to devices. Configuration success does not prove live
+acceptance. All sources disabled is valid configuration; a fresh deployment then
+has no readings to serve. An existing topic manifest can still require retirement work.
 
-Inspect `homie/sma-inverter1/`, `homie/sma-inverter2/`, `homie/sma-inverter3/` and `homie/sma-echarger/` on the configured broker. Verify discovery, source diagnostics, fresh settings and measurement values against the local SMA interface/openHAB. Missing, invalid and stale values must disappear instead of becoming zero. Verify TLS, disconnect/reconnect, Last Will and graceful stop. Commands are not yet available under `/set`.
+## Start and compare selected reads
 
-Home Manager setup is intentionally deferred to the Raspberry Pi. Do not substitute guessed grid readings or activate it on the Mac. Linux/arm64 and Pi multicast acceptance are separate checks.
+After checking which sources and command gates are enabled:
 
-## Next functional acceptance
+```sh
+docker compose --env-file smab.env -f docker-compose.dev.yml up -d
+docker compose --env-file smab.env -f docker-compose.dev.yml logs --tail=100 -f
+```
 
-Validate local eCharger identity, metadata, measurement timestamps and units. Then implement confirmed enum/boolean controls with fresh metadata, rights checks, bounded command handling and readback. Energy/time planning needs a confirmed transaction; local energy and delay units are still open. Maximum charging power needs its own confirmed parameter mapping and limits. Home Manager remains the charging controller. Live writes require a specific requested action and target value.
+This starts live activity for explicitly enabled sources. Examine the configured
+MQTT prefix/device IDs, discovery and independent source status. Compare fresh
+power, energy, settings and units with local SMA interfaces/openHAB at aligned times.
+Record missing channels and sampling differences. Stale/invalid readings preserve
+the last retained observation; they do not become zero or prove current availability.
 
-## Configuration examples
+Inspect health/heartbeat inside the container's state volume. A healthy process does
+not prove broker/device readiness. Test controlled stop/start independently from
+abrupt process failure, Last Will, broker restart and host reboot. Preserve the volume
+through container replacement; follow [state migration](CONFIGURATION.md#migrating-existing-state-from-a-bind-mount)
+when upgrading an older bind-mounted state layout.
 
-The root `smab.example.env` lists every available variable with purpose/type/default. The optional `config.example.json` includes non-secret runtime/device options and documentation-only addresses; all sources remain disabled. It deliberately omits inverter interval overrides so per-poller intervals survive. Copy it to `data/sma-mqtt-bridge/config.json` only when needed; explicit ENV overrides still win. Account usernames/passwords use ENV or private password files.
+## Portal and command acceptance
 
-Bundled model files under `ressources/profiles/` are directly usable examples for host overrides: copy one to `data/sma-mqtt-bridge/profiles/`, preserve its ID, or select a renamed file with `file:custom-name.json`. Never put installation addresses or passwords in a reusable profile. Certificates are public trust material rather than configuration templates; obtain the actual trusted certificate instead of copying a fabricated example.
+Portal interval zero performs no startup login or read. `--refresh-portal` explicitly
+requests one read in an enabled zero-interval service; the sample expires normally.
+A persistent Compose command override repeats that explicit refresh on restart;
+record the override and remove it when restoring ordinary operation. Positive
+intervals enable periodic reads; verify freshness over more than one cycle.
 
-## Authenticated read result on 2026-10-10
+Implemented controls and their independent gates are documented in
+[CONFIGURATION.md](CONFIGURATION.md#local-echarger-command-milestone).
+A live write requires a specifically requested action and concrete target. Observe
+metadata/identity/bounds checks, readback and uncertainty feedback. Do not retry an
+uncertain command or infer physical charging completion from a confirmed setting.
 
-Private credentials have now been supplied and API/portal sources explicitly enabled. Local TLS, model/serial validation and fresh current/voltage/total-energy reads passed. Portal identity and preference reads passed; selected values reached MQTT. The live API uses `time` for measurement timestamps. Plan energy/stop delay still lack local unit metadata and remain unavailable in engineering units.
+Keep Home Manager as charging controller. Accept each remaining command and charging
+scenario separately, using [VALIDATION.md](VALIDATION.md) and
+[the power-limit evidence](ECHARGER_POWER_LIMIT.md) to identify current gaps.
 
-Portal polling remains zero. This test explicitly started the service with `--refresh-portal` through a temporary Compose command override. The current container repeats that explicit refresh on Docker restart; a regular Compose Up without the override restores the default command. One-shot portal values become stale after 180 seconds and disappear; they must not be treated as continuously refreshed settings. No command flags were enabled.
+## Finish the migration check
+
+Compare all [migration-ledger](migration-coverage.csv) rows, including quantities,
+negative values, maps, private offsets, calculations, UI and persistence. Use the
+[MainUI guide](../openHAB/openHAB.md) and actual existing Items. Preserve historical
+series and local day/DST behavior. Neither Homie discovery nor a successful Mac read
+establishes complete openHAB migration or Raspberry Pi acceptance.
