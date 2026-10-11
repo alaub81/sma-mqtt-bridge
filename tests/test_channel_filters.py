@@ -89,6 +89,30 @@ class ChannelAsyncTests(unittest.IsolatedAsyncioTestCase):
             self.assertEqual(await reader.read(), {'measurements/power': 10})
         self.assertEqual([call.args[2]['id'] for call in reader.read_block.call_args_list], ['identity', 'power'])
 
+    async def test_widget_source_status_survives_disabled_diagnostics(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            config = load_config({'SMAB_STATE_DIR': tmp})
+            for source_id in ('api', 'semp', 'portal'):
+                with self.subTest(source=source_id):
+                    state = SourceState(source_id, 'test-device',
+                                        (Property('measurements', 'power', 'Power'),), 5,
+                                        diagnostics_enabled=False)
+                    publisher = HomiePublisher(config, [state])
+                    status_key, time_key = state.diagnostic_keys
+                    props = {p.key: p for p in publisher.properties([state])}
+                    self.assertIn(status_key, props)
+                    self.assertFalse(props[status_key].settable)
+                    self.assertNotIn(time_key, props)
+                    self.assertEqual(publisher.snapshot([state], now=10)[0][status_key], 'init')
+                    state.update({'measurements/power': 12}, now=10)
+                    self.assertEqual(publisher.snapshot([state], now=10)[0][status_key], 'ready')
+                    self.assertEqual(publisher.snapshot([state], now=16)[0][status_key], 'stale')
+                    state.error = True
+                    self.assertEqual(publisher.snapshot([state], now=16)[0][status_key], 'error')
+            commands = SourceState('commands', 'test-device', (), 5,
+                                   diagnostics_enabled=False, contributes_availability=False)
+            self.assertEqual(publisher.properties([commands]), ())
+
     async def test_diagnostics_retirement_and_internal_availability(self):
         with tempfile.TemporaryDirectory() as tmp:
             config = load_config({'SMAB_STATE_DIR': tmp})
@@ -101,16 +125,19 @@ class ChannelAsyncTests(unittest.IsolatedAsyncioTestCase):
             publisher = HomiePublisher(config, [state], lambda *a, **k: client)
             old = {'homie/test-device/diagnostics/fixture-status', 'homie/test-device/diagnostics/fixture-status/$datatype',
                    'homie/test-device/device-1/cos-phi-setpoint'}
-            publisher.owned = {'test-device': old}
+            publisher.owned = {'test-device': old | {'homie/test-device/diagnostics/fixturestatus'}}
             publisher.save_owned()
             publisher = HomiePublisher(config, [state], lambda *a, **k: client)
-            self.assertEqual(publisher.properties([state]), state.properties)
+            self.assertEqual({p.key for p in publisher.properties([state])},
+                             {'measurements/power', 'diagnostics/fixture-status'})
             self.assertEqual(publisher.snapshot([state])[1], 'ready')
             await publisher.run(stop)
             messages = [(t, p) for t, p, _ in client.messages]
             for topic in old:
                 self.assertIn((topic, b''), messages)
-            self.assertFalse(any('/diagnostics/' in t and p != b'' for t, p in messages))
+            self.assertIn(('homie/test-device/diagnostics/fixturestatus', 'ready'), messages)
+            self.assertNotIn(('homie/test-device/diagnostics/fixturestatus', b''), messages)
+            self.assertFalse(any('lastsuccess' in t and p != b'' for t, p in messages))
             self.assertIn(('homie/test-device/$state', 'ready'), messages)
             self.assertIn(('homie/test-device/measurements/power', '12'), messages)
             state.error = True

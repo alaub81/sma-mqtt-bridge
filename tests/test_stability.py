@@ -315,7 +315,9 @@ class AsyncStabilityTests(unittest.IsolatedAsyncioTestCase):
         self.state.monitor = Availability('Source fixture', 300)
         self.state.monitor.failure(timeout=True)
         publisher = HomiePublisher(self.config, [self.state])
-        self.assertTrue(all(p.node != 'diagnostics' for p in publisher.properties([self.state])))
+        self.assertEqual([p.key for p in publisher.properties([self.state]) if p.node == 'diagnostics'],
+                         [self.state.diagnostic_keys[0]])
+        self.assertNotIn('diagnostics/fixture-timeouts', publisher.snapshot([self.state])[0])
         self.assertEqual(self.state.monitor.snapshot()['timeouts'], 1)
         self.state.diagnostics_enabled = True
         snapshot, _ = publisher.snapshot([self.state])

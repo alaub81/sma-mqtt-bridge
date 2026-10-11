@@ -264,6 +264,39 @@ class AsyncProtocolTests(unittest.IsolatedAsyncioTestCase):
                     self.assertEqual(adapter.http.request.await_count, phase + 1)
                 await adapter.close()
 
+    async def test_local_total_energy_kwh_metadata_scaling_and_fallback(self):
+        from sma_mqtt_bridge.adapters.echarger import EChargerReader
+        from sma_mqtt_bridge.homie import discovery
+        primary = 'Measurement.Metering.GridMs.TotWhIn.ChaSta'
+        fallback = 'Measurement.Metering.GridMs.TotWhIn'
+        stamp = '2026-10-11T10:00:00+00:00'
+        adapter = EChargerReader(ECharger(expected_serial='123'), 10000)
+        adapter.access_token = AsyncMock(return_value='fixture-token')
+        catalog = [{'componentId': 'IGULD:SELF', 'values': [
+            {'channelId': 'Parameter.Nameplate.SerNum', 'value': '123'},
+            {'channelId': 'Parameter.Nameplate.ModelStr', 'value': 'EVC22-3AC-20'}]}]
+        metadata = discovery('homie', 'fixture', adapter.properties)
+        self.assertEqual(metadata['homie/fixture/measurements/totalenergy/$unit'], 'kWh')
+        self.assertEqual(metadata['homie/fixture/measurements/totalenergy/$datatype'], 'float')
+        self.assertEqual(metadata['homie/fixture/measurements/totalenergy/$settable'], 'false')
+        cases = [([(primary, '1234567.89', stamp), (fallback, '999', stamp)], Decimal('1234.56789')),
+                 ([(fallback, '1500', stamp)], Decimal('1.5')),
+                 ([(primary, '0', stamp), (fallback, '1500', stamp)], Decimal('0')),
+                 ([(primary, 'NaN', stamp), (fallback, '1500', stamp)], Decimal('1.5')),
+                 ([(primary, '1500', '2000-01-01T00:00:00Z')], None),
+                 ([(primary, None, stamp)], None), ([], None)]
+        for entries, expected in cases:
+            with self.subTest(entries=entries):
+                live = [{'channelId': key, 'values': [{'value': value, 'time': timestamp}]}
+                        for key, value, timestamp in entries]
+                adapter.http.get_json = AsyncMock(side_effect=[catalog, live])
+                with patch('sma_mqtt_bridge.adapters.echarger.datetime') as clock:
+                    clock.now.return_value = datetime.fromisoformat(stamp)
+                    clock.fromisoformat.side_effect = datetime.fromisoformat
+                    values = await adapter.read()
+                self.assertEqual(values['measurements/total-energy'], expected)
+        await adapter.close()
+
     async def test_full_local_api_read_is_scoped_and_read_only(self):
         from sma_mqtt_bridge.adapters.echarger import EChargerReader
         from sma_mqtt_bridge.config import ECharger

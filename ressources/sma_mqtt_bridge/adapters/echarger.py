@@ -43,7 +43,7 @@ SETTINGS = (
 API_SETTINGS = SETTINGS + (
     ("max-charge-power", "Parameter.Inverter.WMaxIn", "integer", "W", None, ""),
 )
-EXTRA = [("total-energy", ("Measurement.Metering.GridMs.TotWhIn.ChaSta", "Measurement.Metering.GridMs.TotWhIn"), "Wh")]
+EXTRA = [("total-energy", ("Measurement.Metering.GridMs.TotWhIn.ChaSta", "Measurement.Metering.GridMs.TotWhIn"), "kWh")]
 for i, phase in enumerate("ABC", 1):
     EXTRA += [(f"current-l{i}", (f"Measurement.GridMs.A.phs{phase}",), "A"),
               (f"voltage-l{i}", (f"Measurement.GridMs.PhV.phs{phase}",), "V")]
@@ -290,7 +290,9 @@ class EChargerReader:
                         raise ProtocolError("Conflicting live measurement timestamps")
                     values[m["channelId"]] = current_measurement(entry.get("value"), stamp, self.settings.stale_seconds)
                 for id, channels, _ in EXTRA:
-                    result["measurements/" + id] = next((number(values[c]) for c in channels if c in values and number(values[c]) is not None), None)
+                    value = next((number(values[c]) for c in channels if c in values and number(values[c]) is not None), None)
+                    # Both total-energy channels report Wh; publish the engineering value in kWh.
+                    result["measurements/" + id] = value / 1000 if id == "total-energy" and value is not None else value
                 if self.include_base:
                     combined = {k: v.get("value") for k, v in catalog.items()}
                     combined.update(values)

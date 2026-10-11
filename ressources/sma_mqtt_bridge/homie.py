@@ -139,11 +139,13 @@ class HomiePublisher:
     def properties(self, states):
         props = [p for state in states for p in state.properties]
         for state in states:
+            status_key, time_key = state.diagnostic_keys
+            # Operational source availability stays usable when optional diagnostics are disabled.
+            if state.contributes_availability or state.diagnostics_enabled:
+                props.append(Property(*status_key.split("/"), "Source availability", "enum", format="init,ready,stale,error"))
             if not state.diagnostics_enabled:
                 continue
-            status_key, time_key = state.diagnostic_keys
-            props += [Property(*status_key.split("/"), "Source availability", "enum", format="init,ready,stale,error"),
-                      Property(*time_key.split("/"), "Last successful receipt (UTC)", "string")]
+            props.append(Property(*time_key.split("/"), "Last successful receipt (UTC)", "string"))
             if state.monitor is not None:
                 props += [Property(*key.split("/"), "Source " + name, datatype, unit)
                           for name, key, datatype, unit in self.metric_properties(state)]
@@ -165,8 +167,9 @@ class HomiePublisher:
         result = {}
         for state in states:
             result.update(state.fresh_values(now))
-            if state.diagnostics_enabled:
+            if state.contributes_availability or state.diagnostics_enabled:
                 result[state.diagnostic_keys[0]] = state.status(now)
+            if state.diagnostics_enabled:
                 if state.last_timestamp:
                     result[state.diagnostic_keys[1]] = state.last_timestamp
                 if state.monitor is not None:
