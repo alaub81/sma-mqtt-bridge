@@ -100,6 +100,29 @@ class ModelTests(unittest.TestCase):
         self.assertEqual(metadata['homie/test-device/measurements/power/$settable'], 'false')
         self.assertFalse(any(t.endswith('/set') for t in metadata))
 
+    def test_homie_discovery_has_required_attributes_for_every_node(self):
+        types = {'measurements': 'measurements', 'settings': 'settings',
+                 'parameters': 'parameters', 'diagnostics': 'diagnostics',
+                 'portal': 'portal', 'control': 'control', 'commands': 'commands',
+                 'device-1': 'device', 'device-2': 'device', 'custom-node': 'custom-node'}
+        props = tuple(Property(node, 'value', 'Value') for node in types)
+        metadata = discovery('homie', 'test-device', props)
+        base = 'homie/test-device'
+        for attribute in ('$homie', '$name', '$state', '$nodes', '$extensions'):
+            self.assertIn(base + '/' + attribute, metadata)
+        self.assertEqual(set(metadata[base + '/$nodes'].split(',')),
+                         {node.replace('-', '') for node in types})
+        for node, expected_type in types.items():
+            with self.subTest(node=node):
+                root = base + '/' + node.replace('-', '')
+                for attribute in ('$name', '$type', '$properties'):
+                    self.assertIn(root + '/' + attribute, metadata)
+                    self.assertTrue(metadata[root + '/' + attribute])
+                self.assertEqual(metadata[root + '/$type'], expected_type)
+                for prop in metadata[root + '/$properties'].split(','):
+                    self.assertIn(root + '/' + prop + '/$name', metadata)
+                    self.assertIn(root + '/' + prop + '/$datatype', metadata)
+
     def test_heartbeat_atomic_freshness_and_stop(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / 'heartbeat.json'
@@ -189,6 +212,10 @@ class AsyncRuntimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(client.kwargs['will'].payload, 'lost')
         self.assertIn(('homie/test-device/measurements/retired', b''), [(t, p) for t, p, _ in client.messages])
         self.assertIn(('homie/test-device/measurements/power', '12'), [(t, p) for t, p, _ in client.messages])
+        messages = [(t, p) for t, p, _ in client.messages]
+        self.assertIn(('homie/test-device/measurements/$type', 'measurements'), messages)
+        self.assertLess(messages.index(('homie/test-device/measurements/$type', 'measurements')),
+                        messages.index(('homie/test-device/$state', 'ready')))
         self.assertEqual(client.messages[-1][1], 'disconnected')
         self.assertTrue(all(k['retain'] for _, _, k in client.messages))
 
@@ -216,12 +243,16 @@ class AsyncRuntimeTests(unittest.IsolatedAsyncioTestCase):
         await publisher.publish_values(client, 'homie/test-device', [state], stop, {}, 0, None, initial)
         messages = [(t, p) for t, p, _ in client.messages]
         self.assertIn(('homie/test-device/measurements/power/$name', b''), messages)
+        self.assertIn(('homie/test-device/measurements/$type', b''), messages)
+        self.assertIn(('homie/test-device/device1/$type', 'device'), messages)
         self.assertIn(('homie/test-device/device1/serial/$settable', 'false'), messages)
         self.assertIn(('homie/test-device/$nodes', 'device1,diagnostics'), messages)
         self.assertNotIn('homie/test-device/measurements/power', publisher.owned['test-device'])
         self.assertIn('homie/test-device/device1/serial', publisher.owned['test-device'])
         saved = __import__('json').loads((Path(self.tmp.name) / 'mqtt-topics.json').read_text())
         self.assertIn('homie/test-device/device1/serial', saved['devices']['test-device'])
+        self.assertIn('homie/test-device/device1/$type', saved['devices']['test-device'])
+        self.assertNotIn('homie/test-device/measurements/$type', saved['devices']['test-device'])
 
     async def test_fully_disabled_device_is_retired(self):
         clients = []
