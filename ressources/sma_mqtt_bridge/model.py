@@ -76,6 +76,7 @@ class SourceState:
     ready_properties: tuple = ()
     monitor: object = None
     contributes_availability: bool = True
+    initialization_deadline: float | None = None
 
     def __post_init__(self):
         if set(self.ready_properties) - {p.key for p in self.properties}:
@@ -112,6 +113,8 @@ class SourceState:
             self.last_success = now
             self.last_timestamp = timestamp or utc_timestamp()
             self.error = False
+        if self.initialization_deadline is not None and self.fresh_values(now) and not self.missing_critical(now):
+            self.initialization_deadline = None
 
     def fresh_values(self, now=None):
         now = time.monotonic() if now is None else now
@@ -122,6 +125,9 @@ class SourceState:
     def status(self, now=None):
         if self.error:
             return "error"
+        if self.initialization_deadline is not None:
+            now = time.monotonic() if now is None else now
+            return "init" if now < self.initialization_deadline else "stale"
         if self.last_success is None:
             return "init"
         fresh = self.fresh_values(now)
