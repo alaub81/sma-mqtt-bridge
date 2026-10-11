@@ -154,6 +154,24 @@ async def run(config, refresh_portal=False, stop=None, publisher_factory=HomiePu
         await run_locked(config, refresh_portal, stop, publisher_factory)
 
 
+def log_startup_status(config, states, mqtt_status, deadline, now=None):
+    """Report initial availability once ready, or after the bounded startup window."""
+    now = time.monotonic() if now is None else now
+    source_status = {state.id: state.status(now) for state in states if state.contributes_availability}
+    devices = sorted({state.device for state in states})
+    complete = all(value == "ready" for value in source_status.values()) and all(
+        mqtt_status.get(device, False) for device in devices)
+    if not complete and now < deadline:
+        return False
+    configured = [device.id for device in config.inverters] + ["home-manager", "api", "semp", "portal"]
+    sources_text = ", ".join(f"{key}={source_status.get(key, 'disabled')}" for key in configured)
+    mqtt_text = ", ".join(f"{key}={'connected' if mqtt_status.get(key, False) else 'disconnected'}"
+                          for key in devices) or "none"
+    LOG.info("Startup status (%s): sources [%s]; MQTT [%s]",
+             "ready" if complete else "startup window elapsed", sources_text, mqtt_text)
+    return True
+
+
 async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=HomiePublisher):
     stop = asyncio.Event() if stop is None else stop
     loop = asyncio.get_running_loop()
@@ -200,6 +218,8 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
                                           refresh_portal and state.id == "portal"))
              for state, reader, interval in readers]
     tasks.append(asyncio.create_task(publisher.run(stop)))
+    startup_deadline = time.monotonic() + config.runtime.read_cycle_timeout_seconds
+    startup_reported = False
     try:
         while not stop.is_set():
             # A failed supervisor must not leave an apparently healthy process behind.
@@ -210,6 +230,8 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
             for state in states:
                 if state.monitor is not None:
                     state.monitor.observe(state.status())
+            if not startup_reported:
+                startup_reported = log_startup_status(config, states, publisher.status, startup_deadline)
             heartbeat(config, states, publisher.status,
                       {d: m.snapshot() for d, m in getattr(publisher, "monitors", {}).items()})
             await wait_stop(stop, config.runtime.health_interval_seconds)

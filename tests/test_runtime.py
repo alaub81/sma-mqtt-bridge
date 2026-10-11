@@ -13,7 +13,7 @@ from sma_mqtt_bridge.errors import AuthenticationError
 from sma_mqtt_bridge.health import atomic_json, healthy, heartbeat
 from sma_mqtt_bridge.homie import HomiePublisher, backoff, discovery
 from sma_mqtt_bridge.model import Property, SourceState
-from sma_mqtt_bridge.runtime import run, sources, supervise
+from sma_mqtt_bridge.runtime import log_startup_status, run, sources, supervise
 
 
 class ModelTests(unittest.TestCase):
@@ -228,6 +228,26 @@ class AsyncRuntimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(state.status(), 'error')
         stop.set()
         await task
+
+    def test_startup_summary_waits_for_sources_and_mqtt_then_reports(self):
+        state = SourceState('api', 'test-device', (Property('measurements', 'power', 'Power'),), 5)
+        with patch('sma_mqtt_bridge.runtime.LOG.info') as log:
+            self.assertFalse(log_startup_status(self.config, [state], {}, 20, now=10))
+            log.assert_not_called()
+            state.update({'measurements/power': 1}, now=10)
+            self.assertFalse(log_startup_status(self.config, [state], {}, 20, now=10))
+            self.assertTrue(log_startup_status(self.config, [state], {'test-device': True}, 20, now=10))
+            self.assertEqual(log.call_args.args[1], 'ready')
+            self.assertIn('api=ready', log.call_args.args[2])
+            self.assertIn('portal=disabled', log.call_args.args[2])
+
+    def test_startup_summary_reports_unavailable_sources_at_deadline(self):
+        state = SourceState('portal', 'test-device', (), 5)
+        with patch('sma_mqtt_bridge.runtime.LOG.info') as log:
+            self.assertTrue(log_startup_status(self.config, [state], {}, 20, now=20))
+            self.assertEqual(log.call_args.args[1], 'startup window elapsed')
+            self.assertIn('portal=init', log.call_args.args[2])
+            self.assertIn('test-device=disconnected', log.call_args.args[3])
 
     async def test_main_loop_heartbeat_and_bounded_shutdown(self):
         stop = asyncio.Event()

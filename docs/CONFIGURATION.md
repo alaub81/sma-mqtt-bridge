@@ -469,3 +469,13 @@ and metadata using the persistent manifest, including inventory changes and rena
 Bundled inverter profiles now mark measurements/status as critical instead of production power.
 Host profile overrides and explicit READY_PROPERTIES selections retain their configured policy;
 update those files/selectors if they still require nighttime power.
+
+## Initial startup log summary
+
+The runtime logs one INFO startup summary when all enabled measurement sources are ready and
+all configured Homie MQTT connections are connected. If startup remains incomplete, the summary
+is emitted at the next health loop after `SMAB_READ_CYCLE_TIMEOUT_SECONDS` (default 120 seconds).
+It reports each source status (`init`, `ready`, `stale`, `error`, or `disabled`) and MQTT connection
+status without credentials or device addresses. This observation does not terminate the service
+or trigger device commands. A portal configured without periodic polling or an explicit refresh
+can remain `init`. Command result sources do not count as measurement readiness.

@@ -1,13 +1,24 @@
 # TODO
 
-Das erste Python-Lesegrundgerüst einschließlich Homie ist implementiert und offline geprüft. Geräteabnahme, vollständige openHAB-Migration und Schreibfunktionen bleiben offen.
+Die Python-Laufzeit einschließlich Homie, bestätigter lokaler Befehle und Portal-PV-Befehle ist implementiert und offline geprüft. Erste Live-Lese-/Schreibprüfungen sind dokumentiert; vollständige Produktionsabnahme und openHAB-Migration bleiben offen. Die folgende Übersicht berücksichtigt spätere Tagebucheinträge; historische Einträge bleiben erhalten.
 
-- [ ] Ein openHAB-MainUI-Widget mit den Basisfunktionen zur Wallboxsteuerung sowie den wichtigsten Messwerten und Statusanzeigen erstellen. Nur nachweislich schreibbare Funktionen zur Bedienung anbieten.
+- [x] openHAB-Wallboxwidget und eigenständigen Ladeplandialog erstellt. Ladeplandialog einschließlich Zeitzonenanzeige durch Andreas bestätigt; Garagenwidget implementiert und offline geprüft. Einzelne iOS-/Liveprüfungen bleiben separat offen.
+- [ ] Garagenwidget auf iOS abnehmen: Einrückung, PV-Skala/Abstand, kompakte Datumsfelder und einheitliche Buttons; PV-Startwert aus aktuellem Item sowie Ein/Aus-Anzeigen prüfen.
+- [ ] Die für das Widget benötigten Werte aus der Steuerung durch das Diagnose-ENV herausnehmen und dauerhaft als reguläre Bridge-Werte bereitstellen. Abfrage und Veröffentlichung dürfen nicht von aktivierter Diagnose abhängen; bei Quellenausfällen Verfügbarkeit und Datenaktualität korrekt kennzeichnen.
+- [x] Korrigierten PV-Befehl laut Andreas am 11.10.2026 live geprüft: 90 % → 70 % → 90 %, Änderung erst bei Übernehmen, Portalrückmeldung und bestätigter Wert passend, kein HTTP 415. Erneutes Öffnen initialisiert den Regler mit 70 %; Ausgangswert 90 % wiederhergestellt.
+- [x] Initiale Statusübersicht implementiert: einmalig bei vollständiger Quellen-/MQTT-Bereitschaft, spätestens nach SMAB_READ_CYCLE_TIMEOUT_SECONDS beim nächsten Health-Zyklus. Aktivierte Quellen mit aktuellem Zustand, deaktivierte Quellen als disabled und MQTT-Verbindungen als connected/disconnected. Image-Update und Zielsystem-Logprüfung bleiben offen.
+- [x] Kontrollierter Container-Stop/Start laut Andreas am 11.10.2026 erfolgreich: letzte Messwerte erhalten, MQTT-/Quellenverbindungen und Wertaktualisierung wiederhergestellt, Container healthy, keine alten Befehle erneut ausgeführt. Last-Will-/Topic-Manifest-Details und ungeplanter Prozess-/Broker-Ausfall bleiben separat zu prüfen.
+- [ ] Portal-Frische über zwei reguläre Abfragezyklen nachweisen. Andreas meldet keine Logeinträge; fehlende Logs allein bestätigen keine erfolgreichen Abfragen.
+- [ ] Nacht-/Schlafbetrieb beobachten; Andreas plant die Prüfung nach Einbruch der Dunkelheit.
+- [ ] Ladeziel-/Sitzungsenergie-Semantik und Rückwechsel nach Zielerreichung später prüfen; 10-kWh-Modusaktivierung bereits bestätigt.
+- [x] Storage-Energie in kWh mit unverändertem Wert, Logzeiten und Wechselrichter-Anzeigenamen laut Andreas geprüft.
 - [ ] Eine Beispiel-`.items`-Datei mit allen verfügbaren Thing-Channels der Bridge erstellen, einschließlich korrekter Item-Typen, Einheiten und Channel-Verknüpfungen.
 - [ ] Eine Beispiel-Sitemap auf Basis der Beispiel-Items erstellen.
-- [ ] `README.md` aktualisieren und an den aktuellen Projektstand anpassen.
+- [ ] Grafana-Dashboards erstellen, um die Werte der bisherigen openHAB-Integration mit den neuen Bridge-Werten im Parallelbetrieb gegenzuprüfen. Zeitreihen mit gleichen Einheiten und abgestimmten Messzeitpunkten vergleichen; Abweichungen und fehlende Werte sichtbar machen und die Ergebnisse für die Migrationsabnahme dokumentieren.
+- [ ] Die gesamte Ladeenergie der Wallbox von Wh auf kWh umstellen. Messwerte korrekt durch 1000 umrechnen und Einheiten in Homie, openHAB-Items und Anzeigen konsistent anpassen; doppelte Skalierung vermeiden und bestehende Historien berücksichtigen.
+- [ ] README und Planungsdokumente abschließend an den aktuellen Stand anpassen. Widget-Verweise sind ergänzt; historische Aussagen zu noch nicht implementierten Befehlen und alten Aktivierungsständen abgleichen.
 - [ ] `.env` und `.env.example` abgleichen (im aktuellen Projekt `smab.env` und `smab.example.env`): Variablennamen, Vollständigkeit, Standardwerte und veraltete Einträge prüfen. Private Werte und Zugangsdaten nicht in die Beispieldatei übernehmen.
-- [ ] Die vorhandenen privaten ENV-Dateien zusammenführen und gegebenenfalls `.smab.env` als einheitlichen Dateinamen verwenden. Doppelte und widersprüchliche Einträge klären; Compose-Verweise, Git-/Docker-Ausschlüsse, Tests und Dokumentation anpassen. Die öffentliche Beispieldatei weiterhin getrennt und ohne Zugangsdaten halten.
+- [ ] Vorhandene private ENV-Dateien inventarisieren und nötigenfalls zusammenführen; gemäß aktuellem Konfigurationsvertrag `smab.env` im Root beibehalten. Historischer Vorschlag `.smab.env` ist durch diesen Vertrag überholt. Doppelte und widersprüchliche Einträge klären; Compose-Verweise, Git-/Docker-Ausschlüsse, Tests und Dokumentation anpassen. Die öffentliche Beispieldatei weiterhin getrennt und ohne Zugangsdaten halten.
 - [ ] Bei Home-Manager-Modbus-Betrieb beide Compose-Dateien vom Host-Netzwerk auf ein normales Docker-Bridge-Netzwerk umstellen. Ausgehende Verbindungen zu SMA-Geräten, MQTT und Portal sowie DNS/TLS auf dem Zielhost prüfen; keine eingehenden Portfreigaben für die Bridge erforderlich. UDP-Multicast als optionale Alternative dokumentieren und dessen gesonderte Netzwerkvoraussetzungen erhalten. Compose-Parität sicherstellen.
 - [x] Reconnect-Fähigkeit offline prüfen und härten: unabhängige Quellen, begrenzte Wiederholungsintervalle, Portal-Login-Dienstausfälle und echte MQTT-Bibliothek bei Verbindungsabbruch vor Empfangsbestätigung geprüft. Keine Befehlswiederholung. Am 10.10.2026 erledigt; reale Ausfallabnahme bleibt unten offen.
 - [ ] Produktionsabnahme auf dem Zielhost: Geräte-/Netzwerkausfälle, Broker-Neustart, TLS-Vertrauen, Container-Stop und Wiederanlauf kontrolliert prüfen; openHAB-Frische und Abhängigkeiten vergleichen. Externe Alarmierung für Broker-Ausfall und Docker-unhealthy einrichten; Compose startet einen noch laufenden unhealthy-Container allein nicht neu.
@@ -17,8 +28,8 @@ Das erste Python-Lesegrundgerüst einschließlich Homie ist implementiert und of
 - [ ] Die Wechselrichter in `inverter-carport`, `inverter-roof` und `inverter-battery` umbenennen. Gerätezuordnung bestätigen und betroffene Konfiguration, Homie-/MQTT-IDs, openHAB-Verknüpfungen und Dokumentation entsprechend anpassen.
 - [x] Zugangsdaten über ENV konfigurierbar: MQTT, lokaler eCharger und separater Portalzugang; sichere Fehlerausgabe und keine persistierten Geheimnisse. Offline geprüft am 10.10.2026.
 - [x] Weitere Wechselrichter über Profildateien ohne Modellzweige im Adapter ergänzbar. Schema-/Identitätsprüfung offline getestet; ursprüngliche 41 Kanäle unter Q20 inzwischen freigegeben, vollständiger Parallelvergleich bleibt offen.
-- [x] Die Implementierungssprache der Bridge klären und bestätigen. Am 10.10.2026 wurde Python gewählt; Docker und Tests wurden im ersten Python-Schritt ersetzt; öffentliches C++-Diagnosegrundgerüst beim Cleanup entfernt, Herkunft und private Referenzen erhalten.
-- [x] Repository aufräumen: am 10.10.2026 C++-/BMW-Diagnosereste, doppelte Dockerfiles und veralteten Startprompt entfernt; aktuelle Dokumentation und Verweise bereinigt, historische Nachweise archiviert.
+- [x] Die Implementierungssprache der Bridge klären und bestätigen. Am 10.10.2026 wurde Python gewählt; Docker und Tests wurden im ersten Python-Schritt ersetzt; öffentliches C++-Diagnosegrundgerüst beim Cleanup entfernt. SMA-Originalreferenzen bleiben erhalten; obsolete BMW-Herkunftsdokumente und Quellen wurden später mit Zustimmung entfernt.
+- [x] Repository aufräumen: am 10.10.2026 C++-/BMW-Diagnosereste, doppelte Dockerfiles und veralteten Startprompt entfernt; aktuelle Dokumentation und Verweise bereinigt, obsolete historische Nachweise später mit Zustimmung entfernt; nicht wiederherstellen.
 - [x] Dockerfile im Root zu `Dockerfile-SMAB` zusammengeführt; `./ressources/` enthält gemäß Andreas' Präzisierung ausschließlich Image-Inhalte: Python-Paket, mitgelieferte Profile und Laufzeit-Abhängigkeiten. Beispiele, Linter-Konfiguration, Compose-Dateien und `.env` bleiben außerhalb. Build, lokale Tests/Starts, CI und Dokumentation angepasst.
 - [ ] Den öffentlichen Projektstand nach GitHub in das Repository [alaub81/sma-mqtt-bridge](https://github.com/alaub81/sma-mqtt-bridge.git) hochladen. Private Dateien und Zugangsdaten ausgeschlossen halten.
 
@@ -805,3 +816,26 @@ Entscheidungen, eingegangene Unterlagen, erledigte Arbeiten und Prüfergebnisse 
 
 - Andreas autorisiert einen lokalen Commit aller offenen Änderungen. Umfang: openHAB-Anleitung, eigenständiger Ladeplandialog, Garagenwidget einschließlich nativer Editorquelle, README-Verweis, dokumentierte Lademix-Untersuchung und bisherige Tagebucheinträge. Private ENV-/Referenzdateien nicht Bestandteil; keine Veröffentlichung oder Geräteaktion.
 - Abschlussprüfung: vollständiger Linter über 94 Dateien, alle 160 Offline-Tests und Diff-Hygiene bestanden. Widget-Sichtabnahme und verbleibende Live-Akzeptanzgrenzen bleiben wie dokumentiert offen.
+
+### 2026-10-11 – Offene Übersicht abgeglichen und nächste Liveprüfungen
+
+- Andreas verschiebt Ladeziel-Abnahme und vollständigen openHAB-Abgleich auf später; Nachtprüfung nach Einbruch der Dunkelheit vorgesehen. Keine Portal-Logeinträge beobachtet: Wunsch nach initialer Statusübersicht als offene Implementierungsaufgabe aufgenommen, nicht bereits umgesetzt.
+- Oberste TODO-Liste mit späteren Einträgen abgeglichen: Widgets als implementiert markiert, iOS-/PV-Liveabnahme separat erhalten, bestätigte Storage-/Log-/Labelprüfungen ergänzt. ENV-Namensvorschlag an bestehenden smab.env-Vertrag angepasst; überholte BMW-/Archivangaben korrigiert. Historische Einträge erhalten.
+- Nächster interaktiver Schritt: iOS-Darstellung und PV-Initialisierung zunächst ohne Befehl prüfen; für PV-Liveabnahme konkreten Zielwert und Wiederherstellung abstimmen. Container-Ausfalltest als kontrollierten Stop/Start mit Beobachtung vorbereiten; kein Neustart oder Gerätebefehl ausgeführt.
+
+### 2026-10-11 – PV-Garagenwidget erfolgreich live abgenommen
+
+- Andreas bestätigt alle Schritte des vereinbarten Tests als erfolgreich: Startwert 90 %, Entwurf 70 % ohne vorzeitige Änderung des bestätigten Werts, ausdrückliches Übernehmen mit Portalrückmeldung und bestätigtem 70-%-Wert ohne HTTP 415, erneutes Öffnen mit 70-%-Initialisierung und erfolgreiche Rückstellung auf 90 %.
+- Korrigierter PV-Befehl und Reglerinitialisierung damit laut Nutzer live geprüft. Die Bestätigung bezieht sich auf diesen PV-Test; Container-Neustart, übrige iOS-Sichtprüfungen, Nachtbetrieb und Ladeziel-Abschluss bleiben separat offen. Keine eigenen Gerätebefehle ausgeführt.
+
+### 2026-10-11 – Kontrollierter Container-Stop/Start bestätigt
+
+- Andreas hat den sma-mqtt-bridge-Container gestoppt und gestartet und bestätigt die abgefragten Kriterien: letzte Messwerte während des Stopps erhalten, MQTT und Gerätequellen wieder verbunden, Werte aktualisiert, Container wieder healthy und keine alten Befehle erneut ausgeführt. Kontrollierte Neustart-Abnahme damit laut Nutzerrückmeldung erfolgreich.
+- Keine eigene Liveprüfung durchgeführt. Diese Abnahme ersetzt nicht ungeplanten Prozessabbruch, Broker-/Netzwerkausfall, Host-Neustart oder Detailprüfung von Last Will und Topic-Manifest. Nachtbetrieb und übrige Produktionsprüfungen bleiben offen.
+
+### 2026-10-11 – Initiale Statusübersicht umgesetzt
+
+- Auf Andreas’ Wunsch nächste Implementierung: INFO-Startübersicht im Hauptloop, einmalig bei bereiten Messquellen und verbundenen MQTT-Geräten oder spätestens nach dem bestehenden SMAB_READ_CYCLE_TIMEOUT_SECONDS beim nächsten Health-Zyklus. Zustand je Quelle inklusive deaktivierter Quellen und MQTT-Verbindungen; keine Zugangsdaten/Adressen oder Messwerte ausgegeben. Befehlsrückmeldungen zählen nicht als Messquellenbereitschaft.
+- Kein zusätzlicher Gerätezugriff, Portalrefresh oder Befehl; keine neue Betriebsvariable. Portal ohne periodische Abfrage kann sichtbar init bleiben. Normale Statuswechsel bleiben separat überwacht. Ausführung endet nicht wegen einer unvollständigen Startübersicht.
+- Zielsystem-Prüfung nach Image-Neubau offen; laufenden Container nicht verändert. Regressionen decken Quellen-/MQTT-Warten, erfolgreiche Bereitschaft und begrenzte unvollständige Startübersicht ab.
+- Abschlussvalidierung: vollständiger Linter über 94 Dateien, alle 162 Offline-Tests einschließlich zweier neuer Startübersicht-Regressionsfälle und Diff-Hygiene bestanden. Kein Deployment, Commit oder Push.
