@@ -896,3 +896,10 @@ Entscheidungen, eingegangene Unterlagen, erledigte Arbeiten und Prüfergebnisse 
 
 - Andreas bestätigt die Portal-Frischeprüfung über zwei reguläre Abfragezyklen sowie die verbleibenden iOS-Layoutdetails des Garagenwidgets als erledigt. Beide Aufgaben in der aktuellen Übersicht abgehakt. PV-Befehl und Reglerinitialisierung bleiben bereits separat abgenommen.
 - Bestätigung laut Nutzerrückmeldung; keine zusätzliche eigene Liveprüfung oder Änderung an Geräten/Widgets durchgeführt.
+
+### 2026-10-11 – Homie-Startstatus des Home Managers
+
+- Andreas beobachtet init → mehrfach alert → ready beim Einlesen. Codebefund: begrenztes Quellen-init wurde im Homie-Gerätestatus ohne fertige Quelle pauschal als alert zusammengefasst.
+- Zusammenfassung erhält init ausschließlich, solange alle zur Verfügbarkeit beitragenden Quellen in einer explizit begrenzten Initialisierung sind. Fehler oder Ablauf bleiben alert; keine neue Start-/Reconnect-Schonfrist. Bestehende any-ready-Policy unverändert. Regression prüft init, Fristablauf, Fehler, Bereitschaft und spätere Veraltung. Zielsystemprüfung offen.
+- Abschlussvalidierung: vollständiger Linter und alle 174 Offline-Tests bestanden; Diff-Hygiene bestanden. Kein Deployment, Commit oder Push.
+- Andreas bestätigt die Einrichtung des openHAB-Eingabe-Items für Maximale Ladeleistung als durchgeführt. Kein konkreter Schreibwert oder physischer Ladeleistungsvergleich gemeldet; Live-Schreibabnahme weiterhin offen. Lokaler Commit der offenen Homie-Startstatuskorrektur angefordert.

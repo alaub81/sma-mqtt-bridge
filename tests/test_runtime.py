@@ -249,6 +249,22 @@ class AsyncRuntimeTests(unittest.IsolatedAsyncioTestCase):
             self.assertIn('portal=init', log.call_args.args[2])
             self.assertIn('test-device=disconnected', log.call_args.args[3])
 
+    def test_homie_status_preserves_bounded_initialization_and_real_errors(self):
+        state = SourceState('home-manager', 'test-device',
+                            (Property('measurements', 'power', 'Power'),), 5,
+                            initialization_deadline=20)
+        publisher = HomiePublisher(self.config, [state])
+        self.assertEqual(publisher.snapshot([state], now=10)[1], 'init')
+        self.assertEqual(publisher.snapshot([state], now=20)[1], 'alert')
+        state.error = True
+        self.assertEqual(publisher.snapshot([state], now=10)[1], 'alert')
+        state.error = False
+        state.initialization_deadline = None
+        self.assertEqual(publisher.snapshot([state], now=10)[1], 'alert')
+        state.update({'measurements/power': 12}, now=10)
+        self.assertEqual(publisher.snapshot([state], now=10)[1], 'ready')
+        self.assertEqual(publisher.snapshot([state], now=16)[1], 'alert')
+
     async def test_main_loop_heartbeat_and_bounded_shutdown(self):
         stop = asyncio.Event()
         class FakePublisher:
