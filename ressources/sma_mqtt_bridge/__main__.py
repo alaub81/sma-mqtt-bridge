@@ -2,17 +2,30 @@
 
 import argparse
 import asyncio
+from datetime import datetime
 import json
 import logging
 import os
 from pathlib import Path
 import sys
+from zoneinfo import ZoneInfo
 
 from . import __version__
 from .config import DATA, load_config
 from .errors import BridgeError, ConfigError
 from .health import healthy
 from .profiles import load_profile
+
+
+class TimestampFormatter(logging.Formatter):
+    """Render each record in the configured timezone, including its UTC offset."""
+
+    def __init__(self, timezone):
+        super().__init__("%(asctime)s %(levelname)s %(message)s")
+        self.timezone = ZoneInfo(timezone)
+
+    def formatTime(self, record, datefmt=None):
+        return datetime.fromtimestamp(record.created, self.timezone).isoformat(timespec="milliseconds")
 
 
 def main(argv=None):
@@ -58,7 +71,9 @@ def main(argv=None):
         if not config.has_sources and not (Path(config.runtime.state_dir) / "mqtt-topics.json").exists():
             raise ConfigError("No sources enabled; use --check-config for offline validation")
         from .runtime import run
-        logging.basicConfig(level=config.runtime.log_level, format="%(levelname)s %(message)s")
+        handler = logging.StreamHandler()
+        handler.setFormatter(TimestampFormatter(config.runtime.timezone))
+        logging.basicConfig(level=config.runtime.log_level, handlers=[handler])
         # Third-party diagnostics may contain URLs or tokens, including at DEBUG level.
         for name in ("aiohttp", "aiomqtt", "paho", "asyncio"):
             logging.getLogger(name).setLevel(logging.CRITICAL)

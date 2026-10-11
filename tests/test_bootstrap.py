@@ -1,6 +1,8 @@
 """Exercise Python CLI offline, without private ENV files or network sessions."""
 
 import json
+import logging
+from datetime import datetime, timezone
 import os
 from pathlib import Path
 import subprocess
@@ -8,11 +10,25 @@ import sys
 import tempfile
 import unittest
 
+from sma_mqtt_bridge.__main__ import TimestampFormatter
+
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "ressources" if (ROOT / "ressources/sma_mqtt_bridge").is_dir() else ROOT
 
 
 class BootstrapTests(unittest.TestCase):
+    def test_log_timestamps_follow_timezone_and_daylight_saving(self):
+        formatter = TimestampFormatter('Europe/Berlin')
+        for month, offset, hour in ((1, '+01:00', '13'), (7, '+02:00', '14')):
+            with self.subTest(month=month):
+                record = logging.LogRecord('fixture', logging.WARNING, '', 0,
+                                           'Source portal unavailable (stale)', (), None)
+                record.created = datetime(2026, month, 11, 12, 0, 0, 123000,
+                                          tzinfo=timezone.utc).timestamp()
+                self.assertEqual(formatter.format(record),
+                                 f'2026-{month:02d}-11T{hour}:00:00.123{offset} '
+                                 'WARNING Source portal unavailable (stale)')
+
     def cli(self, *args, env=None):
         clean = {key: value for key, value in os.environ.items() if not key.startswith('SMAB_')}
         clean.update(env or {})

@@ -568,3 +568,17 @@ Entscheidungen, eingegangene Unterlagen, erledigte Arbeiten und Prüfergebnisse 
 - Auf ausdrücklichen Wunsch beide Register 30537/30531 auf kWh geändert. Bewusste Abweichung von Wh in der offiziellen Storage-V13-Liste in Profilvalidierung, REGISTER_VALIDATION, Wertekatalog, Migrationsledger und MIGRATION dokumentiert. U32/FIX0, scale=1 und Homie integer bleiben erhalten; keine Umrechnung des Zahlenwerts. Historische Tagebucheinträge bleiben als damaliger Kenntnisstand erhalten.
 - Bestehende Profilregression erweitert: Tages-/Gesamtenergie aller drei Profile müssen kWh/integer/scale=1 haben und Rohwert 2 unverändert decodieren. openHAB-Anpassung und historische Fehlerwerte in MIGRATION beschrieben. Unabhängiger Livevergleich, Image-Update und Übernahme der Metadaten in openHAB bleiben offen; keine private Originalreferenz oder ENV geändert.
 - Validierung abgeschlossen: vollständiger Linter über 91 Dateien und alle 158 Offline-Tests bestanden; Diff-Hygiene bestanden. Erster Testlauf scheiterte ausschließlich an vier sandboxgesperrten Loopback-Socket-Tests, erlaubter Wiederholungslauf vollständig erfolgreich. Kein Deployment oder Push.
+
+### 2026-10-11 – Periodische Portal-Stale-Meldungen erklärt und konfiguriert
+
+- Andreas meldet wiederholte Portal-Stale-/Recovered-Zyklen bei failures=0. Ursache geklärt: private Konfiguration fragt alle 900 Sekunden ab, ließ Werte aber bereits nach 180 Sekunden ablaufen. Rund 720 Sekunden Stale pro erfolgreichem Zyklus entsprechen den Logs; diese Meldungen belegen keinen Anmelde- oder Netzwerkfehler.
+- Private Portal-Frischegrenze auf 1800 Sekunden angepasst; Abfrageintervall unverändert. ENV-Beispiel und CONFIGURATION erläutern Intervall plus Zeitreserve. Fehlerstatus bei fehlgeschlagenen Anfragen bleibt sofort wirksam; veraltete Werte und echte Fehler werden weiterhin erkannt. Keine Laufzeitlogik, Zugangsdaten oder private Originalreferenzen geändert.
+- Offen: Compose-Container auf dem Zielsystem mit geänderter ENV neu erstellen und mindestens zwei reguläre Abfragezyklen beobachten. Kein Deployment oder Gerätebefehl durchgeführt. Validierung folgt.
+- Ergänzende Logs: Home Manager war einmal 0,2 Sekunden und SEMP einmal 30 Sekunden stale, jeweils ohne gezählte Anfragefehler. Ursache dieser Einzelereignisse ist ohne Zeitstempel/Frischediagnose nicht belegt; keine weiteren Grenzwerte auf Verdacht geändert. Home Manager verwendet lokal Modbus-TCP, SEMP prüft zusätzlich die vom Gerät gelieferten Messzeitstempel.
+- Portal-Konfigurationskorrektur validiert: alle 158 Offline-Tests und vollständiger Linter bestanden; Testwiederholung außerhalb der Socket-Sandbox mit lokalen Testservern erfolgreich.
+
+### 2026-10-11 – Zeitstempel in Laufzeitlogs
+
+- Auf Andreas’ Wunsch Datum/Uhrzeit mit Millisekunden und explizitem UTC-Offset vor Level und Nachricht ergänzt. Bestehendes SMAB_TIMEZONE steuert die Zeitzone (Standard Europe/Berlin), einschließlich Sommer-/Winterzeit; keine weitere Betriebsvariable erforderlich.
+- Deterministische Regression prüft beide Berliner UTC-Offsets anhand fester LogRecord-Zeitpunkte. Dokumentation ergänzt; Gerätekommunikation, Befehle und Verfügbarkeitslogik unverändert. Image-Neubau und Logprüfung auf dem Zielsystem bleiben offen. Validierung folgt.
+- Abschließende Validierung: alle 159 Offline-Tests inklusive Zeitzonenregression und vollständiger Linter über 91 Dateien bestanden. Diff-Hygiene geprüft; kein Deployment, Gerätebefehl oder Push.

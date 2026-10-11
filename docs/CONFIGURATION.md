@@ -245,6 +245,11 @@ See [Docker volume lifecycle and migration](https://docs.docker.com/engine/stora
 
 ## Failure supervision and healthcheck
 
+Runtime log records start with an ISO 8601 timestamp including milliseconds and
+the UTC offset, followed by severity and message. `SMAB_TIMEZONE` (default
+`Europe/Berlin`) controls the log timezone, including daylight-saving changes.
+Example: `2026-10-11T14:30:00.123+02:00 WARNING Source portal unavailable (stale)`.
+
 The Docker probe runs `python -m sma_mqtt_bridge --healthcheck`. It validates configuration
 without device I/O and reads `state/heartbeat.json`. A successful probe requires schema 2,
 `status=running`, a positive PID still present in the same PID namespace, and a finite monotonic
@@ -396,6 +401,15 @@ Portal activation is independent of the local API:
 | `SMAB_PORTAL_ENABLED=true`, `SMAB_PORTAL_COMMANDS_ENABLED=false` | Portal reads only. |
 | Both portal flags and `SMAB_COMMANDS_ENABLED=true` | Advertise `portal/pvminimum/set`, accepting integer payloads 0–100. |
 | `SMAB_PORTAL_POLL_INTERVAL_SECONDS=0` | Disable periodic reads; explicit refresh and command preflight/readback still read when requested. |
+
+For periodic portal reads, configure `SMAB_PORTAL_STALE_SECONDS` above
+`SMAB_PORTAL_POLL_INTERVAL_SECONDS`, allowing time for requests and scheduling.
+For example, a 900-second polling interval with a 1800-second freshness limit
+keeps successful observations fresh between reads. Keeping the default 180-second
+limit with that interval produces roughly 720 seconds of `stale` status per cycle,
+even when all requests succeed. Request failures still set source status to `error`
+immediately; increasing freshness does not suppress those errors. With interval
+zero, observations still expire after the configured freshness limit.
 
 `portal/pvminimum/set` takes minimum PV share, not grid share. `portal/gridshare` remains read-only and equals 100 minus the confirmed minimum. A fresh device read verifies configured plant/device IDs, product 19143, EVehicle consumer type, optional-consumer state and edit permission. An empty edit-link array is valid. All four demand fields must be present. Cost-limit mode or `pvSurplusOnly=true` rejects the percentage write without changing modes.
 
