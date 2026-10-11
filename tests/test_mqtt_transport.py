@@ -117,6 +117,8 @@ class MQTTTransportTests(unittest.IsolatedAsyncioTestCase):
                 self.assertIn(('homie/test-device/measurements/power', '123', True), received)
                 self.assertIn(('homie/test-device/$state', 'disconnected', True), received)
                 self.assertTrue(all(retain for _, _, retain in received))
+                # Retrieving a failed future must not hide the supervised outage.
+                self.assertEqual(publisher.monitors['test-device'].failures, 1 if drop_first else 0)
         finally:
             server.close()
             await server.wait_closed()

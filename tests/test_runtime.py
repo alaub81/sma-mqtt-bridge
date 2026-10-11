@@ -419,6 +419,40 @@ class AsyncRuntimeTests(unittest.IsolatedAsyncioTestCase):
                 raise asyncio.TimeoutError
         client._client.socket().shutdown.assert_called()
 
+    async def test_completed_disconnect_failure_is_propagated(self):
+        from aiomqtt import MqttError
+        from sma_mqtt_bridge.homie import mqtt_session
+        client = FakeClient()
+        client._disconnected = asyncio.get_running_loop().create_future()
+        error = MqttError('Fixture disconnected')
+        with self.assertRaises(MqttError) as caught:
+            async with mqtt_session(client, .1, .1):
+                client._disconnected.set_exception(error)
+        self.assertIs(caught.exception, error)
+
+    async def test_disconnect_error_preserves_primary_publication_timeout(self):
+        from aiomqtt import MqttError
+        from sma_mqtt_bridge.homie import mqtt_session
+        client = FakeClient()
+        client._disconnected = asyncio.get_running_loop().create_future()
+        error = asyncio.TimeoutError('Fixture publication timeout')
+        with self.assertRaises(asyncio.TimeoutError) as caught:
+            async with mqtt_session(client, .1, .1):
+                client._disconnected.set_exception(MqttError('Fixture disconnected'))
+                raise error
+        self.assertIs(caught.exception, error)
+
+    async def test_late_disconnect_error_after_failed_cleanup_is_retrieved(self):
+        from aiomqtt import MqttError
+        from sma_mqtt_bridge.homie import mqtt_session
+        client = FakeClient()
+        client._disconnected = asyncio.get_running_loop().create_future()
+        with self.assertRaises(asyncio.TimeoutError):
+            async with mqtt_session(client, .1, .1):
+                raise asyncio.TimeoutError
+        client._disconnected.set_exception(MqttError('Fixture late disconnect'))
+        await asyncio.sleep(0)  # Run the callback; the strict suite detects orphan errors.
+
     async def test_source_failure_does_not_stop_independent_supervisor(self):
         failing, working = AsyncMock(), AsyncMock()
         failing.read.side_effect = OSError('Uncontrolled fixture error')
