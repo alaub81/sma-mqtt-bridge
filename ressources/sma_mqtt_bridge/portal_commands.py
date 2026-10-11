@@ -1,8 +1,8 @@
 """Guarded minimum PV preference writes preserving the other portal options."""
 
 import asyncio
-from pathlib import Path
 import re
+from pathlib import Path
 
 from .adapters.portal import PortalReader, portal_values
 from .commands import DurableCommands
@@ -33,7 +33,11 @@ class PortalCommands(DurableCommands):
         if retained:
             self.result("rejected-retained")
             return
-        if not (self.config.commands.enabled and self.config.portal.commands_enabled and self.config.portal.enabled):
+        if not (
+            self.config.commands.enabled
+            and self.config.portal.commands_enabled
+            and self.config.portal.enabled
+        ):
             self.result("rejected-disabled")
             return
         if self.lock.locked():
@@ -42,7 +46,11 @@ class PortalCommands(DurableCommands):
         async with self.lock:
             sent = False
             try:
-                if key != "pv-minimum" or not isinstance(data, bytes) or not re.fullmatch(rb"(?:0|[1-9][0-9]?|100)", data):
+                if (
+                    key != "pv-minimum"
+                    or not isinstance(data, bytes)
+                    or not re.fullmatch(rb"(?:0|[1-9][0-9]?|100)", data)
+                ):
                     raise ProtocolError("PV preference needs a whole percentage from 0 to 100")
                 guard = self.guard()
                 if guard:
@@ -52,24 +60,47 @@ class PortalCommands(DurableCommands):
                 device = await self.reader.read_device()
                 observed = self.validated(device)
                 demand = device["optionalEnergyDemand"]
-                if not {"minPvPercentage", "pvSurplusOnly", "usePriceLimit", "priceLimit"} <= demand.keys():
+                if (
+                    not {"minPvPercentage", "pvSurplusOnly", "usePriceLimit", "priceLimit"}
+                    <= demand.keys()
+                ):
                     raise ProtocolError("Portal options are incomplete")
-                if not observed["portal/writable"] or demand["usePriceLimit"] or demand.get("pvSurplusOnly") is True:
+                if (
+                    not observed["portal/writable"]
+                    or demand["usePriceLimit"]
+                    or demand.get("pvSurplusOnly") is True
+                ):
                     raise ProtocolError("Portal preference is unavailable in this mode or account")
-                expected = {"minPvPercentage": target, "pvSurplusOnly": demand.get("pvSurplusOnly"),
-                            "usePriceLimit": demand["usePriceLimit"], "priceLimit": demand.get("priceLimit")}
+                expected = {
+                    "minPvPercentage": target,
+                    "pvSurplusOnly": demand.get("pvSurplusOnly"),
+                    "usePriceLimit": demand["usePriceLimit"],
+                    "priceLimit": demand.get("priceLimit"),
+                }
                 if demand["minPvPercentage"] == target:
                     self.portal_state.update(observed)
                     self.result("already-confirmed")
                     return
-                write_state(self.journal, {"schemaVersion": 1, "property": key, "target": expected,
-                                           "timestamp": utc_timestamp()}, self.config.runtime.max_state_bytes)
+                write_state(
+                    self.journal,
+                    {
+                        "schemaVersion": 1,
+                        "property": key,
+                        "target": expected,
+                        "timestamp": utc_timestamp(),
+                    },
+                    self.config.runtime.max_state_bytes,
+                )
                 self.sync_directory()
                 sent = True
                 self.result("pending")
                 # No refresh/retry of this PUT, even after 401 or an uncertain response.
-                status, _, _ = await self.reader.http.request("PUT", self.reader.device_url() + "/optionalenergydemand",
-                    token=await self.reader.access_token(), json=expected)
+                status, _, _ = await self.reader.http.request(
+                    "PUT",
+                    self.reader.device_url() + "/optionalenergydemand",
+                    token=await self.reader.access_token(),
+                    json=expected,
+                )
                 if not 200 <= status < 300:
                     raise ProtocolError("Portal write could not be confirmed")
                 async with asyncio.timeout(self.config.commands.readback_timeout_seconds):

@@ -1,24 +1,24 @@
 """Independent read supervisors, monotonic scheduling and main-loop liveness."""
 
 import asyncio
-from dataclasses import replace
 import logging
-from pathlib import Path
 import signal
 import time
+from dataclasses import replace
+from pathlib import Path
 
 from .adapters.echarger import EChargerReader, SempReader
-from .adapters.meter import MeterReader
 from .adapters.home_manager_modbus import HomeManagerModbusReader
+from .adapters.meter import MeterReader
 from .adapters.modbus import ModbusReader
 from .adapters.portal import PortalReader
 from .availability import Availability, is_timeout
-from .errors import AuthenticationError
 from .commands import LOCAL_COMMANDS, LocalCommands
-from .portal_commands import CommandRouter, PortalCommands
+from .errors import AuthenticationError
 from .health import atomic_json, heartbeat
 from .homie import HomiePublisher, backoff, wait_stop
 from .model import Property, SourceState
+from .portal_commands import CommandRouter, PortalCommands
 from .storage import journal_status, state_lock
 from .timestamp_diagnostics import TimestampDiagnostics
 
@@ -30,37 +30,114 @@ def sources(config):
     limit = config.runtime.max_response_bytes
     for device in config.inverters:
         if device.enabled:
-            reader = ModbusReader(device, config.profiles[device.id], device.id in config.interval_overrides)
-            interval = min((reader.interval(p) for p in reader.pollers), default=device.poll_interval_seconds)
-            result.append((SourceState(device.id, device.homie_id, reader.properties, device.stale_seconds,
-                                       diagnostics_enabled=device.diagnostics_enabled), reader, interval))
+            reader = ModbusReader(
+                device, config.profiles[device.id], device.id in config.interval_overrides
+            )
+            interval = min(
+                (reader.interval(p) for p in reader.pollers), default=device.poll_interval_seconds
+            )
+            result.append(
+                (
+                    SourceState(
+                        device.id,
+                        device.homie_id,
+                        reader.properties,
+                        device.stale_seconds,
+                        diagnostics_enabled=device.diagnostics_enabled,
+                    ),
+                    reader,
+                    interval,
+                )
+            )
     hm, ec, portal = config.home_manager, config.echarger, config.portal
-    timestamp_observer = (TimestampDiagnostics(config.runtime.state_dir, ec.timestamp_diagnostics_max_bytes,
-                                              ec.timestamp_diagnostics_summary_interval_seconds)
-                          if ec.timestamp_diagnostics_enabled and (ec.enabled or ec.semp_enabled) else None)
+    timestamp_observer = (
+        TimestampDiagnostics(
+            config.runtime.state_dir,
+            ec.timestamp_diagnostics_max_bytes,
+            ec.timestamp_diagnostics_summary_interval_seconds,
+        )
+        if ec.timestamp_diagnostics_enabled and (ec.enabled or ec.semp_enabled)
+        else None
+    )
     if hm.enabled:
         if hm.transport == "modbus-tcp":
-            reader = HomeManagerModbusReader(hm, config.profiles["home-manager"], "home-manager" in config.interval_overrides)
+            reader = HomeManagerModbusReader(
+                hm, config.profiles["home-manager"], "home-manager" in config.interval_overrides
+            )
             interval = hm.poll_interval_seconds
         else:
             reader, interval = MeterReader(hm), None
-        result.append((SourceState("home-manager", hm.homie_id, reader.properties, hm.stale_seconds,
-                                       diagnostics_enabled=hm.diagnostics_enabled), reader, interval))
+        result.append(
+            (
+                SourceState(
+                    "home-manager",
+                    hm.homie_id,
+                    reader.properties,
+                    hm.stale_seconds,
+                    diagnostics_enabled=hm.diagnostics_enabled,
+                ),
+                reader,
+                interval,
+            )
+        )
     if ec.enabled:
-        reader = EChargerReader(ec, limit, include_base=not ec.semp_enabled, timestamp_observer=timestamp_observer)
-        result.append((SourceState("api", ec.homie_id, reader.properties, ec.stale_seconds,
-                                       diagnostics_enabled=ec.diagnostics_enabled), reader, ec.api_poll_interval_seconds))
+        reader = EChargerReader(
+            ec, limit, include_base=not ec.semp_enabled, timestamp_observer=timestamp_observer
+        )
+        result.append(
+            (
+                SourceState(
+                    "api",
+                    ec.homie_id,
+                    reader.properties,
+                    ec.stale_seconds,
+                    diagnostics_enabled=ec.diagnostics_enabled,
+                ),
+                reader,
+                ec.api_poll_interval_seconds,
+            )
+        )
     if ec.semp_enabled:
-        reader = SempReader(ec, limit, include_settings=not ec.enabled, timestamp_observer=timestamp_observer)
-        result.append((SourceState("semp", ec.homie_id, reader.properties, ec.stale_seconds,
-                                       diagnostics_enabled=ec.diagnostics_enabled), reader, ec.semp_poll_interval_seconds))
+        reader = SempReader(
+            ec, limit, include_settings=not ec.enabled, timestamp_observer=timestamp_observer
+        )
+        result.append(
+            (
+                SourceState(
+                    "semp",
+                    ec.homie_id,
+                    reader.properties,
+                    ec.stale_seconds,
+                    diagnostics_enabled=ec.diagnostics_enabled,
+                ),
+                reader,
+                ec.semp_poll_interval_seconds,
+            )
+        )
     if portal.enabled:
         reader = PortalReader(portal, limit)
-        result.append((SourceState("portal", ec.homie_id, reader.properties, portal.stale_seconds,
-                                       diagnostics_enabled=portal.diagnostics_enabled), reader, portal.poll_interval_seconds))
+        result.append(
+            (
+                SourceState(
+                    "portal",
+                    ec.homie_id,
+                    reader.properties,
+                    portal.stale_seconds,
+                    diagnostics_enabled=portal.diagnostics_enabled,
+                ),
+                reader,
+                portal.poll_interval_seconds,
+            )
+        )
     settings = {d.id: (d, "ready_properties") for d in config.inverters}
-    settings.update({"home-manager": (hm, "ready_properties"), "api": (ec, "api_ready_properties"),
-                     "semp": (ec, "semp_ready_properties"), "portal": (portal, "ready_properties")})
+    settings.update(
+        {
+            "home-manager": (hm, "ready_properties"),
+            "api": (ec, "api_ready_properties"),
+            "semp": (ec, "semp_ready_properties"),
+            "portal": (portal, "ready_properties"),
+        }
+    )
     for state, reader, _interval in result:
         device, attr = settings[state.id]
         value = getattr(device, attr)
@@ -68,7 +145,9 @@ def sources(config):
         state.__post_init__()  # Reject filtered or unknown readiness keys before device I/O.
         if isinstance(reader, HomeManagerModbusReader):
             # Paced Modbus reads populate readiness properties over multiple calls.
-            state.initialization_deadline = time.monotonic() + config.runtime.read_cycle_timeout_seconds
+            state.initialization_deadline = (
+                time.monotonic() + config.runtime.read_cycle_timeout_seconds
+            )
     return result
 
 
@@ -88,7 +167,9 @@ async def reset_reader(reader, config):
 
 async def supervise(state, reader, interval, config, stop, refresh_portal=False):
     attempt = 0
-    state.monitor = state.monitor or Availability("Source " + state.id, config.runtime.failure_log_interval_seconds)
+    state.monitor = state.monitor or Availability(
+        "Source " + state.id, config.runtime.failure_log_interval_seconds
+    )
     monitor = state.monitor
     try:
         if interval == 0 and not refresh_portal:
@@ -122,14 +203,19 @@ async def supervise(state, reader, interval, config, stop, refresh_portal=False)
                     await stop.wait()
                 elif interval is not None:
                     monitor.progress("waiting")
-                    await wait_stop(stop, reader.delay() if isinstance(reader, ModbusReader) else interval)
+                    await wait_stop(
+                        stop, reader.delay() if isinstance(reader, ModbusReader) else interval
+                    )
             except AuthenticationError:
                 state.initialization_deadline = None
                 state.error = True
                 monitor.failure(reason="AuthenticationError")
                 monitor.progress("auth-blocked")
                 monitor.observe("error")
-                LOG.error("Source %s authentication blocked; resolve credentials/permissions before restart", state.id)
+                LOG.error(
+                    "Source %s authentication blocked; resolve credentials/permissions before restart",
+                    state.id,
+                )
                 await stop.wait()  # No credential retry storm.
             except Exception as error:
                 state.initialization_deadline = None
@@ -140,8 +226,14 @@ async def supervise(state, reader, interval, config, stop, refresh_portal=False)
                 monitor.observe("error")
                 if is_timeout(error):
                     await reset_reader(reader, config)
-                await wait_stop(stop, backoff(attempt, config.runtime.reconnect_min_seconds,
-                                              config.runtime.reconnect_max_seconds))
+                await wait_stop(
+                    stop,
+                    backoff(
+                        attempt,
+                        config.runtime.reconnect_min_seconds,
+                        config.runtime.reconnect_max_seconds,
+                    ),
+                )
                 attempt += 1
     finally:
         monitor.progress("stopped")
@@ -152,7 +244,9 @@ async def supervise(state, reader, interval, config, stop, refresh_portal=False)
 async def run(config, refresh_portal=False, stop=None, publisher_factory=HomiePublisher):
     with state_lock(config.runtime.state_dir):
         for name in ("echarger-command-pending.json", "portal-command-pending.json"):
-            status = journal_status(Path(config.runtime.state_dir) / name, config.runtime.max_state_bytes)
+            status = journal_status(
+                Path(config.runtime.state_dir) / name, config.runtime.max_state_bytes
+            )
             if status:
                 LOG.error("Command journal %s: %s; manual reconciliation required", name, status)
         await run_locked(config, refresh_portal, stop, publisher_factory)
@@ -161,18 +255,35 @@ async def run(config, refresh_portal=False, stop=None, publisher_factory=HomiePu
 def log_startup_status(config, states, mqtt_status, deadline, now=None):
     """Report initial availability once ready, or after the bounded startup window."""
     now = time.monotonic() if now is None else now
-    source_status = {state.id: state.status(now) for state in states if state.contributes_availability}
+    source_status = {
+        state.id: state.status(now) for state in states if state.contributes_availability
+    }
     devices = sorted({state.device for state in states})
     complete = all(value == "ready" for value in source_status.values()) and all(
-        mqtt_status.get(device, False) for device in devices)
+        mqtt_status.get(device, False) for device in devices
+    )
     if not complete and now < deadline:
         return False
-    configured = [device.id for device in config.inverters] + ["home-manager", "api", "semp", "portal"]
+    configured = [device.id for device in config.inverters] + [
+        "home-manager",
+        "api",
+        "semp",
+        "portal",
+    ]
     sources_text = ", ".join(f"{key}={source_status.get(key, 'disabled')}" for key in configured)
-    mqtt_text = ", ".join(f"{key}={'connected' if mqtt_status.get(key, False) else 'disconnected'}"
-                          for key in devices) or "none"
-    LOG.info("Startup status (%s): sources [%s]; MQTT [%s]",
-             "ready" if complete else "startup window elapsed", sources_text, mqtt_text)
+    mqtt_text = (
+        ", ".join(
+            f"{key}={'connected' if mqtt_status.get(key, False) else 'disconnected'}"
+            for key in devices
+        )
+        or "none"
+    )
+    LOG.info(
+        "Startup status (%s): sources [%s]; MQTT [%s]",
+        "ready" if complete else "startup window elapsed",
+        sources_text,
+        mqtt_text,
+    )
     return True
 
 
@@ -186,24 +297,38 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
     local_controller, portal_controller = None, None
     if config.commands.enabled and config.echarger.commands_enabled:
         api_state = next(s for s in states if s.id == "api")
-        api_state.properties = tuple(replace(p, settable=True) if p.node == "settings" and p.id in LOCAL_COMMANDS else p
-                                     for p in api_state.properties)
-        result_state = SourceState("commands", config.echarger.homie_id,
-                                   (Property("commands", "local-result", "Local command result", "string"),
-                                    Property("commands", "plan", "Confirmed charging plan", "string", settable=True)),
-                                   config.echarger.stale_seconds, diagnostics_enabled=config.echarger.diagnostics_enabled,
-                                   contributes_availability=False)
+        api_state.properties = tuple(
+            replace(p, settable=True) if p.node == "settings" and p.id in LOCAL_COMMANDS else p
+            for p in api_state.properties
+        )
+        result_state = SourceState(
+            "commands",
+            config.echarger.homie_id,
+            (
+                Property("commands", "local-result", "Local command result", "string"),
+                Property("commands", "plan", "Confirmed charging plan", "string", settable=True),
+            ),
+            config.echarger.stale_seconds,
+            diagnostics_enabled=config.echarger.diagnostics_enabled,
+            contributes_availability=False,
+        )
         states.append(result_state)
         api_reader = next(r for s, r, _ in readers if s.id == "api")
         local_controller = LocalCommands(config, api_state, result_state, reader=api_reader)
     if config.commands.enabled and config.portal.commands_enabled:
         portal_state = next(s for s in states if s.id == "portal")
-        portal_state.properties = tuple(replace(p, settable=True, format="0:100") if p.id == "pv-minimum" else p
-                                        for p in portal_state.properties)
-        result_state = SourceState("portal-commands", config.echarger.homie_id,
-                                   (Property("commands", "portal-result", "Portal command result", "string"),),
-                                   config.portal.stale_seconds, diagnostics_enabled=config.portal.diagnostics_enabled,
-                                   contributes_availability=False)
+        portal_state.properties = tuple(
+            replace(p, settable=True, format="0:100") if p.id == "pv-minimum" else p
+            for p in portal_state.properties
+        )
+        result_state = SourceState(
+            "portal-commands",
+            config.echarger.homie_id,
+            (Property("commands", "portal-result", "Portal command result", "string"),),
+            config.portal.stale_seconds,
+            diagnostics_enabled=config.portal.diagnostics_enabled,
+            contributes_availability=False,
+        )
         states.append(result_state)
         portal_reader = next(r for s, r, _ in readers if s.id == "portal")
         portal_controller = PortalCommands(config, portal_state, result_state, reader=portal_reader)
@@ -216,11 +341,16 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
         try:
             loop.add_signal_handler(sig, stop.set)
             installed.append(sig)
-        except (NotImplementedError, RuntimeError):
+        except NotImplementedError, RuntimeError:
             pass
-    tasks = [asyncio.create_task(supervise(state, reader, interval, config, stop,
-                                          refresh_portal and state.id == "portal"))
-             for state, reader, interval in readers]
+    tasks = [
+        asyncio.create_task(
+            supervise(
+                state, reader, interval, config, stop, refresh_portal and state.id == "portal"
+            )
+        )
+        for state, reader, interval in readers
+    ]
     tasks.append(asyncio.create_task(publisher.run(stop)))
     startup_deadline = time.monotonic() + config.runtime.read_cycle_timeout_seconds
     startup_reported = False
@@ -228,16 +358,23 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
         while not stop.is_set():
             # A failed supervisor must not leave an apparently healthy process behind.
             for task in tasks:
-                if task.done() and (task.cancelled() or task.exception() is not None
-                                    or bool(readers)):
+                if task.done() and (
+                    task.cancelled() or task.exception() is not None or bool(readers)
+                ):
                     raise RuntimeError("A runtime supervisor stopped unexpectedly")
             for state in states:
                 if state.monitor is not None:
                     state.monitor.observe(state.status())
             if not startup_reported:
-                startup_reported = log_startup_status(config, states, publisher.status, startup_deadline)
-            heartbeat(config, states, publisher.status,
-                      {d: m.snapshot() for d, m in getattr(publisher, "monitors", {}).items()})
+                startup_reported = log_startup_status(
+                    config, states, publisher.status, startup_deadline
+                )
+            heartbeat(
+                config,
+                states,
+                publisher.status,
+                {d: m.snapshot() for d, m in getattr(publisher, "monitors", {}).items()},
+            )
             await wait_stop(stop, config.runtime.health_interval_seconds)
     finally:
         stop.set()

@@ -1,10 +1,10 @@
 """Protocol-neutral property metadata and independently expiring samples."""
 
+import math
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from decimal import Decimal
-import math
-import time
 
 from .errors import ConfigError, ProtocolError
 
@@ -43,7 +43,7 @@ def payload(value, prop):
                     return None
                 return str(int(number))
             return format(number, "f")
-        except (ValueError, ArithmeticError):
+        except ValueError, ArithmeticError:
             return None
     if prop.datatype == "enum" and str(value) not in prop.format.split(","):
         return None
@@ -86,8 +86,11 @@ class SourceState:
 
     @property
     def required_keys(self):
-        return (self.ready_properties or tuple(p.key for p in self.properties if p.required_for_ready)
-                or tuple(p.key for p in self.properties if p.node == "measurements"))
+        return (
+            self.ready_properties
+            or tuple(p.key for p in self.properties if p.required_for_ready)
+            or tuple(p.key for p in self.properties if p.node == "measurements")
+        )
 
     def missing_critical(self, now=None):
         return sorted(set(self.required_keys) - set(self.fresh_values(now)))
@@ -115,14 +118,24 @@ class SourceState:
             self.last_success = now
             self.last_timestamp = timestamp or utc_timestamp()
             self.error = False
-        if self.initialization_deadline is not None and self.fresh_values(now) and not self.missing_critical(now):
+        if (
+            self.initialization_deadline is not None
+            and self.fresh_values(now)
+            and not self.missing_critical(now)
+        ):
             self.initialization_deadline = None
 
     def fresh_values(self, now=None):
         now = time.monotonic() if now is None else now
-        expiry = {p.key: p.stale_seconds if p.stale_seconds is not None else self.stale_seconds for p in self.properties}
-        return {k: value for k, (value, received) in self.values.items()
-                if math.isfinite(received) and 0 <= now - received <= expiry[k]}
+        expiry = {
+            p.key: p.stale_seconds if p.stale_seconds is not None else self.stale_seconds
+            for p in self.properties
+        }
+        return {
+            k: value
+            for k, (value, received) in self.values.items()
+            if math.isfinite(received) and 0 <= now - received <= expiry[k]
+        }
 
     def status(self, now=None):
         if self.error:

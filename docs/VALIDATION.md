@@ -29,8 +29,8 @@ exceptions are resolved offline; unexpected event-loop errors now fail the suite
 The 2026-10-11 code review passed configured lint and all 174 offline tests. Its
 MQTT disconnect tests also emitted unhandled future exceptions: the passing test
 result alone did not close that defect; see the subsequent correction below.
-Ruff currently checks E4/E7/E9/F and Pylint
-error/fatal diagnostics; broader style checks are a separate planned improvement.
+Ruff now checks E4/E7/E9/F/I and formatting; Pylint checks error/fatal diagnostics.
+Additional lint rules remain a separate planned improvement.
 
 ## Acceptance matrix
 
@@ -281,6 +281,28 @@ credentials, and check all global/per-adapter gate combinations for local and po
 configuration. Invalid global-only gates remain rejected. All 201 offline tests,
 full lint over 107 public files and Compose parity passed. No installation or device
 configuration was changed.
+
+### Python formatting and import ordering, 2026-10-11
+
+The existing pinned Ruff now enforces formatting as a read-only repository check:
+100-column target, double quotes and four-space indentation. Rule I enforces import
+ordering/grouping, with `sma_mqtt_bridge` and `tests` classified as project packages.
+EditorConfig and the README match these rules; no dependencies were upgraded.
+
+The two changes were applied and validated sequentially. Formatting changed 44
+public Python files; all 48 parsed syntax trees remained identical. Import ordering
+then fixed 48 reported locations. A second comparison normalized only consecutive
+import statements and aliases within their original scopes; all 48 syntax trees
+matched beyond that ordering/grouping. Local runtime/test import changes were
+reviewed; no import was moved into or out of a function or conditional.
+The only intentional non-formatting code addition is the formatter check in the
+lint runner. No protocol, configuration defaults, command gates or data changed.
+
+All 201 offline tests passed after formatting and again after import ordering,
+including the real loopback MQTT/HTTP cases and strict event-loop check. Final lint
+over 107 public files, including formatter/import checks, and Compose parity passed.
+This is offline validation; no image deployment or new installation acceptance
+was performed. Private references and configuration were excluded from formatting.
 
 Record date, tested image/version, source/transport, automated versus direct versus
 user-reported result, and remaining limits. Keep authenticated responses, private

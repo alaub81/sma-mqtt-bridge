@@ -2,11 +2,11 @@
 """Lint all existing tracked and non-ignored untracked files without modifying them."""
 
 import json
-from pathlib import Path
 import re
 import shutil
 import subprocess
 import sys
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -15,12 +15,17 @@ def project_files():
     """Deduplicate staged/untracked paths and omit staged deletions and ignored data."""
     result = subprocess.run(
         ["git", "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
-        cwd=ROOT, check=True, capture_output=True,
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
     )
-    return sorted({
-        name.decode("utf-8") for name in result.stdout.split(b"\0")
-        if name and (ROOT / name.decode("utf-8")).is_file()
-    })
+    return sorted(
+        {
+            name.decode("utf-8")
+            for name in result.stdout.split(b"\0")
+            if name and (ROOT / name.decode("utf-8")).is_file()
+        }
+    )
 
 
 def check_text(files):
@@ -85,10 +90,14 @@ def check_dotenv(files):
 
 
 def check_widget_export(_files):
-    return subprocess.run(
-        [sys.executable, "tools/export_openhab_widget.py", "--check"], cwd=ROOT,
-        check=False,
-    ).returncode == 0
+    return (
+        subprocess.run(
+            [sys.executable, "tools/export_openhab_widget.py", "--check"],
+            cwd=ROOT,
+            check=False,
+        ).returncode
+        == 0
+    )
 
 
 def main():
@@ -115,7 +124,9 @@ def main():
                 passed = False
             else:
                 try:
-                    passed = subprocess.run(command + paths, cwd=ROOT, timeout=timeout).returncode == 0
+                    passed = (
+                        subprocess.run(command + paths, cwd=ROOT, timeout=timeout).returncode == 0
+                    )
                 except subprocess.TimeoutExpired:
                     print(f"{label}: timed out after {timeout} seconds; check failed.", flush=True)
                     passed = False
@@ -124,27 +135,58 @@ def main():
         results.append((label, passed))
 
     check("Text hygiene / file coverage", files, function=check_text)
-    check("JSON syntax and duplicate keys",
-          [p for p in files if p.endswith(".json")],
-          function=check_json)
-    check("Dotenv examples", [p for p in files if Path(p).name == "smab.example.env"],
-          function=check_dotenv)
-    check("openHAB widget export",
-          [p for p in files if p == "openHAB/yaml/widgets/echarger-comfort.yml"],
-          function=check_widget_export)
+    check(
+        "JSON syntax and duplicate keys",
+        [p for p in files if p.endswith(".json")],
+        function=check_json,
+    )
+    check(
+        "Dotenv examples",
+        [p for p in files if Path(p).name == "smab.example.env"],
+        function=check_dotenv,
+    )
+    check(
+        "openHAB widget export",
+        [p for p in files if p == "openHAB/yaml/widgets/echarger-comfort.yml"],
+        function=check_widget_export,
+    )
     check("ShellCheck", [p for p in files if p.endswith(".sh")], command=["shellcheck"])
-    check("Hadolint", [p for p in files if Path(p).name.startswith("Dockerfile")],
-          command=["hadolint", "--config", ".hadolint.yaml"])
-    check("YAML", [p for p in files if p.endswith((".yml", ".yaml"))],
-          command=["yamllint", "--strict", "--config-file", ".yamllint.yaml"])
-    check("GitHub Actions", [p for p in files if p.startswith(".github/workflows/") and p.endswith((".yml", ".yaml"))],
-          command=["actionlint", "-pyflakes="])
-    check("Python / Ruff", [p for p in files if p.endswith(".py")],
-          command=["ruff", "check", "--config", "ruff.toml"])
-    check("Python / Pylint", [p for p in files if p.endswith(".py")],
-          command=["pylint", "--rcfile", ".pylintrc", "--errors-only"], timeout=180)
-    check("Markdown", [p for p in files if p.endswith(".md")],
-          command=["pymarkdown", "--config", ".pymarkdown.yaml", "--strict-config", "scan"])
+    check(
+        "Hadolint",
+        [p for p in files if Path(p).name.startswith("Dockerfile")],
+        command=["hadolint", "--config", ".hadolint.yaml"],
+    )
+    check(
+        "YAML",
+        [p for p in files if p.endswith((".yml", ".yaml"))],
+        command=["yamllint", "--strict", "--config-file", ".yamllint.yaml"],
+    )
+    check(
+        "GitHub Actions",
+        [p for p in files if p.startswith(".github/workflows/") and p.endswith((".yml", ".yaml"))],
+        command=["actionlint", "-pyflakes="],
+    )
+    check(
+        "Python / Ruff",
+        [p for p in files if p.endswith(".py")],
+        command=["ruff", "check", "--config", "ruff.toml"],
+    )
+    check(
+        "Python / formatting",
+        [p for p in files if p.endswith(".py")],
+        command=["ruff", "format", "--check", "--config", "ruff.toml"],
+    )
+    check(
+        "Python / Pylint",
+        [p for p in files if p.endswith(".py")],
+        command=["pylint", "--rcfile", ".pylintrc", "--errors-only"],
+        timeout=180,
+    )
+    check(
+        "Markdown",
+        [p for p in files if p.endswith(".md")],
+        command=["pymarkdown", "--config", ".pymarkdown.yaml", "--strict-config", "scan"],
+    )
     print("\n================ Summary ================", flush=True)
     print(f"All {len(files)} project files received the text hygiene check.", flush=True)
     for label, passed in results:

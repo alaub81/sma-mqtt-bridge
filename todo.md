@@ -14,6 +14,7 @@ Die aktuelle Abnahme steht in [docs/VALIDATION.md](docs/VALIDATION.md), die Reih
 - [x] Review 2 am 11.10.2026 lokal korrigiert: Homie-Integer kanonisch ohne Dezimalpunkt ausgegeben, signed-64-bit-Grenzen geprüft; Bruchzahlen werden nicht gerundet. Float-Ausgabe unverändert, Leistungsgrenzen-Regression korrigiert.
 - [x] Review 1 am 11.10.2026 lokal korrigiert: individuelle API-Bestätigung und Plan-Einheiten einschließlich Rücklesen abgesichert; SEMP und retained Beobachtungen erhalten. Neue Live-Abnahme bleibt offen; Details im neuen Tagebucheintrag.
 - [x] Review 6 am 11.10.2026 abgeschlossen: statischer CLI-Projektstatus nennt optionale Schreibfähigkeit und standardmäßig geschlossene Befehlsfreigaben; check-config bewertet tatsächliche Gates. Modulbeschreibungen für optionales Schreiben/lokales Datei-I/O präzisiert; Profilbefehle weiterhin nur für Wechselrichter gesperrt.
+- [x] Clean Code/KISS Schritte 1–2 am 11.10.2026 umgesetzt: Python-Formatierung und Importordnung getrennt angewendet/geprüft, anschließend verbindlich im Linter verankert. Keine Funktionszerlegung, Setting-Migration oder Widgetänderung; weitere Vereinfachungen bleiben im Plan.
 - [ ] Nachtbetrieb vollständig abnehmen: Morgen-Aufwachen und Wertaktualisierung sowie Schlaf-/Ausfallunterscheidung prüfen. Abendbeobachtung am 11.10.2026 laut Andreas unauffällig.
 - [ ] Mehrstündigen deterministischen Ausfalltest und Produktionsabnahme ergänzen: langsame/unvollständige Antworten, Geräte-/Broker-Ausfälle, abruptes Prozessende, Last Will, TLS, Topic-Retirement und selbstständige Erholung. Kontrollierter Stop/Start ist separat bestätigt.
 - [ ] Externe Betriebsüberwachung für Prozessstillstand, Docker-unhealthy, Broker-Ausfall und dauerhaft fehlende kritische Werte einrichten; Host-Neustart und Zustandswiederherstellung prüfen. Manifest, Unklarheitsjournale und Instanzsperre erhalten.
@@ -49,6 +50,14 @@ Die ursprünglichen Fragen Q01–Q27 bleiben mit ihrem genauen Wortlaut und alle
 ## Regeln für das Projekttagebuch
 
 Neue Entscheidungen, Unterlagen, Ergebnisse und offene Fragen mit Datum ergänzen. Geklärte Fragen ausdrücklich mit Antwort und Datum markieren. Frühere Einträge bleiben in verlinkten, datierten Archiven erhalten; sie werden nicht nachträglich als aktuelle Anleitung umgeschrieben. Öffentliche technische Dokumente sind Englisch, Tagebucheinträge Deutsch. Private Kennungen, Adressen, Zugangsdaten und Rohantworten bleiben ausgeschlossen.
+
+## 2026-10-11 – Python-Formatierung und Importordnung
+
+- Auftrag: die beiden risikoärmsten Clean-Code-Schritte umsetzen. Bestehende gepinnte Ruff-Version beibehalten; Formatstil explizit mit Zielbreite 100, doppelten Anführungszeichen und vier Leerzeichen festgelegt. EditorConfig abgestimmt. Keine zusätzlichen Bugbear-/Modernisierungsregeln und keine strukturellen Umbauten eingeführt.
+- Zuerst 44 öffentliche Python-Dateien formatiert; AST-Vergleich aller 48 Python-Dateien ohne Positionsattribute identisch. Danach 201 Offline-Tests und vollständigen Linter erfolgreich ausgeführt. Private/ignorierte Dateien nicht formatiert.
+- Danach ausschließlich Importregel I angewendet: 48 Hinweise korrigiert, Projektpakete sma_mqtt_bridge/tests ausdrücklich eingeordnet. Zweiter AST-Vergleich nur unter Normalisierung zusammenhängender Importblöcke innerhalb ihrer ursprünglichen Scopes identisch; keine andere Logikänderung. Importblöcke im Runtime/Testcode auf Kontext geprüft, keine Imports zwischen Funktionen/Bedingungen verschoben.
+- Formatprüfung als read-only Ruff-format-check in tests/lint.py ergänzt; Importregel verbindlich in ruff.toml aktiviert. README enthält die passenden manuellen Korrekturbefehle. Der übliche Linter verändert weiterhin keine Dateien. Abgesehen vom neuen Linter-Prüfschritt nur Format-/Importänderungen in Python.
+- Endstand erneut mit allen 201 Offline-Tests ohne unbehandelte Loop-Ausnahmen, allen Lintern über 107 öffentliche Dateien einschließlich Format-/Importprüfung und Compose-Parität/Overrides geprüft. Einheiten, Defaults, Protokolle, Writes/Gates und Daten unverändert. Kein Build, Deployment oder Gerätezugriff; Setting-Dataclass, Funktionszerlegung und Widgetvereinfachung weiterhin spätere unabhängige Schritte.
 
 ## 2026-10-11 – Review 6: CLI-Fähigkeitsstatus und Modulbeschreibungen
 

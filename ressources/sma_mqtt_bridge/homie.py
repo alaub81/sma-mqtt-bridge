@@ -1,21 +1,21 @@
 """Retained Homie 4 metadata/state, one supervised connection/Last Will per device."""
 
 import asyncio
-from contextlib import asynccontextmanager
 import logging
-from pathlib import Path
 import random
 import socket
 import time
+from contextlib import asynccontextmanager
+from pathlib import Path
 
 import aiomqtt
 
-from .config import ID, ssl_context
 from .availability import Availability, is_timeout
+from .config import ID, ssl_context
 from .errors import ConfigError, StateError
-from .translation import load_translation
 from .model import Property
 from .storage import MISSING, read_state, write_state
+from .translation import load_translation
 
 LOG = logging.getLogger(__name__)
 
@@ -30,8 +30,14 @@ def discovery(prefix, device, properties, labels=None, device_name=None):
     if len({wire_key(p.key) for p in properties}) != len(properties):
         raise ConfigError("Compact Homie IDs collide")
     base = prefix + "/" + device
-    topics = {base + "/$homie": "4.0.0", base + "/$name": labels.get(device, labels.get(device_name or device, device_name or device)), base + "/$state": "init",
-              base + "/$extensions": ""}
+    topics = {
+        base + "/$homie": "4.0.0",
+        base + "/$name": labels.get(
+            device, labels.get(device_name or device, device_name or device)
+        ),
+        base + "/$state": "init",
+        base + "/$extensions": "",
+    }
     nodes = sorted({p.node for p in properties})
     if len({wire_key(node) for node in nodes}) != len(nodes):
         raise ConfigError("Compact Homie node IDs collide")
@@ -45,11 +51,19 @@ def discovery(prefix, device, properties, labels=None, device_name=None):
             name = labels.get("Device {number}", "Device {number}").replace("{number}", node[7:])
         topics[root + "/$name"] = labels.get(name, name)
         topics[root + "/$type"] = node_type
-        topics[root + "/$properties"] = ",".join(sorted(wire_key(p.id) for p in properties if p.node == node))
+        topics[root + "/$properties"] = ",".join(
+            sorted(wire_key(p.id) for p in properties if p.node == node)
+        )
     for p in properties:
         root = base + "/" + wire_key(p.key)
-        topics.update({root + "/$name": labels.get(p.name, p.name), root + "/$datatype": p.datatype,
-                       root + "/$settable": str(p.settable).lower(), root + "/$retained": "true"})
+        topics.update(
+            {
+                root + "/$name": labels.get(p.name, p.name),
+                root + "/$datatype": p.datatype,
+                root + "/$settable": str(p.settable).lower(),
+                root + "/$retained": "true",
+            }
+        )
         if p.unit:
             topics[root + "/$unit"] = p.unit
         if p.format:
@@ -59,7 +73,9 @@ def discovery(prefix, device, properties, labels=None, device_name=None):
 
 def backoff(attempt, minimum, maximum, random_value=None):
     cap = min(maximum, minimum * 2 ** min(attempt, 30))
-    return max(minimum, cap * (.5 + .5 * (random.random() if random_value is None else random_value)))
+    return max(
+        minimum, cap * (0.5 + 0.5 * (random.random() if random_value is None else random_value))
+    )
 
 
 async def wait_stop(stop, seconds):
@@ -84,8 +100,11 @@ class HomiePublisher:
     def metadata(self, device, properties):
         states = [s for s in self.states if s.device == device]
         inverter = next((s.id[8:] for s in states if s.id.startswith("inverter")), None)
-        role = "Home Manager" if any(s.id == "home-manager" for s in states) else (
-            "eCharger" if any(s.id in ("api", "semp", "portal") for s in states) else device)
+        role = (
+            "Home Manager"
+            if any(s.id == "home-manager" for s in states)
+            else ("eCharger" if any(s.id in ("api", "semp", "portal") for s in states) else device)
+        )
         if inverter is not None:
             role = self.labels.get("Inverter", "Inverter") + " " + inverter
         return discovery(self.config.mqtt.homie_prefix, device, properties, self.labels, role)
@@ -103,7 +122,9 @@ class HomiePublisher:
                 elif active is not None and not active.done():
                     self.command_controller.reject(key, "rejected-busy")
                 else:
-                    active = asyncio.create_task(self.command_controller.handle(key, message.payload))
+                    active = asyncio.create_task(
+                        self.command_controller.handle(key, message.payload)
+                    )
         finally:
             if active is not None:
                 if not active.done():
@@ -115,29 +136,51 @@ class HomiePublisher:
         if data is MISSING:
             return {}
         try:
-            if (not isinstance(data, dict) or set(data) != {"schemaVersion", "prefix", "devices"}
-                    or type(data["schemaVersion"]) is not int or data["schemaVersion"] != 1
-                    or not isinstance(data["prefix"], str) or not ID.fullmatch(data["prefix"])
-                    or not isinstance(data["devices"], dict)):
+            if (
+                not isinstance(data, dict)
+                or set(data) != {"schemaVersion", "prefix", "devices"}
+                or type(data["schemaVersion"]) is not int
+                or data["schemaVersion"] != 1
+                or not isinstance(data["prefix"], str)
+                or not ID.fullmatch(data["prefix"])
+                or not isinstance(data["devices"], dict)
+            ):
                 raise ValueError
             result = {}
             for device, topics in data["devices"].items():
-                if (not ID.fullmatch(device) or not isinstance(topics, list)
-                        or any(not isinstance(t, str) or len(t.split("/")) < 3
-                               or not ID.fullmatch(t.split("/")[0]) or t.split("/")[1] != device
-                               or any(not level for level in t.split("/")) or any(c in t for c in "+#")
-                               or any(ord(c) < 32 for c in t) for t in topics)
-                        or len(topics) != len(set(topics))):
+                if (
+                    not ID.fullmatch(device)
+                    or not isinstance(topics, list)
+                    or any(
+                        not isinstance(t, str)
+                        or len(t.split("/")) < 3
+                        or not ID.fullmatch(t.split("/")[0])
+                        or t.split("/")[1] != device
+                        or any(not level for level in t.split("/"))
+                        or any(c in t for c in "+#")
+                        or any(ord(c) < 32 for c in t)
+                        for t in topics
+                    )
+                    or len(topics) != len(set(topics))
+                ):
                     raise ValueError
                 result[device] = set(topics)
             return result
-        except (ValueError, TypeError, AttributeError, KeyError):
-            raise StateError("MQTT topic manifest is corrupt; restore or reconcile it before startup") from None
+        except ValueError, TypeError, AttributeError, KeyError:
+            raise StateError(
+                "MQTT topic manifest is corrupt; restore or reconcile it before startup"
+            ) from None
 
     def save_owned(self):
-        write_state(self.path, {"schemaVersion": 1, "prefix": self.config.mqtt.homie_prefix,
-                               "devices": {d: sorted(t) for d, t in self.owned.items()}},
-                    self.config.runtime.max_state_bytes)
+        write_state(
+            self.path,
+            {
+                "schemaVersion": 1,
+                "prefix": self.config.mqtt.homie_prefix,
+                "devices": {d: sorted(t) for d, t in self.owned.items()},
+            },
+            self.config.runtime.max_state_bytes,
+        )
 
     def properties(self, states):
         props = [p for state in states for p in state.properties]
@@ -145,13 +188,22 @@ class HomiePublisher:
             status_key, time_key = state.diagnostic_keys
             # Operational source availability stays usable when optional diagnostics are disabled.
             if state.contributes_availability or state.diagnostics_enabled:
-                props.append(Property(*status_key.split("/"), "Source availability", "enum", format="init,ready,stale,error"))
+                props.append(
+                    Property(
+                        *status_key.split("/"),
+                        "Source availability",
+                        "enum",
+                        format="init,ready,stale,error",
+                    )
+                )
             if not state.diagnostics_enabled:
                 continue
             props.append(Property(*time_key.split("/"), "Last successful receipt (UTC)", "string"))
             if state.monitor is not None:
-                props += [Property(*key.split("/"), "Source " + name, datatype, unit)
-                          for name, key, datatype, unit in self.metric_properties(state)]
+                props += [
+                    Property(*key.split("/"), "Source " + name, datatype, unit)
+                    for name, key, datatype, unit in self.metric_properties(state)
+                ]
         if len({p.key for p in props}) != len(props):
             raise ValueError("Duplicate Homie property ownership")
         return tuple(props)
@@ -159,12 +211,14 @@ class HomiePublisher:
     @staticmethod
     def metric_properties(state):
         root = "portal/" if state.id == "portal" else "diagnostics/" + state.id + "-"
-        return (("failures", root + "failures", "integer", ""),
-                ("consecutiveFailures", root + "consecutive-failures", "integer", ""),
-                ("timeouts", root + "timeouts", "integer", ""),
-                ("outageSeconds", root + "outage-seconds", "float", "s"),
-                ("phase", root + "phase", "string", ""),
-                ("missingCritical", root + "missing-critical", "integer", ""))
+        return (
+            ("failures", root + "failures", "integer", ""),
+            ("consecutiveFailures", root + "consecutive-failures", "integer", ""),
+            ("timeouts", root + "timeouts", "integer", ""),
+            ("outageSeconds", root + "outage-seconds", "float", "s"),
+            ("phase", root + "phase", "string", ""),
+            ("missingCritical", root + "missing-critical", "integer", ""),
+        )
 
     def snapshot(self, states, now=None):
         result = {}
@@ -176,19 +230,31 @@ class HomiePublisher:
                 if state.last_timestamp:
                     result[state.diagnostic_keys[1]] = state.last_timestamp
                 if state.monitor is not None:
-                    metrics = state.monitor.snapshot(now) | {"missingCritical": len(state.missing_critical(now))}
-                    result.update({key: str(round(metrics[name], 1)) if datatype == "float" else str(metrics[name])
-                                   for name, key, datatype, _ in self.metric_properties(state)})
+                    metrics = state.monitor.snapshot(now) | {
+                        "missingCritical": len(state.missing_critical(now))
+                    }
+                    result.update(
+                        {
+                            key: str(round(metrics[name], 1))
+                            if datatype == "float"
+                            else str(metrics[name])
+                            for name, key, datatype, _ in self.metric_properties(state)
+                        }
+                    )
         available = [s for s in states if s.contributes_availability]
         status = "ready" if any(s.status(now) == "ready" for s in available) else "alert"
         # Keep the bounded paced initialization visible instead of reporting a premature outage.
-        if available and all(s.initialization_deadline is not None and s.status(now) == "init" for s in available):
+        if available and all(
+            s.initialization_deadline is not None and s.status(now) == "init" for s in available
+        ):
             status = "init"
         return result, status
 
     async def serve_device(self, device, states, stop):
         mqtt, runtime = self.config.mqtt, self.config.runtime
-        monitor = self.monitors.setdefault(device, Availability("MQTT " + device, runtime.failure_log_interval_seconds))
+        monitor = self.monitors.setdefault(
+            device, Availability("MQTT " + device, runtime.failure_log_interval_seconds)
+        )
         base = mqtt.homie_prefix + "/" + device
         props = self.properties(states)
         metadata = self.metadata(device, props) if states else {}
@@ -207,10 +273,19 @@ class HomiePublisher:
             self.status[device] = False
             monitor.progress("connecting")
             client = self.client_factory(
-                mqtt.host, mqtt.port, username=mqtt.username or None, password=mqtt.password or None,
-                identifier=mqtt.client_id + "-" + device, clean_session=True,
-                keepalive=mqtt.keepalive_seconds, timeout=mqtt.connect_timeout_seconds,
-                tls_context=ssl_context(mqtt.tls_ca_file, mqtt.tls_cert_file, mqtt.tls_key_file, verify=mqtt.tls_verify) if mqtt.tls else None,
+                mqtt.host,
+                mqtt.port,
+                username=mqtt.username or None,
+                password=mqtt.password or None,
+                identifier=mqtt.client_id + "-" + device,
+                clean_session=True,
+                keepalive=mqtt.keepalive_seconds,
+                timeout=mqtt.connect_timeout_seconds,
+                tls_context=ssl_context(
+                    mqtt.tls_ca_file, mqtt.tls_cert_file, mqtt.tls_key_file, verify=mqtt.tls_verify
+                )
+                if mqtt.tls
+                else None,
                 will=aiomqtt.Will(base + "/$state", "lost", qos=mqtt.qos, retain=True),
                 max_queued_outgoing_messages=mqtt.max_queue_messages,
                 max_queued_incoming_messages=mqtt.max_queue_messages,
@@ -219,7 +294,9 @@ class HomiePublisher:
             if transport is not None:
                 transport.connect_timeout = mqtt.connect_timeout_seconds
             try:
-                async with mqtt_session(client, mqtt.connect_timeout_seconds, runtime.shutdown_timeout_seconds):
+                async with mqtt_session(
+                    client, mqtt.connect_timeout_seconds, runtime.shutdown_timeout_seconds
+                ):
                     self.status[device] = True
                     monitor.progress("discovery")
                     for topic in sorted(previous - all_topics):
@@ -240,19 +317,28 @@ class HomiePublisher:
                     if self.command_controller is not None and any(p.settable for p in props):
                         for p in props:
                             if p.settable:
-                                await client.subscribe(base + "/" + wire_key(p.key) + "/set", qos=mqtt.qos)
+                                await client.subscribe(
+                                    base + "/" + wire_key(p.key) + "/set", qos=mqtt.qos
+                                )
                         consumer = asyncio.create_task(self.receive_commands(client, base, props))
                     attempt = 0
                     try:
-                        await self.publish_values(client, base, states, stop, sent, last_status, consumer, props)
+                        await self.publish_values(
+                            client, base, states, stop, sent, last_status, consumer, props
+                        )
                     finally:
                         if consumer is not None:
                             consumer.cancel()
                             await asyncio.gather(consumer, return_exceptions=True)
                     # Publish waits for QoS acknowledgement. Timeout causes an abrupt close,
                     # leaving the broker's Will responsible for reporting loss.
-                    await client.publish(base + "/$state", "disconnected", qos=mqtt.qos, retain=True,
-                                         timeout=runtime.shutdown_timeout_seconds)
+                    await client.publish(
+                        base + "/$state",
+                        "disconnected",
+                        qos=mqtt.qos,
+                        retain=True,
+                        timeout=runtime.shutdown_timeout_seconds,
+                    )
                     monitor.progress("stopped")
                     return
             except (aiomqtt.MqttError, OSError, asyncio.TimeoutError) as error:
@@ -262,12 +348,17 @@ class HomiePublisher:
                 monitor.failure(is_timeout(error), type(error).__name__)
                 monitor.progress("retrying")
                 monitor.observe("lost")
-                await wait_stop(stop, backoff(attempt, runtime.reconnect_min_seconds, runtime.reconnect_max_seconds))
+                await wait_stop(
+                    stop,
+                    backoff(attempt, runtime.reconnect_min_seconds, runtime.reconnect_max_seconds),
+                )
                 attempt += 1
             finally:
                 self.status[device] = False
 
-    async def publish_values(self, client, base, states, stop, sent, last_status, consumer, declared=None):
+    async def publish_values(
+        self, client, base, states, stop, sent, last_status, consumer, declared=None
+    ):
         mqtt, runtime = self.config.mqtt, self.config.runtime
         declared = self.properties(states) if declared is None else declared
         while not stop.is_set():
@@ -299,7 +390,10 @@ class HomiePublisher:
             desired[base + "/$state"] = state
             # Missing/expired values are not new observations; retain the last publication.
             for topic, value in desired.items():
-                if sent.get(topic) != value or (topic == base + "/$state" and time.monotonic() - last_status >= min(runtime.health_interval_seconds, 1)):
+                if sent.get(topic) != value or (
+                    topic == base + "/$state"
+                    and time.monotonic() - last_status >= min(runtime.health_interval_seconds, 1)
+                ):
                     await client.publish(topic, value, qos=mqtt.qos, retain=True)
             last_status = time.monotonic()
             monitor = self.monitors.get(base.split("/")[1])
@@ -312,8 +406,12 @@ class HomiePublisher:
 
     async def run(self, stop):
         devices = {s.device for s in self.states} | set(self.owned)
-        tasks = [asyncio.create_task(self.serve_device(device, [s for s in self.states if s.device == device], stop))
-                 for device in sorted(devices)]
+        tasks = [
+            asyncio.create_task(
+                self.serve_device(device, [s for s in self.states if s.device == device], stop)
+            )
+            for device in sorted(devices)
+        ]
         try:
             await asyncio.gather(*tasks)
         finally:

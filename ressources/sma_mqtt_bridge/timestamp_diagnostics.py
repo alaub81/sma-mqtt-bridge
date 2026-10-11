@@ -1,26 +1,35 @@
 """Bounded, best-effort observations of allowlisted eCharger sample timestamps."""
 
-from datetime import datetime, timezone
 import json
 import logging
 import os
-from pathlib import Path
 import stat
 import time
+from datetime import datetime, timezone
+from pathlib import Path
 
 from .model import number
 
 LOG = logging.getLogger(__name__)
-CHANNELS = frozenset({
-    "Measurement.Metering.GridMs.TotWIn.ChaSta", "Measurement.ChaSess.WhIn",
-    "Measurement.Metering.GridMs.TotWhIn.ChaSta", "Measurement.Metering.GridMs.TotWhIn",
-    "Measurement.Operation.EVeh.ChaStt", "Measurement.Operation.Health",
-    "Measurement.Operation.EVeh.Health", "Measurement.Operation.Evt.Msg",
-    "Measurement.Chrg.ModSw", "Measurement.Acs.AuthRegistStt", "Measurement.GridMs.Hz",
-    "Setpoint.PlantControl.PCC.ChrgActCnt",
-    "Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMaxNom",
-    "Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMinNom",
-} | {f"Measurement.GridMs.{kind}.phs{phase}" for kind in ("A", "PhV") for phase in "ABC"})
+CHANNELS = frozenset(
+    {
+        "Measurement.Metering.GridMs.TotWIn.ChaSta",
+        "Measurement.ChaSess.WhIn",
+        "Measurement.Metering.GridMs.TotWhIn.ChaSta",
+        "Measurement.Metering.GridMs.TotWhIn",
+        "Measurement.Operation.EVeh.ChaStt",
+        "Measurement.Operation.Health",
+        "Measurement.Operation.EVeh.Health",
+        "Measurement.Operation.Evt.Msg",
+        "Measurement.Chrg.ModSw",
+        "Measurement.Acs.AuthRegistStt",
+        "Measurement.GridMs.Hz",
+        "Setpoint.PlantControl.PCC.ChrgActCnt",
+        "Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMaxNom",
+        "Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMinNom",
+    }
+    | {f"Measurement.GridMs.{kind}.phs{phase}" for kind in ("A", "PhV") for phase in "ABC"}
+)
 
 
 def sample_timestamp(timestamp, now, stale_seconds):
@@ -28,7 +37,7 @@ def sample_timestamp(timestamp, now, stale_seconds):
     try:
         measured = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
         age = (now - measured).total_seconds()
-    except (AttributeError, TypeError, ValueError, OverflowError):
+    except AttributeError, TypeError, ValueError, OverflowError:
         return None, None, "invalid"
     quality = "future" if age < 0 else "fresh" if age <= stale_seconds else "stale"
     return measured.astimezone(timezone.utc).isoformat(), age, quality
@@ -53,7 +62,9 @@ class TimestampDiagnostics:
         except Exception as error:
             # Diagnostic storage must never fail a successful read or disclose response data.
             self.retry_after = monotonic + self.summary_interval
-            LOG.warning("eCharger timestamp diagnostics unavailable; error=%s", type(error).__name__)
+            LOG.warning(
+                "eCharger timestamp diagnostics unavailable; error=%s", type(error).__name__
+            )
 
     def record(self, source, channel, value, timestamp, stale_seconds, now, monotonic):
         stamp, age, quality = sample_timestamp(timestamp, now, stale_seconds)
@@ -71,10 +82,16 @@ class TimestampDiagnostics:
             self.previous[key] = previous[0], previous[1], count
             return
         row = {
-            "schemaVersion": 1, "source": source, "channel": channel,
-            "receivedAt": now.astimezone(timezone.utc).isoformat(), "deviceTimestamp": stamp,
-            "deviceAgeSeconds": age, "staleSeconds": stale_seconds,
-            "timestampQuality": quality, "value": encoded, "valueValid": encoded is not None,
+            "schemaVersion": 1,
+            "source": source,
+            "channel": channel,
+            "receivedAt": now.astimezone(timezone.utc).isoformat(),
+            "deviceTimestamp": stamp,
+            "deviceAgeSeconds": age,
+            "staleSeconds": stale_seconds,
+            "timestampQuality": quality,
+            "value": encoded,
+            "valueValid": encoded is not None,
             "valueChanged": None if previous is None else numeric != previous[0][0],
             "timestampChanged": None if previous is None else stamp != previous[0][1],
             "repeatedSamples": count if repeated else 1,
@@ -94,7 +111,9 @@ class TimestampDiagnostics:
                 self.path.replace(self.path.with_suffix(".jsonl.1"))
         if len(data) > self.max_bytes:
             raise ValueError("Diagnostic record exceeds file limit")
-        descriptor = os.open(self.path, os.O_WRONLY | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600)
+        descriptor = os.open(
+            self.path, os.O_WRONLY | os.O_CREAT | os.O_APPEND | os.O_NOFOLLOW | os.O_NONBLOCK, 0o600
+        )
         with os.fdopen(descriptor, "ab") as stream:
             if not stat.S_ISREG(os.fstat(stream.fileno()).st_mode):
                 raise OSError("Diagnostic destination is not a regular file")

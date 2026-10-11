@@ -2,10 +2,10 @@
 
 import json
 import os
-from pathlib import Path
 import re
 import subprocess
 import sys
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 FILES = ("docker-compose.dev.yml", "docker-compose.example.yml")
@@ -17,9 +17,22 @@ def render(filename, overrides):
     env = {key: value for key, value in os.environ.items() if not key.startswith("SMAB_")}
     env.update(SMAB_ENV_FILE=str(ROOT / "smab.example.env"), **overrides)
     result = subprocess.run(
-        ["docker", "compose", "--env-file", str(ROOT / "smab.example.env"),
-         "-f", filename, "config", "--format", "json"],
-        cwd=ROOT, env=env, text=True, capture_output=True, timeout=30,
+        [
+            "docker",
+            "compose",
+            "--env-file",
+            str(ROOT / "smab.example.env"),
+            "-f",
+            filename,
+            "config",
+            "--format",
+            "json",
+        ],
+        cwd=ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        timeout=30,
     )
     if result.returncode:
         raise ValueError("Compose rendering failed; configuration output withheld")
@@ -27,7 +40,10 @@ def render(filename, overrides):
     if set(config["services"]) != {"sma-mqtt-bridge"}:
         raise ValueError("Unexpected Compose service set")
     volumes = config.get("volumes", {})
-    if set(volumes) != {"data_smab_state"} or volumes["data_smab_state"]["name"] != config["name"] + "_data_smab_state":
+    if (
+        set(volumes) != {"data_smab_state"}
+        or volumes["data_smab_state"]["name"] != config["name"] + "_data_smab_state"
+    ):
         raise ValueError("State must use the project-scoped data_smab_state volume")
     return config["services"]["sma-mqtt-bridge"]
 
@@ -61,13 +77,24 @@ def check(overrides):
     if data_mount["type"] != "bind" or Path(data_mount["source"]) != source:
         raise ValueError("Host data directory override was not applied")
     state_mount = mounts["/data/sma-mqtt-bridge/state"]
-    if state_mount["type"] != "volume" or state_mount["source"] != "data_smab_state" or state_mount.get("read_only", False):
+    if (
+        state_mount["type"] != "volume"
+        or state_mount["source"] != "data_smab_state"
+        or state_mount.get("read_only", False)
+    ):
         raise ValueError("State must use a writable named volume")
 
 
 def main():
-    for overrides in ({}, {"SMAB_UID": "1234", "SMAB_GID": "2345",
-                           "SMAB_DATA_DIR": "./data/compose-fixture", "SMAB_BRIDGE_VERSION": "fixture"}):
+    for overrides in (
+        {},
+        {
+            "SMAB_UID": "1234",
+            "SMAB_GID": "2345",
+            "SMAB_DATA_DIR": "./data/compose-fixture",
+            "SMAB_BRIDGE_VERSION": "fixture",
+        },
+    ):
         check(overrides)
     print("Both standalone Compose files render with identical runtime options; overrides passed.")
     return 0
@@ -76,6 +103,6 @@ def main():
 if __name__ == "__main__":
     try:
         sys.exit(main())
-    except (OSError, ValueError, KeyError, subprocess.TimeoutExpired):
+    except OSError, ValueError, KeyError, subprocess.TimeoutExpired:
         print("Compose validation failed; no configuration values were logged.", file=sys.stderr)
         sys.exit(1)

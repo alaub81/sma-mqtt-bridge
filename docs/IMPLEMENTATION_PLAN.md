@@ -88,7 +88,8 @@ small named steps where this removes duplicated responsibilities. Consider a sma
 immutable setting definition instead of positional tuples. Simplify repeated widget
 expressions only with preserved gating and visible behavior.
 
-Enable formatter/import-order and selected additional lint rules in focused changes.
+Consider selected additional lint rules in focused changes; formatting and import
+ordering are already enforced by the repository check.
 Do not convert style hints into a broad rewrite or introduce a generic adapter platform.
 Keep current status in one acceptance matrix and archive completed diary periods.
 

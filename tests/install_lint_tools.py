@@ -3,7 +3,6 @@
 
 import hashlib
 import json
-from pathlib import Path
 import platform
 import re
 import shutil
@@ -11,6 +10,7 @@ import subprocess
 import sys
 import tarfile
 import urllib.request
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 TOOLS = ROOT / ".lint-tools"
@@ -21,12 +21,18 @@ def has_version(binary, specification):
     try:
         result = subprocess.run(
             [str(binary), specification.get("versionFlag", "--version")],
-            text=True, capture_output=True, check=True,
+            text=True,
+            capture_output=True,
+            check=True,
         )
-    except (OSError, subprocess.CalledProcessError):
+    except OSError, subprocess.CalledProcessError:
         return False
-    return bool(re.search(r"(?<![\d.])" + re.escape(specification["version"]) + r"(?![\d.])",
-                          result.stdout + result.stderr))
+    return bool(
+        re.search(
+            r"(?<![\d.])" + re.escape(specification["version"]) + r"(?![\d.])",
+            result.stdout + result.stderr,
+        )
+    )
 
 
 def download(url, checksum, destination):
@@ -50,13 +56,17 @@ def install_binary(name, specification, target_platform):
     else:
         asset = specification["assets"].get(target_platform)
         if asset is None:
-            raise ValueError(f"Install {name} {specification['version']} on PATH first; no asset for {target_platform}")
+            raise ValueError(
+                f"Install {name} {specification['version']} on PATH first; no asset for {target_platform}"
+            )
         filename, checksum = asset
         archive_path = TOOLS / filename
         download(specification["releaseBase"] + filename, checksum, archive_path)
         if filename.endswith(".tar.gz"):
             with tarfile.open(archive_path) as archive:
-                candidates = [m for m in archive.getmembers() if m.isfile() and Path(m.name).name == name]
+                candidates = [
+                    m for m in archive.getmembers() if m.isfile() and Path(m.name).name == name
+                ]
                 if len(candidates) != 1:
                     raise ValueError(f"Expected one {name} executable in {filename}")
                 with archive.extractfile(candidates[0]) as binary:

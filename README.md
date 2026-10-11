@@ -53,10 +53,20 @@ python3 tests/compose_check.py
 ```
 
 All public repository files receive hygiene checks and applicable language linters.
-Ruff uses E4/E7/E9/F; Pylint checks errors/fatal diagnostics. Widget export parity is
-included. Offline tests use deterministic fixtures and local test servers.
+Ruff uses E4/E7/E9/F/I and checks Python formatting (100-column target, double
+quotes, four-space indentation). Pylint checks errors/fatal diagnostics. Widget
+export parity is included. Offline tests use deterministic fixtures and local test servers.
 CI is prepared for Compose parity and amd64/arm64 image tests; local checks do not
 prove that hosted CI, security scans or release jobs have run.
+
+To apply only import ordering and formatting with the pinned local Ruff:
+
+```sh
+.lint-venv/bin/ruff check --select I --fix ressources tests tools
+.lint-venv/bin/ruff format ressources tests tools
+```
+
+The linter-check command itself remains read-only.
 
 ## Documentation and layout
 

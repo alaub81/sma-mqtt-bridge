@@ -1,7 +1,7 @@
 """File-based display labels; never translate identifiers or device values."""
 
-from pathlib import Path
 import re
+from pathlib import Path
 
 from .errors import ConfigError
 
@@ -17,16 +17,25 @@ def read_labels(path):
         if path.is_symlink() or not path.is_file() or path.stat().st_size > 1048576:
             raise ValueError
         data = read_json(path)
-        if (not isinstance(data, dict) or set(data) != {"schemaVersion", "labels"}
-                or type(data["schemaVersion"]) is not int or data["schemaVersion"] != 1
-                or not isinstance(data["labels"], dict)
-                or any(not key or not isinstance(value, str) or not value.strip()
-                       or len(key) > 256 or len(value) > 256
-                       or any(ord(char) < 32 for char in key + value)
-                       for key, value in data["labels"].items())):
+        if (
+            not isinstance(data, dict)
+            or set(data) != {"schemaVersion", "labels"}
+            or type(data["schemaVersion"]) is not int
+            or data["schemaVersion"] != 1
+            or not isinstance(data["labels"], dict)
+            or any(
+                not key
+                or not isinstance(value, str)
+                or not value.strip()
+                or len(key) > 256
+                or len(value) > 256
+                or any(ord(char) < 32 for char in key + value)
+                for key, value in data["labels"].items()
+            )
+        ):
             raise ValueError
         return data["labels"]
-    except (OSError, ValueError, ConfigError):
+    except OSError, ValueError, ConfigError:
         raise ConfigError("Invalid translation file") from None
 
 
