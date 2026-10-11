@@ -37,7 +37,7 @@ Additional lint rules remain a separate planned improvement.
 | Capability | Latest evidence and date | Remaining acceptance |
 | --- | --- | --- |
 | Configuration and ENV | Offline validation; 144 documented options/defaults checked, 2026-10-11 | Target-host permissions and operational thresholds |
-| Homie node metadata | Required attributes, stable untranslated types, retained publication and dynamic retirement offline tested, 2026-10-11 | Deploy and verify actual broker/openHAB discovery |
+| Homie node metadata | Required attributes, stable untranslated types, retained publication and dynamic retirement offline tested; new $type present at the broker reported by user, 2026-10-11; general openHAB display already accepted | Dynamic retirement on the target installation remains offline tested |
 | Inverter baseline | Model-specific lists, local identities and MQTT publication for the original 41 channels, 2026-10-10; [register evidence](REGISTER_VALIDATION.md) | Aligned values/history/rules comparison; additional registers require separate verification |
 | Inverter energy/labels | Storage kWh values, log times and labels accepted by user, 2026-10-11; inverter rename/link migration reported complete | Remaining quantity metadata/history continuity |
 | Inverter sleep/wake | Evening behavior reported normal, 2026-10-11 | Morning autonomous wake-up; sleep versus outage |
@@ -51,13 +51,14 @@ Additional lint rules remain a separate planned improvement.
 | Portal minimum PV | Offline preserving write/readback tests; 90 → 70 → 90 and reopened widget value reported accepted, 2026-10-11 | Longer outage/uncertainty behavior; no extra portal setters accepted |
 | Portal freshness | Two normal polling cycles accepted by user, 2026-10-11 | Longer target-host operation and source-failure behavior |
 | Maximum charging power | Verified WMaxIn/W mapping and bounds; offline setter tests; canonical integer MQTT payload and openHAB display reported accepted, 2026-10-11 | Physical limit/phase effect; [details](ECHARGER_POWER_LIMIT.md) |
-| eCharger total energy | Wh-to-kWh API conversion and unchanged Channel ID offline tested, 2026-10-11 | Image update, actual Item metadata and persistence/history acceptance |
+| eCharger total energy | Wh-to-kWh API conversion and unchanged Channel ID offline tested; openHAB unit, scaling and existing history reported accepted by user, 2026-10-11 | Accepted for the tested installation |
 | Controlled stop/start | Retained values, reconnection, healthy container and no replay accepted by user, 2026-10-11 | Abrupt failures, Last Will, broker/host restart and manifest details |
 | MQTT outage recovery | User-reported successful update check and supplied log, 2026-10-11: all five connections recovered autonomously in 11.0–28.5 seconds from their respective outage detection; errors/timeouts remained visible, no unhandled future exception in supplied excerpt | Longer outages, Last Will and broader production failure matrix |
-| Source status/health | Independent operational status, watchdogs, heartbeat/state protection offline tested; Home Manager startup accepted by user; supplied target-host startup summary shows all seven sources ready and all five MQTT connections connected, 2026-10-11 | Diagnostics-disabled deployment, multi-hour faults and external alarms |
+| Source status/health | Independent operational status, watchdogs, heartbeat/state protection offline tested; Home Manager startup accepted by user; supplied target-host startup summary shows all seven sources ready and all five MQTT connections connected; widget source availability with optional diagnostics disabled reported accepted by user, 2026-10-11 | Multi-hour faults; individual external alarm scenarios remain unspecified |
 | Garage widget | PV operation/staging and iOS layout accepted by user, 2026-10-11; canonical source/export parity checked locally | Existing acceptance remains; future behavior changes need a new check |
 | openHAB migration | 100-row ledger, 34 linked inverter Items, four Home Manager Items and ten derived capabilities inventoried | Seven unidentified Item links; full rules/UI/units/offsets/persistence continuity |
-| Docker and publication | Prior local builds/offline image checkpoints in archive; workflows prepared for amd64/arm64 | Current target-host image acceptance, hosted CI/security scans and separately authorized release |
+| External monitoring and alarms | Setup reported complete by user, 2026-10-11 | Specific monitored signals and triggered alarm scenarios not supplied; host reboot/state restoration remain separate |
+| Docker and publication | Existing GitHub CI including lint, tests, Compose checks, amd64/arm64 builds, container tests and scans reported repeatedly successful by user, 2026-10-11; target-host update checklist accepted | New release-to-CI dependency needs a hosted run; GHCR publication/pull acceptance remains separate |
 
 Unavailable readings are not a successful measurement. Reported acceptance of one
 command or UI action does not certify every control or completed physical charging.
@@ -235,10 +236,10 @@ storage failures, symlink/FIFO rejection, configuration precedence and inactive
 sources. API/SEMP integration fixtures compare output dictionaries and request counts
 with observation disabled/enabled, including a failed diagnostic write.
 All 194 offline tests, lint over 106 public files and Compose parity passed at
-this milestone; MQTT future errors were still open then. Local Docker has no running service;
-the feature has not been deployed or enabled on the installation. A new image and
-explicit ENV activation are required. Natural-transition observation and the
-subsequent timestamp-policy decision remain pending.
+this milestone; MQTT future errors were still open then. The user subsequently
+reported activation on the target host on 2026-10-11. Recorded file contents and
+sufficient quiet/charging/natural-transition observations have not yet been reviewed;
+that review and the subsequent timestamp-policy decision remain pending.
 
 ### MQTT disconnect future correction, 2026-10-11
 
@@ -332,3 +333,36 @@ Record date, tested image/version, source/transport, automated versus direct ver
 user-reported result, and remaining limits. Keep authenticated responses, private
 identities and secrets out of public fixtures. Update this matrix when acceptance
 changes; preserve detailed German decisions in the active diary and its archive.
+
+### Full CI required before release, 2026-10-11
+
+The release workflow calls the existing CI through workflow_call for the tagged
+revision and requires its successful completion before the publishing job. This
+includes lint, regressions, Compose parity and both amd64/arm64 build, container
+test and Trivy matrix jobs. Package write permission is limited to publication.
+The user reports repeated successful hosted runs of the existing full CI. A hosted
+run of the newly added release-to-CI dependency remains pending; no run URLs or
+commit identifiers were supplied.
+
+### Security gate and public-data inspection, 2026-10-11
+
+CI image scans for both architectures and the release scan now fail on fixable
+HIGH or CRITICAL vulnerabilities; ignore-unfixed remains enabled. Results under
+this stricter policy require the next hosted run.
+
+Checksum-verified Gitleaks 8.30.1 found no secrets in the 107 current tracked
+files or reachable Git history (46 commits, 570 unique blobs). Historical paths
+contained no private ENV/data/reference files except the public private/README.md.
+An additional comparison against selected current private ENV values produced
+only harmless substring matches in historical library names. Reports were
+redacted and stored outside the repository. This does not certify all personal
+data or unreachable Git objects. Full lint and all 203 offline tests passed.
+
+### Automatic application/build versions, 2026-10-11
+
+Native calls derive clean release or development versions from local Git; immutable
+image metadata takes precedence. Builds without Git-derived arguments or embedded
+metadata report 0.0.0+unknown. CI checks CLI equality on both architectures; the
+release checks its pre-publication image against the stable tag. Full lint and
+205 offline tests passed, including Git failure and Git-free image cases. Actual
+Docker build and hosted execution of this new version chain remain pending.

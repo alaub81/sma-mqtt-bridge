@@ -25,9 +25,11 @@ limits in the acceptance matrix. Green tests alone do not close a proven review 
 
 ## 2. Complete operational acceptance
 
-Compare the latest image on the target host with the local evidence. Check source
-status with optional diagnostics disabled, startup summary, Home Manager init/ready
-and energy units. Preserve the existing state volume and command journals.
+Continue target-host operational acceptance beyond the completed checks. Source
+availability with optional diagnostics disabled, startup summary, Home Manager
+init/ready and eCharger total-energy kWh checks were accepted by the user on
+2026-10-11; see the acceptance matrix. Preserve the existing state volume and
+command journals.
 
 - Verify inverter morning wake-up after the reported successful evening behavior;
   distinguish sleep from a connection or data-quality failure.
@@ -35,8 +37,9 @@ and energy units. Preserve the existing state volume and command journals.
   device outages and MQTT disconnect/restart. Check recovery, memory and connections.
 - Test abrupt process/host failures, Last Will, broker restart, TLS trust and topic
   retirement. Controlled stop/start acceptance does not cover these failures.
-- Configure external alarms for unhealthy/stalled processes, broker loss and stale
-  critical measurements; verify host reboot and state restoration.
+- External monitoring and alarm setup was reported complete by the user on
+  2026-10-11. Verify host reboot and state restoration; record specific monitored
+  signals and alarm scenarios when evidence is available.
 - For Home Manager Modbus deployment, evaluate the planned switch from host to
   Docker bridge networking in both Compose files. Verify device, broker, DNS and
   TLS reachability; retain UDP multicast as an independently documented alternative.
@@ -55,8 +58,9 @@ maps, private counter offsets, quantity units, polling and history semantics.
 
 Build Grafana comparisons of existing openHAB and bridge time series with matching
 units and measurement times. Verify energy scaling, midnight/DST boundaries, gaps
-and restart behavior. Complete eCharger total-energy kWh deployment and persistence
-acceptance without rewriting existing history silently.
+and restart behavior for remaining migration capabilities. The eCharger total-energy
+kWh unit, scaling and existing history were accepted by the user on 2026-10-11;
+see the acceptance matrix.
 
 Keep Shelly-derived charging state, Smart-Grid consumers and InfluxDB calculations
 in openHAB until equivalent behavior is accepted. Maintain
@@ -99,4 +103,8 @@ Keep current status in one acceptance matrix and archive completed diary periods
 Publication remains separately authorized work. Before a GitHub upload or GHCR
 release, verify private-data exclusions, namespace/tags, hosted CI/security scans and
 amd64/arm64 images. Recheck stable official Python tags before updating the image.
-Local workflow files and tests do not prove that hosted CI or release jobs have run.
+The release workflow now requires the reusable full CI for the tagged commit before
+publication, including lint, tests, Compose checks and amd64/arm64 image builds,
+container tests and scans. Repeated successful hosted runs of the existing CI were
+reported by the user on 2026-10-11. Verify the newly added release-to-CI dependency
+in a hosted run; release publication remains separately authorized.

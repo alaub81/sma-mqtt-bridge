@@ -18,7 +18,7 @@ See [configuration, TLS and state storage](docs/CONFIGURATION.md).
 Build and validate locally; GHCR publication remains a later milestone:
 
 ```sh
-docker compose --env-file smab.env -f docker-compose.dev.yml build
+./tools/build_image.sh
 docker compose --env-file smab.env -f docker-compose.dev.yml run --rm sma-mqtt-bridge --check-config
 ```
 
@@ -92,3 +92,13 @@ replacement charging controller is used.
 ## License
 
 MIT. See [LICENSE](LICENSE). This project is not affiliated with SMA.
+
+## Build versions
+
+Local Python calls derive their version from Git: a clean stable tag reports its
+release version; later commits or tracked edits report a dev version with commit
+identity and an optional dirty suffix. Use `./tools/build_image.sh` for local image
+builds to embed that version without sending Git or private files to Docker.
+Plain Compose/Docker builds without `SMAB_BUILD_VERSION` report `0.0.0+unknown`.
+Release builds receive the version from their stable tag and verify the CLI output
+before publication. An embedded image version takes precedence over local Git.

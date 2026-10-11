@@ -1,16 +1,17 @@
-name: Python CI (lint, tests, arm64 build)
+name: Python CI (lint, tests, amd64/arm64 builds)
 
 on:
   pull_request:
   push:
     branches: [main]
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -51,6 +52,16 @@ jobs:
         platform: [amd64, arm64]
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.14.8'
+      - name: Resolve checkout version
+        id: version
+        run: |
+          smab_build_version=$(PYTHONPATH=ressources python3 -c 'from sma_mqtt_bridge import __version__; print(__version__)')
+          echo "value=$smab_build_version" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
       - name: Build Python image without publication
@@ -58,13 +69,16 @@ jobs:
         with:
           context: .
           file: Dockerfile-SMAB
+          build-args: SMAB_BUILD_VERSION=${{ steps.version.outputs.value }}
           platforms: linux/${{ matrix.platform }}
           load: true
           push: false
           tags: sma-mqtt-bridge:ci-${{ matrix.platform }}
       - name: Container smoke checks and offline tests
+        env:
+          SMAB_EXPECTED_VERSION: ${{ steps.version.outputs.value }}
         run: |
-          docker run --rm sma-mqtt-bridge:ci-${{ matrix.platform }} --version
+          test "$(docker run --rm sma-mqtt-bridge:ci-${{ matrix.platform }} --version)" = "sma-mqtt-bridge $SMAB_EXPECTED_VERSION"
           docker run --rm sma-mqtt-bridge:ci-${{ matrix.platform }} --check-config
           docker run --rm --entrypoint python -v "$PWD/tests:/app/tests:ro" -v "$PWD/smab.example.env:/app/smab.example.env:ro" -v "$PWD/config.example.json:/app/config.example.json:ro" -v "$PWD/reference/inverter-things-inventory.json:/app/reference/inverter-things-inventory.json:ro" sma-mqtt-bridge:ci-${{ matrix.platform }} tests/run_tests.py
       - name: Trivy image gate
@@ -72,6 +86,6 @@ jobs:
         with:
           image-ref: sma-mqtt-bridge:ci-${{ matrix.platform }}
           format: table
-          severity: CRITICAL
+          severity: HIGH,CRITICAL
           ignore-unfixed: true
           exit-code: '1'

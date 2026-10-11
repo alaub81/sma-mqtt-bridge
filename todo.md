@@ -4,13 +4,15 @@ Die aktuelle Abnahme steht in [docs/VALIDATION.md](docs/VALIDATION.md), die Reih
 
 ## Aktive Aufgaben
 
+- [ ] Release-Dokumentation aktualisieren: Änderungen und Upgrade-Hinweise zusammenstellen; README vom Vorbereitungsstand auf die tatsächlich verfügbare GHCR-Veröffentlichung umstellen. Produktionsbetrieb mit veröffentlichtem Image und Beispiel-Compose laut Andreas bereits vorhanden; keine erneute Veröffentlichung dafür erforderlich.
+
 - [ ] Watchtower und Autoheal auf dem Zielhost einrichten: automatische Container-Updates und Neustarts bei Docker-unhealthy konfigurieren und prüfen. Persistente Zustandsdaten erhalten und Wiederanlauf ohne Befehlswiederholung sicherstellen.
 - [ ] Review 4 beheben: tatsächliches Messwertalter nach vorheriger Zeitstempelklassifikation. Nachweise und Fundstellen im [archivierten Review](docs/archive/2026-10-11/todo.md#2026-10-11--repository--und-codereview); Umsetzungsschritte im Plan. Bestehende Unsicherheitssperren und retained Beobachtungen erhalten.
 - [x] Review 5 am 11.10.2026 offline korrigiert: bereits abgeschlossene/späte MQTT-Disconnect-Futures abgeholt, primäre Fehler erhalten und eigenständige Disconnect-Fehler weitergegeben. Unerwartete Event-Loop-Ausnahmen lassen den vollständigen Testlauf scheitern; Ausfallzähler und Wiederverbindung weiterhin geprüft.
 - [ ] Review 4 vor Umsetzung neu bewerten: erste Referenz-/Codeprüfung und drei Basistests am 11.10.2026 abgeschlossen. Zeitstempel pro Kanal und API/SEMP durch lesende Beobachtung bei unverändertem Wert und natürlichem Zustandswechsel klassifizieren; danach gezielte Umbau-Regressionsfälle und UI-Abnahme nach [Prüfmatrix](docs/VALIDATION.md#measurement-freshness-investigation-2026-10-11). Kein pauschales Ablaufverhalten für Zähler/Zustände beschließen.
-- [ ] Zeitstempeldiagnose auf dem Zielhost starten: neues Image bauen und SMAB_ECHARGER_TIMESTAMP_DIAGNOSTICS_ENABLED=true in smab.env setzen. Optionale Aufzeichnung im vorhandenen Zustandsvolume ist offline implementiert/geprüft; Ruhe-/Ladephase und natürliche Übergänge auswerten. Lokaler Docker hat aktuell keinen laufenden Service, Deployment nicht durchgeführt.
+- [x] Zeitstempeldiagnose auf dem Zielhost aktiviert: Andreas bestätigt die Aktivierung am 11.10.2026. Dateiinhalte sowie Ruhe-/Ladephasen und natürliche Übergänge noch auswerten.
 - [ ] Zeitstempelaufzeichnung später gemeinsam mit Andreas auswerten: nach ausreichenden Beobachtungen in Ruhe-/Ladephasen und natürlichen Zustandswechseln echarger-timestamps.jsonl.1 und echarger-timestamps.jsonl aus dem Zustandsvolume in dieser Reihenfolge prüfen. Für jeden Kanal und API/SEMP getrennt klären, ob der Zeitstempel Erfassung oder letzte Änderung beschreibt; mehrdeutige Fälle offenlassen. Danach Nutzen/Risiko des Frischeumbaus neu bewerten und die gezielten Vorher-/Nachher-Tests festlegen. Termin noch offen; kein automatischer Umbau oder Löschen der Aufzeichnungen.
-- [x] Review 3 am 11.10.2026 lokal korrigiert: obligatorisches Homie-Node-$type ergänzt, sprachunabhängig und stabil; delegierte Geräte teilen den Typ device. Veröffentlichung, dynamisches Retirement und Manifestbesitz offline geprüft.
+- [x] Review 3 am 11.10.2026 lokal korrigiert: obligatorisches Homie-Node-$type ergänzt, sprachunabhängig und stabil; delegierte Geräte teilen den Typ device. Veröffentlichung, dynamisches Retirement und Manifestbesitz offline geprüft; Andreas bestätigt am 11.10.2026 das vorhandene $type am Broker.
 - [x] Review 2 am 11.10.2026 lokal korrigiert: Homie-Integer kanonisch ohne Dezimalpunkt ausgegeben, signed-64-bit-Grenzen geprüft; Bruchzahlen werden nicht gerundet. Float-Ausgabe unverändert, Leistungsgrenzen-Regression korrigiert.
 - [x] Review 1 am 11.10.2026 lokal korrigiert: individuelle API-Bestätigung und Plan-Einheiten einschließlich Rücklesen abgesichert; SEMP und retained Beobachtungen erhalten. Einstellungsrücklesen und erneute Ladeplanübertragung von Andreas am 11.10.2026 erfolgreich geprüft; Pending-/Fehlereinheitenfälle bleiben offline belegt.
 - [x] Review 6 am 11.10.2026 abgeschlossen: statischer CLI-Projektstatus nennt optionale Schreibfähigkeit und standardmäßig geschlossene Befehlsfreigaben; check-config bewertet tatsächliche Gates. Modulbeschreibungen für optionales Schreiben/lokales Datei-I/O präzisiert; Profilbefehle weiterhin nur für Wechselrichter gesperrt.
@@ -18,8 +20,10 @@ Die aktuelle Abnahme steht in [docs/VALIDATION.md](docs/VALIDATION.md), die Reih
 - [x] Clean Code/KISS Schritt 3 am 11.10.2026 umgesetzt: Setting-Positions-Tupel durch benannte unveränderliche Definitionen ersetzt, auch die Befehls-Allowlist verwendet diese Definitionen. Gegencheck mit vorherigem Stand identisch; keine zusätzlichen Setter oder Protokolländerungen.
 - [ ] Nachtbetrieb vollständig abnehmen: Morgen-Aufwachen und Wertaktualisierung sowie Schlaf-/Ausfallunterscheidung prüfen. Abendbeobachtung am 11.10.2026 laut Andreas unauffällig.
 - [ ] Mehrstündigen deterministischen Ausfalltest und Produktionsabnahme ergänzen: langsame/unvollständige Antworten, Geräte-/Broker-Ausfälle, abruptes Prozessende, Last Will, TLS, Topic-Retirement und selbstständige Erholung. Kontrollierter Stop/Start ist separat bestätigt.
-- [ ] Externe Betriebsüberwachung für Prozessstillstand, Docker-unhealthy, Broker-Ausfall und dauerhaft fehlende kritische Werte einrichten; Host-Neustart und Zustandswiederherstellung prüfen. Manifest, Unklarheitsjournale und Instanzsperre erhalten.
-- [ ] Aktuelles Image auf dem Zielhost prüfen: Quellenstatus bei deaktivierter optionaler Diagnose, Startübersicht und Wallbox-Gesamtladeenergie in kWh einschließlich Item-Metadaten/Persistence. Home-Manager-Startstatus und Startübersicht mit allen Quellen ready/MQTT verbunden sind bestätigt; Diagnose-aus und kWh-Historie bleiben separat offen.
+- [x] Externe Überwachung und Alarmierung eingerichtet: von Andreas am 11.10.2026 bestätigt.
+- [ ] Host-Neustart und Zustandswiederherstellung prüfen. Manifest, Unklarheitsjournale und Instanzsperre erhalten.
+- [x] Quellenstatus bei deaktivierter optionaler Diagnose am 11.10.2026 von Andreas abgenommen: Das Widget erhält weiterhin die Verfügbarkeitswerte. Home-Manager-Startstatus und Startübersicht mit allen Quellen ready/MQTT verbunden sind ebenfalls bestätigt.
+- [x] Wallbox-Gesamtladeenergie in kWh am 11.10.2026 von Andreas abgenommen: openHAB-Einheit, Skalierung und bestehende Historie erfolgreich geprüft.
 - [ ] Bei Home-Manager-Modbus beide Compose-Dateien auf normales Docker-Bridge-Netzwerk umstellen und Zielhost-Verbindungen einschließlich DNS/TLS prüfen. UDP-Multicast als Alternative mit eigenen Voraussetzungen erhalten; Compose-Parität prüfen. Bis dahin Netzwerk unverändert.
 - [ ] openHAB-Migration und Historien vollständig abnehmen; sämtliche 100 Ledgerzeilen, sieben noch nicht zugeordnete Itemlinks, Maps, Vorzeichen, private Offsets, Regeln, UI und Tages-/Sommerzeitgrenzen erhalten. Keine Fähigkeiten stillschweigend streichen.
 - [ ] Grafana-Dashboards für den Parallelvergleich alter openHAB- und neuer Bridge-Zeitreihen erstellen: gleiche Einheiten und abgestimmte Messzeitpunkte, Abweichungen und Lücken sichtbar machen.
@@ -28,7 +32,7 @@ Die aktuelle Abnahme steht in [docs/VALIDATION.md](docs/VALIDATION.md), die Reih
 - [ ] Zusätzliche Profile/Portalwerte und aktuellen Lademix nur mit bestätigten Messwerten, Einheiten, Zeitbezug und Identität ergänzen. Tagesanteile und Mindest-PV-Präferenz nicht als aktuellen Lademix veröffentlichen.
 - [ ] Kleine Diagnose-/Frischeverbesserungen und ausdrückliches Portal-Leseauffrischen ohne Neustart bewerten; anschließend gezielte Funktionsvereinfachung und zusätzliche Linterregeln. Keine allgemeine Adapterplattform bauen.
 - [ ] Später lhlab.wiki-Artikel aus [openHAB/openHAB.md](openHAB/openHAB.md) erstellen. Beispiel-Item-Dateien und Sitemaps bleiben auf Andreas’ Wunsch aus dem Umfang gestrichen.
-- [ ] Öffentlichen Stand später nach [GitHub](https://github.com/alaub81/sma-mqtt-bridge) hochladen und GHCR-Release vorbereiten. Private Daten ausschließen, Hosted CI/Sicherheitsprüfungen und beide Architekturen verifizieren; Veröffentlichung ist durch diesen Cleanup nicht beauftragt.
+- [ ] Öffentlichen Stand später nach [GitHub](https://github.com/alaub81/sma-mqtt-bridge) hochladen und GHCR-Release vorbereiten. Private Daten ausschließen, neue Release-/CI-Verknüpfung und GHCR-Installation prüfen; bestehende GitHub-CI einschließlich beider Architekturen und Sicherheitsprüfungen laut Andreas mehrfach erfolgreich; Veröffentlichung ist durch diesen Cleanup nicht beauftragt.
 
 ## Offene Fragen und geklärte Teile
 
@@ -160,3 +164,62 @@ Aktuellen Abnahmestand ausschließlich in VALIDATION.md pflegen; CONTEXT.md enth
 - Neuer Pflichtmetadatentest umfasst Geräte-, Node- und Propertyattribute für sieben bestehende Gruppen, zwei delegierte Slots und einen benutzerdefinierten Profilnode. Vor dem Fix fehlte $type in allen zehn Nodes; Sprachtest ebenfalls reproduzierbar fehlgeschlagen. Bestehende Publisher-, Übersetzungs- und dynamische Inventartests um Type-Stabilität, retained Veröffentlichung vor ready, Tombstone und Manifestprüfung erweitert.
 - Gezielte 50 Laufzeit-/Übersetzungs-/Home-Manager-Modbus-Tests bestanden. Offizielle Homie-4-Spezifikation und openHAB-Homie-Dokumentation konsultiert; Konfigurationsvertrag, aktuelle Abnahmematrix, Plan und aktive Aufgaben aktualisiert. Neue echte Broker-/openHAB-Abnahme bleibt separat offen.
 - Abschlussprüfung: vollständiger Linter über 103 öffentliche Dateien, alle 182 Offline-Tests und Compose-Parität einschließlich Overrides bestanden; Diff-Hygiene sauber. Zwei bekannte unbehandelte MQTT-Future-Ausnahmen bleiben unter Review 5 offen. Keine SMA-/Portal-/Installationsbroker-Verbindung oder Gerätebefehle; private Konfiguration, Referenzen und installierte openHAB-Definitionen unverändert. Review 4–5 und CLI-/Modulbeschreibungsteil von Review 6 bleiben offen.
+
+## 2026-10-11 – Wallbox-Gesamtenergie in kWh abgenommen
+
+- Andreas bestätigt die erfolgreiche Prüfung von openHAB-Einheit, Skalierung und bestehender Historie der Wallbox-Gesamtenergie. Der entsprechende Abnahmepunkt ist erledigt.
+- Aktive Aufgaben, Abnahmematrix und Implementierungsplan abgeglichen; übrige Migrations-/Historienprüfungen bleiben eigenständig offen.
+
+## 2026-10-11 – Verfügbarkeit ohne optionale Diagnose abgenommen
+
+- Andreas bestätigt, dass das Widget bei ausgeschalteter optionaler Diagnose weiterhin den Quellenstatus erhält. Zielhost-Abnahme für diesen Punkt abgeschlossen.
+- Aktive Aufgaben, Abnahmematrix und Implementierungsplan abgeglichen; mehrstündige Ausfälle und externe Alarmierung bleiben offen.
+
+## 2026-10-11 – Homie-Node-Typ am Broker bestätigt
+
+- Andreas bestätigt, dass das neue $type-Metadatum am Broker vorhanden ist. Die gezielte Live-Prüfung ist abgeschlossen; dynamisches Retirement und Manifestbesitz bleiben durch Offline-Tests belegt.
+
+## 2026-10-11 – Zeitstempelaufzeichnung auf dem Zielhost aktiviert
+
+- Andreas bestätigt die Aktivierung der optionalen Zeitstempelaufzeichnung auf dem Zielhost. Aktivierungsaufgabe abgeschlossen; Dateiinhalt und ausreichende Beobachtungen sind noch nicht geprüft.
+- Aufzeichnungen in Ruhe-/Ladephasen und bei natürlichen Zustandswechseln sammeln und später gemeinsam auswerten. Daraus erst die kanalweise Zeitstempelpolitik ableiten; kein Frischeumbau durch die Aktivierung.
+
+## 2026-10-11 – Externe Überwachung und Alarmierung eingerichtet
+
+- Andreas bestätigt die Einrichtung der externen Überwachung und Alarmierung. Konkrete Überwachungswege und ausgelöste Alarmfälle wurden nicht genannt; daraus keine vollständige Ausfallabnahme ableiten.
+- Host-Neustart und Zustandswiederherstellung bleiben als separate aktive Aufgabe offen.
+
+## 2026-10-11 – App-Version mit aktuellem Release-Tag abgeglichen
+
+- Auf Andreas’ Auftrag __version__ in ressources/sma_mqtt_bridge/__init__.py von 0.1.0 auf 0.3.1 gesetzt, passend zum neuesten lokalen Tag v0.3.1. Veraltete Read-only-Modulbeschreibung korrigiert; keine Änderung an Befehlsfreigaben.
+- CLI --version meldet sma-mqtt-bridge 0.3.1. Vollständiger Linter und alle 203 Offline-Tests bestanden; für die lokalen Loopback-Testserver war Socket-Ausführung außerhalb der Sandbox erforderlich. Keine Geräteverbindung, kein Commit, Tag, Push oder Deployment. Künftige Release-Tags müssen weiter mit der App-Version abgeglichen werden.
+
+## 2026-10-11 – Vollständige CI als Release-Voraussetzung
+
+- Auf Andreas’ Auftrag CI via workflow_call wiederverwendbar gemacht. Der Release ruft dieselben Lint-/Test-/Compose-/amd64-/arm64-Build-, Container-Test- und Trivy-Jobs für den getaggten Stand auf und benötigt deren erfolgreichen Abschluss vor GHCR-Login/Veröffentlichung.
+- packages:write ausschließlich im Veröffentlichungsjob; Validierung nur mit contents:read. CI-Concurrency um Ereignistyp ergänzt, um direkt gestartete und durch Release aufgerufene Läufe getrennt zu halten. Keine neue Veröffentlichung ausgelöst.
+- GitHub-hosted Ausführung und reale Multiarch-/Scan-Ergebnisse bleiben separat offen.
+
+## 2026-10-11 – Wiederholte erfolgreiche GitHub-CI bestätigt
+
+- Andreas bestätigt, dass die vorhandenen GitHub-Läufe für Linter, Tests, Compose-Prüfung, amd64/arm64-Builds, Container-Tests und Sicherheitsprüfungen mehrfach erfolgreich gelaufen sind. Bisher fehlende Hosted-CI-Abnahme entsprechend korrigiert.
+- Konkrete Lauf-URLs/Commitstände wurden nicht genannt. Die gerade ergänzte Release-/CI-Verknüpfung benötigt weiterhin einen eigenen GitHub-Lauf; keine pauschale Release-Veröffentlichung daraus ableiten.
+
+## 2026-10-11 – Sicherheitsgrenze und Prüfung öffentlicher Daten
+
+- Auf Andreas’ Auftrag Trivy in CI (beide Architekturen) und Release auf HIGH,CRITICAL mit Exit 1 erweitert. ignore-unfixed=true bleibt: behebbare hohe/kritische Schwachstellen blockieren; Befunde ohne verfügbaren Fix werden weiterhin nicht zum Gate.
+- Offizielles Gitleaks 8.30.1 temporär außerhalb des Repositorys geladen, SHA-256 gegen veröffentlichte Prüfsumme verifiziert. Redaktierte Prüfung aller 107 aktuellen Git-Dateien sowie der gesamten erreichbaren Historie (--all, 46 Commits, 570 eindeutige Blobs) ohne Secret-Fund. Private ENV, Daten, Geheimnisdateien und private Referenzen in keiner erreichbaren Revision getrackt; private/README.md ist die öffentliche Ausnahme.
+- Zusätzlich historische Blob-Inhalte gegen ausgewählte aktuelle private ENV-Werte abgeglichen. Acht Treffer waren ausschließlich eine harmlose Teilzeichenfolge in historischen Bibliotheksnamen, kein Konfigurationsleck. Keine privaten Werte ausgegeben; temporäre Reports nicht ins Repository übernommen. Die Prüfung ist keine Garantie für sämtliche persönlichen Daten oder unerreichbare Git-Objekte.
+- Vollständiger Linter und alle 203 Offline-Tests bestanden. Neue Trivy-Ergebnisse unter der verschärften Grenze stehen erst nach dem nächsten GitHub-Lauf zur Verfügung; lokal kein Trivy installiert und Docker-Zugriff sandboxseitig gesperrt. Keine Veröffentlichung oder Historienänderung durchgeführt.
+
+## 2026-10-11 – Release-Dokumentation als Aufgabe aufgenommen
+
+- Andreas beauftragt, Änderungen/Upgrade-Hinweise und README-Anpassung als offenen TODO-Punkt aufzunehmen. Dokumentationsumsetzung folgt später.
+- Andreas bestätigt den bestehenden Produktionsbetrieb des veröffentlichten Images mit der Beispiel-Compose-Datei. Daraus keine zusätzliche gezielte Healthcheck-/Volume-Abnahme ableiten.
+
+## 2026-10-11 – Automatische Versionsableitung
+
+- Auf Andreas’ Auftrag manuelle App-Versionsnummer ersetzt: saubere stabile Git-Tags melden die Release-Version; spätere Commits/getrackte Änderungen eine dev-Kennung mit Abstand, Commit und optional .dirty. Ohne Git/Build-Metadaten ehrlicher Rückfall 0.0.0+unknown.
+- Docker übernimmt SMAB_BUILD_VERSION als reines Build-Argument und speichert die geprüfte Version im Paket; kein Git/private Daten im Kontext, kein Laufzeit-ENV-Override. tools/build_image.sh leitet für lokale Builds die Version automatisch ab; direkte Compose-Builds ohne Build-Argument bleiben unknown. README erklärt beide Wege.
+- CI lädt die Tag-Historie, übergibt die ermittelte Version für beide Architekturen und prüft die CLI-Ausgabe. Release verwendet die stabile Tag-Version für Vorab-/Multiarch-Build und prüft die Vorab-Image-CLI vor Veröffentlichung.
+- Zwei neue Regressionstests für saubere Tags, Abstand/dirty, ungültige Tags, Git-Ausfall und Image-Metadaten ohne Git. Vollständiger Linter und alle 205 Offline-Tests bestanden; Docker-Build und GitHub-Ausführung der neuen Versionskette bleiben separat zu prüfen. Kein Commit, Push oder Release ausgelöst.

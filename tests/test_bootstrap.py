@@ -48,7 +48,9 @@ class BootstrapTests(unittest.TestCase):
     def test_version_without_credentials(self):
         result = self.cli("--version")
         self.assertEqual(result.returncode, 0)
-        self.assertRegex(result.stdout, r"^sma-mqtt-bridge \d+\.\d+\.\d+\n$")
+        self.assertRegex(
+            result.stdout, r"^sma-mqtt-bridge \d+\.\d+\.\d+(?:-dev\.\d+)?(?:\+[a-z0-9.]+)?\n$"
+        )
 
     def test_status_distinguishes_runtime_from_live_acceptance(self):
         status = json.loads(self.cli("--project-status").stdout)

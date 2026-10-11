@@ -20,3 +20,6 @@ build/
 .DS_Store
 .venv/
 *.egg-info/
+
+# Image-generated version metadata must not override local Git identity.
+**/_build_version.txt
