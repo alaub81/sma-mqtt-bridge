@@ -582,3 +582,9 @@ Entscheidungen, eingegangene Unterlagen, erledigte Arbeiten und Prüfergebnisse 
 - Auf Andreas’ Wunsch Datum/Uhrzeit mit Millisekunden und explizitem UTC-Offset vor Level und Nachricht ergänzt. Bestehendes SMAB_TIMEZONE steuert die Zeitzone (Standard Europe/Berlin), einschließlich Sommer-/Winterzeit; keine weitere Betriebsvariable erforderlich.
 - Deterministische Regression prüft beide Berliner UTC-Offsets anhand fester LogRecord-Zeitpunkte. Dokumentation ergänzt; Gerätekommunikation, Befehle und Verfügbarkeitslogik unverändert. Image-Neubau und Logprüfung auf dem Zielsystem bleiben offen. Validierung folgt.
 - Abschließende Validierung: alle 159 Offline-Tests inklusive Zeitzonenregression und vollständiger Linter über 91 Dateien bestanden. Diff-Hygiene geprüft; kein Deployment, Gerätebefehl oder Push.
+
+### 2026-10-11 – Gesamtertrag-Anzeigenamen vereinheitlicht
+
+- Abgleich aller drei Wechselrichterprofile: Tripower und Sunny Boy PV verwenden Total yield → Gesamtertrag; Storage verwendete E-Total → Gesamtenergie. Storage auf denselben vorhandenen Übersetzungsschlüssel Total yield geändert. Damit heißen alle drei total-yield-Kanäle deutsch Gesamtertrag. Der separate eCharger-Ladeenergiebegriff bleibt fachlich eigenständig.
+- Ausschließlich Anzeigename geändert; MQTT-IDs, Register, kWh-Einheit und Werte unverändert. Image-Update und Übernahme des Homie-Anzeigenamens bleiben offen.
+- Validierung: vollständiger Linter über 91 Dateien und alle 159 aktuell vorhandenen Offline-Tests bestanden. Kein Deployment oder Commit für diese Labelkorrektur.
