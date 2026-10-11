@@ -21,6 +21,7 @@ APPROVAL = {"5171": "Gesperrt", "5172": "Freigegeben"}
 VERIFIED_LOCAL_UNITS = {
     "Parameter.Chrg.Plan.En": "kWh",
     "Parameter.Chrg.StpWhenFlTm": "min",
+    "Parameter.Inverter.WMaxIn": "W",
 }
 
 # Explicit read mapping from working references, not the entire installer catalog.
@@ -36,6 +37,11 @@ SETTINGS = (
     ("ambient-enabled", "Parameter.Sys.UseAmbLght", "boolean", "", {"308": True, "303": False}, ""),
     ("plan-energy", "Parameter.Chrg.Plan.En", "float", "kWh", None, ""),
     ("plan-end", "Parameter.Chrg.Plan.StopTm", "string", "", None, ""),
+)
+# The local WebUI labels maxChargePower with metadata 12195 (WMaxIn), not WMax.
+# SEMP does not expose this setting; it remains owned by the local API.
+API_SETTINGS = SETTINGS + (
+    ("max-charge-power", "Parameter.Inverter.WMaxIn", "integer", "W", None, ""),
 )
 EXTRA = [("total-energy", ("Measurement.Metering.GridMs.TotWhIn.ChaSta", "Measurement.Metering.GridMs.TotWhIn"), "Wh")]
 for i, phase in enumerate("ABC", 1):
@@ -113,19 +119,24 @@ def parameter_catalog(reply, expected_serial):
     return catalog
 
 
-def settings_values(catalog):
-    result = {}
+def parameter_unit(catalog, channel):
+    unit = catalog.get(channel, {}).get("unit")
     verified_local = (catalog.get("Parameter.Nameplate.ModelStr", {}).get("value") == "EVC22-3AC-20"
                       and catalog.get("Parameter.Nameplate.PkgRev", {}).get("value") == "2.6.37.R")
-    for id, channel, datatype, unit, mapping, fmt in SETTINGS:
+    return VERIFIED_LOCAL_UNITS.get(channel) if unit is None and verified_local else unit
+
+
+def settings_values(catalog, include_api_only=True):
+    result = {}
+    for id, channel, datatype, unit, mapping, fmt in API_SETTINGS if include_api_only else SETTINGS:
         entry = catalog.get(channel, {})
         raw = entry.get("value")
         value = mapping.get(str(raw)) if mapping is not None else raw
         if unit:
-            source_unit = entry.get("unit")
-            if source_unit is None and verified_local:
-                source_unit = VERIFIED_LOCAL_UNITS.get(channel)
-            value = number(raw) if source_unit == unit else None
+            value = number(raw) if parameter_unit(catalog, channel) == unit else None
+        if id == "max-charge-power" and (entry.get("state") != "Confirmed" or value is None
+                                         or value != value.to_integral_value() or not 1380 <= value <= 22000):
+            value = None
         if id == "plan-end":
             seconds = number(raw)
             try:
@@ -182,7 +193,7 @@ def semp_values(text, stale_seconds, now=None, advanced=True, diagnostics=True):
             raw = current_measurement(raw, stamp, stale_seconds, now)
         catalog[channel] = raw
     result = base_values(catalog, advanced)
-    result.update(settings_values({k: {"value": v} for k, v in catalog.items()}))
+    result.update(settings_values({k: {"value": v} for k, v in catalog.items()}, include_api_only=False))
     result.update({node + "/" + id: number(catalog.get(channel)) for node, id, channel in extra_channels(advanced, diagnostics)})
     return result
 
@@ -228,7 +239,7 @@ class EChargerReader:
         self.token, self.expires = None, 0
         self.lock = asyncio.Lock()
         props = [Property("settings", id, id.replace("-", " ").title(), datatype, unit, fmt)
-                 for id, _, datatype, unit, _, fmt in SETTINGS]
+                 for id, _, datatype, unit, _, fmt in API_SETTINGS]
         props += [Property("measurements", id, id.replace("-", " ").title(), unit=unit,
                            required_for_ready=id in ("current-l1", "voltage-l1")) for id, _, unit in EXTRA]
         if include_base:
