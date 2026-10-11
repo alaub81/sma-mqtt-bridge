@@ -366,3 +366,23 @@ metadata report 0.0.0+unknown. CI checks CLI equality on both architectures; the
 release checks its pre-publication image against the stable tag. Full lint and
 205 offline tests passed, including Git failure and Git-free image cases. Actual
 Docker build and hosted execution of this new version chain remain pending.
+
+### Operational limits and focused outage simulation, 2026-10-11
+
+The read-only `python -m sma_mqtt_bridge.operational_limits` module resolves the
+normal configuration and enabled-reader profile timing without network requests.
+Only allowlisted operational fields are printed; private addresses, credentials,
+serial numbers and configured MQTT identities are excluded. Target-host effective
+settings and external alarm rules remain to be supplied. See
+[the operational procedure](OPERATIONAL_ACCEPTANCE.md).
+
+Three additional tests cover report redaction, twelve virtual hours of partial
+samples with independent readiness and retained last-known measurements, and sixty
+serial timeout/retry cycles followed by valid-zero recovery. Existing hung-read,
+partial/invalid-response and MQTT protocol tests remain in the full suite.
+All 206 offline tests passed with local synthetic loopback servers; no installation
+connections or commands were made. Full lint passed hygiene, JSON, ENV, widget,
+shell, Dockerfile, YAML, Actions, Pylint and Markdown checks, but failed Ruff import
+ordering/formatting in pre-existing `version.py` and `test_bootstrap.py` worktree
+changes. The new Python files pass Ruff and formatting. A real multi-hour resource
+soak and target-host external alarm delivery are not covered by virtual-time tests.
