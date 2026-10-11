@@ -10,7 +10,7 @@ automated test. Full production acceptance and openHAB migration remain open.
 The documentation/widget cleanup preserved the bridge runtime and device configuration.
 The subsequent API fix changes confirmation and unit checks; it does not activate
 adapters or command gates.
-The current offline suite contains **182 tests**. Repository lint covers all public
+The current offline suite contains **194 tests**. Repository lint covers all public
 tracked and non-ignored files, including generated widget parity. Compose parity
 checks both standalone files and deployment overrides. Final cleanup results are
 recorded in [todo.md](../todo.md#2026-10-11--dokumente-und-widgetquellen-aufgeräumt).
@@ -71,7 +71,7 @@ The documentation portion of the sixth finding is resolved by the cleanup.
 | API setting confirmation | Resolved offline: individually require Confirmed state, including manual-approval alias; preserve SEMP handling; validate plan-end units and command readback |
 | Homie integers | Resolved offline: integral values serialize without decimals, signed 64-bit bounds enforced, no rounding of fractional values |
 | Homie node metadata | Resolved offline: mandatory stable `$type` per node, untranslated and covered by topic ownership/retirement |
-| Measurement freshness | Carry the device sample's remaining lifetime through source state |
+| Measurement freshness | Classify timestamp semantics first; carry remaining lifetime for verified acquisition timestamps; see the investigation below |
 | MQTT disconnect cleanup | Consume failed futures correctly; make unexpected loop exceptions fail tests |
 | CLI status | Report optional write capabilities accurately; align module descriptions |
 
@@ -97,7 +97,8 @@ unknown firmware is unavailable. SEMP retains its reference epoch-second contrac
 without synthesizing API Confirmed metadata. Offline readback tests also reject
 matching plan numbers with contradictory units; no new live write acceptance is claimed.
 
-API session/health samples can have old change timestamps. Two frequency channels
+API session/health samples can have old timestamps that may represent changes;
+their complete timestamp semantics remain unverified. Two frequency channels
 were absent from the inspected live inventory even though generic WebUI metadata
 defines them. Do not infer freshness or channel presence from static metadata.
 Retained values remain last-known observations; separate source readiness must be
@@ -108,7 +109,132 @@ investigation on 2026-10-11. They describe period energy shares; the current
 charging mix remains unverified. Detailed endpoint/identity notes are preserved in
 [the earlier context](archive/2026-10-11/CONTEXT.md#charging-mix-investigation-2026-10-11).
 
+## Measurement freshness investigation, 2026-10-11
+
+This is an offline investigation of current code, original read-only references and
+earlier installation evidence. Runtime behavior, device configuration and openHAB
+were not changed. No new device, portal or installation-broker requests were sent.
+
+### Evidence and scope
+
+`current_measurement` accepts device ages from zero through the configured limit.
+API and SEMP parsing subsequently discard timestamps. `SourceState.update` records
+receipt time and `fresh_values` starts the complete lifetime again. With a 180-second
+limit, a sample already 179 seconds old remains internally fresh two seconds after
+receipt, although the adapter would reject it then. This was reproduced with fixed
+UTC and monotonic times. The next successful poll rejects an over-age sample, so
+the extension often ends at the next poll; it is not invariably another full lifetime.
+
+The supplied SEMP parameter snapshot has different timestamps within one response:
+power and vehicle status are less than one second apart, while session energy is
+about three days older, health/event channels about 29 days older and some state
+channels about 81 days older. Earlier API inspection also found old session/health
+timestamps. These observations support mixed timestamp semantics but do not prove
+which channels report acquisition versus change times. One snapshot cannot show
+whether a timestamp advances while a value remains constant.
+
+The original API JavaScript `measurements` function ignores measurement timestamps.
+It is migration evidence, not proof that every returned sample is current. The
+[official SMA on-site interface overview](https://developer.sma.de/on-site-integration)
+and [eCharger SEMP description](https://manuals.sma.de/EVCxx20/en-US/15906683019.html)
+do not establish a per-channel timestamp contract for these local responses.
+Do not substitute cloud API or planning timestamps for local measurement semantics.
+
+Candidate acquisition channels are charging power and API phase current/voltage;
+frequency needs channel-presence evidence first. Session/total energy, vehicle and
+health states, events and SEMP setpoints require independent classification.
+Settings and nameplate observations must retain their separate confirmation/read
+contract. Modbus, meter UDP and portal readers are outside this proposed eCharger
+change; a shared model change still needs regressions for those sources.
+
+### Availability and UI effects
+
+Default SEMP readiness requires charging power; API requires phase L1 current and
+voltage, plus power when API owns baseline measurements. Explicit readiness
+overrides can change these requirements. Fresh settings must not hide missing
+critical measurements. The aggregate Homie device is ready while any contributing
+source is ready, so it cannot certify every property. Retained measurements remain
+last-known observations; expiry must neither erase them nor fabricate zero.
+
+The canonical garage widget checks API readiness for local control availability
+and measurement readiness for vehicle-state presentation. Earlier expiry can
+therefore disable controls or show unknown connection state even while another
+source keeps aggregate Homie availability ready. Test those source-specific states.
+The [official openHAB Homie mapping](https://www.openhab.org/addons/bindings/homie/)
+maps device/node/property to Thing/channel group/channel; it does not supply our
+per-property freshness policy. Existing installation rules and persistence are not
+fully inventoried, so complete downstream acceptance remains open.
+
+### Targeted verification before and after a change
+
+Run the current deterministic baseline with:
+
+```sh
+PYTHONPATH=ressources .venv/bin/python -m unittest tests.test_measurement_freshness -v
+```
+
+These three tests cover device-age boundaries, zero, timezone offsets, invalid or
+future timestamps and mixed-age SEMP replies with independent settings. They pass
+before the change and do not close the timestamp-loss finding.
+The full 185-test offline suite, lint over 104 public files and Compose parity
+passed. The two previously recorded unhandled MQTT future exceptions remain open.
+
+Before implementation, add failing regressions for the intended reader-to-state
+behavior. Inject UTC and monotonic clocks; avoid real sleeps and device access.
+
+| Case | Required result after the change |
+| --- | --- |
+| Sample age 179 s, limit 180 s, inspect 2 s later | Sample unavailable internally; critical source stale, retained observation preserved |
+| Same cached timestamp received repeatedly before expiry | Original deadline stays fixed; receipt does not rejuvenate the sample |
+| New acquisition timestamp with unchanged numeric value, including zero | Freshness advances; no false requirement that the value must change |
+| Mixed ages, partial replies and aliases/fallback channels | Expiry follows the actual selected source sample, separately for each property |
+| API parsing followed by delayed completion of the read cycle | Processing/lock delay consumes remaining lifetime too |
+| Invalid, missing, future, conflicting or timezone-free timestamp | Existing rejection preserved; no replacement zero or borrowed timestamp |
+| Old state/counter timestamp | Follow only an evidenced channel policy; until classified, preserve existing behavior |
+| Fresh settings but expired required current/voltage/power | Source stale; settings do not restore measurement readiness |
+| API stale with SEMP ready, and the reverse; custom readiness | Source diagnostics and aggregate availability follow their separate contracts |
+| MQTT reconnect or process restart after expiry | Last retained observation survives; no expiry tombstone or startup write |
+| Wall-clock jump after parsing | Local deadline uses monotonic time; no lifetime extension |
+| Other adapters, units, commands and uncertainty journals | Existing behavior unchanged; no additional writes or retries |
+
+For later read-only installation acceptance, observe API and SEMP independently
+over at least two freshness windows in existing idle/waiting and charging periods.
+Do not start charging or alter settings for the observation. Record per channel:
+relative device age, receipt age, whether value and timestamp changed, source
+status, and API/SEMP agreement. Keep identities, credentials and raw authenticated
+responses private. A stationary timestamp with a stationary value is still
+ambiguous; compare a naturally occurring value/state transition where possible.
+
+Compare old and proposed decisions on the same observations before deployment.
+Accept only explained differences, retained-value continuity and expected widget
+gating; stop rollout on unexplained stale critical samples. Then run full lint,
+offline tests and Compose parity, followed by the source/UI installation checks.
+Return to the prior image/configuration if necessary while preserving the state
+volume and command journals. No runtime correction or live acceptance is claimed
+by this investigation.
+
 ## Recording new evidence
+
+### Optional timestamp recording, 2026-10-11
+
+The bridge now has default-disabled API/SEMP timestamp observation using existing
+read responses. It records allowlisted numeric samples, including over-age ones,
+in `echarger-timestamps.jsonl` in the existing state volume, with one rotated backup.
+Unchanged samples are summarized; timestamp/value/quality changes are recorded
+immediately. Storage failures cannot fail a read and are reported without response
+contents. Freshness, command ownership and MQTT publication are unchanged.
+See [activation and record semantics](CONFIGURATION.md#temporary-echarger-timestamp-observation).
+
+Nine new tests verify numeric versus timestamp changes, unchanged summaries and
+age-boundary transitions, redaction/allowlists, rotation/permissions/restart,
+storage failures, symlink/FIFO rejection, configuration precedence and inactive
+sources. API/SEMP integration fixtures compare output dictionaries and request counts
+with observation disabled/enabled, including a failed diagnostic write.
+All 194 offline tests, lint over 106 public files and Compose parity passed; the
+known MQTT future exceptions remain open. Local Docker has no running service;
+the feature has not been deployed or enabled on the installation. A new image and
+explicit ENV activation are required. Natural-transition observation and the
+subsequent timestamp-policy decision remain pending.
 
 Record date, tested image/version, source/transport, automated versus direct versus
 user-reported result, and remaining limits. Keep authenticated responses, private

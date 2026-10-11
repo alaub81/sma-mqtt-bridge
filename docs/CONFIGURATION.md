@@ -194,6 +194,9 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 | `SEMP_PORT`, `SEMP_PATH` | `80`, `/SEMP/` | Local SEMP endpoint; validate response identity. |
 | `SEMP_POLL_INTERVAL_SECONDS` | `30` | Local SEMP measurement schedule. |
 | `TIMEOUT_SECONDS`, `STALE_SECONDS` | `10`, `180` | HTTP timeout and freshness threshold. |
+| `TIMESTAMP_DIAGNOSTICS_ENABLED` | `false` | Observe existing API/SEMP samples in the state volume; independent of Homie diagnostics, no additional requests. |
+| `TIMESTAMP_DIAGNOSTICS_MAX_BYTES` | `1048576` | Integer file rotation limit, 4096–16777216 bytes; one backup. |
+| `TIMESTAMP_DIAGNOSTICS_SUMMARY_INTERVAL_SECONDS` | `300` | Positive seconds between summaries of unchanged samples; changes are recorded immediately. |
 | `HOMIE_ID` | `sma-echarger` | Shared charger identity for local and portal properties. |
 | `COMMANDS_ENABLED` | `false` | Additional gate for the confirmed local command allowlist. |
 
@@ -212,6 +215,47 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 | `COMMANDS_ENABLED` | `false` | Reserved gate; enabling it is rejected until command implementation. |
 
 The option list is expandable as adapters are implemented; add settings, their defaults and validation here and in `smab.example.env` in the same change. Validate Homie IDs as lowercase letters, digits and internal hyphens; derive one MQTT connection/Last Will per advertised device. Command gates never override a missing allowlist, missing rights, invalid bounds or readback requirements. Do not expose an editable installer setting merely because its metadata is writable.
+
+### Temporary eCharger timestamp observation
+
+Set `SMAB_ECHARGER_TIMESTAMP_DIAGNOSTICS_ENABLED=true` in the private root
+`smab.env` and recreate the service with the rebuilt image. Only already enabled
+API/SEMP readers participate. No adapter is implicitly enabled, no additional
+requests or commands are sent, and freshness/publication policies are unchanged.
+JSON equivalents under `echarger` are `timestampDiagnosticsEnabled`,
+`timestampDiagnosticsMaxBytes`, and `timestampDiagnosticsSummaryIntervalSeconds`.
+
+The diagnostic file is `echarger-timestamps.jsonl` under `SMAB_STATE_DIR`, normally
+`/data/sma-mqtt-bridge/state` in the existing `data_smab_state` Compose volume.
+There is one rotated backup, `echarger-timestamps.jsonl.1`: default storage is
+approximately 2 MiB maximum for files created with these limits. Files use mode
+0600. They are private runtime evidence and must not be committed or published.
+Disabling observation stops recording and preserves both files for evaluation.
+
+Each JSON line contains source (`api`/`semp`), an allowlisted protocol channel,
+UTC processing/receipt time, normalized device timestamp, device age in seconds,
+configured freshness limit and timestamp quality (`fresh`, `stale`, `future`,
+`invalid`). The value is a numeric string in the original protocol units: for
+example energy channels remain raw Wh here, while MQTT uses converted kWh.
+`valueValid` indicates numeric validity. Invalid strings, identities, credentials,
+headers, parameter catalogs and complete responses are never copied into this file.
+
+`valueChanged` compares numeric values (0 and 0.0 are equal); `timestampChanged`
+compares normalized UTC timestamps. Both are null for the first observation after
+startup. Unchanged value/timestamp/quality combinations are suppressed until the
+summary interval; `repeatedSamples` counts the summarized observations including
+the previous emitted observation. `suppressedSamples` reports preceding observations
+omitted since the last emitted line. A transition from fresh to stale is recorded
+even when value and timestamp stay unchanged. API and SEMP histories are separate.
+Only observed channels are recorded; this is not a device-I/O watchdog and silence
+does not establish either health or failure. Use source diagnostics for outages.
+
+Storage is best effort: a write failure emits a warning containing only its exception
+type and defers retries for the summary interval, without failing the device read.
+Records are not fsynced individually; abrupt shutdown can lose the final records.
+Read the rotated backup before the current file when evaluating time order. Do not
+infer acquisition/change semantics from a single old timestamp; follow the
+[observation and acceptance criteria](VALIDATION.md#measurement-freshness-investigation-2026-10-11).
 
 ## Compose usage
 

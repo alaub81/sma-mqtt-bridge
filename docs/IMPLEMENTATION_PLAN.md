@@ -14,8 +14,11 @@ The API confirmation/unit, integer-payload and node-metadata findings are resolv
 offline; see the acceptance matrix.
 The remaining review findings are:
 
-1. Preserve remaining sample freshness from the device timestamp instead of
-   restarting a full lifetime on receipt. Test near-expiry and partial samples.
+1. Classify eCharger timestamps per channel and transport before changing freshness.
+   Then preserve remaining lifetime for verified acquisition timestamps instead of
+   restarting a full lifetime on receipt. Do not assume that old state/counter
+   timestamps prove invalid observations. Follow the targeted tests and observation
+   criteria in [the freshness investigation](VALIDATION.md#measurement-freshness-investigation-2026-10-11).
 2. Resolve unhandled MQTT future exceptions during disconnect tests and fail tests
    on unexpected event-loop exceptions. Do not merely suppress diagnostics.
 3. Correct CLI project-status capability reporting and module descriptions for
