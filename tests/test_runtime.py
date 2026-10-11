@@ -2,6 +2,7 @@
 
 import asyncio
 from dataclasses import replace
+from decimal import Decimal
 import os
 from pathlib import Path
 import tempfile
@@ -12,11 +13,39 @@ from sma_mqtt_bridge.config import load_config
 from sma_mqtt_bridge.errors import AuthenticationError
 from sma_mqtt_bridge.health import atomic_json, healthy, heartbeat
 from sma_mqtt_bridge.homie import HomiePublisher, backoff, discovery
-from sma_mqtt_bridge.model import Property, SourceState
+from sma_mqtt_bridge.model import Property, SourceState, payload
 from sma_mqtt_bridge.runtime import log_startup_status, run, sources, supervise
 
 
 class ModelTests(unittest.TestCase):
+    def test_homie_integer_payload_is_canonical_without_rounding(self):
+        prop = Property('settings', 'limit', 'Limit', 'integer')
+        cases = [(4500, '4500'), (4500.0, '4500'), (Decimal('4500.000'), '4500'),
+                 ('+004500.0', '4500'), (Decimal('4.5E3'), '4500'),
+                 (Decimal('-4500.000'), '-4500'), (Decimal('-0.0'), '0'),
+                 (0, '0'), (Decimal('-9.223372036854775808E18'), '-9223372036854775808'),
+                 (Decimal('9223372036854775807.000'), '9223372036854775807')]
+        for value, expected in cases:
+            with self.subTest(value=value):
+                self.assertEqual(payload(value, prop), expected)
+                self.assertRegex(payload(value, prop), r'^-?[0-9]+$')
+        self.assertEqual(payload(Decimal('4500.0'), replace(prop, datatype='float')), '4500.0')
+        self.assertEqual(payload(Decimal('-0.5'), replace(prop, datatype='float')), '-0.5')
+
+    def test_homie_integer_rejects_out_of_range_fractional_and_invalid_values(self):
+        prop = Property('measurements', 'counter', 'Counter', 'integer')
+        for value in (-(2**63) - 1, 2**63, Decimal('1e1000000'), Decimal('-1e1000000'),
+                      Decimal('9223372036854775807.1'), Decimal('-9223372036854775808.1'),
+                      Decimal('4500.5'), Decimal('-0.5'), True, False, None, '', 'invalid',
+                      Decimal('NaN'), Decimal('sNaN'), Decimal('Infinity'), Decimal('-Infinity')):
+            with self.subTest(value=value):
+                self.assertIsNone(payload(value, prop))
+        state = SourceState('fixture', 'test-device', (prop,), 5)
+        state.update({prop.key: 2**63 - 1}, now=10)
+        self.assertEqual(state.fresh_values(10)[prop.key], '9223372036854775807')
+        state.update({prop.key: 2**63}, now=11)
+        self.assertNotIn(prop.key, state.fresh_values(11))
+
     def state(self):
         return SourceState('fixture', 'test-device', (Property('measurements', 'power', 'Power', unit='W'),), 5)
 

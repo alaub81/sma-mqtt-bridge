@@ -10,14 +10,17 @@ automated test. Full production acceptance and openHAB migration remain open.
 The documentation/widget cleanup preserved the bridge runtime and device configuration.
 The subsequent API fix changes confirmation and unit checks; it does not activate
 adapters or command gates.
-The current offline suite contains **179 tests**. Repository lint covers all public
+The current offline suite contains **181 tests**. Repository lint covers all public
 tracked and non-ignored files, including generated widget parity. Compose parity
 checks both standalone files and deployment overrides. Final cleanup results are
 recorded in [todo.md](../todo.md#2026-10-11--dokumente-und-widgetquellen-aufgeräumt).
 The subsequent API confirmation/unit fix adds five regression tests, including
 uncertain-command polling, retained observations and contradictory plan readback.
-Full repository lint, all 179 offline tests and Compose parity passed on 2026-10-11.
 Results are recorded in [the new diary entry](../todo.md#2026-10-11--review-1-api-bestätigung-und-plan-einheiten).
+The subsequent integer-payload fix adds two regressions for canonical formatting,
+signed 64-bit bounds, invalid inputs and unchanged float handling.
+Latest checks on 2026-10-11 passed full repository lint, all **181 offline tests**
+and Compose parity. The two known MQTT future exceptions remain tracked separately.
 
 The 2026-10-11 code review passed configured lint and all 174 offline tests. Its
 MQTT disconnect tests also emitted unhandled future exceptions: the passing test
@@ -41,7 +44,7 @@ error/fatal diagnostics; broader style checks are a separate planned improvement
 | Combined charging plan | Offline transaction/uncertainty tests; 10-kWh plan and target-mode activation reported accepted, 2026-10-11 | Physical completion, cumulative/additional energy semantics and return mode |
 | Portal minimum PV | Offline preserving write/readback tests; 90 → 70 → 90 and reopened widget value reported accepted, 2026-10-11 | Longer outage/uncertainty behavior; no extra portal setters accepted |
 | Portal freshness | Two normal polling cycles accepted by user, 2026-10-11 | Longer target-host operation and source-failure behavior |
-| Maximum charging power | Verified WMaxIn/W mapping and bounds; offline setter tests, 2026-10-11 | Physical limit/phase effect; integer serialization fix; [details](ECHARGER_POWER_LIMIT.md) |
+| Maximum charging power | Verified WMaxIn/W mapping and bounds; offline setter tests and canonical integer readback, 2026-10-11 | Physical limit/phase effect and deployment acceptance; [details](ECHARGER_POWER_LIMIT.md) |
 | eCharger total energy | Wh-to-kWh API conversion and unchanged Channel ID offline tested, 2026-10-11 | Image update, actual Item metadata and persistence/history acceptance |
 | Controlled stop/start | Retained values, reconnection, healthy container and no replay accepted by user, 2026-10-11 | Abrupt failures, Last Will, broker/host restart and manifest details |
 | Source status/health | Independent operational status, watchdogs, heartbeat/state protection offline tested; Home Manager startup accepted by user | Diagnostics-disabled deployment, startup-summary logs, multi-hour faults and external alarms |
@@ -55,14 +58,14 @@ No cleanup step connects to SMA devices, the portal or the installation broker.
 
 ## Open code-review findings
 
-The API confirmation/unit finding is resolved by offline regression evidence on
-2026-10-11. Findings 2–5 and CLI capability reporting remain pending.
+The API confirmation/unit and integer-payload findings are resolved by offline
+regression evidence on 2026-10-11. Findings 3–5 and CLI capability reporting remain pending.
 The documentation portion of the sixth finding is resolved by the cleanup.
 
 | Finding | Required correction |
 | --- | --- |
 | API setting confirmation | Resolved offline: individually require Confirmed state, including manual-approval alias; preserve SEMP handling; validate plan-end units and command readback |
-| Homie integers | Canonical integer payloads and signed 64-bit bounds |
+| Homie integers | Resolved offline: integral values serialize without decimals, signed 64-bit bounds enforced, no rounding of fractional values |
 | Homie node metadata | Mandatory stable `$type` per node |
 | Measurement freshness | Carry the device sample's remaining lifetime through source state |
 | MQTT disconnect cleanup | Consume failed futures correctly; make unexpected loop exceptions fail tests |

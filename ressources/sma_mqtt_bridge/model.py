@@ -38,8 +38,10 @@ def payload(value, prop):
             number = Decimal(str(value))
             if not number.is_finite():
                 return None
-            if prop.datatype == "integer" and number != number.to_integral_value():
-                return None
+            if prop.datatype == "integer":
+                if number != number.to_integral_value() or not -(2**63) <= number < 2**63:
+                    return None
+                return str(int(number))
             return format(number, "f")
         except (ValueError, ArithmeticError):
             return None

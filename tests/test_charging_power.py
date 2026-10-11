@@ -110,7 +110,7 @@ class PowerCommandTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(values[0]['channelId'], CHANNEL)
         self.assertEqual(values[0]['value'], '4500')
         self.assertEqual(self.status(), 'confirmed')
-        self.assertEqual(self.api.fresh_values()[KEY], '4500.0')
+        self.assertEqual(self.api.fresh_values()[KEY], '4500')
         self.assertFalse(self.controller.journal.exists())
 
     async def test_4000_retained_and_disabled_never_write(self):

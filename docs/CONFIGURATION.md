@@ -380,6 +380,16 @@ writes are disabled. Telemetry can continue, but no command preflight, PUT or au
 takes place. Stop the bridge, verify the actual device setting and reconcile the journal before archiving
 it. A corrupt journal is not permission to repeat its action.
 
+## Homie integer payloads
+
+Integer properties publish canonical decimal whole numbers without a decimal point
+or exponent, including API readback such as `4500.0` becoming `4500`. The
+[Homie 4 payload contract](https://homieiot.github.io/specification/spec-core-v4_0_0/#integer)
+requires signed 64-bit values: -9223372036854775808 through 9223372036854775807.
+Out-of-range, fractional, boolean and nonfinite numeric inputs are unavailable;
+they are never rounded or replaced with zero. Last-known retained observations
+follow the existing availability policy. Float property formatting is unchanged.
+
 ## Local eCharger command milestone
 
 The initial enum/boolean controls use `settings/<property>/set` under the configured charger Homie ID. Measurements and stop delay remain read-only. Energy/end-time planning uses the combined command below; portal preference has its own write gate. Homie discovery and typed command payloads follow the official [openHAB Homie binding](https://www.openhab.org/addons/bindings/homie/) and [Homie 4 specification](https://homieiot.github.io/specification/spec-core-v4_0_0/).
