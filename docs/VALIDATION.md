@@ -10,7 +10,7 @@ automated test. Full production acceptance and openHAB migration remain open.
 The documentation/widget cleanup preserved the bridge runtime and device configuration.
 The subsequent API fix changes confirmation and unit checks; it does not activate
 adapters or command gates.
-The current offline suite contains **199 tests**. Repository lint covers all public
+The current offline suite contains **201 tests**. Repository lint covers all public
 tracked and non-ignored files, including generated widget parity. Compose parity
 checks both standalone files and deployment overrides. Final cleanup results are
 recorded in [todo.md](../todo.md#2026-10-11--dokumente-und-widgetquellen-aufgeräumt).
@@ -23,7 +23,7 @@ The subsequent node-metadata fix adds a required-attribute regression across nor
 delegated and custom nodes. Existing translation and publisher tests also verify
 stable types, publication before readiness, retirement and manifest ownership.
 Latest checks on 2026-10-11 passed full repository lint over 107 public files, all
-**199 offline tests** and Compose parity. The two formerly unhandled MQTT future
+**201 offline tests** and Compose parity. The two formerly unhandled MQTT future
 exceptions are resolved offline; unexpected event-loop errors now fail the suite.
 
 The 2026-10-11 code review passed configured lint and all 174 offline tests. Its
@@ -64,10 +64,9 @@ No cleanup step connects to SMA devices, the portal or the installation broker.
 
 ## Open code-review findings
 
-The API confirmation/unit, integer-payload, node-metadata and MQTT future findings
-are resolved by offline regression evidence on 2026-10-11. Finding 4 and CLI
-capability reporting remain pending.
-The documentation portion of the sixth finding is resolved by the cleanup.
+The API confirmation/unit, integer-payload, node-metadata, MQTT future and CLI
+findings are resolved by offline regression evidence on 2026-10-11. Finding 4
+remains pending timestamp observation and a subsequent policy decision.
 
 | Finding | Required correction |
 | --- | --- |
@@ -76,7 +75,7 @@ The documentation portion of the sixth finding is resolved by the cleanup.
 | Homie node metadata | Resolved offline: mandatory stable `$type` per node, untranslated and covered by topic ownership/retirement |
 | Measurement freshness | Classify timestamp semantics first; carry remaining lifetime for verified acquisition timestamps; see the investigation below |
 | MQTT disconnect cleanup | Resolved offline: retrieve completed/late disconnect errors, preserve primary failures, propagate standalone disconnect failures; strict event-loop test check |
-| CLI status | Report optional write capabilities accurately; align module descriptions |
+| CLI status | Resolved offline: static code capabilities distinguish optional writes from default gates; check-config reports configured gates; module descriptions clarify local file I/O |
 
 See the [archived review](archive/2026-10-11/todo.md#2026-10-11--repository--und-codereview)
 for reproductions and original source references, and the
@@ -264,6 +263,24 @@ retained discovery/measurements and graceful disconnect; they additionally asser
 that the supervised failure count records the dropped connection.
 Full lint over 107 public files and Compose parity passed. This is offline evidence,
 not new installation fault/Last Will acceptance or deployment.
+
+### CLI capability reporting, 2026-10-11
+
+`--project-status` now reports `readOnly=false` for the implemented optional write
+capabilities and `commandsEnabledByDefault=false` for the closed default gates.
+It remains independent of installation configuration and does not claim complete
+live acceptance. `--check-config` retains its effective configured `readOnly` flag;
+no command gates, runtime commands or adapter activation changed. Module descriptions
+now acknowledge optional writes and local configuration-file reads. Inverter profile
+commands remain unsupported regardless of eCharger/portal capabilities.
+
+The existing status regression failed before correction and now verifies the static
+capabilities/default distinction. Two additional CLI tests prove that project status
+ignores an absent configuration file and invalid installation ENV without exposing
+credentials, and check all global/per-adapter gate combinations for local and portal
+configuration. Invalid global-only gates remain rejected. All 201 offline tests,
+full lint over 107 public files and Compose parity passed. No installation or device
+configuration was changed.
 
 Record date, tested image/version, source/transport, automated versus direct versus
 user-reported result, and remaining limits. Keep authenticated responses, private

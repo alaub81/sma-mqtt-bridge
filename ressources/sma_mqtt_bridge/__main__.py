@@ -1,4 +1,4 @@
-"""Non-secret diagnostics and explicitly enabled read-only service."""
+"""Non-secret diagnostics and bridge runtime with independently gated optional writes."""
 
 import argparse
 import asyncio
@@ -44,11 +44,13 @@ def main(argv=None):
             print("sma-mqtt-bridge " + __version__)
             return 0
         if args.project_status:
-            print(json.dumps({"runtimeImplemented": True, "liveVerified": False, "readOnly": True,
+            # Static code capabilities, independent of installation configuration or acceptance.
+            print(json.dumps({"runtimeImplemented": True, "liveVerified": False, "readOnly": False,
+                              "commandsEnabledByDefault": False,
                               "paidSmaApisRequired": False, "bundledPollingProfiles": 3}))
             return 0
         if args.healthcheck:
-            # The same JSON/ENV precedence applies, but source configuration does no I/O.
+            # Resolve local configuration/files with normal precedence, without device connections.
             config = load_config()
             return 0 if healthy(config.runtime.state_dir, config.runtime.health_stale_seconds) else 1
         if args.check_home_manager_profile:

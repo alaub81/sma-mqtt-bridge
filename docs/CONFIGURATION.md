@@ -259,6 +259,15 @@ infer acquisition/change semantics from a single old timestamp; follow the
 
 ## Compose usage
 
+CLI diagnostics distinguish project capabilities from resolved installation settings:
+`--project-status` is static and does not load configuration or connect. Its
+`readOnly=false` means this code supports optional writes; `commandsEnabledByDefault=false`
+means the default command gates are closed. `liveVerified=false` does not claim
+complete installation acceptance. Use `--check-config` to validate JSON/ENV and
+local profile/password/certificate files without device connections. Its `readOnly`
+field describes the effective global and per-adapter command gates of that validated
+configuration. Neither diagnostic sends a command or activates an adapter.
+
 Place only needed overrides in the root `smab.env`; no additional JSON file is mandatory. On a fresh installation, copy `smab.example.env` to `smab.env` and replace its placeholder broker host. Keep existing configuration intact. Both Compose files explicitly pass `smab.env` through the service's `env_file`. No extra flag is needed to load bridge settings with the default layout:
 
 ```bash

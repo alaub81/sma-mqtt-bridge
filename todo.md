@@ -13,7 +13,7 @@ Die aktuelle Abnahme steht in [docs/VALIDATION.md](docs/VALIDATION.md), die Reih
 - [x] Review 3 am 11.10.2026 lokal korrigiert: obligatorisches Homie-Node-$type ergänzt, sprachunabhängig und stabil; delegierte Geräte teilen den Typ device. Veröffentlichung, dynamisches Retirement und Manifestbesitz offline geprüft.
 - [x] Review 2 am 11.10.2026 lokal korrigiert: Homie-Integer kanonisch ohne Dezimalpunkt ausgegeben, signed-64-bit-Grenzen geprüft; Bruchzahlen werden nicht gerundet. Float-Ausgabe unverändert, Leistungsgrenzen-Regression korrigiert.
 - [x] Review 1 am 11.10.2026 lokal korrigiert: individuelle API-Bestätigung und Plan-Einheiten einschließlich Rücklesen abgesichert; SEMP und retained Beobachtungen erhalten. Neue Live-Abnahme bleibt offen; Details im neuen Tagebucheintrag.
-- [ ] Review 6 abschließen: CLI-Projektstatus und Modulbeschreibungen an optionale Schreibpfade beziehungsweise Datei-I/O anpassen. Aktuelle Dokumentation ist bereinigt.
+- [x] Review 6 am 11.10.2026 abgeschlossen: statischer CLI-Projektstatus nennt optionale Schreibfähigkeit und standardmäßig geschlossene Befehlsfreigaben; check-config bewertet tatsächliche Gates. Modulbeschreibungen für optionales Schreiben/lokales Datei-I/O präzisiert; Profilbefehle weiterhin nur für Wechselrichter gesperrt.
 - [ ] Nachtbetrieb vollständig abnehmen: Morgen-Aufwachen und Wertaktualisierung sowie Schlaf-/Ausfallunterscheidung prüfen. Abendbeobachtung am 11.10.2026 laut Andreas unauffällig.
 - [ ] Mehrstündigen deterministischen Ausfalltest und Produktionsabnahme ergänzen: langsame/unvollständige Antworten, Geräte-/Broker-Ausfälle, abruptes Prozessende, Last Will, TLS, Topic-Retirement und selbstständige Erholung. Kontrollierter Stop/Start ist separat bestätigt.
 - [ ] Externe Betriebsüberwachung für Prozessstillstand, Docker-unhealthy, Broker-Ausfall und dauerhaft fehlende kritische Werte einrichten; Host-Neustart und Zustandswiederherstellung prüfen. Manifest, Unklarheitsjournale und Instanzsperre erhalten.
@@ -49,6 +49,14 @@ Die ursprünglichen Fragen Q01–Q27 bleiben mit ihrem genauen Wortlaut und alle
 ## Regeln für das Projekttagebuch
 
 Neue Entscheidungen, Unterlagen, Ergebnisse und offene Fragen mit Datum ergänzen. Geklärte Fragen ausdrücklich mit Antwort und Datum markieren. Frühere Einträge bleiben in verlinkten, datierten Archiven erhalten; sie werden nicht nachträglich als aktuelle Anleitung umgeschrieben. Öffentliche technische Dokumente sind Englisch, Tagebucheinträge Deutsch. Private Kennungen, Adressen, Zugangsdaten und Rohantworten bleiben ausgeschlossen.
+
+## 2026-10-11 – Review 6: CLI-Fähigkeitsstatus und Modulbeschreibungen
+
+- Auftrag: geprüften MQTT-Fix zuerst committen und mit dem nächsten Punkt fortfahren. Lokaler Commit 15ad548 (fix: retrieve MQTT disconnect errors and enforce strict loop checks), kein Push oder Deployment.
+- Statischen --project-status korrigiert: readOnly=false beschreibt die bereits vorhandenen optionalen Schreibpfade, commandsEnabledByDefault=false stellt die geschlossenen Standard-Gates klar. Keine private Konfiguration dafür geladen, keine Adapter aktiviert und keine vollständige Live-Abnahme behauptet. --check-config behält readOnly anhand der tatsächlich validierten globalen und lokalen/Portal-Gates; keine Freigabe oder Schreiblogik verändert.
+- Modulbeschreibung des CLI für optionale Writes präzisiert; config.py und Healthcheck-Kommentar unterscheiden lokale Datei-/TLS-/Profilprüfung von Geräte-/Netzwerk-I/O. Reader-Beschreibung im eCharger-Modul weiterhin korrekt, Setter liegen separat. PROFILES-Vertrag auf nicht implementierte Wechselrichter-Setter eingegrenzt, statt den gesamten Runtime als read-only zu bezeichnen.
+- Vorhandener Status-Test vor Fix gezielt fehlgeschlagen. Zwei neue CLI-Regressionsfälle prüfen statische Ausgabe trotz fehlender JSON-Datei/ungültigem Installations-ENV ohne Geheimnisausgabe sowie alle vier Gate-Kombinationen jeweils für lokale und Portal-Konfiguration. Globales Gate ohne Gerätefreigabe weiterhin abgewiesen. Standard-check-config bleibt readOnly=true.
+- Alle 201 Offline-Tests ohne unbehandelte MQTT-Future-Ausnahmen, vollständiger Linter über 107 öffentliche Dateien, Compose-Parität/Overrides und Diff-Hygiene bestanden. Review 6 geschlossen; von den sechs konkreten Befunden bleibt Review 4 bis zur Zeitstempelbeobachtung/Auswertung offen. Als nächster unabhängiger Stabilitätsschritt bleibt die deterministische längere Ausfall-/Wiederanlaufsimulation im Plan.
 
 ## 2026-10-11 – Review 5: MQTT-Disconnect-Futures
 

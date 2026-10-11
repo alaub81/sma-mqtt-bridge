@@ -46,7 +46,7 @@ The loader rejects unknown fields and non-standard JSON numbers. Required top-le
 | `identity` | `model`, `firmware`, `serial` reference defined property IDs. Identity blocks are read and checked before measurement blocks on each TCP session. |
 | `pollers[]` | Unique `id`, read `function` 3 or 4, `start` 0–65535, `count` 1–125 with no address overflow; optional positive `intervalSeconds`. |
 | `properties[]` | Unique `id`, Homie `node`, `name`, `poller` reference, register `offset`, `length`, `type`, explicit `byteOrder`/`wordOrder`, finite `scale`, `unit`, raw `invalid` list, Homie `datatype`; optional `valueMap`, `minimum`, `maximum`, `format`, `channelGroup`, boolean `requiredForReady`. |
-| `commands` | Must be empty in the read-only runtime. |
+| `commands` | Must be empty; inverter write paths are not implemented. |
 
 Register types: `uint16`, `int16`, `uint32`, `int32`, `uint64`, `int64`, `float32`, `string`. Numeric lengths must match the type; ASCII strings use their explicit register length. Order is `big` or `little`. Homie datatypes are `integer`, `float`, `string`, `boolean`, `enum`; enums/booleans require `valueMap`; boolean map values are `true`/`false`. Unknown enum codes are unavailable, never guessed. Maps can preserve existing openHAB status strings. Sentinel checks precede mapping/scaling; floating-point NaN is always unavailable. Bounds apply to scaled numbers.
 

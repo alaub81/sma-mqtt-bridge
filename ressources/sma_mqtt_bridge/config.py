@@ -1,4 +1,4 @@
-"""Strict defaults < profile < JSON < explicit ENV configuration, without I/O."""
+"""Strict defaults < profile < JSON < ENV precedence and local file reads, without network I/O."""
 
 from dataclasses import dataclass, fields, replace
 import ipaddress
