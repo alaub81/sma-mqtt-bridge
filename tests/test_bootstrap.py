@@ -45,7 +45,39 @@ class BootstrapTests(unittest.TestCase):
         self.assertTrue(status['runtimeImplemented'])
         self.assertFalse(status['liveVerified'])
         self.assertEqual(status['bundledPollingProfiles'], 3)
-        self.assertTrue(status['readOnly'])
+        self.assertFalse(status['readOnly'])
+        self.assertFalse(status['commandsEnabledByDefault'])
+
+    def test_project_status_is_static_and_does_not_resolve_private_configuration(self):
+        result = self.cli('--project-status', env={
+            'SMAB_CONFIG_FILE': '/missing-fixture-config.json',
+            'SMAB_COMMANDS_ENABLED': 'invalid',
+            'SMAB_ECHARGER_PASSWORD': 'fixture-do-not-log'})
+        self.assertEqual(result.returncode, 0)
+        self.assertEqual(json.loads(result.stdout), json.loads(self.cli('--project-status').stdout))
+        self.assertNotIn('fixture-do-not-log', result.stdout + result.stderr)
+
+    def test_check_config_read_only_follows_global_and_adapter_command_gates(self):
+        for adapter in ('ECHARGER', 'PORTAL'):
+            for global_gate, adapter_gate in ((False, False), (False, True), (True, True), (True, False)):
+                with self.subTest(adapter=adapter, global_gate=global_gate, adapter_gate=adapter_gate):
+                    env = {'SMAB_MQTT_HOST': 'fixture.invalid',
+                           'SMAB_COMMANDS_ENABLED': str(global_gate).lower(),
+                           f'SMAB_{adapter}_COMMANDS_ENABLED': str(adapter_gate).lower(),
+                           f'SMAB_{adapter}_ENABLED': 'true',
+                           f'SMAB_{adapter}_USERNAME': 'fixture-account',
+                           f'SMAB_{adapter}_PASSWORD': 'fixture-do-not-log'}
+                    if adapter == 'ECHARGER':
+                        env.update(SMAB_ECHARGER_HOST='fixture.invalid', SMAB_ECHARGER_EXPECTED_SERIAL='123')
+                    else:
+                        env.update(SMAB_PORTAL_PLANT_ID='123', SMAB_PORTAL_DEVICE_ID='456')
+                    result = self.cli('--check-config', env=env)
+                    self.assertNotIn('fixture-do-not-log', result.stdout + result.stderr)
+                    if global_gate and not adapter_gate:
+                        self.assertEqual(result.returncode, 2)
+                    else:
+                        self.assertEqual(result.returncode, 0, result.stderr)
+                        self.assertEqual(json.loads(result.stdout)['readOnly'], not (global_gate and adapter_gate))
 
     def test_no_sources_fail_without_secret_output(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -58,6 +90,7 @@ class BootstrapTests(unittest.TestCase):
         result = self.cli('--check-config')
         self.assertEqual(result.returncode, 0)
         self.assertEqual(json.loads(result.stdout)['enabledSources'], 0)
+        self.assertTrue(json.loads(result.stdout)['readOnly'])
 
     def test_check_profile_reports_validated_profile(self):
         result = self.cli('--check-profile', 'sma-stp8-0-3av-40')
