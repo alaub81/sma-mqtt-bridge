@@ -70,7 +70,9 @@ class HomeManagerProfileTests(unittest.TestCase):
                'SMAB_HOME_MANAGER_HOST': 'fixture.invalid', 'SMAB_HOME_MANAGER_SERIAL': '123',
                'SMAB_MQTT_HOST': 'broker.invalid', 'SMAB_MQTT_TLS': 'false'}
         config = load_config(env)
-        source = sources(config)[0]
+        with patch('sma_mqtt_bridge.runtime.time.monotonic', return_value=100):
+            source = sources(config)[0]
+        self.assertEqual(source[0].initialization_deadline, 100 + config.runtime.read_cycle_timeout_seconds)
         self.assertIsInstance(source[1], HomeManagerModbusReader)
         self.assertFalse(source[1].interval_override)
         self.assertEqual(config.home_manager.port, 9522)

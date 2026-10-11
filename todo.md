@@ -588,3 +588,10 @@ Entscheidungen, eingegangene Unterlagen, erledigte Arbeiten und Prüfergebnisse 
 - Abgleich aller drei Wechselrichterprofile: Tripower und Sunny Boy PV verwenden Total yield → Gesamtertrag; Storage verwendete E-Total → Gesamtenergie. Storage auf denselben vorhandenen Übersetzungsschlüssel Total yield geändert. Damit heißen alle drei total-yield-Kanäle deutsch Gesamtertrag. Der separate eCharger-Ladeenergiebegriff bleibt fachlich eigenständig.
 - Ausschließlich Anzeigename geändert; MQTT-IDs, Register, kWh-Einheit und Werte unverändert. Image-Update und Übernahme des Homie-Anzeigenamens bleiben offen.
 - Validierung: vollständiger Linter über 91 Dateien und alle 159 aktuell vorhandenen Offline-Tests bestanden. Kein Deployment oder Commit für diese Labelkorrektur.
+
+### 2026-10-11 – Home-Manager-Startmeldung korrigiert
+
+- Andreas meldet unmittelbar nach Containerstart Home-Manager-stale mit Erholung nach 0,2 Sekunden und ohne Anfragefehler. Codebefund: gepacete Modbus-Teilantworten setzen last_success, bevor alle für Readiness benötigten Werte eingelesen sind.
+- Auf ausdrücklichen Wunsch bleibt ausschließlich die Home-Manager-Modbus-Quelle beim ersten Einlesen init. Begrenzung durch bestehendes SMAB_READ_CYCLE_TIMEOUT_SECONDS (Standard 120 Sekunden) ab Quellenerstellung. Vollständige frische Readiness beendet die Initialisierung; Fristablauf wird stale, Anfragefehler sofort error und beenden die Startphase. Keine erneute Schonfrist bei Wiederverbindung, keine Änderung an Messwert-Frischegrenzen oder Gerätebefehlen.
+- Regression prüft Teilantworten ohne falsche Ausfall-/Erholungslogs, erste Readiness, späteren Ablauf, ausbleibende Anfangswerte und unmittelbare Fehlerpriorität. Zielsystem-Abnahme mit neu gebautem Image bleibt offen. Validierung folgt.
+- Validierung abgeschlossen: vollständiger Linter über 91 Dateien und alle 160 Offline-Tests bestanden; nach Ergänzung des Abbruchs bei ausschließlich unbrauchbaren Antworten alle 20 Stabilitätstests erneut bestanden. Diff-Hygiene bestanden. Kein Geräte-I/O, Deployment oder Push; Änderung noch nicht committet.

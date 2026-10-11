@@ -5,6 +5,7 @@ from dataclasses import replace
 import logging
 from pathlib import Path
 import signal
+import time
 
 from .adapters.echarger import EChargerReader, SempReader
 from .adapters.meter import MeterReader
@@ -56,11 +57,14 @@ def sources(config):
     settings = {d.id: (d, "ready_properties") for d in config.inverters}
     settings.update({"home-manager": (hm, "ready_properties"), "api": (ec, "api_ready_properties"),
                      "semp": (ec, "semp_ready_properties"), "portal": (portal, "ready_properties")})
-    for state, _, _ in result:
+    for state, reader, _interval in result:
         device, attr = settings[state.id]
         value = getattr(device, attr)
         state.ready_properties = tuple(value.split(",")) if value else ()
         state.__post_init__()  # Reject filtered or unknown readiness keys before device I/O.
+        if isinstance(reader, HomeManagerModbusReader):
+            # Paced Modbus reads populate readiness properties over multiple calls.
+            state.initialization_deadline = time.monotonic() + config.runtime.read_cycle_timeout_seconds
     return result
 
 
@@ -102,6 +106,7 @@ async def supervise(state, reader, interval, config, stop, refresh_portal=False)
                     state.values = {k: v for k, v in state.values.items() if k in keys}
                 state.update(values)
                 if values and not state.fresh_values():
+                    state.initialization_deadline = None
                     state.error = True
                     monitor.failure(reason="UnavailableSamples")
                 if state.status() == "ready":
@@ -115,6 +120,7 @@ async def supervise(state, reader, interval, config, stop, refresh_portal=False)
                     monitor.progress("waiting")
                     await wait_stop(stop, reader.delay() if isinstance(reader, ModbusReader) else interval)
             except AuthenticationError:
+                state.initialization_deadline = None
                 state.error = True
                 monitor.failure(reason="AuthenticationError")
                 monitor.progress("auth-blocked")
@@ -122,6 +128,7 @@ async def supervise(state, reader, interval, config, stop, refresh_portal=False)
                 LOG.error("Source %s authentication blocked; resolve credentials/permissions before restart", state.id)
                 await stop.wait()  # No credential retry storm.
             except Exception as error:
+                state.initialization_deadline = None
                 # Uncontrolled third-party exception text may contain authenticated data.
                 state.error = True
                 monitor.failure(is_timeout(error), type(error).__name__)

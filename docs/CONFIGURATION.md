@@ -250,6 +250,13 @@ the UTC offset, followed by severity and message. `SMAB_TIMEZONE` (default
 `Europe/Berlin`) controls the log timezone, including daylight-saving changes.
 Example: `2026-10-11T14:30:00.123+02:00 WARNING Source portal unavailable (stale)`.
 
+The Home Manager Modbus source remains `init` while its first paced reads
+collect the required fresh properties. This initial phase is bounded by
+`SMAB_READ_CYCLE_TIMEOUT_SECONDS` (default 120 seconds) from source creation.
+Missing required values then produce `stale`; request errors produce `error`
+immediately and end initialization. Once ready, ordinary freshness checks apply
+without another initialization grace period on reconnect.
+
 The Docker probe runs `python -m sma_mqtt_bridge --healthcheck`. It validates configuration
 without device I/O and reads `state/heartbeat.json`. A successful probe requires schema 2,
 `status=running`, a positive PID still present in the same PID namespace, and a finite monotonic

@@ -56,6 +56,27 @@ class StabilityTests(unittest.TestCase):
         state.update({'measurements/b': None}, now=2)
         self.assertEqual(state.status(2), 'stale')
 
+    def test_paced_initialization_is_bounded_and_ends_on_readiness(self):
+        props = (Property('measurements', 'a', 'A', required_for_ready=True),
+                 Property('measurements', 'b', 'B', required_for_ready=True))
+        state = SourceState('home-manager', 'test-device', props, 5, initialization_deadline=10)
+        self.assertEqual(state.status(0), 'init')
+        state.update({'measurements/a': 1}, now=0)
+        monitor = Availability('Source home-manager', 300)
+        with self.assertNoLogs('sma_mqtt_bridge.availability'):
+            monitor.observe(state.status(0), now=0)
+            state.update({'measurements/b': 2}, now=.2)
+            monitor.observe(state.status(.2), now=.2)
+        self.assertEqual(state.status(.2), 'ready')
+        self.assertIsNone(state.initialization_deadline)
+        self.assertEqual(state.status(6), 'stale')
+        pending = SourceState('home-manager', 'test-device', props, 5, initialization_deadline=10)
+        self.assertEqual(pending.status(10), 'stale')
+        pending.update({'measurements/a': 1}, now=11)
+        self.assertEqual(pending.status(11), 'stale')
+        pending.error = True
+        self.assertEqual(pending.status(1), 'error')
+
     def test_command_feedback_does_not_mask_a_device_outage(self):
         device = SourceState('fixture', 'test-device', (Property('measurements', 'power', 'Power'),), 5)
         command = SourceState('commands', 'test-device', (Property('commands', 'result', 'Result', 'string'),), 5,
