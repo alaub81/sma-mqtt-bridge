@@ -10,6 +10,9 @@ RUN python -m pip install --no-cache-dir --requirement requirements.txt \
     && chown -R smab:smab /data/sma-mqtt-bridge
 COPY ressources/ ./
 
+ARG SMAB_BUILD_VERSION=0.0.0+unknown
+RUN python -c 'import os, pathlib; from sma_mqtt_bridge.version import VERSION; value = os.environ["SMAB_BUILD_VERSION"]; assert VERSION.fullmatch(value), "Invalid build version"; pathlib.Path("sma_mqtt_bridge/_build_version.txt").write_text(value + "\n", encoding="utf-8")'
+
 ENV SMAB_STATE_DIR=/data/sma-mqtt-bridge/state
 USER 10001:10001
 VOLUME ["/data/sma-mqtt-bridge/state"]

@@ -1,3 +1,5 @@
-"""Read-only SMA to Homie bridge; no command paths are implemented."""
+"""SMA to Homie bridge with independently gated optional commands."""
 
-__version__ = "0.1.0"
+from .version import resolve_version
+
+__version__ = resolve_version()
