@@ -10,7 +10,7 @@ automated test. Full production acceptance and openHAB migration remain open.
 The documentation/widget cleanup preserved the bridge runtime and device configuration.
 The subsequent API fix changes confirmation and unit checks; it does not activate
 adapters or command gates.
-The current offline suite contains **194 tests**. Repository lint covers all public
+The current offline suite contains **199 tests**. Repository lint covers all public
 tracked and non-ignored files, including generated widget parity. Compose parity
 checks both standalone files and deployment overrides. Final cleanup results are
 recorded in [todo.md](../todo.md#2026-10-11--dokumente-und-widgetquellen-aufgeräumt).
@@ -22,12 +22,14 @@ signed 64-bit bounds, invalid inputs and unchanged float handling.
 The subsequent node-metadata fix adds a required-attribute regression across normal,
 delegated and custom nodes. Existing translation and publisher tests also verify
 stable types, publication before readiness, retirement and manifest ownership.
-Latest checks on 2026-10-11 passed full repository lint, all **182 offline tests**
-and Compose parity. The two known MQTT future exceptions remain tracked separately.
+Latest checks on 2026-10-11 passed full repository lint over 107 public files, all
+**199 offline tests** and Compose parity. The two formerly unhandled MQTT future
+exceptions are resolved offline; unexpected event-loop errors now fail the suite.
 
 The 2026-10-11 code review passed configured lint and all 174 offline tests. Its
 MQTT disconnect tests also emitted unhandled future exceptions: the passing test
-result does not close that defect. Ruff currently checks E4/E7/E9/F and Pylint
+result alone did not close that defect; see the subsequent correction below.
+Ruff currently checks E4/E7/E9/F and Pylint
 error/fatal diagnostics; broader style checks are a separate planned improvement.
 
 ## Acceptance matrix
@@ -62,8 +64,9 @@ No cleanup step connects to SMA devices, the portal or the installation broker.
 
 ## Open code-review findings
 
-The API confirmation/unit, integer-payload and node-metadata findings are resolved by
-offline regression evidence on 2026-10-11. Findings 4–5 and CLI capability reporting remain pending.
+The API confirmation/unit, integer-payload, node-metadata and MQTT future findings
+are resolved by offline regression evidence on 2026-10-11. Finding 4 and CLI
+capability reporting remain pending.
 The documentation portion of the sixth finding is resolved by the cleanup.
 
 | Finding | Required correction |
@@ -72,7 +75,7 @@ The documentation portion of the sixth finding is resolved by the cleanup.
 | Homie integers | Resolved offline: integral values serialize without decimals, signed 64-bit bounds enforced, no rounding of fractional values |
 | Homie node metadata | Resolved offline: mandatory stable `$type` per node, untranslated and covered by topic ownership/retirement |
 | Measurement freshness | Classify timestamp semantics first; carry remaining lifetime for verified acquisition timestamps; see the investigation below |
-| MQTT disconnect cleanup | Consume failed futures correctly; make unexpected loop exceptions fail tests |
+| MQTT disconnect cleanup | Resolved offline: retrieve completed/late disconnect errors, preserve primary failures, propagate standalone disconnect failures; strict event-loop test check |
 | CLI status | Report optional write capabilities accurately; align module descriptions |
 
 See the [archived review](archive/2026-10-11/todo.md#2026-10-11--repository--und-codereview)
@@ -177,7 +180,8 @@ These three tests cover device-age boundaries, zero, timezone offsets, invalid o
 future timestamps and mixed-age SEMP replies with independent settings. They pass
 before the change and do not close the timestamp-loss finding.
 The full 185-test offline suite, lint over 104 public files and Compose parity
-passed. The two previously recorded unhandled MQTT future exceptions remain open.
+passed at this investigation checkpoint. The MQTT future finding was still open
+then and is resolved by the subsequent correction below.
 
 Before implementation, add failing regressions for the intended reader-to-state
 behavior. Inject UTC and monotonic clocks; avoid real sleeps and device access.
@@ -230,11 +234,36 @@ age-boundary transitions, redaction/allowlists, rotation/permissions/restart,
 storage failures, symlink/FIFO rejection, configuration precedence and inactive
 sources. API/SEMP integration fixtures compare output dictionaries and request counts
 with observation disabled/enabled, including a failed diagnostic write.
-All 194 offline tests, lint over 106 public files and Compose parity passed; the
-known MQTT future exceptions remain open. Local Docker has no running service;
+All 194 offline tests, lint over 106 public files and Compose parity passed at
+this milestone; MQTT future errors were still open then. Local Docker has no running service;
 the feature has not been deployed or enabled on the installation. A new image and
 explicit ENV activation are required. Natural-transition observation and the
 subsequent timestamp-policy decision remain pending.
+
+### MQTT disconnect future correction, 2026-10-11
+
+The pinned aiomqtt 2.5.1 `__aexit__` returns immediately if its disconnect future
+is already completed, without retrieving an error from that future. The bridge's
+session teardown now retrieves completed errors. A disconnect failure is propagated
+if there is no primary session failure; otherwise the existing failure is preserved.
+A late disconnect error after failed bounded cleanup is retrieved by a completion
+callback after the original failure has already propagated. No library upgrade,
+retry policy, command replay or Last Will behavior was introduced.
+
+The full pre-deployment runner now records unexpected event-loop exceptions, retains
+their default diagnostic output, collects unreachable future cycles and exits with
+failure even if individual unittest assertions passed. Before the runtime correction,
+the 194-test suite reproducibly exited 1 for the two formerly unhandled MQTT errors.
+After the correction, all 199 tests exit 0 without those messages.
+
+Three new session tests cover standalone disconnect error propagation, preservation
+of a publication timeout and a late future completion. Two runner self-tests prove
+that an orphaned failed future makes an otherwise passing suite fail and that a
+clean loop passes. Existing real aiomqtt/Paho loopback tests still verify reconnect,
+retained discovery/measurements and graceful disconnect; they additionally assert
+that the supervised failure count records the dropped connection.
+Full lint over 107 public files and Compose parity passed. This is offline evidence,
+not new installation fault/Last Will acceptance or deployment.
 
 Record date, tested image/version, source/transport, automated versus direct versus
 user-reported result, and remaining limits. Keep authenticated responses, private

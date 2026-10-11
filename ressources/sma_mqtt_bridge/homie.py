@@ -338,6 +338,7 @@ def abort_client(client):
 
 @asynccontextmanager
 async def mqtt_session(client, connect_timeout, shutdown_timeout):
+    failed = False
     try:
         await asyncio.wait_for(client.__aenter__(), connect_timeout)
         try:
@@ -348,5 +349,30 @@ async def mqtt_session(client, connect_timeout, shutdown_timeout):
         finally:
             await asyncio.wait_for(client.__aexit__(None, None, None), shutdown_timeout)
     except BaseException:
+        failed = True
         abort_client(client)
         raise
+    finally:
+        finish_disconnect(client, failed)
+
+
+def finish_disconnect(client, failed):
+    """Retrieve aiomqtt's disconnect error without replacing an active session failure."""
+    # aiomqtt 2.5.1 returns early in __aexit__ when this future is already done.
+    future = getattr(client, "_disconnected", None)
+    if not isinstance(future, asyncio.Future):
+        return
+    if future.done():
+        if not future.cancelled():
+            error = future.exception()
+            if error is not None and not failed:
+                raise error
+    elif failed:
+        # An abort callback can arrive after bounded cleanup failed. That session's
+        # original error is already propagated; still retrieve the late future error.
+        future.add_done_callback(retrieve_disconnect_error)
+
+
+def retrieve_disconnect_error(future):
+    if not future.cancelled():
+        future.exception()

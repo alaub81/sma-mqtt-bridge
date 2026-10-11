@@ -10,7 +10,7 @@ questions. Earlier plans remain in the [archive](archive/README.md).
 Use deterministic regression cases before changing behavior. Preserve existing
 Channel IDs, retained last-known measurements and all uncertainty guards.
 
-The API confirmation/unit, integer-payload and node-metadata findings are resolved
+The API confirmation/unit, integer-payload, node-metadata and MQTT future findings are resolved
 offline; see the acceptance matrix.
 The remaining review findings are:
 
@@ -19,9 +19,7 @@ The remaining review findings are:
    restarting a full lifetime on receipt. Do not assume that old state/counter
    timestamps prove invalid observations. Follow the targeted tests and observation
    criteria in [the freshness investigation](VALIDATION.md#measurement-freshness-investigation-2026-10-11).
-2. Resolve unhandled MQTT future exceptions during disconnect tests and fail tests
-   on unexpected event-loop exceptions. Do not merely suppress diagnostics.
-3. Correct CLI project-status capability reporting and module descriptions for
+2. Correct CLI project-status capability reporting and module descriptions for
    optional writes and configuration file I/O. The documentation portion is resolved.
 
 Run complete lint, offline tests and Compose parity. Record evidence and unresolved

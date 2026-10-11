@@ -106,8 +106,8 @@ own diagnostics. A single device outage must not force a restart loop.
 
 Retained measurements represent the last valid observation. Invalid, stale or missing
 samples must not become fabricated zeros; readiness describes freshness separately.
-Keep receipt timestamps distinct from device measurement timestamps. Known freshness
-and MQTT cleanup gaps remain explicitly tracked in the acceptance matrix.
+Keep receipt timestamps distinct from device measurement timestamps. The remaining
+freshness gap and offline MQTT cleanup evidence are tracked in the acceptance matrix.
 
 Owned topic names are persisted for retirement after source/ID/prefix changes.
 Preserve the state volume to clean up old discovery. Moving brokers also requires
