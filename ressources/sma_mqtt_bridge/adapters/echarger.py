@@ -3,7 +3,10 @@
 import asyncio
 import time
 import xml.etree.ElementTree as ET
+from collections.abc import Mapping
+from dataclasses import dataclass
 from datetime import datetime, timezone
+from types import MappingProxyType
 
 from ..config import echarger_ssl_context
 from ..errors import AuthenticationError, ProtocolError
@@ -30,45 +33,87 @@ VERIFIED_LOCAL_UNITS = {
     "Parameter.Inverter.WMaxIn": "W",
 }
 
+
+@dataclass(frozen=True, kw_only=True)
+class SettingDefinition:
+    """Named read metadata shared with the explicit command allowlist."""
+
+    id: str
+    channel: str
+    datatype: str
+    unit: str = ""
+    mapping: Mapping[str, bool] | None = None
+    format: str = ""
+
+    def __post_init__(self):
+        if self.mapping is not None:
+            object.__setattr__(self, "mapping", MappingProxyType(dict(self.mapping)))
+
+
 # Explicit read mapping from working references, not the entire installer catalog.
 SETTINGS = (
-    ("charge-mode", "Parameter.Chrg.ActChaMod", "enum", "", None, "4718,4719,4720,4721"),
-    (
-        "charging-release",
-        "Parameter.Chrg.ChrgApv",
-        "boolean",
-        "",
-        {"5172": True, "5171": False},
-        "",
+    SettingDefinition(
+        id="charge-mode",
+        channel="Parameter.Chrg.ActChaMod",
+        datatype="enum",
+        format="4718,4719,4720,4721",
     ),
-    (
-        "approval-required",
-        "Parameter.Chrg.ChrgLok",
-        "boolean",
-        "",
-        {"1129": True, "1130": False},
-        "",
+    SettingDefinition(
+        id="charging-release",
+        channel="Parameter.Chrg.ChrgApv",
+        datatype="boolean",
+        mapping={"5172": True, "5171": False},
     ),
-    (
-        "stop-when-full",
-        "Parameter.Chrg.StpWhenFl",
-        "boolean",
-        "",
-        {"1129": True, "1130": False},
-        "",
+    SettingDefinition(
+        id="approval-required",
+        channel="Parameter.Chrg.ChrgLok",
+        datatype="boolean",
+        mapping={"1129": True, "1130": False},
     ),
-    ("stop-delay", "Parameter.Chrg.StpWhenFlTm", "integer", "min", None, ""),
-    ("cable-lock", "Parameter.Chrg.CblLok", "boolean", "", {"308": True, "303": False}, ""),
-    ("led-brightness", "Parameter.Sys.DevSigBri", "enum", "", None, "5191,5190,5173"),
-    ("ambient-brightness", "Parameter.Sys.AmbLghtBri", "enum", "", None, "5191,5190,5173"),
-    ("ambient-enabled", "Parameter.Sys.UseAmbLght", "boolean", "", {"308": True, "303": False}, ""),
-    ("plan-energy", "Parameter.Chrg.Plan.En", "float", "kWh", None, ""),
-    ("plan-end", "Parameter.Chrg.Plan.StopTm", "string", "", None, ""),
+    SettingDefinition(
+        id="stop-when-full",
+        channel="Parameter.Chrg.StpWhenFl",
+        datatype="boolean",
+        mapping={"1129": True, "1130": False},
+    ),
+    SettingDefinition(
+        id="stop-delay", channel="Parameter.Chrg.StpWhenFlTm", datatype="integer", unit="min"
+    ),
+    SettingDefinition(
+        id="cable-lock",
+        channel="Parameter.Chrg.CblLok",
+        datatype="boolean",
+        mapping={"308": True, "303": False},
+    ),
+    SettingDefinition(
+        id="led-brightness",
+        channel="Parameter.Sys.DevSigBri",
+        datatype="enum",
+        format="5191,5190,5173",
+    ),
+    SettingDefinition(
+        id="ambient-brightness",
+        channel="Parameter.Sys.AmbLghtBri",
+        datatype="enum",
+        format="5191,5190,5173",
+    ),
+    SettingDefinition(
+        id="ambient-enabled",
+        channel="Parameter.Sys.UseAmbLght",
+        datatype="boolean",
+        mapping={"308": True, "303": False},
+    ),
+    SettingDefinition(
+        id="plan-energy", channel="Parameter.Chrg.Plan.En", datatype="float", unit="kWh"
+    ),
+    SettingDefinition(id="plan-end", channel="Parameter.Chrg.Plan.StopTm", datatype="string"),
 )
 # The local WebUI labels maxChargePower with metadata 12195 (WMaxIn), not WMax.
 # SEMP does not expose this setting; it remains owned by the local API.
 API_SETTINGS = SETTINGS + (
-    ("max-charge-power", "Parameter.Inverter.WMaxIn", "integer", "W", None, ""),
+    SettingDefinition(
+        id="max-charge-power", channel="Parameter.Inverter.WMaxIn", datatype="integer", unit="W"
+    ),
 )
 EXTRA = [
     (
@@ -184,22 +229,26 @@ def parameter_unit(catalog, channel):
 def settings_values(catalog, *, from_api=True):
     """Require confirmed API settings; SEMP provides raw parameters without API metadata."""
     result = {}
-    for id, channel, datatype, unit, mapping, fmt in API_SETTINGS if from_api else SETTINGS:
-        entry = catalog.get(channel, {})
+    for setting in API_SETTINGS if from_api else SETTINGS:
+        entry = catalog.get(setting.channel, {})
         if from_api and entry.get("state") != "Confirmed":
-            result["settings/" + id] = None
+            result["settings/" + setting.id] = None
             continue
         raw = entry.get("value")
-        value = mapping.get(str(raw)) if mapping is not None else raw
-        if unit:
-            value = number(raw) if parameter_unit(catalog, channel) == unit else None
-        if id == "max-charge-power" and (
+        value = setting.mapping.get(str(raw)) if setting.mapping is not None else raw
+        if setting.unit:
+            value = (
+                number(raw) if parameter_unit(catalog, setting.channel) == setting.unit else None
+            )
+        if setting.id == "max-charge-power" and (
             value is None or value != value.to_integral_value() or not 1380 <= value <= 22000
         ):
             value = None
-        if id == "plan-end":
+        if setting.id == "plan-end":
             seconds = (
-                number(raw) if not from_api or parameter_unit(catalog, channel) == "s" else None
+                number(raw)
+                if not from_api or parameter_unit(catalog, setting.channel) == "s"
+                else None
             )
             try:
                 value = (
@@ -209,7 +258,7 @@ def settings_values(catalog, *, from_api=True):
                 )
             except OverflowError, OSError, ValueError:
                 value = None
-        result["settings/" + id] = value
+        result["settings/" + setting.id] = value
     return result
 
 
@@ -284,8 +333,15 @@ class SempReader:
         ]
         if include_settings:
             props += [
-                Property("settings", id, id.replace("-", " ").title(), datatype, unit, fmt)
-                for id, _, datatype, unit, _, fmt in SETTINGS
+                Property(
+                    "settings",
+                    setting.id,
+                    setting.id.replace("-", " ").title(),
+                    setting.datatype,
+                    setting.unit,
+                    setting.format,
+                )
+                for setting in SETTINGS
             ]
         props += [
             Property(node, id, channel + " (raw code/value)", "float")
@@ -335,8 +391,15 @@ class EChargerReader:
         self.token, self.expires = None, 0
         self.lock = asyncio.Lock()
         props = [
-            Property("settings", id, id.replace("-", " ").title(), datatype, unit, fmt)
-            for id, _, datatype, unit, _, fmt in API_SETTINGS
+            Property(
+                "settings",
+                setting.id,
+                setting.id.replace("-", " ").title(),
+                setting.datatype,
+                setting.unit,
+                setting.format,
+            )
+            for setting in API_SETTINGS
         ]
         props += [
             Property(

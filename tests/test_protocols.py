@@ -3,6 +3,7 @@
 import asyncio
 import struct
 import unittest
+from dataclasses import FrozenInstanceError
 from datetime import datetime, timezone
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock, patch
@@ -10,6 +11,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from sma_mqtt_bridge.adapters.echarger import (
     NS,
     SempReader,
+    SettingDefinition,
     parameter_catalog,
     semp_values,
     settings_values,
@@ -28,6 +30,23 @@ from sma_mqtt_bridge.config import ECharger, Inverter, Portal
 from sma_mqtt_bridge.errors import AuthenticationError, ProtocolError
 from sma_mqtt_bridge.profiles import validate_profile
 from tests.helpers import validated_profile
+
+
+class SettingDefinitionTests(unittest.TestCase):
+    def test_mapping_cannot_change_through_original_dictionary_or_definition(self):
+        original = {"5172": True, "5171": False}
+        setting = SettingDefinition(
+            id="fixture", channel="Fixture", datatype="boolean", mapping=original
+        )
+        original["5172"] = False
+        self.assertTrue(setting.mapping["5172"])
+        with self.assertRaises(TypeError):
+            setting.mapping["5172"] = False
+        with self.assertRaises(FrozenInstanceError):
+            setting.channel = "OtherFixture"
+
+    def test_definition_requires_named_fields_to_prevent_position_mixups(self):
+        self.assertRaises(TypeError, SettingDefinition, "fixture", "Fixture", "boolean")
 
 
 class DecodeTests(unittest.TestCase):
