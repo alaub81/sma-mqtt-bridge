@@ -74,7 +74,7 @@ the independently configured portal retains its PV-share channels.
 | --- | --- |
 | Home Manager advanced | Skip Unit 1 metadata polling, assignment-table reads and all delegated `device-*` channels. Keep the six Unit 2 plant/grid readings. UDP currently exposes only basic readings. |
 | Inverter advanced | Omit published identity channels and explicitly tagged supplementary properties, including Sunny Boy type and power-limit parameters. Keep the existing energy, power, phase, battery, internal temperature and operating-status measurements. |
-| eCharger advanced | Omit firmware, duplicate vehicle-status code, SEMP control setpoints and raw parameter duplicates. Keep charging measurements, readable charging settings and command feedback. |
+| eCharger advanced | Omit firmware, SEMP control setpoints and raw parameter duplicates. Keep charging measurements, vehicle-status text/code, readable charging settings and command feedback. |
 | Diagnostics | Keep operational source status channels regardless of this flag. Omit last-success timestamps and optional failure/timeout/outage metrics, Home Manager rejected-block count and SEMP raw health/event/registration/mode codes. |
 
 Operational availability is always advertised for enabled measurement sources, including

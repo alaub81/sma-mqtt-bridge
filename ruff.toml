@@ -1,5 +1,6 @@
 target-version = "py314"
 line-length = 100
+per-file-target-version = { "tests/resource_soak.py" = "py39" }
 
 [format]
 quote-style = "double"

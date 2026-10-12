@@ -61,8 +61,8 @@ Docker health is process liveness, not proof that all devices or MQTT are availa
 External alarms must distinguish those signals. Sleeping inverters need their
 accepted readiness policy; missing night production alone is not an outage.
 UDP/interface/multicast tests are required only when the UDP transport is selected.
-Device timestamp semantics and the remaining freshness correction are pending the
-separate recording review. No threshold changes or live interruptions are performed
+Selected periodically refreshed eCharger channels now retain their device age;
+unresolved channel semantics and installation freshness acceptance remain separate. No threshold changes or live interruptions are performed
 by this procedure's implementation.
 
 ## Automated evidence and limits
@@ -74,3 +74,89 @@ monotonic times and sixty repeated timeout/retry cycles without real waiting.
 They check bounded outage summaries, retained last-known values, independent fresh
 zero readings, bounded retry delays and recovery. This is not a twelve-hour live
 load test, memory/connection soak, or external alarm delivery test.
+
+## Extended deterministic fault sequences, 2026-10-12
+
+`tests/test_long_outages.py` exercises production supervisors and the Homie
+connection loop with synthetic readers/clients and virtual monotonic time:
+
+- Twelve virtual hours: one source passes through normal reads, partial responses,
+  repeated read timeouts, slow responses carrying expired observation times,
+  connection failures and recovery. A second actual supervisor receives scheduled
+  ticks and stays ready with valid zero samples. Critical expiry, bounded stored
+  property counts, serialized reads, timeout session cleanup, outage counters,
+  bounded logging and autonomous recovery are asserted.
+- Twenty-four actual asyncio watchdog cancellations followed by recovery; each
+  cancelled read finishes before retry and sessions close. Virtual time advances
+  thirty minutes per cancellation, while the watchdog is one millisecond in the
+  fixture. This verifies repeated cancellation handling, not a real twelve-hour
+  hanging connection.
+- Twelve virtual hours: ten hours of refused broker connections, then repeated
+  lost/delayed publish acknowledgements until the final recovery. Only one
+  connected fixture client exists at a time, each connected session closes,
+  reads continue updating, retry delays stay bounded and source readiness remains
+  independent. Retained payloads, obsolete-topic retirement, the persisted topic
+  manifest and an untouched synthetic journal are checked. No controller handle
+  is invoked and no background task remains after completion.
+
+The module bindings for time are patched independently of asyncio's real timer.
+There are no multi-hour sleeps or installation requests. The synthetic MQTT client
+does not prove network-level ACK behavior, TLS or broker Last Will delivery;
+existing loopback-stack tests and user-reported installation checks cover separate
+parts of those contracts. This is not a memory/network/resource soak: session,
+task and property-count assertions do not establish target-host resource usage.
+The synthetic journal byte check verifies non-interference only, not all command
+uncertainty scenarios, which have their own regression tests.
+
+## Bounded Linux host resource recording
+
+`tests/resource_soak.py` runs outside the bridge image with Python 3.9+ and the
+Docker CLI, from the installation's Compose directory. It performs read-only
+Docker/procfs/sysfs sampling; it never loads ENV secrets or queries devices/MQTT.
+Defaults are 24 hours and a 60-second sampling interval. CLI flags
+`--duration-seconds` (1..86400), `--interval-seconds` (1..3600), `--output` and
+optional `--compose-file` configure this host tool, not the service runtime.
+No additional service environment variables or image dependencies are introduced.
+
+Copy the script onto the host, then run a short two-minute check first:
+
+```sh
+python3 resource_soak.py --duration-seconds 120 --output smab-resource-soak-check.jsonl
+```
+
+After checking the output, start the bounded recording:
+
+```sh
+nohup python3 resource_soak.py --output smab-resource-soak-24h.jsonl \
+  > smab-resource-soak-24h.log 2>&1 < /dev/null &
+```
+
+The output file is created exclusively: existing observations are never
+overwritten. The default produces approximately 1,441 JSON lines with a final
+sample at the duration boundary; slow Docker calls can extend wall duration.
+Each Docker command has a ten-second deadline. Host shutdown stops the recorder;
+container restart/replacement and unavailable samples reset CPU comparisons.
+`generation` identifies continuity segments, including unavailable intervals,
+not an exact restart count. Docker's `restartCount` is reported separately.
+
+Recorded fields include UTC time/elapsed time, container health/status, cgroup-v2
+CPU usage and delta percent (100% means one CPU core), optional cgroup memory,
+summed resident/peak process memory, process/thread counts and aggregate physical
+host-interface byte counters. The memory sums may double-count shared pages and
+are not interchangeable with Docker's cache-adjusted memory accounting. If
+processes disappear during a sample, expected/read counts expose partial results.
+Missing memory controllers/cgroup metrics produce null, never a fabricated zero.
+The first CPU sample and discontinuities produce null rather than invalid rates.
+No container IDs, addresses, command lines or ENV values are saved.
+
+Host physical-interface traffic includes other services and excludes loopback;
+it is context only, not Bridge-specific throughput. Interface resets or membership
+changes require separate interpretation of counter deltas. A network-mode change
+or dedicated traffic attribution would need independent acceptance; do not alter
+networking just to collect this baseline. Docker/procfs sampling itself has some
+overhead; this is a coarse one-minute resource trend, not microbenchmarking.
+
+After recording, compare CPU/RSS trends with natural night/morning and charging
+phases, available source diagnostics and same-period bridge logs. Preserve units,
+polling and measurement coverage until a measured change has an explicit
+before/after acceptance plan. Generated observations/logs stay outside Git.

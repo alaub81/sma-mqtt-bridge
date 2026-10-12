@@ -4,6 +4,8 @@ Die aktuelle Abnahme steht in [docs/VALIDATION.md](docs/VALIDATION.md), die Reih
 
 ## Aktive Aufgaben
 
+- [ ] Timestamp-Prüfungen überprüfen: klären, ob sie beibehalten, angepasst oder wieder entfernt werden sollen. Nutzen für Datenaktualität und mögliche Fehlalarme durch Gerätezeit, Zeitzonen oder fehlende Zeitstempel untersuchen; Entscheidung und Auswirkungen dokumentieren.
+
 - [ ] Ressourcenverbrauch der Bridge auf dem Zielhost messen und optimieren: CPU, Arbeitsspeicher, Netzwerkverkehr und Abfrageaufwand prüfen. Optimierungen ohne Verlust von Messwerten, Datenaktualität oder Reconnect-Stabilität umsetzen und durch Vorher-/Nachher-Messungen belegen.
 
 - [ ] Auf Andreas’ Wunsch vom 12.10.2026 die Home-Manager-Anlagenzeit (`measurements/planttime`) in openHAB als Datum/Uhrzeit darstellen. Unix-Sekunden in der Bridge unverändert erhalten; für reine Anzeige eine State-Description-Transformation verwenden, bei Zeitvergleichen/Regeln ein DateTime-Item mit geeigneter Umwandlung vorsehen. Zeitzone `Europe/Berlin` einschließlich Sommerzeit in openHAB behandeln; eine einfache Datumsformatierung eines Number-Items allein genügt nicht. Vor Umsetzung offizielle openHAB-Dokumentation konsultieren und bestehende Links/Item-Namen berücksichtigen.
@@ -47,7 +49,7 @@ Die vollständigen Einzelbefunde stehen in [der Ergebnismatrix](docs/modbus-avai
 
 ### Weitere aktive Aufgaben
 
-- [ ] Wallbox `measurements/vehiclestatuscode` auf Andreas’ Wunsch vom 12.10.2026 aus ADVANCED in die Standard-/Basisgruppe übernehmen. Topic und Werte erhalten; Verfügbarkeit bei deaktivierten Advanced-Kanälen prüfen. Noch nicht implementiert.
+- [x] Wallbox `measurements/vehiclestatuscode` am 12.10.2026 lokal in die Basisgruppe übernommen. Topic/Integerwerte, Read-only-Metadaten und Zeitstempelbehandlung erhalten; bestehende API-/SEMP- und Discoverytests bei deaktivierten optionalen Gruppen erweitert. Deployment nach Ressourcenmessung offen.
 
 - [ ] Release-Dokumentation aktualisieren: Änderungen und Upgrade-Hinweise zusammenstellen; README vom Vorbereitungsstand auf die tatsächlich verfügbare GHCR-Veröffentlichung umstellen. Produktionsbetrieb mit veröffentlichtem Image und Beispiel-Compose laut Andreas bereits vorhanden; keine erneute Veröffentlichung dafür erforderlich.
 
@@ -63,10 +65,11 @@ Die vollständigen Einzelbefunde stehen in [der Ergebnismatrix](docs/modbus-avai
 - [x] Review 6 am 11.10.2026 abgeschlossen: statischer CLI-Projektstatus nennt optionale Schreibfähigkeit und standardmäßig geschlossene Befehlsfreigaben; check-config bewertet tatsächliche Gates. Modulbeschreibungen für optionales Schreiben/lokales Datei-I/O präzisiert; Profilbefehle weiterhin nur für Wechselrichter gesperrt.
 - [x] Clean Code/KISS Schritte 1–2 am 11.10.2026 umgesetzt: Python-Formatierung und Importordnung getrennt angewendet/geprüft, anschließend verbindlich im Linter verankert. Keine Funktionszerlegung, Setting-Migration oder Widgetänderung; weitere Vereinfachungen bleiben im Plan.
 - [x] Clean Code/KISS Schritt 3 am 11.10.2026 umgesetzt: Setting-Positions-Tupel durch benannte unveränderliche Definitionen ersetzt, auch die Befehls-Allowlist verwendet diese Definitionen. Gegencheck mit vorherigem Stand identisch; keine zusätzlichen Setter oder Protokolländerungen.
-- [ ] Nachtbetrieb vollständig abnehmen: Morgen-Aufwachen und Wertaktualisierung sowie Schlaf-/Ausfallunterscheidung prüfen. Abendbeobachtung am 11.10.2026 laut Andreas unauffällig.
-- [ ] Mehrstündigen deterministischen Ausfalltest und Produktionsabnahme ergänzen: langsame/unvollständige Antworten, Geräte-/Broker-Ausfälle, abruptes Prozessende, Last Will, TLS, Topic-Retirement und selbstständige Erholung. Kontrollierter Stop/Start ist separat bestätigt.
+- [x] Nächtlicher Betrieb für den beobachteten Zyklus bestätigt: Abendverhalten am 11.10.2026 unauffällig; selbstständiges Morgen-Aufwachen, ready und neue Messwerte am 12.10.2026 von Andreas bestätigt. Gezielte Schlaf-/Ausfallunterscheidung bleibt separat offen.
+- [x] Erweiterte deterministische Ausfallfolgen am 12.10.2026 ergänzt: zwölf simulierte Stunden mit Teil-/langsamen Antworten und Gerätefehlern über zwei Supervisoren, 24 echte Watchdog-Abbrüche sowie zwölf simulierte Stunden Broker-/Publikationsfehler mit Cleanup/Erholung. Kein realer Ressourcen-Soak.
+- [ ] Verbleibende Produktionsausfälle und Ressourcen-Soak abnehmen: gezielte Einzelgeräteausfälle, längere Unterbrechungen, TLS/Alarme und konkrete Zustandswiederherstellung; bisherige Live-Teilnachweise erhalten.
 - [x] Externe Überwachung und Alarmierung eingerichtet: von Andreas am 11.10.2026 bestätigt.
-- [ ] Host-Neustart und Zustandswiederherstellung prüfen. Manifest, Unklarheitsjournale und Instanzsperre erhalten.
+- [ ] Zustandswiederherstellung nach Host-Neustart vollständig prüfen. Automatischer Bridge-Start beim Host-Neustart von Andreas am 12.10.2026 bestätigt; Quellen-/MQTT-Erholung, Manifest, Unklarheitsjournale, Instanzsperre und openHAB-Kontinuität separat abnehmen.
 - [x] Quellenstatus bei deaktivierter optionaler Diagnose am 11.10.2026 von Andreas abgenommen: Das Widget erhält weiterhin die Verfügbarkeitswerte. Home-Manager-Startstatus und Startübersicht mit allen Quellen ready/MQTT verbunden sind ebenfalls bestätigt.
 - [x] Wallbox-Gesamtladeenergie in kWh am 11.10.2026 von Andreas abgenommen: openHAB-Einheit, Skalierung und bestehende Historie erfolgreich geprüft.
 - [ ] Bei Home-Manager-Modbus beide Compose-Dateien auf normales Docker-Bridge-Netzwerk umstellen und Zielhost-Verbindungen einschließlich DNS/TLS prüfen. UDP-Multicast als Alternative mit eigenen Voraussetzungen erhalten; Compose-Parität prüfen. Bis dahin Netzwerk unverändert.
@@ -526,3 +529,68 @@ Topic-Suffixe werden unter `homie/<konfigurierte Homie-ID>/` veröffentlicht. Di
 
 - Andreas hat Commit, Tag und Push ausdrücklich freigegeben. Remote-main entspricht dem bisherigen lokalen HEAD; nächster freier Patch-Tag ist v0.3.6. Umfang: Zeitstempelauswertung mit aggregierter Matrix, Restlaufzeit-Fix, elf neue Regressionstests und zugehörige Dokumentation. Private Originalaufzeichnungen bleiben ausgeschlossen.
 - Lokale Abnahme: 232 Offline-Tests, vollständiger Linter und Compose-Parität bestanden. Der Tag-Push startet den vorhandenen Release-Workflow; dessen Ergebnis und die Zielhost-/openHAB-Abnahme sind eigenständige Nachweise.
+
+## 2026-10-12 – Zielhost-Neustart und Last Will mit v0.3.6 bestätigt
+
+- Andreas liefert Version v0.3.6 und healthy vor dem Compose-Neustart. Startübersichten um 19:14:09 und 19:14:43 Europe/Berlin zeigen alle sieben Quellen ready und fünf MQTT-Verbindungen connected.
+- Nach SIGKILL bestätigt Andreas `$state=lost` bei allen fünf Homie-Geräten. Nach ausdrücklichem `docker compose up -d sma-mqtt-bridge` zeigt die Startübersicht um 19:16:28 erneut alle Quellen ready und MQTT verbunden. Last Will bei diesem abrupten Ende und Wiederanlauf nach manuellem Start damit belegt.
+- Offen: automatische Crash-Erholung, healthy nach Wiederanlauf, openHAB-Aktualisierung/Historie, Einstellungs-/Befehlswiederholungsfreiheit, konkrete Manifest-/Journalinhalte sowie Broker-/Host-Neustart. Der manuelle Start beweist keinen automatischen Neustart durch die Restart-Policy. Keine Live-Aktion durch Codex; Abnahmematrix aktualisiert.
+
+## 2026-10-12 – Healthy und automatischer Start beim Host-Neustart
+
+- Andreas bestätigt healthy nach dem Wiederanlauf und dass die Bridge beim Host-Neustart automatisch startet. Diese beiden Teilprüfungen sind erledigt.
+- Offen bleiben vollständige Quellen-/MQTT-Erholung nach Boot, openHAB-/Historien- und Einstellungskontinuität sowie konkrete Zustandswiederherstellung. Automatischer Start beim Boot ist kein Nachweis einer beliebigen automatischen Crash-Erholung. Keine Live-Aktion durch Codex.
+
+## 2026-10-12 – Vorhandenen Mosquitto-Ausfalltest bestätigt
+
+- Andreas berichtet den bereits erfolgreich durchgeführten Test: Mosquitto als Compose-Service heruntergefahren, Bridge-Verhalten geprüft, Broker hochgefahren und selbstständigen Reconnect der Bridge beobachtet. Kein erneuter gleichartiger Test erforderlich.
+- Testdatum/-dauer, Einzelverbindungszeiten und Alarmbeobachtungen nicht geliefert; keine Langzeitausfall-, In-flight- oder Historienabnahme daraus ableiten. Verbleibende Betriebsprüfungen entsprechend gezielt auswählen. Keine Live-Aktion durch Codex.
+
+## 2026-10-12 – InfluxDB-/Grafana-Kontinuität nach Bridge-Wiederanlauf
+
+- Andreas nutzt InfluxDB/Grafana und bestätigt alle vier vorgeschlagenen Prüfungen rund um das Neustartfenster 19:05–19:30 Europe/Berlin: Home-Manager-Bezugs-/Einspeisezähler ohne Reset/Sprung, Wallbox-Gesamtenergie mit gleicher kWh-Skalierung und erhaltener alter Historie, neue Home-Manager-Leistungswerte nach 19:16 sowie Tageswerte ohne auffällige Neustartsprünge.
+- Für diese ausgewählten Reihen und das geprüfte Zeitfenster von Andreas abgenommen; keine Rohdaten-/Queryprüfung durch Codex. Übrige Migrationszeilen, Tages-/Sommerzeitgrenzen und openHAB-Neustart bleiben separat. Wallbox-Einstellungskontinuität noch bestätigen.
+
+## 2026-10-12 – Wallbox-Einstellungskontinuität bestätigt
+
+- Andreas bestätigt den lesenden Widgetvergleich: Lademodus, Ladefreigabe und maximale Ladeleistung unverändert gegenüber vor dem Neustart. Planenergie/-endzeit waren nur bei vorhandenem Plan Teil der Frage; Planvorhandensein nicht separat genannt, daher keine uneingeschränkte Ladeplanabnahme.
+- Zusammen mit den Grafana-Prüfungen ist der ausgewählte openHAB-/Historien-/Einstellungskontinuitätscheck für den getesteten Bridge-Wiederanlauf abgeschlossen. Vollständiger Migrationsaudit und Befehlsverkehrsnachweis bleiben eigenständige Aufgaben. Keine neuen Gerätebefehle oder Live-Aktionen durch Codex.
+
+## 2026-10-12 – Morgendliches Aufwachen der Wechselrichter bestätigt
+
+- Andreas bestätigt, dass das selbstständige Aufwachen mit ready und neuen Messwerten heute Morgen funktioniert hat. Zusammen mit dem unauffälligen Abendverhalten ist der beobachtete Nacht-/Morgenzyklus abgenommen.
+- Keine genauen Uhrzeiten/Einzellogs geliefert; gezielte Unterscheidung von Schlaf und echtem Verbindungsausfall sowie längere Beobachtung bleiben offen. Morgenbeobachtung vor den abendlichen v0.3.6-Tests, daher keine versionsspezifische v0.3.6-Nachtabnahme behauptet. Keine Live-Aktion durch Codex.
+
+## 2026-10-12 – Erweiterte deterministische Ausfallfolgen
+
+- Auftrag: längere lokale Ausfalltests ergänzen. Bestehende Zwölf-Stunden-Teilwertsimulation und 60 Timeout-Wiederholungen inventarisiert; um drei Tests mit tatsächlichen Supervisor-/Publisher-Schleifen erweitert.
+- Zwölf simulierte Stunden: Normalbetrieb, Teilantworten, Timeouts, langsame überalterte Antworten, Verbindungsfehler und Rückkehr. Zweiter Supervisor liefert weiterhin gültige Nullwerte. Pflichtmessungen laufen ab, Datenbestand bleibt begrenzt, Reads seriell, Timeout-Sessions schließen, Fehlerzähler/Logs und Erholung geprüft.
+- 24 echte asyncio-Watchdog-Abbrüche mit jeweils 30 Minuten virtuellem Fortschritt: jeder Read vollständig abgebrochen vor Retry, keine Überlappung, Cleanup und Recovery geprüft. Keine echten mehrstündigen Wartezeiten.
+- MQTT: zehn simulierte Stunden Broker nicht erreichbar, danach verlorene/verzögerte Publikationsbestätigungen bis zum Ende von zwölf Stunden und erfolgreiche Rückkehr. Höchstens eine verbundene Fixture-Session, alle schließen, keine verbleibenden Hintergrundtasks. Retained-Werte, Topic-Retirement, Manifest und unverändertes synthetisches Journal geprüft; kein Controller-Handle aufgerufen.
+- Grenzen: kein echter CPU-/RAM-/Netzwerk-Soak, kein neuer TLS-/Last-Will-/Alarmnachweis; Journalvergleich beweist Nichtbeeinflussung, ersetzt keine Befehls-Unklarheitstests. Keine Laufzeit-/Konfigurationsänderung, Geräte-/Brokeraktion oder Veröffentlichung.
+- Abschlussvalidierung: alle 235 Offline-Tests in etwa 7,3 s, vollständiger Linter über 131 Dateien, eigenständige Compose-Parität einschließlich Overrides und Diff-Prüfung bestanden. Neue Ausfalltests ohne Sockets; bestehende Loopback-Tests im freigegebenen Lauf außerhalb der Sandbox.
+
+## 2026-10-12 – Ressourcen-Bestandsaufnahme vom Zielhost
+
+- Andreas liefert Docker-Momentaufnahme: CPU 0,73 %, drei Tasks; RAM/Limit und Netzwerk jeweils als 0 gemeldet. Nullanzeigen nicht als echten Nullverbrauch werten. Speicher-Accounting und Netzwerkmodus zuerst lesend prüfen, bevor wir die begrenzte 24-h-Aufzeichnung festlegen.
+- Effektive Intervalle bestätigt: Wechselrichter mindestens 3/5/3 s, Home Manager 3 s, API 60 s, SEMP 30 s, Portal 900 s mit Frischegrenze 1800 s. Keine Intervalle geändert; ein CPU-Sample reicht nicht für Optimierungsentscheidungen.
+
+## 2026-10-12 – Linux-Ressourcenprobe und begrenzte Aufzeichnung vorbereitet
+
+- Andreas liefert cgroup v2/systemd und Host-Netzwerk. Python-RSS/Höchststand jeweils 53.776 KiB, rund 52,5 MiB, zwei Threads; docker-init 592 KiB/ein Thread. Nur Momentaufnahme. `/proc/cgroups` unter v2 kein hinreichender Controller-Nachweis; Docker-RAM-Nullanzeige noch nicht abschließend erklärt.
+- Externes Standardbibliothek-Hostskript tests/resource_soak.py vorbereitet: standardmäßig 24 h/60 s, CPU aus Container-cgroup, optionaler cgroup-Speicher, Prozess-RSS/Höchststände, health/Restart-Segmente und physische Host-Netzwerkzähler. Fehlende Werte als null, Resets ohne falsche CPU-Deltas, exklusive Ausgabedatei. Keine ENV-Geheimnisse, Containeridentitäten oder Geräte-/Brokerabfragen.
+- Netzwerk ist ausdrücklich Host-Gesamtverkehr, nicht Bridge-Anteil; RSS-Summen können Shared Pages mehrfach enthalten. Python-3.9-Syntax nur für das Hostskript per Ruff-Ausnahme erhalten; Bridge bleibt Python 3.14. Generierte Beobachtungen/Logs aus Git ausgeschlossen.
+- Fünf gezielte Tests für Accounting-Ausfälle, CPU-Resets, begrenzte Erfassung/Neustartlücken, Identitätsfreiheit, Nichtüberschreiben und Host-Syntax bestanden. Zweiminütiger Zielhost-Probelauf und eigentliche 24-h-Messung noch offen. Keine Änderung von Polling, Netzwerk oder Host-/Kernelsettings.
+- Abschlussprüfung: alle 240 Offline-Tests, vollständiger Linter über 133 öffentliche Dateien, Compose-Parität mit Overrides und Diff-Prüfung bestanden. Keine Aufzeichnung auf dem Zielhost durch Codex gestartet.
+
+## 2026-10-12 – Ressourcenrecorder auf Zielhost kurz geprüft
+
+- Andreas liefert drei Samples von 20:56:16 bis 20:58:16 Europe/Berlin: CPU 4,328 % beziehungsweise 3,686 % eines Kerns, erste Rate erwartungsgemäß null. RSS/Höchststandsumme konstant 55.672.832 Bytes, rund 53,1 MiB; beide erwarteten Prozesse gelesen, drei Threads, healthy, keine Restart-Count-Erhöhung oder Segmentwechsel.
+- Zweiminütiger Probelauf für CPU/Prozessspeicher erfolgreich. cgroup-Speicher weiterhin nicht verfügbar; fehlenden Wert nicht als null Bytes interpretieren. Netzwerkzähler betreffen zwei physische Host-Interfaces, nicht Bridge-Verkehr. 24-h-Aufzeichnung als nächster Schritt, noch nicht gestartet/bestätigt.
+
+## 2026-10-12 – Fahrzeugstatuscode in die Basisgruppe übernommen
+
+- Auftrag: lokalen kleinen Gruppenwechsel jetzt umsetzen, Deployment nach der laufenden 24-h-Ressourcenmessung bündeln. Rohcode aus der Advanced-Filtermenge entfernt und unabhängig davon dekodiert. Topic, Integerwerte, Read-only-/Retained-Metadaten und gemeinsame Restlaufzeit mit Fahrzeugstatus-Text erhalten. Firmware bleibt Advanced.
+- Bestehende Filter-/Discovery-/Stateprüfungen angepasst; API-Read-/Restlaufzeitfälle nun mit deaktivierten Advanced-/Diagnostics-Gruppen. Ohne Pflicht-Leistungsmessung erzeugt der Statuscode kein ready; API ohne Basiseigentum erzeugt kein konkurrierendes Code-Topic. Keine neuen Abfragen, Setter, ENV-Optionen, Pollintervalle oder Identitäts-/Unitregeln.
+- Produktions-/Discovery-Abnahme und Deployment erst nach Ressourcenmessung. Keine Geräte-/Brokeraktion oder Veröffentlichung.
+- Validierung: alle 240 Offline-Tests, vollständiger Linter über 133 Dateien, Compose-Parität einschließlich Overrides und Diff-Prüfung bestanden.

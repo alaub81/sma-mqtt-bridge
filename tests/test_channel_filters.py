@@ -10,7 +10,7 @@ from sma_mqtt_bridge.adapters.home_manager_modbus import HomeManagerModbusReader
 from sma_mqtt_bridge.adapters.modbus import ModbusReader
 from sma_mqtt_bridge.config import ECharger, HomeManager, Inverter, load_config
 from sma_mqtt_bridge.errors import ConfigError, ProtocolError
-from sma_mqtt_bridge.homie import HomiePublisher
+from sma_mqtt_bridge.homie import HomiePublisher, discovery
 from sma_mqtt_bridge.model import Property, SourceState
 from tests.helpers import validated_profile, write_json
 from tests.test_home_manager_modbus import profile, words
@@ -49,10 +49,30 @@ class ChannelTests(unittest.TestCase):
         self.assertIn("measurements/power", keys)
         self.assertNotIn("control/power-setpoint-min-percent", keys)
         self.assertNotIn("measurements/event-code", keys)
-        self.assertNotIn("measurements/vehicle-status-code", keys)
+        self.assertIn("measurements/vehicle-status-code", keys)
+        self.assertNotIn("parameters/nameplate-pkgrev", keys)
+        prop = next(p for p in reader.properties if p.key == "measurements/vehicle-status-code")
+        self.assertEqual(prop.datatype, "integer")
+        self.assertFalse(prop.settable)
+        self.assertFalse(prop.required_for_ready)
         values = base_values({"Measurement.Operation.EVeh.ChaStt": "200113"}, advanced=False)
         self.assertEqual(values["measurements/vehicle-status"], "Lädt")
-        self.assertNotIn("measurements/vehicle-status-code", values)
+        self.assertEqual(values["measurements/vehicle-status-code"], 200113)
+        self.assertNotIn("parameters/nameplate-pkgrev", values)
+        metadata = discovery("homie", "fixture", reader.properties)
+        topic = "homie/fixture/measurements/vehiclestatuscode"
+        self.assertEqual(metadata[topic + "/$datatype"], "integer")
+        self.assertEqual(metadata[topic + "/$settable"], "false")
+        self.assertEqual(metadata[topic + "/$retained"], "true")
+        self.assertIn(
+            "vehiclestatuscode", metadata["homie/fixture/measurements/$properties"].split(",")
+        )
+        state = SourceState("semp", "fixture", reader.properties, 180)
+        state.update(values, now=10)
+        self.assertEqual(state.fresh_values(10)["measurements/vehicle-status-code"], "200113")
+        self.assertEqual(
+            state.status(10), "stale"
+        )  # Status code alone does not replace required power.
         xml = f'<Device2EM xmlns="{NS}"><Parameters><Parameter><channelId>Measurement.Operation.Evt.Msg</channelId><value>1</value></Parameter></Parameters></Device2EM>'
         values = semp_values(xml, 30, advanced=False, diagnostics=False)
         self.assertNotIn("measurements/event-code", values)

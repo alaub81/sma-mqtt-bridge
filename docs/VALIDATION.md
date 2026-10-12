@@ -10,7 +10,7 @@ automated test. Full production acceptance and openHAB migration remain open.
 The documentation/widget cleanup preserved the bridge runtime and device configuration.
 The subsequent API fix changes confirmation and unit checks; it does not activate
 adapters or command gates.
-The current offline suite contains **221 tests**. Repository lint covers all public
+The current offline suite contains **240 tests**. Repository lint covers all public
 tracked and non-ignored files, including generated widget parity. Compose parity
 checks both standalone files and deployment overrides. Final cleanup results are
 recorded in [todo.md](../todo.md#2026-10-11--dokumente-und-widgetquellen-aufgeräumt).
@@ -40,7 +40,7 @@ Additional lint rules remain a separate planned improvement.
 | Homie node metadata | Required attributes, stable untranslated types, retained publication and dynamic retirement offline tested; new $type present at the broker reported by user, 2026-10-11; general openHAB display already accepted | Dynamic retirement on the target installation remains offline tested |
 | Inverter baseline | Model-specific lists, local identities and MQTT publication for the original 41 channels, 2026-10-10; [register evidence](REGISTER_VALIDATION.md) | Aligned values/history/rules comparison; additional registers require separate verification |
 | Inverter energy/labels | Storage kWh values, log times and labels accepted by user, 2026-10-11; inverter rename/link migration reported complete | Remaining quantity metadata/history continuity |
-| Inverter sleep/wake | Evening behavior reported normal, 2026-10-11 | Morning autonomous wake-up; sleep versus outage |
+| Inverter sleep/wake | Evening behavior reported normal, 2026-10-11; autonomous morning wake-up with ready status and new measurements confirmed by user for 2026-10-12 | Deliberate sleep-versus-outage distinction and longer observations remain separate |
 | Home Manager Modbus | Direct read, 2026-10-10: all 16 core reads, three assignment entries; 3 of 48 delegated reads available, 45 unavailable | Target-host/openHAB value continuity; unavailable delegated fields remain unavailable |
 | Home Manager startup | Init-to-ready behavior accepted by user, 2026-10-11 | Broader target-host outage/recovery acceptance |
 | Home Manager UDP | Deterministic telegram tests; Mac attempt received no packets on a different network, 2026-10-10 | Actual Pi multicast/interface/VLAN and encryption applicability |
@@ -52,7 +52,8 @@ Additional lint rules remain a separate planned improvement.
 | Portal freshness | Two normal polling cycles accepted by user, 2026-10-11 | Longer target-host operation and source-failure behavior |
 | Maximum charging power | Verified WMaxIn/W mapping and bounds; offline setter tests; canonical integer MQTT payload and openHAB display reported accepted, 2026-10-11 | Physical limit/phase effect; [details](ECHARGER_POWER_LIMIT.md) |
 | eCharger total energy | Wh-to-kWh API conversion and unchanged Channel ID offline tested; openHAB unit, scaling and existing history reported accepted by user, 2026-10-11 | Accepted for the tested installation |
-| Controlled stop/start | Retained values, reconnection, healthy container and no replay accepted by user, 2026-10-11 | Abrupt failures, Last Will, broker/host restart and manifest details |
+| Controlled stop/start | Previous acceptance on 2026-10-11; v0.3.6 healthy before restart and all seven sources/five MQTT connections ready after Compose restart in supplied logs, 2026-10-12 | New-run openHAB updates/settings continuity; broker/host restart and manifest details |
+| Abrupt process failure / Last Will | User reports `$state=lost` on all five devices after SIGKILL; supplied log at 19:16:28 Europe/Berlin shows seven sources ready and five MQTT connections connected after explicit Compose up, 2026-10-12 | Post-start Docker health confirmed by user; autonomous crash restart, openHAB updates, settings/command replay and persistent-state contents not separately confirmed |
 | MQTT outage recovery | User-reported successful update check and supplied log, 2026-10-11: all five connections recovered autonomously in 11.0–28.5 seconds from their respective outage detection; errors/timeouts remained visible, no unhandled future exception in supplied excerpt | Longer outages, Last Will and broader production failure matrix |
 | Source status/health | Independent operational status, watchdogs, heartbeat/state protection offline tested; Home Manager startup accepted by user; supplied target-host startup summary shows all seven sources ready and all five MQTT connections connected; widget source availability with optional diagnostics disabled reported accepted by user, 2026-10-11 | Multi-hour faults; individual external alarm scenarios remain unspecified |
 | Garage widget | PV operation/staging and iOS layout accepted by user, 2026-10-11; canonical source/export parity checked locally | Existing acceptance remains; future behavior changes need a new check |
@@ -745,4 +746,169 @@ not closed: unresolved channel policies and installation acceptance remain open.
 Final validation passed: all 232 offline tests, complete lint over 130 project
 files, standalone Compose parity including overrides and `git diff --check`.
 Tests used synthetic loopback servers outside the sandbox; no installation
+endpoint was contacted.
+
+## Target-host restart and SIGKILL acceptance, 2026-10-12
+
+Andreas supplied CLI output identifying v0.3.6, with the target-host container
+healthy before the controlled Compose restart. Startup summaries at 19:14:09 and
+19:14:43 Europe/Berlin show all seven configured read sources ready and all five
+MQTT connections connected. Following the requested SIGKILL procedure, Andreas
+reported `$state=lost` visible for every Homie device. After explicit
+`docker compose up -d sma-mqtt-bridge`, the supplied 19:16:28 startup summary again
+shows all seven sources ready and all five connections connected.
+
+This is user-reported broker observation and supplied-log evidence, not direct
+Codex access. It accepts Last Will delivery for this abrupt termination and
+recovery after explicit start. It does not prove autonomous restart after crash,
+post-start Docker health, command non-replay, preserved state-file contents,
+openHAB/history continuity or host/broker restart. No private host/device/topic
+identifiers or raw telemetry are included. Codex performed no live action.
+
+## Target-host health and boot startup confirmation, 2026-10-12
+
+Andreas confirmed that the container is healthy after the tested restart and that
+a host reboot starts the bridge automatically. This accepts reported container
+health and boot startup for the installation. No post-reboot source/MQTT log or
+state-file comparison was supplied; complete source recovery, openHAB/history,
+settings continuity and manifest/uncertainty-journal restoration remain separate.
+Boot startup does not establish autonomous recovery from an arbitrary process crash.
+
+## User-reported Mosquitto stop/start recovery, 2026-10-12
+
+Andreas confirms an already completed Compose-service interruption of Mosquitto:
+the broker service was shut down, bridge behavior was observed, and after broker
+startup the bridge reconnected. This accepts user-reported reconnect following
+that service outage; no repeated test is required for this same scenario. The
+exact test date, duration, individual connection timings and alarm observations
+were not supplied. Longer outages, in-flight publish failures and state/history
+continuity remain separate; no complete failure matrix is inferred. Codex did not
+operate the broker or other installation services.
+
+## User-reported InfluxDB/Grafana restart continuity, 2026-10-12
+
+Following the targeted Grafana checklist for approximately 19:05–19:30
+Europe/Berlin, Andreas confirmed that all four checks passed: Home Manager
+import/export energy counters had no reset or unexplained jump; eCharger total
+energy retained its kWh scale and older history; Home Manager power received
+new samples after the 19:16 restart; derived daily values showed no abnormal
+restart-related jump. The installation uses InfluxDB/Grafana.
+
+This is user-reported acceptance for those selected series across the tested
+bridge restart window. No raw persistence samples or queries were supplied to
+Codex. It does not certify all migration rows, midnight/DST behavior, an openHAB
+restart, or Wallbox setting continuity, which remains separately unconfirmed.
+
+## User-reported Wallbox setting continuity, 2026-10-12
+
+Andreas confirmed the follow-up read-only widget comparison: charging mode,
+charging release and maximum charging power match their pre-restart settings;
+plan energy/end time were included conditionally if a plan existed. Plan presence
+was not separately stated, so no unconditional plan-continuity claim is made.
+Together with the preceding Grafana checks, this completes the selected
+openHAB/history/settings continuity checklist for the tested bridge restart.
+This is user-reported display/readback evidence, not command-traffic capture or
+a complete audit of every setting, rule, persistence series or migration row.
+
+## User-reported inverter morning wake-up, 2026-10-12
+
+Andreas confirmed that the proposed morning check worked on 2026-10-12:
+the inverters woke autonomously, returned ready and supplied new measurements
+after the night. This complements the previously reported normal evening
+behavior. Exact times, per-device logs and aligned readings were not supplied;
+this is user-reported acceptance of the observed overnight cycle, not a controlled
+network-outage test or evidence for every future weather/operating condition.
+The morning observation predates the evening v0.3.6 tests and does not establish
+a v0.3.6-specific overnight run.
+
+## Extended deterministic long-outage verification, 2026-10-12
+
+Three additional tests exercise actual supervisor/publisher loops with synthetic
+readers/clients and virtual time. The twelve-hour mixed-source sequence verifies
+partial/slow/time-out/disconnected reads, critical expiry and independent ready
+zero values from another supervisor, serialized reads, cleanup and recovery.
+Twenty-four real watchdog cancellations consume twelve simulated hours and leave
+no overlapping read. The broker sequence simulates ten hours of connection
+failures plus lost publication acknowledgements until twelve hours, then restores
+publication; connected clients close, no background task remains, retries/logs
+are bounded, and topic manifest/retirement and an unchanged journal are checked.
+See [scope and limits](OPERATIONAL_ACCEPTANCE.md#extended-deterministic-fault-sequences-2026-10-12).
+
+No runtime behavior or configuration changed. No installation endpoint was
+contacted. These tests do not certify actual memory/CPU/network soak, TLS,
+external alarm delivery or the complete production failure matrix.
+
+Final checks passed: all 235 offline tests in approximately 7.3 seconds, complete
+lint over 131 files, standalone Compose parity including overrides, and
+`git diff --check`. Loopback transport fixtures required the permitted execution
+outside the sandbox; the three new fault tests use no sockets.
+
+## User-supplied resource baseline and effective limits, 2026-10-12
+
+Andreas supplied one Docker stats snapshot: CPU 0.73%, three tasks, and zero
+reported memory usage/limit and network I/O. The zeros are unavailable/unverified
+accounting, not evidence of zero resource consumption; no optimization is justified
+by this single sample. Memory-controller availability and actual network mode
+need read-only host checks before selecting a collection method.
+
+The allowlisted operational report shows all seven sources: inverter minimum
+poll intervals 3/5/3 s, Home Manager 3 s, API 60 s, SEMP 30 s, portal 900 s.
+Portal freshness is 1,800 s; API/SEMP 180 s, inverters 60 s and Home Manager 30 s
+with individual property overrides. Read-cycle limit 120 s, retry 1–60 s,
+health heartbeat 10 s / expiry 60 s and MQTT timeout/keepalive 10/60 s.
+This confirms reported effective configuration, not measured request rates or
+manufacturer approval for those intervals. No runtime or host setting changed.
+
+## Linux host resource probe and recorder preparation, 2026-10-12
+
+Andreas supplied cgroup v2 with systemd and host networking. The Python process
+reported RSS/HWM 53,776 KiB (52.5 MiB), two threads; docker-init reported 592 KiB
+and one thread. This is one resident-memory observation with identical high-water
+mark, not evidence of a stable long-term baseline. The supplied `/proc/cgroups`
+listing is not authoritative for controller availability on cgroup v2; inspect
+actual sysfs memory metrics. Docker's zero memory remains unexplained.
+
+A bounded external [host recorder](OPERATIONAL_ACCEPTANCE.md#bounded-linux-host-resource-recording)
+is prepared with cgroup CPU, optional memory, process RSS and contextual host
+network counters, reset-aware sampling and exclusive output creation. Five
+synthetic tests cover CPU counter discontinuities, missing/partial process reads,
+missing/root-cgroup accounting, bounded collection with restart gaps and identity
+redaction, exclusive output, and Python 3.9-compatible host syntax. The bridge
+image/runtime and existing polling configuration are unchanged. Recorder deployment
+and the actual two-minute/24-hour host recording remain pending.
+
+Recorder preparation validation passed: all 240 offline tests, full lint over
+133 public files, standalone Compose parity with overrides and `git diff --check`.
+This is local fixture evidence only; no target-host recording was started.
+
+## User-supplied two-minute host recorder check, 2026-10-12
+
+Three supplied samples span 20:56:16–20:58:16 Europe/Berlin. Container cgroup
+CPU deltas are 4.328% and 3.686% of one core; the initial CPU rate is null as
+expected. Summed process RSS/peak RSS is unchanged at 55,672,832 bytes
+(53.1 MiB), with both expected processes read, three total threads, healthy
+status, restartCount zero and one continuity segment. Cgroup memory is null,
+so process RSS is the available memory trend; controller availability is not
+otherwise established. Two physical host-interface counters are recorded,
+without attributing that traffic to the bridge. The recorder short check is
+accepted for these metrics; a 24-hour resource soak remains pending.
+
+## Basic eCharger vehicle-status code, 2026-10-12
+
+`measurements/vehicle-status-code` (wire ID `vehiclestatuscode`) now belongs to
+the basic group. API baseline ownership and SEMP supply the same integer property
+with Advanced/Diagnostics disabled. Firmware remains Advanced, other channel
+filters and command gates are unchanged. No new request, unit conversion,
+readiness requirement or timestamp rule was introduced. The text and code aliases
+retain the selected observation's remaining lifetime.
+
+Existing filter/discovery/state tests now check basic availability, integer
+non-settable retained metadata, unchanged wire ID, payload and readiness behavior.
+API freshness/ownership cases run with optional groups disabled and verify the
+code expires with the text alias and is omitted when SEMP owns baseline values.
+The change is local only; deployment and production discovery remain pending
+until the resource baseline recording is complete.
+
+Validation passed: all 240 offline tests, full lint over 133 files, standalone
+Compose parity including overrides and `git diff --check`. No installation
 endpoint was contacted.

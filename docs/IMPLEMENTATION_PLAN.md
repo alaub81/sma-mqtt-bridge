@@ -36,8 +36,11 @@ command journals.
 
 - Verify inverter morning wake-up after the reported successful evening behavior;
   distinguish sleep from a connection or data-quality failure.
-- Add deterministic, multi-hour fault simulation for slow/partial responses,
-  device outages and MQTT disconnect/restart. Check recovery, memory and connections.
+- Accept remaining target-host fault scenarios and measure real resource behavior.
+  Extended virtual twelve-hour supervisor/MQTT sequences and repeated actual
+  watchdog cancellations are implemented; see
+  [operational evidence](OPERATIONAL_ACCEPTANCE.md#extended-deterministic-fault-sequences-2026-10-12).
+  They verify recovery/session cleanup, not a real memory/network soak.
 - Test abrupt process/host failures, Last Will, broker restart, TLS trust and topic
   retirement. Controlled stop/start acceptance does not cover these failures.
 - External monitoring and alarm setup was reported complete by the user on
