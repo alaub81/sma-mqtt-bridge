@@ -44,7 +44,7 @@ firmware behavior or live value. The known Storage kWh override remains explicit
 ## Coverage
 
 | Device | Source rows | Repeated address rows | No numeric SMA address | Distinct SMA addresses | RO | RW | WO | Mapped addresses | Missing readable addresses |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| --- | --: | --: | --: | --: | --: | --: | --: | --: | --: |
 | inverter1 / STP8.0-3AV-40 | 533 | 6 | 0 | 527 | 186 | 322 | 19 | 17 | 491 |
 | inverter2 / SBS3.7-10 | 588 | 12 | 126 | 450 | 230 | 194 | 26 | 14 | 410 |
 | inverter3 / SB4.0-1AV-41 | 396 | 6 | 0 | 390 | 178 | 200 | 12 | 18 | 360 |

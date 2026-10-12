@@ -511,3 +511,11 @@ register list proves absence of any hardware Modbus capability.
 Validation passed: all 214 offline tests, complete lint over 120 files, separate
 Compose parity including overrides, and `git diff --check`. No new device I/O was
 used for this expansion or the Home Manager/eCharger coverage clarification.
+
+## Markdown table lint correction, 2026-10-12
+
+Four separator rows in the three Modbus evidence documents now use compact
+three-character right-alignment delimiters (`--:`). Table contents and alignment
+are unchanged. Complete lint passed over 120 files, including all 27 Markdown
+files; all 214 offline tests passed. The initial sandbox run blocked four synthetic
+loopback server binds; the approved rerun passed. `git diff --check` passed.

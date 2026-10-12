@@ -16,7 +16,7 @@ eCharger API/SEMP or MQTT acceptance test.
 ## Complete result
 
 | Device | Read attempts | Non-NaN samples | Of these valid numeric zero | SMA NaN | Undecodable strings | WO skipped | Access control skipped |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| --- | --: | --: | --: | --: | --: | --: | --: |
 | STP8.0-3AV-40 / inverter1 | 507 | 457 | 50 | 50 | 0 | 19 | 1 |
 | SBS3.7-10 / inverter2 | 423 | 218 | 26 | 203 | 2 | 26 | 1 |
 | SB4.0-1AV-41 / inverter3 | 377 | 197 | 29 | 180 | 0 | 12 | 1 |

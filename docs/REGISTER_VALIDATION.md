@@ -95,7 +95,7 @@ L3 assignment. The existing L1 properties and every original poller remain uncha
 The matching Sunny Boy V16 list supplies the following RO mappings:
 
 | Compact property under measurements | Register | Raw type / format | Scale | Unit | Poll interval |
-| --- | ---: | --- | ---: | --- | --- |
+| --- | --: | --- | --: | --- | --- |
 | powerl2 | 30779 | S32 / FIX0 | 1 | W | 3 s |
 | powerl3 | 30781 | S32 / FIX0 | 1 | W | 3 s |
 | voltg2 | 30785 | U32 / FIX2 | 0.01 | V | 3 s |
@@ -129,7 +129,7 @@ properties implement this selection. Existing properties and pollers, including
 the earlier Sunny Boy L2/L3 extension, remain unchanged.
 
 | Device | Compact measurement ID | Register | Raw type / format | Scale | Unit | Default interval |
-| --- | --- | ---: | --- | ---: | --- | --- |
+| --- | --- | --: | --- | --: | --- | --- |
 | Tripower, Storage | type | 30053 | U32 / TAGLIST | 1 | — | Identity reads / 60 s |
 | Tripower, Storage | maxpower | 30231 | U32 / FIX0 | 1 | W | Existing status block / 60 s |
 | Tripower, Storage | setmaxpower | 30233 | U32 / FIX0 | 1 | W | Existing status block / 60 s |

@@ -346,3 +346,8 @@ Aktuellen Abnahmestand ausschließlich in VALIDATION.md pflegen; CONTEXT.md enth
 - Andreas beauftragt Typ/Leistungsgrenzen für inverter1/2 sowie Frequenz/verfügbare Phasenströme und Storage-AC-/Batteriestrom/-spannung. 16 weitere dateibasierte RO-Mappings umgesetzt; vorhandene Definitionen/Poller unverändert. Typ/Grenzen wie Sunny Boy Advanced, Messwerte Basic-Default. Keine neue ENV, Adapterlogik, Setter oder Geräteschreibaktion.
 - Quellen-/Scanabgleich aller neuen Adressen erfolgreich; signierte Werte erhalten, Null gültig, NaN verworfen. Gezielte 34 Profil-/Erweiterungs-/Phasen-/Übersetzungs-/Home-Manager-Tests sowie alle 214 Offline-Tests bestanden. Vollständiger Linter über 120 Dateien, separate Compose-Parität und git diff --check bestanden.
 - Home-Manager-NSD-Profil/Testbestand geprüft: 16 feste Eigenschaften plus 245 Zuordnungsslots und 16 delegierte Templates decken bekannte lesbare Dokumenteinträge ab; vollständiger Live-Verfügbarkeitscheck bleibt offen. Wallbox nutzt API/SEMP/Portal; keine passende vollständige Modbus-Liste in den vorhandenen Quellen. Separate aktive Aufgaben ergänzt, keine zusätzlichen Geräteabfragen dafür vorgenommen.
+
+## 2026-10-12 – Markdown-Tabellenlint korrigiert
+
+- Gemeldete MD060-Fehler in drei Modbus-Dokumenten behoben: vier Tabellen-Trennzeilen auf den kompakten Stil angepasst (`--:` statt `---:`). Rechtsausrichtung und Tabelleninhalte erhalten.
+- Vollständiger Linter über 120 Dateien und alle 214 Offline-Tests bestanden. Erster Testlauf durch vier sandboxseitig gesperrte Loopback-Bindungen fehlgeschlagen; freigegebener Wiederholungslauf erfolgreich. `git diff --check` ohne Befund.
