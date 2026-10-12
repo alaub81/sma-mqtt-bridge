@@ -48,7 +48,7 @@ no Modbus capability; this audit intentionally covers the existing API/SEMP read
 ## Channel coverage
 
 | Source inventory | Offered | Directly mapped for current ownership | Implemented fallback mapping | Only another transport has the mapping | Identity-only use | Intentionally excluded | Unmapped |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| --- | --: | --: | --: | --: | --: | --: | --: |
 | API parameters | 85 | 12 | 1 | 1 | 2 | 7 | 62 |
 | API live measurement/setpoint entries | 44 | 7 | 4 | 7 | 0 | 0 | 26 |
 | SEMP custom Parameters entries | 25 | 16 | 8 | 0 | 0 | 1 | 0 |
@@ -84,7 +84,7 @@ Twelve of the 26 unmapped API live entries had a present numeric value and a
 currently accepted timestamp in this single snapshot:
 
 | Source channel family | Entries | Candidate use | Remaining review |
-| --- | ---: | --- | --- |
+| --- | --: | --- | --- |
 | Measurement.GridMs.W.phsA/B/C | 3 | Active charging-station power per phase | Confirm engineering units and sign meaning before new W topics. |
 | Measurement.GridMs.TotVA and VA.phsA/B/C | 4 | Total and phase apparent power | Confirm VA units; select useful total/phase coverage rather than duplicates. |
 | Measurement.GridMs.TotVAr and VAr.phsA/B/C | 4 | Total and phase reactive power | Confirm VAr units and sign convention; usefulness/group decision remains open. |

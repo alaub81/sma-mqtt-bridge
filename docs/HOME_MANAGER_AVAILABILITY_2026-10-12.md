@@ -17,7 +17,7 @@ No MQTT connection, profile/group change or openHAB change was made.
 ## Results
 
 | Section | Checked | Value | Valid zero | SMA NaN | Rejected/error |
-| --- | ---: | ---: | ---: | ---: | ---: |
+| --- | --: | --: | --: | --: | --: |
 | Unit 1/2 fixed properties | 16 | 13 | 3 | 0 | 0 |
 | Delegated parameter properties | 48 | 3 | 0 | 45 | 0 |
 

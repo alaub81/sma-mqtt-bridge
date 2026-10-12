@@ -438,3 +438,8 @@ Topic-Suffixe werden unter `homie/<konfigurierte Homie-ID>/` veröffentlicht. Di
 - [ ] T23 – `measurements/powerl1` – Leistung Phase L1 (W)
 - [ ] T24 – `measurements/powerl2` – Leistung Phase L2 (W)
 - [ ] T25 – `measurements/powerl3` – Leistung Phase L3 (W)
+
+## 2026-10-12 – Markdown-CI-Korrektur
+
+- MD060-Fehler in den Tabellen des eCharger-Audits und Home-Manager-Verfügbarkeitsberichts behoben: rechtsbündige Trennzellen auf den konfigurierten kompakten Stil gekürzt. Inhalte unverändert.
+- Validierung: vollständiger Linter über 126 Dateien einschließlich Markdown und alle 217 Offline-Tests bestanden. Vier lokale MQTT-Testserver benötigten einen Lauf außerhalb der Sandbox; keine Live-Geräteverbindung. `git diff --check` bestanden.
