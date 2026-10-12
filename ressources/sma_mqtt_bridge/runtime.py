@@ -19,6 +19,7 @@ from .health import atomic_json, heartbeat
 from .homie import HomiePublisher, backoff, wait_stop
 from .model import Property, SourceState
 from .portal_commands import CommandRouter, PortalCommands
+from .portal_refresh import PortalRefresh
 from .storage import journal_status, state_lock
 from .timestamp_diagnostics import TimestampDiagnostics
 
@@ -165,7 +166,7 @@ async def reset_reader(reader, config):
             await reader.close()
 
 
-async def supervise(state, reader, interval, config, stop, refresh_portal=False):
+async def supervise(state, reader, interval, config, stop, refresh_portal=False, refresh=None):
     attempt = 0
     state.monitor = state.monitor or Availability(
         "Source " + state.id, config.runtime.failure_log_interval_seconds
@@ -174,10 +175,14 @@ async def supervise(state, reader, interval, config, stop, refresh_portal=False)
     try:
         if interval == 0 and not refresh_portal:
             monitor.progress("idle")
-            await stop.wait()
-            return
+            if refresh is None:
+                await stop.wait()
+                return
+            await refresh.wait(stop)
         while not stop.is_set():
             try:
+                if refresh is not None:
+                    refresh.begin()
                 monitor.progress("reading")
                 # A whole-cycle deadline also catches locks or non-network waits.
                 async with asyncio.timeout(config.runtime.read_cycle_timeout_seconds) as deadline:
@@ -190,6 +195,8 @@ async def supervise(state, reader, interval, config, stop, refresh_portal=False)
                     keys = {p.key for p in state.properties}
                     state.values = {k: v for k, v in state.values.items() if k in keys}
                 state.update(values)
+                if refresh is not None:
+                    refresh.finish("completed")
                 if values and not state.fresh_values():
                     state.initialization_deadline = None
                     state.error = True
@@ -200,13 +207,21 @@ async def supervise(state, reader, interval, config, stop, refresh_portal=False)
                 attempt = 0
                 if interval == 0:
                     monitor.progress("idle")
-                    await stop.wait()
+                    if refresh is None:
+                        await stop.wait()
+                    else:
+                        await refresh.wait(stop)
                 elif interval is not None:
                     monitor.progress("waiting")
-                    await wait_stop(
-                        stop, reader.delay() if isinstance(reader, ModbusReader) else interval
-                    )
+                    delay = reader.delay() if isinstance(reader, ModbusReader) else interval
+                    if refresh is None:
+                        await wait_stop(stop, delay)
+                    else:
+                        await refresh.wait(stop, delay)
             except AuthenticationError:
+                if refresh is not None:
+                    refresh.blocked = True
+                    refresh.finish("auth-blocked")
                 state.initialization_deadline = None
                 state.error = True
                 monitor.failure(reason="AuthenticationError")
@@ -218,6 +233,8 @@ async def supervise(state, reader, interval, config, stop, refresh_portal=False)
                 )
                 await stop.wait()  # No credential retry storm.
             except Exception as error:
+                if refresh is not None:
+                    refresh.finish("failed")
                 state.initialization_deadline = None
                 # Uncontrolled third-party exception text may contain authenticated data.
                 state.error = True
@@ -295,6 +312,18 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
     states = [s for s, _, _ in readers]
     controller = None
     local_controller, portal_controller = None, None
+    portal_refresh = None
+    if config.portal.enabled:
+        refresh_state = SourceState(
+            "portal-refresh",
+            config.echarger.homie_id,
+            (Property("portal", "refresh", "Refresh portal", "string", settable=True),),
+            config.portal.stale_seconds,
+            diagnostics_enabled=False,
+            contributes_availability=False,
+        )
+        states.append(refresh_state)
+        portal_refresh = PortalRefresh(refresh_state)
     if config.commands.enabled and config.echarger.commands_enabled:
         api_state = next(s for s in states if s.id == "api")
         api_state.properties = tuple(
@@ -332,8 +361,8 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
         states.append(result_state)
         portal_reader = next(r for s, r, _ in readers if s.id == "portal")
         portal_controller = PortalCommands(config, portal_state, result_state, reader=portal_reader)
-    if local_controller is not None or portal_controller is not None:
-        controller = CommandRouter(local_controller, portal_controller)
+    if local_controller is not None or portal_controller is not None or portal_refresh is not None:
+        controller = CommandRouter(local_controller, portal_controller, portal_refresh)
     publisher = publisher_factory(config, states)
     if controller is not None:
         publisher.command_controller = controller
@@ -346,7 +375,13 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
     tasks = [
         asyncio.create_task(
             supervise(
-                state, reader, interval, config, stop, refresh_portal and state.id == "portal"
+                state,
+                reader,
+                interval,
+                config,
+                stop,
+                refresh_portal and state.id == "portal",
+                portal_refresh if state.id == "portal" else None,
             )
         )
         for state, reader, interval in readers

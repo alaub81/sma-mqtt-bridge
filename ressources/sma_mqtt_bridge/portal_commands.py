@@ -126,20 +126,25 @@ class PortalCommands(DurableCommands):
 class CommandRouter:
     """Route the independently gated sources through the single MQTT consumer."""
 
-    def __init__(self, local=None, portal=None):
-        self.local, self.portal = local, portal
+    def __init__(self, local=None, portal=None, refresh=None):
+        self.local, self.portal, self.refresh = local, portal, refresh
+
+    def target(self, key):
+        if key == "refresh":
+            return self.refresh
+        return self.portal if key == "pv-minimum" else self.local
 
     def reject(self, key, status):
-        controller = self.portal if key == "pv-minimum" else self.local
+        controller = self.target(key)
         if controller is not None:
             controller.result(status)
 
     async def handle(self, key, data):
-        controller = self.portal if key == "pv-minimum" else self.local
+        controller = self.target(key)
         if controller is not None:
             await controller.handle(key, data)
 
     async def close(self):
-        for controller in (self.local, self.portal):
+        for controller in (self.local, self.portal, self.refresh):
             if controller is not None:
                 await controller.close()
