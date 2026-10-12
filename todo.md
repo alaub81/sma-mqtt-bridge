@@ -4,6 +4,39 @@ Die aktuelle Abnahme steht in [docs/VALIDATION.md](docs/VALIDATION.md), die Reih
 
 ## Aktive Aufgaben
 
+- [ ] Auf Andreas’ Wunsch vom 12.10.2026 die Home-Manager-Anlagenzeit (`measurements/planttime`) in openHAB als Datum/Uhrzeit darstellen. Unix-Sekunden in der Bridge unverändert erhalten; für reine Anzeige eine State-Description-Transformation verwenden, bei Zeitvergleichen/Regeln ein DateTime-Item mit geeigneter Umwandlung vorsehen. Zeitzone `Europe/Berlin` einschließlich Sommerzeit in openHAB behandeln; eine einfache Datumsformatierung eines Number-Items allein genügt nicht. Vor Umsetzung offizielle openHAB-Dokumentation konsultieren und bestehende Links/Item-Namen berücksichtigen.
+
+- [ ] Auf Andreas’ Wunsch vom 12.10.2026 die drei Wallbox-SEMP-Steuerwerte `control/activechargingcount` (`Setpoint.PlantControl.PCC.ChrgActCnt`), `control/powersetpointmaxpercent` (`Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMaxNom`) und `control/powersetpointminpercent` (`Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMinNom`) genauer erklären und belegen. Für ChrgActCnt Zählumfang und Vorgabe gegenüber tatsächlichem Zustand klären; für WSptMaxNom/WSptMinNom Einheit, Normierungsbasis, Vorzeichenkonvention und Wirksamkeit klären. Verhältnis zur Home-Manager-Laderegelung und zur separaten maximalen Ladeleistung untersuchen; offizielle Dokumentation/Metadaten und lesende Beobachtungen bei natürlichen Ladezustandswechseln verwenden. Bisherige Rohwerte 0/0/-100 reichen nicht als Semantikbeleg; keine PV-/Netzanteile ableiten und keine Setter oder Live-Schreibversuche daraus freigeben.
+
+- [x] Typ-/Leistungsgrenzen für inverter1/2 am 12.10.2026 dokumentiert, im Scan lesbar und lokal als Profil-Mappings ergänzt: `measurements/type`, `maxpower`, `setmaxpower`; Advanced-Konvention wie inverter3, Leistungsgrenzen read-only. Produktionsveröffentlichung separat offen.
+- [x] Dokumentarischer Vollständigkeitsabgleich der drei Wechselrichter am 12.10.2026 durchgeführt: [Bericht](docs/MODBUS_TOPIC_AUDIT.md) und vollständige CSV-Registerliste. 491/410/360 lesbare Geräte/Register-Paare ohne Profil-Topic; Mehrfachdarstellungen und bedingte Unterstützung ausdrücklich getrennt. Vorhandene Mapping-Adressen, Typen, Längen und FIX-/TEMP-Skalierungen geprüft; keine neue Live-Abnahme.
+- [x] Produktionsabhängiger Modbus-Verfügbarkeitstest am 12.10.2026 um 08:25–08:31 Europe/Berlin abgeschlossen: 1307 Leseabfragen, 872 Werte einschließlich 105 gültiger Nullwerte, 433 SMA-NaN, zwei nicht dekodierbare Strings. Keine Ablehnungen/Verbindungsfehler. [Ergebnis und Kandidaten](docs/MODBUS_AVAILABILITY_2026-10-12.md); Automation pausiert.
+- [ ] Mit Andreas eine sinnvolle kleine Smart-Home-Auswahl aus den tatsächlich verfügbaren Modbus-Kandidaten treffen; Einheiten/Enums, alternative Zähler und Basic/Advanced/Diagnostics anschließend festlegen. 433 NaN und zwei nicht dekodierbare Strings aus der ersten Kandidatenliste ausgeschlossen, ursprüngliche Evidenz samt Zustandsbezug erhalten. Sunny Boy explizit für L3 abbilden: 40183 = 329, L3-Leistung/-Spannung/-Strom gültig; vorhandene L1-Topics nicht stillschweigend umdeuten. DC-Eingang B lesbar mit 0, tatsächliche Belegung offen. Schreibbefehle weiterhin separat prüfen.
+
+### Modbus-Umsetzung aus dem Produktionsscan
+
+Die vollständigen Einzelbefunde stehen in [der Ergebnismatrix](docs/modbus-availability-2026-10-12.csv), die fachliche Auswahlgrundlage im [Scanbericht](docs/MODBUS_AVAILABILITY_2026-10-12.md). Die folgenden Pakete sind eine vorgeschlagene Reihenfolge, keine bereits beschlossene Erweiterung aller Topics oder Kanalgruppen.
+
+- [x] M01 – Sunny-Boy-Phasenmapping am 12.10.2026 lokal erweitert: auf Andreas’ ausdrücklichen Wunsch L2 und L3 jeweils mit Leistung, Spannung und Strom. Neue Topics `measurements/powerl2`, `powerl3`, `voltg2`, `voltg3`, `currentl2`, `currentl3`; vorhandene L1-Definitionen unverändert. Keine feste L3-Modellannahme, kein automatischer Phasenwechsel. Dokumentierte L2-NaN werden nicht als Werte veröffentlicht; Basiskanal-Default wie vorhandene Phasenwerte, späterer gemeinsamer Gruppenreview bleibt offen.
+- [ ] M01-Abnahme – Nach Image-Neubau/Container-Neustart sechs neue L2/L3-Discovery-Kanäle und echte L3-Werte prüfen; gegebenenfalls verwendete Host-Profilkopie ausdrücklich ergänzen. Neue openHAB-Links/Items phasenrichtig anlegen, L1-IDs/Historie erhalten. Der bisherige Scan belegt Geräte-Lesbarkeit, nicht Veröffentlichung durch den erweiterten Laufzeitbetrieb.
+- [x] M02 – Typ-/Leistungsgrenzen für inverter1/2 umgesetzt: Rohmodellcode 30053, RO-Leistungsgrenzen 30231/30233, gleiche IDs/Labels/Advanced-Konvention wie Sunny Boy. Bestehende Identity-/Statusblöcke verwendet; keine Setter.
+- [x] M03 – Kleine AC-Auswahl umgesetzt: Netzfrequenz aller drei Wechselrichter, Ströme Tripower L1/L2/L3 und Storage L1; Sunny Boy L2/L3 bereits in M01 ergänzt. Neue Messwerte mit bestehendem Basic-Default, fünf Sekunden für neue kleine Pollblöcke. Zusätzliche Tripower-/Storage-Phasenspannung/-leistung war nicht Teil dieses Auftrags und bleibt eine mögliche spätere Auswahl.
+- [x] M04 – Storage signed AC-Gesamtleistung, Batteriestrom und Batteriespannung 30775/30843/30851 ergänzt. Vorzeichen unverändert erhalten, keine Ladezustandsableitung aus dem Vorzeichen. Bestehende Batteriemessungen und langsame Poller unverändert.
+- [ ] M05 – Batterie-Lade-/Entladeenergie aus 31397/31401 separat prüfen: beide U64-Zähler am Storage lesbar, Quelle Wh. Gegen bestehende Gerätezähler/Verlauf auf Einheit, Skalierung und Zählumfang abgleichen; kWh-Sonderfall der alten 30531/30537 nicht übertragen. Erst nach dieser Prüfung neue Energie-Topics hinzufügen.
+- [ ] M06 – Scheinleistung und Leistungsfaktor nach Nutzen auswählen: 30813 sowie Varianten 30949/31221 verfügbar. Unterschiedliche PF-Konventionen klären und nur eine passende Darstellung wählen. Blindleistung modell-/phasengenau prüfen; Tripower 31497 verfügbar, Storage/Sunny Boy 30805 NaN, keine unbelegte Ersatzzuordnung.
+- [ ] M07 – Alternative Ertragszähler 30513/30517 und Betriebs-/Einspeisedauern 30521/30525 bewerten. Units/Genauigkeit/32-/64-Bit-Alternativen prüfen; bestehende ganze-kWh-Topics und Historie erhalten. Nicht jede Darstellung als eigenen Standardkanal veröffentlichen.
+- [ ] M08 – Derating und Ereignisinformationen für spätere Advanced-/Diagnostics-Auswahl prüfen: 30219 liefert Werte, 30247 derzeit NaN. Enums belegen; ereignisabhängige NaN nicht als dauerhaft ununterstützt behaupten. Keine Fehler absichtlich erzeugen.
+- [ ] M09 – Sunny-Boy-DC-Eingang B nur bei Nutzen ergänzen: 30957/30959/30961 lesbar mit gültiger 0; tatsächliche Stringbelegung mit Andreas klären. Keine belegte zweite PV-Quelle behaupten und gültige 0 nicht als NaN ausschließen.
+- [ ] M10 – Ausschlussliste bewahren: 433 NaN und zwei nicht dekodierbare Storage-BMS-Strings bleiben aus der ersten Kandidatenliste ausgeschlossen. Bei Bedarf später gezielt unter natürlichen Lade-/Entlade-/Ereigniszuständen prüfen; kein erneuter Vollscan automatisch geplant. Identitäts-/Netzwerkwerte, Konfigurationsbeobachtungen und Dopplungen gemeinsam nach Nutzen behandeln; aus RO/RW/WO keine automatische Schreibfreigabe ableiten.
+
+- [ ] M02–M04-Abnahme – Neue Profilkanäle nach Image-Neubau/Neustart am Broker und mit passenden openHAB-Units prüfen. Gegebenenfalls ausgewählte Host-Profilkopien ausdrücklich erweitern. Neue Eigenschaften sind offline getestet; frühe Registerantworten allein bestätigen keine Veröffentlichung. Gemeinsamer späterer Gruppenreview bleibt offen.
+- [ ] Home Manager – Dokumentarisch vollständige NSD-Read-Mappings sind bereits vorhanden und inventory-getestet. Separaten lesenden Verfügbarkeitscheck sämtlicher aktiver Unit-1/2-Register, Zuordnungstabelle und delegierter Parameter planen; Grundstatus ready und der Dreier-Inverterscan belegen nicht alle Advanced-Kanäle. Disabled-/Netzwerk-/Grid-Guard-Grenzen respektieren, keine Anmeldeschreibaktion.
+- [ ] Wallbox – Vollständigkeit passend zu den tatsächlich verwendeten Schnittstellen API/SEMP prüfen: angebotene Metadaten-/Messkanäle gegen Topics/Settings/Units abgleichen, lokale und Portalquellen trennen; tatsächliche Werte in natürlichen Lade-/Ruhezuständen erfassen. Keine passende vollständige eCharger-Modbus-Liste vorhanden; keine erfundenen Registeradressen. Aktuelle Kataloge belegen keine pauschal vollständige Laufzeitabdeckung.
+
+### Weitere aktive Aufgaben
+
+- [ ] Wallbox `measurements/vehiclestatuscode` auf Andreas’ Wunsch vom 12.10.2026 aus ADVANCED in die Standard-/Basisgruppe übernehmen. Topic und Werte erhalten; Verfügbarkeit bei deaktivierten Advanced-Kanälen prüfen. Noch nicht implementiert.
+
 - [ ] Release-Dokumentation aktualisieren: Änderungen und Upgrade-Hinweise zusammenstellen; README vom Vorbereitungsstand auf die tatsächlich verfügbare GHCR-Veröffentlichung umstellen. Produktionsbetrieb mit veröffentlichtem Image und Beispiel-Compose laut Andreas bereits vorhanden; keine erneute Veröffentlichung dafür erforderlich.
 
 - [ ] Watchtower und Autoheal auf dem Zielhost einrichten: automatische Container-Updates und Neustarts bei Docker-unhealthy konfigurieren und prüfen. Persistente Zustandsdaten erhalten und Wiederanlauf ohne Befehlswiederholung sicherstellen.
@@ -239,3 +272,77 @@ Aktuellen Abnahmestand ausschließlich in VALIDATION.md pflegen; CONTEXT.md enth
 - Drei neue Tests: geheime Konfigurationswerte nicht ausgegeben; zwölf Stunden virtuelle Teilantworten mit unabhängiger Quelle, Ablauf kritischer Werte, retained Beobachtung und Erholung; 60 wiederholte Timeouts mit begrenzten Backoff-Abständen und serieller Wiederaufnahme. Keine echte mehrstündige Last-/Ressourcenprüfung daraus ableiten.
 - Ablauf und Default-Tabelle in docs/OPERATIONAL_ACCEPTANCE.md. Kein zusätzliches Logging, keine Grenzänderung, kein Live-Ausfall oder Gerätebefehl ausgeführt. Zielhost-Werte, Alarmabgleich und manuelle Geräteausfallprüfung bleiben offen.
 - Abschluss: alle 206 Offline-Tests mit lokalen synthetischen Loopback-Servern bestanden. Vollständiger Linter über 112 Dateien: alle übrigen Prüfkategorien bestanden, Ruff/Formatierung scheitern an bereits vorhandenen Änderungen in version.py und test_bootstrap.py; neue Dateien Ruff-/Format-konform. Kein pauschal grüner Gesamt-Linter behauptet.
+
+## 2026-10-12 – Fehlende Messwerte und Kanalgruppen geprüft
+
+- Andreas meldet weiterhin fehlende inverter3-Werte für Leistung L1 und Netzspannung L1 sowie Wallbox-Gerätezustand und Frequenz. Bestehende Evidenz: Register 30777/30783 lieferten beim ersten begrenzten Lesen SMA-NaN; Tagesvergleich und tatsächliche Firmware-Unterstützung bleiben offen. Wallbox-Frequenz fehlte im geprüften Live-Inventar; Gerätezustand wurde wegen alten Quellzeitstempels ausgefiltert. Kein neuer Live-Test durchgeführt.
+- Geklärt: Home-Manager-Anlagenzeit ist Register 30193 auf Unit 2, Unix-Zeit in UTC-Sekunden; keine Betriebsdauer.
+- Aktuelle Advanced-/Diagnostics-Filter anhand Profile, Adapter, Runtime und Publisher vollständig inventarisiert. Quellenstatus der Messadapter bleibt bei abgeschalteter Diagnose erhalten; zusätzliche Statuswerte der Befehlsquellen werden dagegen ausgefiltert. Interne Temperatur, Wallbox-Gerätezustand und Frequenz gehören aktuell zur Basisgruppe.
+- Offizielle Homie-4-Spezifikation und openHAB-Homie-Dokumentation konsultiert: kein standardisiertes Advanced-Property-Attribut für die openHAB-Anzeige. Projektfilter entfernen Discovery/Topics, statt das openHAB-Advanced-Kennzeichen zu setzen.
+- Offen: Gruppen gemeinsam bereinigen; doppelte Typ-/Seriennummern und Rohwerte prüfen, Anlagenzeit sinnvoll darstellen, Frequenz-Unterstützung und Zustandszeitstempel getrennt klären. Keine Runtime-, Profil-, Konfigurations- oder Geräteänderung; deshalb keine neuen Laufzeittests.
+
+## 2026-10-12 – Wallbox-Fahrzeugstatuscode und SEMP-Steuerwerte
+
+- Andreas fordert den Fahrzeugstatuscode als Standardkanal; als aktive Aufgabe aufgenommen, Runtime unverändert.
+- Drei SEMP-Steuerwerte geprüft: ChrgActCnt, WSptMaxNom und WSptMinNom liegen als Rohwerte vor. Referenzsnapshot zeigt 0, 0 und -100. Exakte Zählsemantik, Normierungsbasis und Vorzeichenkonvention bleiben unbestätigt; kein PV-/Netzanteil daraus ableiten. Der Adapter veröffentlicht diese Werte als Float ohne Einheit und ohne Setter. Offizielle Websuche nach den exakten Kanalnamen ohne Ergebnis.
+
+## 2026-10-12 – Wechselrichter-Registerabgleich vorgemerkt
+
+- Andreas beauftragt zunächst die Aufnahme zweier TODOs: Typ-/Leistungsregister für inverter1 und inverter2 modellgenau prüfen und bestätigte Entsprechungen nachziehen; außerdem alle drei Modbus-Dokumentationen systematisch gegen die aktuellen Topics/Profile abgleichen.
+- Entscheidung geklärt: `measurements/type` soll ausdrücklich erhalten bleiben. Die zuvor erwogene Bereinigung dieses Altkanals wird nicht verfolgt.
+- Nur Aufgaben und Entscheidung dokumentiert; keine Registerrecherche, Profil-/Runtimeänderung, Geräteabfrage oder Tests durchgeführt.
+
+## 2026-10-12 – SEMP-Steuersemantik als aktive Aufgabe
+
+- Andreas möchte ChrgActCnt, WSptMaxNom und WSptMinNom näher verstehen. Eigene aktive Prüfaufgabe mit Zählsemantik, Einheit, Bezugsleistung, Vorzeichen und tatsächlicher Wirksamkeit ergänzt.
+- Nur TODO ergänzt; keine neue Recherche, Geräteabfrage oder Runtimeänderung durchgeführt.
+
+## 2026-10-12 – Anlagenzeit in openHAB darstellen
+
+- Andreas beauftragt die TODO-Aufnahme: Unix-Sekunden der Anlagenzeit in der Bridge behalten und Datum/Uhrzeit einschließlich Europe/Berlin-/Sommerzeitdarstellung in openHAB umsetzen. Anzeige-Transformation und DateTime-Item je nach Verwendung unterscheiden.
+- Nur Aufgabe dokumentiert; keine Bridge- oder openHAB-Änderung durchgeführt.
+
+## 2026-10-12 – Vollständiger dokumentarischer Modbus-/Topic-Abgleich
+
+- Passende offizielle V13-/V13-/V16-Archive für STP8.0-3AV-40, SBS3.7-10 und SB4.0-1AV-41 gegen die gebündelten Profile geprüft; lokale SHA-256 stimmen mit REGISTER_VALIDATION überein. Offizielle SMA- und openHAB-Modbus-Dokumentation konsultiert. Ältere -40-Liste nicht für den -41 verwendet.
+- Vollständiges technisches Registerinventar in docs/modbus-topic-audit.csv: 527/450/390 eindeutige SMA-Adressen, davon 508/424/378 lesbar und 17/14/18 bereits gemappt. Somit 491/410/360 lesbare Adressen ohne Profil-Topic. 126 Storage-Quellzeilen ohne numerische SMA-Adresse in separater SunSpec-Liste erhalten. Duplikate derselben Adresse geprüft und zusammengeführt; alternative Adressen nicht zusammengezählt oder als unabhängige Sensoren behauptet.
+- Alle 50 bestehenden Properties auf dokumentierte Adresse, Typ, Registerlänge und FIX-/TEMP-Skalierung geprüft. Sunny-Boy-Typ und identity/model teilen eine Adresse; deshalb 49 gemappte Adressen. Storage-kWh-Sonderfall ausdrücklich erhalten; Einheitenlücken, Enums und tatsächliche Geräteunterstützung bleiben getrennte Prüfungen.
+- Konkrete Lücken: Typ-Alias/Leistungsgrenzen für inverter1/2, AC-Ströme/Frequenz/Blind-/Scheinleistung, Storage-AC-Leistung/Batteriestrom/-spannung/-energie, Sunny-Boy-DC-B, Betriebszeiten, Ereignisse und zahlreiche lesbare Konfigurationen. Modellgenaue Typ-/Leistungsregister 30053/30231/30233 dokumentiert, Profilergänzung weiterhin offen.
+- Ziel geklärt: vollständige verifizierte Lese-/Konfigurationsabdeckung; Kanalgruppen werden anschließend gemeinsam entschieden. RW ist keine automatische Schreibfreigabe. WO und Zugriffssteuerung sind ausdrücklich inventarisiert; keine Geheimnisse als Telemetrie. Keine Runtime-/Profil-/Filteränderung, keine Geräte-/Brokerabfrage oder Live-Schreibaktion. Home-Manager-NSD bereits dokumentarisch vollständig; eCharger ohne passende vollständige Modbus-Liste separat gegen API/SEMP prüfen.
+- Validierung: vollständiger Linter über 116 Dateien bestanden; alle 208 Offline-Tests einschließlich synthetischer Loopback-Protokollserver bestanden. Erster Sandbox-Testlauf an vier lokalen Socket-Bindungen gescheitert; vollständiger freigegebener Wiederholungslauf erfolgreich. git diff --check ohne Befund.
+
+## 2026-10-12 – Produktionsabhängiger Modbus-Verfügbarkeitstest
+
+- Andreas präzisiert den Umfang: zunächst alle dokumentierten lesbaren Register während PV-Produktion einmal auf tatsächliche Werte prüfen, danach eine sinnvolle Smart-Home-Auswahl treffen. Nicht sämtliche dokumentierten Adressen automatisch als Topics implementieren. Frühere Vollständigkeitsentscheidung damit für die Topic-Auswahl präzisiert; vollständiges Inventar bleibt als Prüfgrundlage erhalten.
+- Sunny Boy SB4.0-1AV-41 besitzt laut offizieller SMA-Betriebsanleitung zwei unabhängige MPP-Eingänge; ob beide bei Andreas belegt sind, bleibt offen. Eingangs-B-Register werden daher geprüft, nicht als angeschlossene Hardware behauptet.
+- Gegen 07:51 Europe/Berlin beide PV-Wechselrichter lesend geprüft: Modell/Firmware/Seriennummern-Gates bestanden, jeweils gültige 0 W auf Register 30775. Kein Vollscan gestartet, da beide noch nicht produzierten. Keine Writes, MQTT-Verbindungen oder Geräteänderungen.
+- Privater einmaliger Prüfer und Rohresultate unter private/verification/modbus-availability-2026-10-12/ vorbereitet; nicht in Git/Docker, keine Originalreferenzen verändert. FC04-Einzelregisterlesung, 250 ms Pause, begrenzte Timeouts, einmalige Startmarkierung; WO und Zugriffssteuerung 43090 ausgelassen. Sieben synthetische NaN-/Null-/signed-/String-Klassifikationsprüfungen bestanden.
+- Andreas autorisiert anschließend ausdrücklich die automatische Prüfung alle 30 Minuten ausschließlich heute und genau einen Vollscan bei positiver Leistung beider PV-Geräte. Chat-Heartbeat „Modbus-Verfügbarkeit bei PV-Produktion prüfen“ eingerichtet, Tagesende begrenzt. Bei 0 W still; Ergebnis/Fehler melden und nach dem Scan pausieren. Profilerweiterung und Gruppenentscheidung bleiben offen.
+
+## 2026-10-12 – Einmaliger Produktionsscan abgeschlossen
+
+- Autorisierter Heartbeat meldet vor dem Scan PV-Produktion: Tripower 203 W, Sunny Boy 52 W. Scan 08:25–08:31 Europe/Berlin, danach weiterhin positive Leistung auf beiden Geräten. Modell/Firmware/Seriennummern-Gates für alle drei Geräte bestanden. Einmalige Startmarkierung erhalten; Automation nach Abschluss pausiert.
+- Alle 1367 Geräte/Register-Paare erfasst: 1307 FC04-Leseabfragen, 57 WO und dreimal Zugriffssteuerung 43090 bewusst ausgelassen. Tripower 457 nutzbare Rohantworten/50 NaN; Storage 218/203 NaN/zwei nicht dekodierbare Strings; Sunny Boy 197/180 NaN. Insgesamt 105 gültige Nullwerte enthalten. Keine Modbus-Ablehnung, Transportfehler oder ungetesteten Zeilen. Keine Writes, MQTT-Verbindungen, Profil-/Runtime-/openHAB-Änderungen.
+- Sunny-Boy-L1-Lücken geklärt: Phaseinstellung 40183 liefert 329, laut passender V16-Liste L3. L3-Register 30781/30787/30981 liefern Leistung/Spannung/Strom; jeweilige L1/L2-Adressen NaN. Künftige Mappings müssen die L3-Zuordnung ausdrücklich behandeln; bestehende L1-IDs und Historie erhalten, nicht umdeuten.
+- Sunny-Boy-Eingang A liefert Werte, Eingang B 30957/30959/30961 jeweils gültige 0. Aus diesem Snapshot keine physische Stringbelegung ableiten. Storage-Batteriestrom/-spannung, Lade-/Entladeenergie, Frequenz aller drei Geräte und zahlreiche weitere sinnvolle Kandidaten vorhanden.
+- Öffentliche vollständige Ergebnismatrix und englischer Bericht in docs/ gespeichert, ausschließlich technische Metadaten/Verfügbarkeit; private Rohwerte bleiben ignoriert. 433 NaN und zwei String-Dekodierungslücken aus der ersten Topic-Kandidatenliste ausgeschlossen, aber nicht als in allen Betriebszuständen dauerhaft ununterstützt behauptet. 872 verfügbare Rohantworten sind keine Empfehlung für 872 Topics. Gruppen und konkrete kleine Auswahl gemeinsam offen.
+- Abschlussvalidierung: vollständiger Linter über 118 Dateien bestanden, alle 208 Offline-Tests bestanden, git diff --check ohne Befund. Öffentliche Matrix auf 1367 eindeutige Schlüssel, richtige Ergebniszählung, NaN-Ausschluss und Erhalt gültiger Nullwerte geprüft. Keine neue Profil-/Setter-/openHAB-Abnahme daraus abgeleitet.
+
+## 2026-10-12 – Umsetzungspakete aus dem Scan konkretisiert
+
+- Andreas fragt nach Startreihenfolge, offenen Umsetzungsfragen und expliziter Battery-Abdeckung. Bestätigt: inverter2 / SBS3.7-10 wurde vollständig mitgeprüft, 423 Leseabfragen und 218 Antworten ohne NaN einschließlich 26 Nullwerten; 203 NaN und zwei String-Dekodierungslücken. Die PV-Produktion war nur Startbedingung für den gemeinsamen Scan.
+- Scanbefunde in zehn einzelne aktive Pakete M01–M10 überführt und vollständige Ergebnismatrix verlinkt. Vorschlag: erst Sunny-Boy-Phasenmapping und gewünschte Typ-/Grenzkanäle, danach kleine AC-/Batteriemesswertauswahl; Energie-/PF-/Diagnosefragen separat. Gruppen und Umfang neuer Topics gemeinsam entscheiden.
+- Offene Umsetzungsfragen ausdrücklich erhalten: installationsabhängige Phase ohne feste Modell-L3-Annahme, konkrete neue Topics/Linkmigration, Batterie-Energieeinheiten, PF-Konventionen, Stringbelegung B und Zustandsspezifik ausgeschlossener Werte. Keine Profil-/Runtime-/Geräteänderung für diese Priorisierung durchgeführt.
+
+## 2026-10-12 – Sunny-Boy-L2-/L3-Kanäle umgesetzt
+
+- Andreas beauftragt M01 einschließlich L2-Erweiterung. Sechs dateibasierte RO-Mappings für Leistung/Spannung/Strom ergänzt; keine L1-Änderung oder modellabhängige Adapterlogik. Nicht verfügbare Phasen bleiben ohne neuen Messwert, letzte retained Beobachtung gegebenenfalls erhalten.
+- Leistung/Spannung nutzen unverändert den bisherigen 3-Sekunden-Block; L2/L3-Strom erhält einen kleinen FC04-Block mit vier Registern im 5-Sekunden-Takt. Readiness weiterhin über Status; optional abgeschaltete Advanced-/Diagnostics-Filter entfernen die neuen Basismesswerte nicht. Deutsche/englische Labels ergänzt.
+- Alle alten Properties/Poller gegen unabhängigen Vorher-Snapshot identisch; sechs neue Mappings auf Adresse, Typ, Länge, Skalierung und Unit gegen offizielle Inventardaten geprüft. Gezielte 19 Profil-/Phasen-/Übersetzungstests bestanden. Vollständiger Linter über 119 Dateien und alle 211 Offline-Tests bestanden; git diff --check ohne Befund. Keine Geräteabfrage, Deployment-, MQTT-/openHAB- oder Live-Abnahme für diese Änderung durchgeführt.
+- Separate Compose-Paritätsprüfung bestanden: beide Standalone-Dateien mit identischen Laufzeiteinstellungen und geprüften Overrides.
+
+## 2026-10-12 – M02–M04 und Abgrenzung Home Manager/Wallbox
+
+- Andreas beauftragt Typ/Leistungsgrenzen für inverter1/2 sowie Frequenz/verfügbare Phasenströme und Storage-AC-/Batteriestrom/-spannung. 16 weitere dateibasierte RO-Mappings umgesetzt; vorhandene Definitionen/Poller unverändert. Typ/Grenzen wie Sunny Boy Advanced, Messwerte Basic-Default. Keine neue ENV, Adapterlogik, Setter oder Geräteschreibaktion.
+- Quellen-/Scanabgleich aller neuen Adressen erfolgreich; signierte Werte erhalten, Null gültig, NaN verworfen. Gezielte 34 Profil-/Erweiterungs-/Phasen-/Übersetzungs-/Home-Manager-Tests sowie alle 214 Offline-Tests bestanden. Vollständiger Linter über 120 Dateien, separate Compose-Parität und git diff --check bestanden.
+- Home-Manager-NSD-Profil/Testbestand geprüft: 16 feste Eigenschaften plus 245 Zuordnungsslots und 16 delegierte Templates decken bekannte lesbare Dokumenteinträge ab; vollständiger Live-Verfügbarkeitscheck bleibt offen. Wallbox nutzt API/SEMP/Portal; keine passende vollständige Modbus-Liste in den vorhandenen Quellen. Separate aktive Aufgaben ergänzt, keine zusätzlichen Geräteabfragen dafür vorgenommen.

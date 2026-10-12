@@ -75,6 +75,20 @@
       "start": 34113,
       "count": 2,
       "intervalSeconds": 120.0
+    },
+    {
+      "id": "phase-currents",
+      "function": 4,
+      "start": 30979,
+      "count": 4,
+      "intervalSeconds": 5.0
+    },
+    {
+      "id": "grid-frequency",
+      "function": 4,
+      "start": 30803,
+      "count": 2,
+      "intervalSeconds": 5.0
     }
   ],
   "properties": [
@@ -401,6 +415,125 @@
       "wordOrder": "big",
       "scale": 0.01,
       "unit": "V",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "float"
+    },
+    {
+      "id": "power-l2",
+      "node": "measurements",
+      "name": "Power L2",
+      "poller": "power-a",
+      "offset": 10,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "volt-g2",
+      "node": "measurements",
+      "name": "Grid voltage phase L2",
+      "poller": "power-a",
+      "offset": 16,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.01,
+      "unit": "V",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "float"
+    },
+    {
+      "id": "current-l2",
+      "node": "measurements",
+      "name": "Grid current phase L2",
+      "poller": "phase-currents",
+      "offset": 0,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.001,
+      "unit": "A",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "float"
+    },
+    {
+      "id": "power-l3",
+      "node": "measurements",
+      "name": "Power L3",
+      "poller": "power-a",
+      "offset": 12,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "volt-g3",
+      "node": "measurements",
+      "name": "Grid voltage phase L3",
+      "poller": "power-a",
+      "offset": 18,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.01,
+      "unit": "V",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "float"
+    },
+    {
+      "id": "current-l3",
+      "node": "measurements",
+      "name": "Grid current phase L3",
+      "poller": "phase-currents",
+      "offset": 2,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.001,
+      "unit": "A",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "float"
+    },
+    {
+      "id": "frequency",
+      "node": "measurements",
+      "name": "Grid frequency",
+      "poller": "grid-frequency",
+      "offset": 0,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.01,
+      "unit": "Hz",
       "invalid": [
         4294967295
       ],

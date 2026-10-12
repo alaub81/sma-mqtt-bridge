@@ -1,5 +1,9 @@
 # SMA-Wertekatalog für die MQTT-Bridge
 
+> For the current model-specific inverter completeness assessment, see the
+> [2026-10-12 Modbus topic audit](MODBUS_TOPIC_AUDIT.md). The older -40 inventory
+> below remains historical/comparative evidence, not the installed -41 profile.
+>
 > Current MQTT node/property IDs remove hyphens at the publication boundary. Internal profile and
 > readiness keys keep their spelling; historical examples below may use the former IDs. See
 > [compact IDs and display translations](CONFIGURATION.md#display-language-and-compact-channel-ids).

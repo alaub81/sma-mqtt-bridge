@@ -132,6 +132,16 @@
     "Voltage L1": "Voltage L1",
     "Voltage L2": "Voltage L2",
     "Voltage L3": "Voltage L3",
-    "eCharger": "eCharger"
+    "eCharger": "eCharger",
+    "Power L2": "Power L2",
+    "Grid voltage phase L2": "Grid voltage phase L2",
+    "Grid current phase L2": "Grid current phase L2",
+    "Power L3": "Power L3",
+    "Grid voltage phase L3": "Grid voltage phase L3",
+    "Grid current phase L3": "Grid current phase L3",
+    "Grid frequency": "Grid frequency",
+    "Grid current phase L1": "Grid current phase L1",
+    "Battery current": "Battery current",
+    "Battery voltage": "Battery voltage"
   }
 }

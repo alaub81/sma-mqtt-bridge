@@ -81,3 +81,87 @@ Each original FC04 block and 3–180-second poller interval is preserved. Each p
 The first bounded read returned 39 of the 41 measurement channels, plus all nine identity properties. Sunny Boy registers 30777 (`power-l1`) and 30783 (`volt-g1`) returned SMA NaN; their mappings remain declared but no value is published. Check again during daytime operation and compare with openHAB before classifying this as unsupported. SEMP identity matched the configured eCharger. Seven baseline SEMP values were usable; the device-health measurement had an old source timestamp and was withheld. Neither local API nor portal authentication was attempted without credentials. No device write was performed.
 
 Home Manager remains disabled for the Mac: the Mac is on a different network and does not receive meter multicast. Complete sender/serial/interface configuration and acceptance on the Raspberry Pi in the device network. Existing openHAB rules, offsets, historical counter corrections and persistence remain untouched.
+
+## Full inventory audit, 2026-10-12
+
+The original mapping validation does not imply complete register coverage. See the
+[model-specific topic audit](MODBUS_TOPIC_AUDIT.md) and its complete register ledger
+for all documented RO/RW/WO entries, current mappings and outstanding candidates.
+
+## Sunny Boy L2/L3 profile extension, 2026-10-12
+
+The user requested explicit L2 and L3 properties after the production scan confirmed
+L3 assignment. The existing L1 properties and every original poller remain unchanged.
+The matching Sunny Boy V16 list supplies the following RO mappings:
+
+| Compact property under measurements | Register | Raw type / format | Scale | Unit | Poll interval |
+| --- | ---: | --- | ---: | --- | --- |
+| powerl2 | 30779 | S32 / FIX0 | 1 | W | 3 s |
+| powerl3 | 30781 | S32 / FIX0 | 1 | W | 3 s |
+| voltg2 | 30785 | U32 / FIX2 | 0.01 | V | 3 s |
+| voltg3 | 30787 | U32 / FIX2 | 0.01 | V | 3 s |
+| currentl2 | 30979 | S32 / FIX3 | 0.001 | A | 5 s |
+| currentl3 | 30981 | S32 / FIX3 | 0.001 | A | 5 s |
+
+Power/voltage fit the existing 30769–30788 block without increasing its size or
+request frequency. Currents use one new four-register FC04 block at 30979.
+S32 invalid is -2147483648 and U32 invalid is 4294967295. Values use big-endian
+word/byte order; zero is valid and signed power/current remain signed.
+
+These properties follow the existing phase-measurement basic default and are not
+required for readiness. They remain exposed when optional advanced/diagnostics
+filters are disabled. All six are non-settable. No model-specific adapter code or
+fixed L3 phase selection is added: explicit phase topics remain explicit, and an
+inactive phase may return NaN. Existing measurements/powerl1 and measurements/voltg1
+keep their original register definitions and retained-history meaning.
+
+The earlier scan returned L3 values and L2 NaN; L2 is deliberately included at the
+user's request as a documented, potentially unavailable phase. This is offline-tested
+profile implementation, not a new bridge/MQTT/openHAB deployment acceptance.
+The three profiles now contain 47 measurement properties plus nine identity
+properties. Historical audit coverage counts describe the pre-extension snapshot.
+
+## Small inverter measurement extension, 2026-10-12
+
+The user requested type/limits for Tripower and Storage, grid frequency and available
+phase currents, and Storage AC power/battery current/voltage. Sixteen additive
+properties implement this selection. Existing properties and pollers, including
+the earlier Sunny Boy L2/L3 extension, remain unchanged.
+
+| Device | Compact measurement ID | Register | Raw type / format | Scale | Unit | Default interval |
+| --- | --- | ---: | --- | ---: | --- | --- |
+| Tripower, Storage | type | 30053 | U32 / TAGLIST | 1 | — | Identity reads / 60 s |
+| Tripower, Storage | maxpower | 30231 | U32 / FIX0 | 1 | W | Existing status block / 60 s |
+| Tripower, Storage | setmaxpower | 30233 | U32 / FIX0 | 1 | W | Existing status block / 60 s |
+| All three | frequency | 30803 | U32 / FIX2 | 0.01 | Hz | 5 s |
+| Tripower | currentl1 / currentl2 / currentl3 | 30977 / 30979 / 30981 | S32 / FIX3 | 0.001 | A | 5 s |
+| Storage | currentl1 | 30977 | S32 / FIX3 | 0.001 | A | 5 s |
+| Storage | activepower | 30775 | S32 / FIX0 | 1 | W | 5 s |
+| Storage | batterycurrent | 30843 | S32 / FIX3 | 0.001 | A | 5 s |
+| Storage | batteryvoltage | 30851 | U32 / FIX2 | 0.01 | V | 5 s |
+
+Type/limits reuse existing identity/status reads without additional requests and
+use the same IDs, labels and advanced group as Sunny Boy. `type` reports the raw
+model code rather than replacing identity/model. All limits remain RO; `setmaxpower`
+is an observed limit and never a `/set` command. The measurement additions follow
+existing basic defaults and are not additional readiness requirements.
+
+Frequency uses one two-register FC04 block per device. Tripower currents use one
+six-register block and Storage current one two-register block. Storage AC power,
+battery current and battery voltage each use a two-register block, avoiding gaps
+and preserving the existing slow SOC/temperature pollers. All new blocks default
+to 5 seconds; explicit device poll-interval overrides still apply. SMA S32/U32
+invalid values remain -2147483648/4294967295. Signed power/current are not clipped
+or converted into inferred charging state.
+
+All added addresses returned non-NaN values in the earlier production scan. The
+matching model lists confirm addresses/types/formats; Storage explicitly provides
+Hz/A/V/W units. The Tripower parameter UI leaves frequency/current unit fields
+blank: Hz and A are reconciled with GridMs.Hz / GridMs.A.phsA–C, their FIX formats
+and the physical quantities, consistent with the earlier documented unit method.
+This does not extend firmware support or validate new MQTT/openHAB deployment.
+
+Tripower exposes L1/L2/L3 currents, Storage only the available L1 current. Sunny Boy
+retains its explicitly requested L2/L3 currents; the prior scan returned NaN for
+L1/L2 and a value for L3. No additional inactive-phase channels are added to Storage.
+The complete profiles now contain 63 measurement properties plus nine identities.

@@ -204,3 +204,28 @@ before changing persisted unit assumptions. Correct kWh history must not be resc
 mixed Wh/kWh series require a verified timestamp boundary and service-specific treatment.
 No persistence data, legacy offsets, original exports or device counters were changed.
 Live readback and installation history inspection remain pending.
+
+## Sunny Boy explicit L2/L3 extension, 2026-10-12
+
+The bundled Sunny Boy profile now adds read-only measurements/powerl2, powerl3,
+voltg2, voltg3, currentl2 and currentl3. Existing L1 IDs and their register meanings
+are preserved; do not transfer their history or reinterpret their values as L3.
+After deploying the extension, create/link new phase-specific Items as needed.
+Power uses W, voltage V and current A. L2 may have discovery metadata without a
+measurement payload because the installation scan returned SMA NaN. The L3 scan
+values do not by themselves certify publication or new openHAB links.
+
+The original 100-row capability ledger remains the original integration baseline;
+new phase properties are an extension, not silently substituted migration rows.
+The [official Homie binding documentation](https://www.openhab.org/addons/bindings/homie/)
+was consulted; no live Item links, transformations or persistence were changed.
+
+## Selected inverter additions, 2026-10-12
+
+Read-only type/limits now share measurements/type, maxpower and setmaxpower on all
+three profiles. New measurements/frequency uses Hz on all devices. Tripower adds
+currentl1/currentl2/currentl3 (A); Storage adds currentl1 (A), activepower (W),
+batterycurrent (A) and batteryvoltage (V). These are additive properties outside
+the original capability ledger. Old Items, quantities, maps, counter offsets,
+links and persistence remain unchanged. Preserve signed AC/battery observations;
+no battery charging-state convention is inferred from sign alone.

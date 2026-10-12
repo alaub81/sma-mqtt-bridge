@@ -108,3 +108,12 @@ publication, including lint, tests, Compose checks and amd64/arm64 image builds,
 container tests and scans. Repeated successful hosted runs of the existing CI were
 reported by the user on 2026-10-11. Verify the newly added release-to-CI dependency
 in a hosted run; release publication remains separately authorized.
+
+## Complete model-specific Modbus coverage
+
+Use the [full topic audit](MODBUS_TOPIC_AUDIT.md) as the expansion ledger. Validate
+all readable measurements and RW observations in coherent groups, preserving
+existing IDs and separating alternative counters and conditional equipment. Agree
+basic/advanced/diagnostics with Andreas before assigning new groups. File-based
+profile extensions need verified units, enums/sentinels and suitable poll intervals.
+Review WO/RW commands separately; documentation access flags alone never enable setters.

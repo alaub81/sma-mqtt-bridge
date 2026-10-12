@@ -4,7 +4,7 @@
 > readiness keys keep their spelling; historical examples below may use the former IDs. See
 > [compact IDs and display translations](CONFIGURATION.md#display-language-and-compact-channel-ids).
 
-The public JSON files under `ressources/profiles/` are packaged directly in the Docker image. They contain no installation addresses, serial numbers or credentials. **The three supplied profiles now cover the existing 41 read channels**, checked against official model-specific SMA lists and local model/firmware/serial reads. See [register validation](REGISTER_VALIDATION.md) for units, type corrections, source hashes and remaining parallel acceptance.
+The public JSON files under `ressources/profiles/` are packaged directly in the Docker image. They contain no installation addresses, serial numbers or credentials. **The three supplied profiles cover the original 41 read channels plus 22 selected additional measurement channels**, checked against official model-specific SMA lists and local model/firmware/serial reads. See [register validation](REGISTER_VALIDATION.md) for units, type corrections, source hashes and remaining parallel acceptance.
 
 | Profile ID | Model | Observed firmware | Default slot |
 | --- | --- | --- | --- |
@@ -79,3 +79,33 @@ polling and decoding; mandatory identity checks always use the complete profile.
 blocks still serve enabled properties. Bundled inverter internal-temperature readings are explicitly tagged
 `basic` and remain enabled with either filter disabled; Sunny Boy type/max-power/set-max-power are tagged `advanced`. Default flags enable
 every existing channel. See [channel configuration](CONFIGURATION.md#optional-channel-groups).
+
+## Explicit Sunny Boy L2/L3 channels
+
+The Sunny Boy profile additionally provides measurements/powerl2, powerl3, voltg2,
+voltg3, currentl2 and currentl3. See the
+[register extension](REGISTER_VALIDATION.md#sunny-boy-l2l3-profile-extension-2026-10-12)
+for units, scaling and polling. Existing L1 mappings are preserved. Inactive-phase
+NaN yields no new MQTT measurement; the last valid retained observation, if any,
+remains under the usual retention rules. The source status property remains the
+readiness criterion; these new phase measurements are not required for ready.
+
+The packaged extension follows the existing phase-channel basic default. General
+channel-group review remains future work. Host profile overrides take precedence:
+update a host copy explicitly if one is selected; a rebuilt image cannot replace
+that copy. No new environment setting is needed and existing explicit poll-interval
+overrides continue to apply to all profile blocks. Rebuild/recreate the bridge to
+load the bundled extension. Production publication and openHAB links require a
+separate installation check; no running service or instance was changed here.
+
+## Type/limits, frequency and selected AC/battery measurements
+
+Tripower and Storage now additionally publish measurements/type, maxpower and
+setmaxpower, using the existing Sunny Boy advanced-group convention. All three
+provide measurements/frequency. Tripower adds currentl1/currentl2/currentl3;
+Storage adds currentl1, activepower, batterycurrent and batteryvoltage. These new
+measurements use the basic default. See the
+[complete extension table](REGISTER_VALIDATION.md#small-inverter-measurement-extension-2026-10-12)
+for addresses, units, intervals, source evidence and acceptance limits.
+No new configuration switch or setter is introduced; host override precedence,
+explicit interval overrides and required status-based readiness remain unchanged.

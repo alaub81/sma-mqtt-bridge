@@ -402,3 +402,112 @@ shell, Dockerfile, YAML, Actions, Pylint and Markdown checks, but failed Ruff im
 ordering/formatting in pre-existing `version.py` and `test_bootstrap.py` worktree
 changes. The new Python files pass Ruff and formatting. A real multi-hour resource
 soak and target-host external alarm delivery are not covered by virtual-time tests.
+
+## Documentary Modbus completeness audit, 2026-10-12
+
+[Full audit and ledgers](MODBUS_TOPIC_AUDIT.md) reconcile all numeric SMA register
+addresses in the three matching source archives with bundled profile properties.
+All existing addresses, raw types, lengths and FIX/TEMP scales passed the comparison.
+There are 491/410/360 unmapped readable device/register pairs; these include
+alternatives and conditional channels, not guaranteed live support. No runtime,
+profile, channel filter, device setting or openHAB integration changed. New mapping
+semantics, channel-group decisions, command approval and live acceptance remain open.
+
+Validation: complete lint passed for 116 files; all 208 offline tests passed,
+including synthetic loopback servers. The first sandboxed run could not bind four
+local test sockets; the permitted rerun passed. `git diff --check` passed.
+
+## Production-gated availability probe, 2026-10-12
+
+A user-authorized direct FC04 probe around 07:51 Europe/Berlin passed the configured
+model, firmware and serial gates for inverter1 and inverter3. Both returned valid
+0 W at register 30775, so the full availability scan did not start. Seven synthetic
+raw/sentinel classification checks passed; no new profile or runtime support is
+claimed. The private one-shot checker distinguishes numeric zero, SMA NaN, empty
+strings, undecoded raw data, Modbus exceptions and transport failures. It skips
+WO and access-control register 43090 and performs no MQTT I/O or device writes.
+
+Andreas authorized a thread automation to check every 30 minutes on this date and
+perform exactly one scan when both PV inverters have positive power. The completed
+scan, useful topic selection and channel-group decisions remain pending. Sunny Boy
+[official specifications](https://manuals.sma.de/SBxx-1AV-41/de-DE/4177679243.html)
+list two independent MPP inputs; actual second-input wiring remains unverified.
+
+## Completed production availability scan, 2026-10-12
+
+The authorized one-shot FC04 scan completed at 08:25–08:31 Europe/Berlin with
+positive power on both PV inverters before and after. All three identity gates
+passed. All 1,367 device/register ledger pairs were accounted for: 1,307 read
+attempts, 57 WO exclusions and three exclusions of access-control register 43090.
+There were 872 non-NaN numeric/string samples (including 105 numeric zeros),
+433 SMA NaN readings and two undecodable Storage strings. No rejected requests,
+transport errors or untested ledger entries occurred. The automation is paused;
+no second scan, writes, MQTT I/O or profile/runtime/openHAB changes took place.
+
+[Full report and candidates](MODBUS_AVAILABILITY_2026-10-12.md) and the
+[public result matrix](modbus-availability-2026-10-12.csv) contain no private raw
+values or installation identities. Matrix uniqueness, counts, NaN exclusion and
+valid-zero retention were checked against private scan records. Units, enums,
+state-dependent support, useful topic selection and channel groups remain pending.
+
+Sunny Boy phase assignment 40183 returned code 329 (L3 in the matching official
+V16 list), agreeing with valid L3 power/voltage/current and NaN on L1/L2. Input B
+returned valid zero for all three DC readings; actual string wiring remains open.
+These observations explain unavailable L1 mappings but do not authorize silently
+changing their meaning or migrating existing Item links/history.
+
+Complete lint passed for 118 files and all 208 offline tests passed after recording
+these results; `git diff --check` passed. These checks do not approve new polling
+profiles, setters, physical phase wiring or openHAB migration.
+
+## Sunny Boy L2/L3 implementation, 2026-10-12
+
+Six additive phase properties are implemented in the bundled Sunny Boy profile;
+see the [register table](REGISTER_VALIDATION.md#sunny-boy-l2l3-profile-extension-2026-10-12).
+Existing properties and pollers were compared against an independent pre-edit
+snapshot and are unchanged. All six new addresses, types, lengths, scales and units
+match the official inventory. L2/L3 power/voltage reuse the existing 3-second block;
+L2/L3 current uses one four-register block every 5 seconds.
+
+Targeted synthetic tests cover signed values, fractional V/A scaling, valid zero,
+SMA NaN, phase-specific discovery/labels/units/non-settable metadata, optional
+filters disabled, and ready status with L1/L2 unavailable while L3 returns values.
+The existing migration-baseline test still checks original ranges/intervals and
+original channel counts independently of the additive extension.
+No device query, write, runtime deployment, MQTT publication or openHAB link change
+was performed for this implementation; those installation checks remain pending.
+
+Full validation passed: all 211 offline tests, the complete lint check over 119
+files, and `git diff --check`. The separate `tests/compose_check.py` also passed.
+
+## Selected inverter expansion and other-device coverage, 2026-10-12
+
+Sixteen additional file-based properties implement the requested type/limits,
+frequency, available phase currents and Storage AC/battery measurements. An
+independent pre-edit snapshot confirms that all previous property definitions and
+poller ranges/intervals remain unchanged. Every added register matches documentary
+metadata and has a valid sample in the existing production availability matrix.
+See the [register table](REGISTER_VALIDATION.md#small-inverter-measurement-extension-2026-10-12).
+Targeted synthetic tests cover raw model codes, advanced-group limit filtering,
+non-settable metadata, signed/fractional decoding, zero/NaN handling, basic reads
+with optional filters disabled and unchanged status-based readiness.
+No new device read/write, deployment, MQTT publication or openHAB migration was
+performed for this implementation. Host profile overrides need explicit updates.
+
+Home Manager coverage was rechecked against the existing profile and its complete
+inventory regression: 16 fixed Unit 1/2 properties, all 245 assignment slots and
+16 delegated parameter templates cover the known readable NSD document entries.
+The recent inverter scan did not include Home Manager; full actual register and
+assignment/delegated availability still needs a separate read-only installation
+check. Basic readiness acceptance does not certify all advanced readings.
+
+The eCharger reader uses local API/SEMP and separate portal observations. The
+supplied documents contain no matching complete Modbus register table that could
+support an equivalent address sweep. Local parameter/SEMP inventories and known
+reads exist, but exhaustive metadata-to-topic coverage and availability in natural
+charging states remain a separate task. Do not claim that absence of a supplied
+register list proves absence of any hardware Modbus capability.
+
+Validation passed: all 214 offline tests, complete lint over 120 files, separate
+Compose parity including overrides, and `git diff --check`. No new device I/O was
+used for this expansion or the Home Manager/eCharger coverage clarification.

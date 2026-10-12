@@ -132,3 +132,21 @@ Keep active German tasks and decisions in [todo.md](../todo.md). Archive earlier
 working documents without deleting entries or unresolved questions. Configuration,
 profile, migration and technical evidence documents remain maintained contracts.
 GitHub publication and releases require a separate later milestone.
+
+## Complete register coverage decision, 2026-10-12
+
+The goal includes all verified readable device values and readable configurable
+parameters, beyond the original openHAB baseline. The
+[Modbus completeness audit](MODBUS_TOPIC_AUDIT.md) inventories candidates without
+preselecting basic/advanced/diagnostics; agree those groups with Andreas. Keep
+documentary evidence, implemented mappings and observed live support distinct.
+RW/WO inventory does not alter command allowlists or authorize device writes.
+
+## Availability-first scope refinement, 2026-10-12
+
+Andreas clarified that the full register inventory is evidence for selection, not
+a target to publish every address. First run one read-only availability scan while
+both PV inverters produce. Then choose useful Smart Home properties together.
+Exclude missing values from the initial candidate set while preserving the tested
+operating-state evidence; valid zero is available, and transport failure is not
+proof of unsupported registers. Agree channel groups after this selection.
