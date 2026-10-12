@@ -622,7 +622,7 @@ inverters and the eCharger advertised ready. No message was published, deleted o
 changed; no configuration or device setting was modified.
 
 | Group | New basic properties checked | Observation |
-| --- | ---: | --- |
+| --- | --: | --- |
 | Tripower | 4 | Frequency and all three phase currents have numeric payloads and expected Hz/A metadata. |
 | Storage | 5 | Frequency, L1 current, AC active power, battery current and voltage have numeric payloads; signed values preserved. |
 | Sunny Boy | 10 | L3 power/voltage/current, frequency and DC input B have numeric payloads; the three L2 properties have correct metadata without measurement payloads. DC input B is valid zero. |
@@ -670,3 +670,14 @@ comparison, MQTT publication and openHAB acceptance remain pending.
 Final checks passed: all 221 offline tests, complete repository lint over 127 files, standalone Compose parity and `git diff --check`. No live device or broker action was performed for this extension.
 
 Andreas confirmed the channel groups: battery energy Basic, operating/feed-in times Advanced, and derating Diagnostics. The implementation already matches the approved selection.
+
+## Local/CI Markdown lint parity, 2026-10-12
+
+The two reported MD060 failures were reproduced from unchanged HEAD documents
+with the pinned pymarkdownlnt 0.9.40. The local environment had 0.9.39. Compact
+right-aligned table delimiters now use `--:`. The lint runner rejects Python
+linter package versions that differ from `tests/requirements-lint.txt`; a
+simulated 0.9.39 mismatch returned exit code 1 with an update instruction.
+Full repository lint (127 files) and all 221 offline tests passed after updating
+the local environment. Tests used local loopback servers outside the sandbox.
+Hosted CI verification remains pending.

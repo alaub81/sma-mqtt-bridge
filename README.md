@@ -52,6 +52,9 @@ python3.14 -m venv .lint-venv
 python3 tests/compose_check.py
 ```
 
+The lint check rejects Python tool versions that differ from the CI pins. After
+changing `tests/requirements-lint.txt`, rerun the pip install command above.
+
 All public repository files receive hygiene checks and applicable language linters.
 Ruff uses E4/E7/E9/F/I and checks Python formatting (100-column target, double
 quotes, four-space indentation). Pylint checks errors/fatal diagnostics. Widget

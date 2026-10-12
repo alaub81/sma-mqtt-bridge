@@ -6,9 +6,33 @@ import re
 import shutil
 import subprocess
 import sys
+from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def check_linter_versions():
+    """Require the same pinned Python linter environment as CI."""
+    failures = []
+    for line in (ROOT / "tests/requirements-lint.txt").read_text().splitlines():
+        if "==" not in line:
+            continue
+        package, expected = line.split("==", 1)
+        try:
+            actual = version(package)
+        except PackageNotFoundError:
+            actual = "not installed"
+        if actual != expected:
+            failures.append(f"{package}: expected {expected}, found {actual}")
+    if failures:
+        print("Lint environment differs from CI:\n" + "\n".join(failures), flush=True)
+        print(
+            "Update with: .lint-venv/bin/python -m pip install "
+            "--requirement tests/requirements-lint.txt",
+            flush=True,
+        )
+    return not failures
 
 
 def project_files():
@@ -104,6 +128,8 @@ def main():
     if len(sys.argv) != 1:
         print("Usage: ./tests/linter-check.sh (read-only; no arguments)", file=sys.stderr)
         return 2
+    if not check_linter_versions():
+        return 1
     try:
         files = project_files()
     except subprocess.CalledProcessError as error:

@@ -177,7 +177,7 @@ additional read-only properties. Existing mappings, counters, labels and poller
 intervals are preserved.
 
 | Models | Published property | Register | Source / published unit | Group |
-| --- | --- | ---: | --- | --- |
+| --- | --- | --: | --- | --- |
 | All three | measurements/operatingtime | 30521 | U64 seconds, scale 1, integer s | Advanced |
 | All three | measurements/feedintime | 30525 | U64 seconds, scale 1, integer s | Advanced |
 | All three | diagnostics/deratingreason | 30219 | U32 TAGLIST, model-specific enum | Diagnostics |

@@ -487,3 +487,9 @@ Topic-Suffixe werden unter `homie/<konfigurierte Homie-ID>/` veröffentlicht. Di
 - Gerätescan belegt Lesbarkeit; GUI-/Verlaufsvergleich von Energie/Zeiten einschließlich Reset-/Zählumfang und spätere MQTT-/openHAB-Abnahme offen. Alternativerträge, Schein-/Blindleistung und aktuell ungültige Ereignisregister bleiben außerhalb dieser Ergänzung.
 
 - Endprüfung: alle 221 Offline-Tests, vollständiger Linter über 127 Dateien, Compose-Parität und git diff --check bestanden. Neuer Umfang: zwei Energie-, sechs Zeit- und drei Derating-Kanäle; noch kein Commit/Tag/Deploy.
+
+## 12.10.2026 – Markdown-Lint-Parität
+
+- Ursache geklärt: lokal war pymarkdownlnt 0.9.39 installiert, CI verwendet den Pin 0.9.40. Der gemeinsame Lint-Aufruf prüfte bisher keine installierten Versionen.
+- Zwei MD060-Tabellentrenner korrigiert (`---:` → `--:` für den kompakten Stil); lokale Lint-Abhängigkeiten aktualisiert. Versionsprüfung gegen die Python-Pins ergänzt, damit veraltete Umgebungen mit Aktualisierungshinweis scheitern. README beschreibt die Aktualisierung.
+- Validierung: ursprüngliche zwei Fehler mit 0.9.40 reproduziert; simulierte veraltete Version wird mit Exit 1 abgewiesen. Vollständiger Lint über 127 Dateien und alle 221 Offline-Tests bestanden (lokale Testserver außerhalb der Sandbox). Neuer gehosteter CI-Lauf bleibt offen.
