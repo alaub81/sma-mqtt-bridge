@@ -64,6 +64,14 @@ def utc_timestamp():
     return datetime.now(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
 
+class SampleValues(dict):
+    """Decoded values with optional monotonic observation times per property."""
+
+    def __init__(self, values, observed_at):
+        super().__init__(values)
+        self.observed_at = observed_at
+
+
 @dataclass
 class SourceState:
     id: str
@@ -103,6 +111,7 @@ class SourceState:
 
     def update(self, values, now=None, timestamp=None):
         now = time.monotonic() if now is None else now
+        observed_at = values.observed_at if isinstance(values, SampleValues) else {}
         by_key = {p.key: p for p in self.properties}
         if set(values) - set(by_key):
             raise ProtocolError("Adapter returned an undeclared property")
@@ -112,7 +121,7 @@ class SourceState:
             if encoded is None:
                 self.values.pop(key, None)
             else:
-                self.values[key] = (encoded, now)
+                self.values[key] = (encoded, observed_at.get(key, now))
                 usable = True
         if usable:
             self.last_success = now
