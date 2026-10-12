@@ -30,7 +30,8 @@ Die vollständigen Einzelbefunde stehen in [der Ergebnismatrix](docs/modbus-avai
 - [ ] M10 – Ausschlussliste bewahren: 433 NaN und zwei nicht dekodierbare Storage-BMS-Strings bleiben aus der ersten Kandidatenliste ausgeschlossen. Bei Bedarf später gezielt unter natürlichen Lade-/Entlade-/Ereigniszuständen prüfen; kein erneuter Vollscan automatisch geplant. Identitäts-/Netzwerkwerte, Konfigurationsbeobachtungen und Dopplungen gemeinsam nach Nutzen behandeln; aus RO/RW/WO keine automatische Schreibfreigabe ableiten.
 
 - [ ] M02–M04-Abnahme – Neue Profilkanäle nach Image-Neubau/Neustart am Broker und mit passenden openHAB-Units prüfen. Gegebenenfalls ausgewählte Host-Profilkopien ausdrücklich erweitern. Neue Eigenschaften sind offline getestet; frühe Registerantworten allein bestätigen keine Veröffentlichung. Gemeinsamer späterer Gruppenreview bleibt offen.
-- [ ] Home Manager – Dokumentarisch vollständige NSD-Read-Mappings sind bereits vorhanden und inventory-getestet. Separaten lesenden Verfügbarkeitscheck sämtlicher aktiver Unit-1/2-Register, Zuordnungstabelle und delegierter Parameter planen; Grundstatus ready und der Dreier-Inverterscan belegen nicht alle Advanced-Kanäle. Disabled-/Netzwerk-/Grid-Guard-Grenzen respektieren, keine Anmeldeschreibaktion.
+- [x] Home Manager – Vollständiger lesender NSD-Verfügbarkeitscheck am 12.10.2026 um 10:28–10:29 Europe/Berlin abgeschlossen: Identität geprüft, alle 16 Unit-1/2-Eigenschaften gültig, alle 245 Zuordnungsslots gelesen. Drei zugeordnete Geräte mit je 16 delegierten Parametern geprüft: 30233 je Gerät gültig, übrige 45 Antworten SMA-NaN. Keine Ablehnung/Transportfehler, keine Writes/Login/MQTT. [Bericht](docs/HOME_MANAGER_AVAILABILITY_2026-10-12.md) und vollständige Statusmatrix; keine neuen Topics.
+- [ ] Home Manager – Ursache der 45 delegierten NaN-Antworten bei Bedarf gezielt klären (Modell/Zustand/Zugriff), dokumentierte Mappings nicht pauschal als dauerhaft ununterstützt löschen. Vollständige Broker-/openHAB-/Historien- und Betriebsabnahme bleibt separat offen; kein Grid-Guard-Login oder Gerätetestschreiben automatisch durchführen.
 - [x] Wallbox-API-/SEMP-Vollständigkeitsabgleich am 12.10.2026 abgeschlossen: [Bericht](docs/ECHARGER_TOPIC_AUDIT.md), vollständige Kanalmatrix und Standard-SEMP-Feldmatrix. Aktuell 85 API-Parameter, 44 API-Mess-/Setpointkanäle und 25 SEMP-Parameterkanäle lesend erfasst. 24 SEMP-Kanäle gemappt, Standort bewusst ausgeschlossen; API-Lücken und Quelleneigentum einzeln dokumentiert. Keine automatische Topic-Erweiterung oder neue Setter.
 
 - [x] E01 – Wallbox-Phasenwirkleistung am 12.10.2026 lokal ergänzt: `measurements/powerl1`, `powerl2`, `powerl3` aus GridMs.W.phsA/B/C, Float/W/read-only. Offizielle lokale WebUI-Metadaten bestätigen unit 18 = W und SCALAR ohne Rohskalierung; fehlende Unit nur für geprüftes Modell/Firmware erlaubt, widersprüchliche Units blockieren den Wert. Vorzeichen/Bruchteile/Null unverändert; keine physische Flussrichtung aus dem Vorzeichen behauptet.
@@ -376,3 +377,64 @@ Aktuellen Abnahmestand ausschließlich in VALIDATION.md pflegen; CONTEXT.md enth
 - Drei zusätzliche API-Messwerte `powerl1`/`powerl2`/`powerl3` Float/W ohne Setter ergänzt. Weiterhin nur bestehende Katalog-/Live-Requests, keine zusätzliche Abfrage. API bleibt Eigentümer auch mit SEMP; bestehende Gesamtladeleistung unverändert, keine Summenersatzberechnung. Basis-Default wie vorhandene API-Phasenmesswerte; Readiness unverändert.
 - Messunit explizit W oder ohne Unit nur EVC22-3AC-20 / 2.6.37.R; Unit-Konflikte und unbekannte Firmware ohne Unit bleiben unavailable. Negative, gebrochene und echte Nullwerte unverändert, NaN/missing/stale nicht veröffentlicht. Keine Setter, Phasensteuerung, Geräteschreibaktion oder MQTT-/openHAB-Änderung.
 - Gezielte 37 Protokoll-/Phasen-/Filtertests und alle 217 Offline-Tests bestanden. Vollständiger Linter über 124 Dateien, separate Compose-Parität und git diff --check bestanden. Vorheriger lesender Audit belegt angebotene Kanäle, nicht die Veröffentlichung durch die neue Bridge. E02–E07 bleiben offen.
+
+## 2026-10-12 – Vorab-Commit und vollständiger Home-Manager-Lesetest
+
+- Auf Andreas’ Wunsch zuerst den gesamten vorherigen Stand lokal als `1828a35` committet (Wallbox-Kanalaudit/Phasenwirkleistung), private Daten ausgeschlossen; kein Push. Danach erst Home-Manager-Check gestartet.
+- Modbus-TCP und Advanced-Inventar waren lokal explizit aktiviert; keine ENV-/Adapteraktivierung geändert. Home-Manager-Modell/Klasse/Hersteller/beide Serienregister vor Anlagen-/Tabellenabfragen verifiziert. Alle 16 festen Eigenschaften gültig, darunter drei echte Nullwerte. Alle 245 Zuordnungsslots in neun Blöcken gelesen, drei gültig zugeordnete Geräte komplett mit je 16 Parametern gelesen.
+- Delegiert jeweils nur 30233 gültig, 45 übrige Werte SMA-NaN. Keine Modbus-Ablehnung, unbekannten Enums, Verbindungsfehler oder ungetesteten Profileinträge. Ursache der NaN offen; kein zusätzlicher Controller, keine Grid-Guard-Anmeldung, Geräteeinstellung, MQTT oder openHAB geändert. Öffentliche Ergebnismatrix enthält ausschließlich technische Metadaten/Status, keine Werte oder privaten Identitäten.
+- Alle 25 in diesem Arbeitsabschnitt neu ergänzten Topics zur Advanced-/Basis-Auswahl zusammengestellt und gegen den früheren Profilstand/aktuellen API-Reader geprüft. Sechs bisher Advanced, 19 bisher Basis. Checkboxen markieren Gruppenwahl, nicht Aufgabenabnahme; noch keine Gruppenänderung vorgenommen.
+
+- Abschlussprüfung: alle 217 Offline-Tests, vollständiger Linter über 126 Dateien und git diff --check bestanden; 64 eindeutige Unit/Register-Beobachtungen und 25 eindeutige Geräte/Topic-Auswahleinträge geprüft.
+
+## 2026-10-12 – Deploy-Vorbereitung und Release-Auftrag
+
+- Advanced-/Basis-Auswahl bestätigt: sechs Typ-/Leistungsgrenzen Advanced, 19 neue Messwerte Basis; entspricht der Implementierung.
+- Alle 217 Offline-Tests auf dem Host und im lokalen Container ohne Netzwerk bestanden; vollständiger Linter und Compose-Parität bestanden. Container-Konfiguration ohne aktivierte Quellen, unprivilegierter Benutzer und Entfernung der Build-Installer geprüft.
+- „Bauen“ zunächst als lokalen Docker-Build interpretiert und ausgeführt. Andreas stellt klar: Stand committen, taggen und GitHub bauen lassen. Lokales Image ist nicht die gewünschte Deploy-Quelle; Release-Workflow prüft beide Zielarchitekturen und Security-Gates vor GHCR-Publikation.
+- Nächster freier Patch-Tag nach lokalem und entferntem v0.3.2 ist v0.3.3. Deploy-Prüfliste in docs/MAC_TEST.md ergänzt: 25 neue Topics, Gruppen/Units, PV-/Batterie-/Ladebetrieb, Home-Manager-NaN, bestehende Historie und Neustart. Live-Abnahme bleibt offen.
+
+## Auswahl der 25 neu ergänzten Topics
+
+Diese Auswahl betrifft die seit Commit `b8b5915` in diesem Arbeitsabschnitt ergänzten Messkanäle; vorhandene ältere Topics sind nicht Teil der Liste. Der Home-Manager-Check fügt keine neuen Topics hinzu. Alle aufgeführten Eigenschaften sind read-only.
+
+`[x]` bedeutet Advanced, `[ ]` bedeutet Basis. Andreas hat diese Auswahl am 12.10.2026 bestätigt: T01–T03 und T08–T10 bleiben Advanced, die übrigen 19 Messwerte bleiben Basis. Die Implementierung entspricht bereits dieser Entscheidung; keine Codeänderung erforderlich. Die Auswahl ist keine Live-Abnahme-Markierung.
+
+Topic-Suffixe werden unter `homie/<konfigurierte Homie-ID>/` veröffentlicht. Die IDs bleiben als Referenz für spätere Änderungswünsche erhalten.
+
+### inverter1 – Tripower
+
+- [x] T01 – `measurements/type` – Gerätetyp
+- [x] T02 – `measurements/maxpower` – Nennwirkleistung WMaxOutRtg (W)
+- [x] T03 – `measurements/setmaxpower` – Eingestellte Wirkleistungsgrenze (W)
+- [ ] T04 – `measurements/frequency` – Netzfrequenz (Hz)
+- [ ] T05 – `measurements/currentl1` – Netzstrom Phase L1 (A)
+- [ ] T06 – `measurements/currentl2` – Netzstrom Phase L2 (A)
+- [ ] T07 – `measurements/currentl3` – Netzstrom Phase L3 (A)
+
+### inverter2 – Storage
+
+- [x] T08 – `measurements/type` – Gerätetyp
+- [x] T09 – `measurements/maxpower` – Nennwirkleistung WMaxOutRtg (W)
+- [x] T10 – `measurements/setmaxpower` – Eingestellte Wirkleistungsgrenze (W)
+- [ ] T11 – `measurements/frequency` – Netzfrequenz (Hz)
+- [ ] T12 – `measurements/currentl1` – Netzstrom Phase L1 (A)
+- [ ] T13 – `measurements/activepower` – Leistung (W)
+- [ ] T14 – `measurements/batterycurrent` – Batteriestrom (A)
+- [ ] T15 – `measurements/batteryvoltage` – Batteriespannung (V)
+
+### inverter3 – Sunny Boy
+
+- [ ] T16 – `measurements/powerl2` – Leistung Phase L2 (W)
+- [ ] T17 – `measurements/voltg2` – Netzspannung Phase L2 (V)
+- [ ] T18 – `measurements/currentl2` – Netzstrom Phase L2 (A)
+- [ ] T19 – `measurements/powerl3` – Leistung Phase L3 (W)
+- [ ] T20 – `measurements/voltg3` – Netzspannung Phase L3 (V)
+- [ ] T21 – `measurements/currentl3` – Netzstrom Phase L3 (A)
+- [ ] T22 – `measurements/frequency` – Netzfrequenz (Hz)
+
+### Wallbox
+
+- [ ] T23 – `measurements/powerl1` – Leistung Phase L1 (W)
+- [ ] T24 – `measurements/powerl2` – Leistung Phase L2 (W)
+- [ ] T25 – `measurements/powerl3` – Leistung Phase L3 (W)

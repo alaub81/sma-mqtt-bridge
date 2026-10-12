@@ -1,6 +1,6 @@
 # Current validation and acceptance
 
-Updated: **2026-10-11**. This is the current status reference. Historical checkpoints
+Updated: **2026-10-12**. This is the current status reference. Historical checkpoints
 and detailed investigation evidence remain in the [archive](archive/README.md).
 A user-reported result is identified separately from a direct observation or an
 automated test. Full production acceptance and openHAB migration remain open.
@@ -10,7 +10,7 @@ automated test. Full production acceptance and openHAB migration remain open.
 The documentation/widget cleanup preserved the bridge runtime and device configuration.
 The subsequent API fix changes confirmation and unit checks; it does not activate
 adapters or command gates.
-The current offline suite contains **203 tests**. Repository lint covers all public
+The current offline suite contains **217 tests**. Repository lint covers all public
 tracked and non-ignored files, including generated widget parity. Compose parity
 checks both standalone files and deployment overrides. Final cleanup results are
 recorded in [todo.md](../todo.md#2026-10-11--dokumente-und-widgetquellen-aufgeräumt).
@@ -565,3 +565,34 @@ from the extended bridge. New MQTT/openHAB/physical acceptance remains pending.
 Full validation passed: all 217 offline tests, complete lint over 124 project files,
 separate Compose parity with overrides, and `git diff --check`. No live write,
 broker publication or physical charging experiment was used for this change.
+
+## Complete live Home Manager NSD read check, 2026-10-12
+
+Following user-requested commit `1828a35`, the explicitly enabled local Home Manager
+completed one identity-gated, paced FC04 session. All sixteen Unit 1/2 properties
+were valid (including three zeros); all 245 assignment slots were read. Three
+assigned units received all sixteen delegated reads each: register 30233 was valid
+for each, and the other 45 observations were SMA NaN. No exceptions, transport
+failures, missing enum mappings or untested in-scope properties occurred.
+
+[Full evidence](HOME_MANAGER_AVAILABILITY_2026-10-12.md) and its public CSV omit
+installation identities and raw values. No write, Grid Guard login, MQTT connection,
+profile/group change or openHAB migration was performed. Full MQTT/history/outage
+acceptance and the reason for delegated NaN remain separate outstanding work.
+
+Validation: all 217 offline tests and the complete lint check over 126 project
+files passed; `git diff --check` passed. The status matrix has 64 unique unit/register
+observations and the topic-choice list has 25 unique device/topic entries.
+
+## Pre-deployment build and verification, 2026-10-12
+
+The local `sma-mqtt-bridge:dev` image built successfully using the existing pinned
+Python base. All 217 offline tests passed both on the host and inside the local
+container with networking disabled. Container default configuration validation
+passed with zero enabled sources. UID 10001 and the absence of pip/ensurepip were
+verified. Complete repository lint and standalone Compose parity passed.
+The user clarified that deployment should use a GitHub tag-triggered release,
+not this local image. Target-platform builds and scans remain the release workflow's
+responsibility; these local checks do not prove target-host live publication.
+The [deployment checklist](MAC_TEST.md#accept-the-2026-10-12-topic-extension)
+records the remaining installation checks.

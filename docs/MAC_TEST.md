@@ -96,3 +96,52 @@ negative values, maps, private offsets, calculations, UI and persistence. Use th
 [MainUI guide](../openHAB/openHAB.md) and actual existing Items. Preserve historical
 series and local day/DST behavior. Neither Homie discovery nor a successful Mac read
 establishes complete openHAB migration or Raspberry Pi acceptance.
+
+## Accept the 2026-10-12 topic extension
+
+Preserve `smab.env`, host profile overrides and the existing state volume. If using
+custom profile files, compare them with the updated bundled mappings before
+deploying; an old override can hide the additions. For the requested GitHub
+release, wait for the tag-triggered workflow to pass, then select
+`SMAB_BRIDGE_VERSION=0.3.3`, pull and recreate using the example Compose file.
+Preserve the existing Compose project name so the state volume remains the same.
+A local commit alone does not update the GHCR image.
+
+- [ ] Validate the actual deployment configuration with `--check-config` before
+  starting normal polling. Confirm expected enabled sources and profile IDs.
+- [ ] Container becomes healthy; enabled sources and MQTT recover without restart
+  loops, identity failures, decoding errors or new recurring connection errors.
+- [ ] All 25 new properties in the [approved selection](../todo.md#auswahl-der-25-neu-ergänzten-topics)
+  have expected discovery metadata when their group is enabled. Inverter1/2
+  `type`, `maxpower`, `setmaxpower` require the respective advanced flag; the
+  other 19 are basic. Every new property has `$settable=false`.
+- [ ] During PV production, compare inverter frequency (Hz), Tripower phase
+  currents (A), Sunny Boy L3 power/voltage/current (W/V/A), and inverter1/2 type
+  and power limits (raw model code/W) against aligned device observations.
+  Preserve existing Sunny Boy L1 IDs and history; do not relabel them as L3.
+  Sunny Boy L2 metadata without a value is expected from the observed SMA NaN.
+- [ ] While the battery operates, compare Storage AC active power (W), L1 current
+  (A), battery current (A) and voltage (V). Preserve valid zero and signed values;
+  do not infer charging direction from an unverified sign convention.
+- [ ] During vehicle charging, compare wallbox `powerl1`/`powerl2`/`powerl3` in W
+  with local observations. Check plausible magnitudes without a factor-of-1000
+  error. Existing total power remains independently sourced; timing differences
+  can affect comparison with the phase sum.
+- [ ] Home Manager core properties update. With advanced inventory enabled,
+  compare assigned devices and available `permanentpowerlimit` observations.
+  The live check found three assigned devices, each with register 30233 valid;
+  the other 45 delegated observations were SMA NaN, not zero-valued sensors.
+- [ ] Invalid/missing readings do not publish literal NaN or fabricated zero.
+  Last retained valid values may remain; distinguish fresh updates from retained
+  observations and check source availability separately.
+- [ ] In openHAB, verify discovery of the new Homie properties, link any desired
+  new Items with correct units, and compare fresh updates. Preserve old Item
+  names, links, rules, offsets and persistence. Follow the
+  [official Homie binding documentation](https://www.openhab.org/addons/bindings/homie/).
+- [ ] A controlled service restart preserves state/history, resumes publication
+  and sends no unsolicited device commands. Observe overnight sleep and morning
+  wake-up separately; abrupt failures and broker/host reboot remain broader
+  operational acceptance tasks.
+
+Record observations, timestamp and any mismatches in the acceptance matrix. This
+read-only checklist does not require exercising setters or changing device parameters.

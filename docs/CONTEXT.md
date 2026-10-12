@@ -150,3 +150,11 @@ both PV inverters produce. Then choose useful Smart Home properties together.
 Exclude missing values from the initial candidate set while preserving the tested
 operating-state evidence; valid zero is available, and transport failure is not
 proof of unsupported registers. Agree channel groups after this selection.
+
+## New topic classification approved, 2026-10-12
+
+Andreas approved the classification of the 25 newly added properties listed in
+[todo.md](../todo.md): the six inverter1/inverter2 device-type and power-limit
+properties remain advanced; the other 19 measurement properties remain basic.
+The implementation already matches this selection. All 25 remain read-only;
+classification approval is separate from live MQTT and openHAB acceptance.

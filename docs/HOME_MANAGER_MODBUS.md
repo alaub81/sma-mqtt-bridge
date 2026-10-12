@@ -94,3 +94,11 @@ readings while skipping Unit 1 metadata polling, the assignment table and all de
 parameters. Mandatory Unit 1 identity verification still runs when a connection is established.
 `SMAB_HOME_MANAGER_DIAGNOSTICS_ENABLED=false` separately removes MQTT source diagnostics and the
 rejected-block counter. Both defaults are `true`; see [configuration](CONFIGURATION.md#optional-channel-groups).
+
+## Subsequent complete live read check, 2026-10-12
+
+The [one-shot availability check](HOME_MANAGER_AVAILABILITY_2026-10-12.md) now supplies
+live identity, all fixed property, complete assignment-table and delegated-read
+evidence. All fixed properties were valid; only delegated 30233 returned values in
+the three occupied slots, while fifteen other parameters per slot returned NaN.
+This updates read availability evidence, not full MQTT/openHAB/operational acceptance.
