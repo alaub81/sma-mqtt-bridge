@@ -1,6 +1,6 @@
 name: Release (build & push)
 
-# Prepared for a later authorized publication milestone; no scheduled releases.
+# Stable tag pushes publish validated GHCR images; no scheduled releases.
 'on':
   push:
     tags: ['v*.*.*']
