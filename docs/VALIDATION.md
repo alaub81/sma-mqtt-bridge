@@ -681,3 +681,21 @@ simulated 0.9.39 mismatch returned exit code 1 with an update instruction.
 Full repository lint (127 files) and all 221 offline tests passed after updating
 the local environment. Tests used local loopback servers outside the sandbox.
 Hosted CI verification remains pending.
+
+## Full DEV MQTT acceptance, 2026-10-12
+
+Direct read-only MQTT Explorer inspection covered all 268 advertised properties
+of the five user-selected DEV adapters, with Advanced and Diagnostics available.
+All had required metadata; datatype/enum/unit checks passed, with 205 payloads
+and 63 explained or tracked absences. All five devices and all read sources were
+ready; read failure/timeout/outage/missing-critical counters and Home Manager
+rejected-block count were zero. All 39 recently added channels were present:
+36 with values, three Sunny Boy L2 additions with metadata only.
+The new type/limits, time counters, Storage energy, derating and DC A/B labels
+therefore have direct DEV publication evidence. A fresh Explorer reconnect
+confirmed sampled legacy paths absent and operating counters progressed.
+
+[Complete scope, counts and limitations](MQTT_DEV_VALIDATION_2026-10-12.md) distinguish
+expected phase/delegated NaN, wallbox availability filtering and unused command
+results. Commands were not sent. Production/openHAB continuity, independent SMA
+counter comparison, charging under load and outage/reboot acceptance remain open.
