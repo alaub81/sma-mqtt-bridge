@@ -82,6 +82,41 @@
       "start": 34113,
       "count": 2,
       "intervalSeconds": 120.0
+    },
+    {
+      "id": "grid-frequency",
+      "function": 4,
+      "start": 30803,
+      "count": 2,
+      "intervalSeconds": 5.0
+    },
+    {
+      "id": "phase-currents",
+      "function": 4,
+      "start": 30977,
+      "count": 2,
+      "intervalSeconds": 5.0
+    },
+    {
+      "id": "ac-power",
+      "function": 4,
+      "start": 30775,
+      "count": 2,
+      "intervalSeconds": 5.0
+    },
+    {
+      "id": "battery-current",
+      "function": 4,
+      "start": 30843,
+      "count": 2,
+      "intervalSeconds": 5.0
+    },
+    {
+      "id": "battery-voltage",
+      "function": 4,
+      "start": 30851,
+      "count": 2,
+      "intervalSeconds": 5.0
     }
   ],
   "properties": [
@@ -330,6 +365,146 @@
         4294967295
       ],
       "datatype": "integer"
+    },
+    {
+      "id": "type",
+      "node": "measurements",
+      "name": "Device type",
+      "poller": "identity",
+      "offset": 0,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295,
+        16777213
+      ],
+      "datatype": "integer",
+      "channelGroup": "advanced"
+    },
+    {
+      "id": "max-power",
+      "node": "measurements",
+      "name": "Rated active power WMaxOutRtg",
+      "poller": "sma-status",
+      "offset": 30,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer",
+      "channelGroup": "advanced"
+    },
+    {
+      "id": "set-max-power",
+      "node": "measurements",
+      "name": "Set active power limit",
+      "poller": "sma-status",
+      "offset": 32,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "integer",
+      "channelGroup": "advanced"
+    },
+    {
+      "id": "frequency",
+      "node": "measurements",
+      "name": "Grid frequency",
+      "poller": "grid-frequency",
+      "offset": 0,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.01,
+      "unit": "Hz",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "float"
+    },
+    {
+      "id": "current-l1",
+      "node": "measurements",
+      "name": "Grid current phase L1",
+      "poller": "phase-currents",
+      "offset": 0,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.001,
+      "unit": "A",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "float"
+    },
+    {
+      "id": "active-power",
+      "node": "measurements",
+      "name": "Power",
+      "poller": "ac-power",
+      "offset": 0,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "integer"
+    },
+    {
+      "id": "battery-current",
+      "node": "measurements",
+      "name": "Battery current",
+      "poller": "battery-current",
+      "offset": 0,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.001,
+      "unit": "A",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "float"
+    },
+    {
+      "id": "battery-voltage",
+      "node": "measurements",
+      "name": "Battery voltage",
+      "poller": "battery-voltage",
+      "offset": 0,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.01,
+      "unit": "V",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "float"
     },
     {
       "id": "internal-temperature",
