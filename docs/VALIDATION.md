@@ -10,7 +10,7 @@ automated test. Full production acceptance and openHAB migration remain open.
 The documentation/widget cleanup preserved the bridge runtime and device configuration.
 The subsequent API fix changes confirmation and unit checks; it does not activate
 adapters or command gates.
-The current offline suite contains **217 tests**. Repository lint covers all public
+The current offline suite contains **221 tests**. Repository lint covers all public
 tracked and non-ignored files, including generated widget parity. Compose parity
 checks both standalone files and deployment overrides. Final cleanup results are
 recorded in [todo.md](../todo.md#2026-10-11--dokumente-und-widgetquellen-aufgeräumt).
@@ -612,3 +612,61 @@ sandbox. Installation and iPhone rendering acceptance remain pending.
 The user requested both documented MPP inputs. Input B is now mapped as three basic read-only properties; the earlier production scan found valid zeros. Existing expansion regressions cover register addresses, FC04 intervals, scales, zero, S32 NaN and read-only discovery with advanced channels disabled. Live MQTT/openHAB acceptance remains pending; v0.3.3 predates this addition.
 
 Validation after the addition: all 217 offline tests, full repository lint over 126 files, Compose parity and `git diff --check` passed.
+
+## MQTT Explorer verification of v0.3.4 additions, 2026-10-12
+
+Andreas reported v0.3.4 deployed and healthy. Direct read-only inspection of the
+connected MQTT Explorer around 16:51–16:55 Europe/Berlin checked the 28 additions
+(T01–T28) against advertised Homie properties and expanded metadata. All three
+inverters and the eCharger advertised ready. No message was published, deleted or
+changed; no configuration or device setting was modified.
+
+| Group | New basic properties checked | Observation |
+| --- | ---: | --- |
+| Tripower | 4 | Frequency and all three phase currents have numeric payloads and expected Hz/A metadata. |
+| Storage | 5 | Frequency, L1 current, AC active power, battery current and voltage have numeric payloads; signed values preserved. |
+| Sunny Boy | 10 | L3 power/voltage/current, frequency and DC input B have numeric payloads; the three L2 properties have correct metadata without measurement payloads. DC input B is valid zero. |
+| eCharger | 3 | All three phase powers have float/W metadata and numeric payloads, with message history. Idle small negative readings are preserved. |
+
+All 22 basic properties have expected datatype/unit metadata, `$retained=true`
+and `$settable=false`. Nineteen have numeric payloads; the remaining three are
+expected unavailable Sunny Boy L2 channels. No literal NaN was visible among these
+properties. The six advanced inverter1/2 type/power-limit properties are absent
+from advertised property lists. Andreas confirmed both deployed advanced flags
+are disabled, so this absence is expected. Publication with the advanced group
+enabled remains unverified.
+
+Variable inverter readings changed during observation; retained values alone do
+not prove source freshness or restart behavior. Wallbox total power was zero and
+vehicle status waiting, so phase scaling under actual charging remains unaccepted.
+No aligned independent SMA or openHAB measurement comparison was performed.
+DC input A/B display names are identical despite distinct topic IDs; clarifying
+those labels is a separate follow-up. Public evidence omits private device IDs,
+addresses, raw telemetry and command history.
+
+## DC input display labels clarified, 2026-10-12
+
+Sunny Boy and Tripower now distinguish DC current/voltage/power input A and B
+in profile names and English/German display dictionaries. All other profile
+fields compare identically with the pre-change definitions; topic IDs, units,
+registers, sentinels and polling remain unchanged. Generic translation keys remain
+for custom profiles. Deployment and live `$name` refresh are pending; custom host
+profile/translation overrides may need equivalent label changes.
+
+Validation: all 217 offline tests, full lint over 126 files and `git diff --check` passed. Before/after discovery comparisons for both models in English and German changed only the six DC `$name` payloads per device, with an identical topic set.
+
+## Selected inverter counters and derating implementation, 2026-10-12
+
+Eleven optional read-only properties are implemented from the model lists and
+existing production scan. Units and model-specific enums are documented in
+[register evidence](REGISTER_VALIDATION.md#selected-counters-and-derating-extension-2026-10-12).
+Four regression tests cover U64 word order/precision above 2^53, seconds, Wh-to-kWh
+scaling without the legacy yield override, zero and sentinels, unknown/model-scoped
+enum values, channel filtering, read-only discovery and optional readiness.
+Existing profile properties and pollers compare unchanged from the pre-extension
+working state. These additions are not deployed; direct device-GUI counter
+comparison, MQTT publication and openHAB acceptance remain pending.
+
+Final checks passed: all 221 offline tests, complete repository lint over 127 files, standalone Compose parity and `git diff --check`. No live device or broker action was performed for this extension.
+
+Andreas confirmed the channel groups: battery energy Basic, operating/feed-in times Advanced, and derating Diagnostics. The implementation already matches the approved selection.

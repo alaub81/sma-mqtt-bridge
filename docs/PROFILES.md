@@ -109,3 +109,14 @@ measurements use the basic default. See the
 for addresses, units, intervals, source evidence and acceptance limits.
 No new configuration switch or setter is introduced; host override precedence,
 explicit interval overrides and required status-based readiness remain unchanged.
+
+## Selected counter and diagnostic properties
+
+The three bundled inverter profiles add advanced `operating-time` and
+`feed-in-time` measurements in seconds, plus diagnostics `derating-reason`.
+The Storage profile adds basic `battery-charge-energy` and
+`battery-discharge-energy` in kWh (source Wh divided by 1000). Existing yield and
+status blocks retain their intervals; Storage energy uses a separate 60-second
+eight-register FC04 block. All properties are optional, read-only and group
+filtered. Host profile overrides must incorporate the mappings explicitly. See
+[register evidence](REGISTER_VALIDATION.md#selected-counters-and-derating-extension-2026-10-12).

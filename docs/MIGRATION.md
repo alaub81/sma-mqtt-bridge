@@ -244,3 +244,14 @@ and new Item links separately. No running bridge or openHAB instance was changed
 ## Sunny Boy DC input B addition, 2026-10-12
 
 Three additional basic read-only properties publish as `measurements/currentbinput` (A), `voltagebinput` (V), `powerbinput` (W). Input A IDs and history remain unchanged. Valid zero is published; missing or SMA-NaN observations preserve last valid retained values. These properties are added after v0.3.3 and need a subsequent deployment for live acceptance.
+
+## Selected counters and derating channels, 2026-10-12
+
+New additive topics are `measurements/operatingtime` and `feedintime` (integer s,
+Advanced) plus `diagnostics/deratingreason` (enum, Diagnostics) on all three
+inverters, and `measurements/batterychargeenergy`/`batterydischargeenergy` (float
+kWh, Basic) on Storage. Published IDs are compact; internal profile IDs retain
+hyphens. Existing Items, yield counters, offsets and history are unchanged.
+For new Item links use the published units and preserve signed/invalid semantics
+of other properties. Device-GUI counter-growth/reset and live MQTT/openHAB
+acceptance remain separate steps; no deployed configuration was modified.

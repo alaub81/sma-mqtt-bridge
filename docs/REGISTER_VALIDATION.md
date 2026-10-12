@@ -169,3 +169,42 @@ The complete profiles now contain 63 measurement properties plus nine identities
 ## Sunny Boy DC input B extension, 2026-10-12
 
 The SB4.0-1AV-41 V16 list maps input B current/voltage/power to 30957/30959/30961 (S32, FIX3/FIX2/FIX0, A/V/W). The availability scan returned valid zero for all three. The profile now adds basic read-only `current-b-input`, `voltage-b-input`, `power-b-input` with scales 0.001/0.01/1 and SMA S32 sentinel -2147483648. A new six-register FC04 block polls every five seconds; existing blocks and input A properties are unchanged. These optional values do not gate readiness. Two independent MPP inputs are confirmed by the [official specification](https://manuals.sma.de/SBxx-1AV-41/de-DE/4177679243.html); installed string wiring remains unknown. Live publication remains pending.
+
+## Selected counters and derating extension, 2026-10-12
+
+The previously verified model-specific lists and production scan support eleven
+additional read-only properties. Existing mappings, counters, labels and poller
+intervals are preserved.
+
+| Models | Published property | Register | Source / published unit | Group |
+| --- | --- | ---: | --- | --- |
+| All three | measurements/operatingtime | 30521 | U64 seconds, scale 1, integer s | Advanced |
+| All three | measurements/feedintime | 30525 | U64 seconds, scale 1, integer s | Advanced |
+| All three | diagnostics/deratingreason | 30219 | U32 TAGLIST, model-specific enum | Diagnostics |
+| Storage only | measurements/batterychargeenergy | 31397 | U64 FIX0 Wh / float kWh, scale 0.001 | Basic |
+| Storage only | measurements/batterydischargeenergy | 31401 | U64 FIX0 Wh / float kWh, scale 0.001 | Basic |
+
+Storage V13 and Sunny Boy V16 explicitly specify seconds for both duration
+registers. Tripower V13 omits the unit; the corresponding U64 duration addresses
+in the official SMA_Modbus-de-en_V25 ZIP, SMA_Modbus-TI-en-31.xlsx, explicitly
+specify s. Duration format alone would not prove seconds. Storage V13 explicitly
+specifies Wh for both battery energy registers; the installation kWh override for
+30531/30537 is not applied to these distinct addresses. Existing scan evidence
+proves readability, not an aligned counter comparison with the device GUI.
+
+The duration properties share the existing yield block, at its unchanged 180 s
+Tripower/Storage and 60 s Sunny Boy intervals. Derating shares the existing status
+block, at its unchanged 60/60/20 s intervals. Only Storage gains one FC04 block,
+31397 with eight registers every 60 seconds.
+
+All U64 properties reject 0xffffffffffffffff and preserve valid zero. Derating
+rejects both 0xffffffff and status-NaN 0x00fffffd; unknown codes remain unavailable.
+All three models map 557/884/1705/3520. Only Tripower additionally maps
+3554/3556/4560/4561 from its own V13 list. No cross-model enum inheritance or
+unavailable event-register fallback is used. The published enum strings preserve
+SMA mnemonics and do not change with UI language, matching existing status values.
+
+These properties are optional for readiness and expose no setter. Do not infer
+daily/session/lifetime reset behavior, battery efficiency or a physical charging
+scenario from the new counters without aligned observations. Live publication
+and counter-growth comparisons remain pending.

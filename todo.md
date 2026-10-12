@@ -22,10 +22,10 @@ Die vollständigen Einzelbefunde stehen in [der Ergebnismatrix](docs/modbus-avai
 - [x] M02 – Typ-/Leistungsgrenzen für inverter1/2 umgesetzt: Rohmodellcode 30053, RO-Leistungsgrenzen 30231/30233, gleiche IDs/Labels/Advanced-Konvention wie Sunny Boy. Bestehende Identity-/Statusblöcke verwendet; keine Setter.
 - [x] M03 – Kleine AC-Auswahl umgesetzt: Netzfrequenz aller drei Wechselrichter, Ströme Tripower L1/L2/L3 und Storage L1; Sunny Boy L2/L3 bereits in M01 ergänzt. Neue Messwerte mit bestehendem Basic-Default, fünf Sekunden für neue kleine Pollblöcke. Zusätzliche Tripower-/Storage-Phasenspannung/-leistung war nicht Teil dieses Auftrags und bleibt eine mögliche spätere Auswahl.
 - [x] M04 – Storage signed AC-Gesamtleistung, Batteriestrom und Batteriespannung 30775/30843/30851 ergänzt. Vorzeichen unverändert erhalten, keine Ladezustandsableitung aus dem Vorzeichen. Bestehende Batteriemessungen und langsame Poller unverändert.
-- [ ] M05 – Batterie-Lade-/Entladeenergie aus 31397/31401 separat prüfen: beide U64-Zähler am Storage lesbar, Quelle Wh. Gegen bestehende Gerätezähler/Verlauf auf Einheit, Skalierung und Zählumfang abgleichen; kWh-Sonderfall der alten 30531/30537 nicht übertragen. Erst nach dieser Prüfung neue Energie-Topics hinzufügen.
+- [x] M05 – Storage-Energiezähler 31397/31401 nach ausdrücklichem Umsetzungsauftrag ergänzt: U64/FIX0, Herstellerquelle Wh, Veröffentlichung kWh mit Faktor 0.001. Gültige 0 erhalten; alter 30531/30537-kWh-Sonderfall nicht übertragen. Direkter GUI-/Verlaufsvergleich, Reset-/Zählumfang und neue MQTT-/openHAB-Abnahme bleiben separat offen.
 - [ ] M06 – Scheinleistung und Leistungsfaktor nach Nutzen auswählen: 30813 sowie Varianten 30949/31221 verfügbar. Unterschiedliche PF-Konventionen klären und nur eine passende Darstellung wählen. Blindleistung modell-/phasengenau prüfen; Tripower 31497 verfügbar, Storage/Sunny Boy 30805 NaN, keine unbelegte Ersatzzuordnung.
-- [ ] M07 – Alternative Ertragszähler 30513/30517 und Betriebs-/Einspeisedauern 30521/30525 bewerten. Units/Genauigkeit/32-/64-Bit-Alternativen prüfen; bestehende ganze-kWh-Topics und Historie erhalten. Nicht jede Darstellung als eigenen Standardkanal veröffentlichen.
-- [ ] M08 – Derating und Ereignisinformationen für spätere Advanced-/Diagnostics-Auswahl prüfen: 30219 liefert Werte, 30247 derzeit NaN. Enums belegen; ereignisabhängige NaN nicht als dauerhaft ununterstützt behaupten. Keine Fehler absichtlich erzeugen.
+- [ ] M07 – Betriebs-/Einspeisedauern 30521/30525 am 12.10.2026 als U64-Sekunden/Advanced umgesetzt; MQTT-/openHAB-Abnahme offen. Alternative Ertragszähler 30513/30517 und 32-Bit-Zeitdopplungen weiterhin nur nach Nutzen bewerten; bestehende ganze-kWh-Topics und Historie erhalten.
+- [ ] M08 – Derating-Grund 30219 am 12.10.2026 als modellgenauer Diagnostics-Enum umgesetzt, NaN/Unbekannt bleibt unveröffentlicht. Ereignisregister 30247 weiterhin wegen NaN aus erster Auswahl ausgeschlossen; spätere natürliche Ereignisbeobachtung möglich. Live-Abnahme offen, keine Fehler absichtlich erzeugen.
 - [x] M09 – Sunny-Boy-DC-Eingang B auf Andreas’ Wunsch ergänzt: Strom/Spannung/Leistung als Basis, read-only, FC04 30957/30959/30961 alle 5 s. Scan lieferte gültige 0; tatsächliche Stringbelegung bleibt offen. MQTT-/openHAB-Abnahme der Ergänzung ausstehend.
 - [ ] M10 – Ausschlussliste bewahren: 433 NaN und zwei nicht dekodierbare Storage-BMS-Strings bleiben aus der ersten Kandidatenliste ausgeschlossen. Bei Bedarf später gezielt unter natürlichen Lade-/Entlade-/Ereigniszuständen prüfen; kein erneuter Vollscan automatisch geplant. Identitäts-/Netzwerkwerte, Konfigurationsbeobachtungen und Dopplungen gemeinsam nach Nutzen behandeln; aus RO/RW/WO keine automatische Schreibfreigabe ableiten.
 
@@ -463,3 +463,27 @@ Topic-Suffixe werden unter `homie/<konfigurierte Homie-ID>/` veröffentlicht. Di
 - Prüfung nach Ergänzung: alle 217 Offline-Tests, vollständiger Linter über 126 Dateien, Compose-Parität und git diff --check bestanden.
 
 - Andreas beauftragt Commit, neuen Release-Tag v0.3.4 und Push. Der Tag umfasst die DC-B-Ergänzung sowie den bereits committeten aktuellen Projektstand; Build/Scans/Publikation erfolgen im vorhandenen GitHub-Release-Workflow.
+
+## 2026-10-12 – Neue Topics in MQTT Explorer geprüft
+
+- Andreas meldet v0.3.4 online/healthy. Direkte rein lesende UI-Prüfung der 28 Ergänzungen: alle 22 Basis-Kanäle angekündigt, Einheiten/Datentypen/read-only/retained-Metadaten korrekt. 19 Zahlenwerte, drei Sunny-Boy-L2-Kanäle erwartbar nur Metadaten. L3 aktualisiert sich; DC-B liefert gültige Nullen. Kein NaN-Payload sichtbar.
+- Sechs Advanced-Topics für Typ/Leistungsgrenzen bei inverter1/2 fehlen in den angekündigten Properties; passt zu deaktivierter Advanced-Gruppe. Andreas bestätigt beide Advanced-Schalter ausgeschaltet: Fehlen ist erwartbar, Frage gelöst. Keine Konfiguration geändert. Veröffentlichung bei aktiver Gruppe noch nicht geprüft.
+- Alle vier geprüften Geräte ready. Storage liefert auch vorzeichenbehaftete AC-/Batteriewerte. Wallbox-Phasenleistung float/W mit Zahlenwerten/History vorhanden, aktuell wartend ohne Ladeleistung: Skalierung unter Last weiterhin prüfen. MQTT-Beobachtung ersetzt keinen gleichzeitigen SMA-/openHAB-Vergleich oder vollständige Neustart-Abnahme.
+- Neue offene Beschriftungsfrage: DC-Eingang A/B haben derzeit gleiche Anzeigenamen; Topic-IDs eindeutig, sinnvoll wären phasenspezifische bzw. eingangsspezifische Beschriftungen. Keine Publish-/Delete-/Set-Aktion ausgeführt, private Rohwerte/IDs nicht in öffentliche Dokumentation übernommen.
+
+## 2026-10-12 – DC-Anzeigenamen A/B vereinheitlicht
+
+- Auf Andreas’ Freigabe Sunny Boy und Tripower mit eindeutigen DC-Strom-/Spannungs-/Leistungsnamen für Eingang A und B versehen. Deutsch: „DC-Strom Eingang A/B“, „DC-Spannung Eingang A/B“, „DC-Leistung Eingang A/B“; englische Profilnamen und Wörterbücher entsprechend ergänzt.
+- Gegenprüfung: ausschließlich sechs Namen je Profil geändert, alle anderen Profilfelder identisch. Topic-IDs, Werte, Einheiten, Register und Pollintervalle erhalten; keine neue Quelle oder Gerätekonfiguration. Generische Übersetzungen für bestehende eigene Profile bleiben verfügbar.
+- Neue Labels benötigen einen späteren Build/Deploy und frische Homie-$name-Metadaten; bei eigenen Profil-/Übersetzungsdateien entsprechend nachziehen. Live-Anzeige noch nicht geprüft.
+
+- Validierung: alle 217 Offline-Tests, kompletter Linter über 126 Dateien und git diff --check bestanden. Discovery-Vergleich beider Modelle in Deutsch/Englisch: gleiche Topic-Menge, ausschließlich sechs DC-$name-Werte je Gerät geändert.
+
+## 2026-10-12 – Weitere Kanäle umgesetzt
+
+- Andreas beauftragt die bisher vorgeschlagenen Batterieenergie-/Betriebszeit-/Diagnosekanäle. Elf read-only-Ergänzungen: Storage-Lade-/Entladeenergie kWh (Basis), Betriebs-/Einspeisezeit aller drei Geräte in s (Advanced), Derating-Grund aller drei Geräte als Enum (Diagnostics). Andreas bestätigt die Aufteilung: Energie Basis, Zeiten Advanced, Derating Diagnostics. Gruppenfrage gelöst; Implementierung entspricht der Entscheidung.
+- Quelle Energie Wh, Faktor 0.001; keine Übertragung des alten Storage-Ertrags-Sonderfalls. U64-Zero und Präzision erhalten, NaN nicht als Wert. Zeiten aus vorhandenen Yield-Blöcken, Derating aus vorhandenen Status-Blöcken; bestehende Intervalle/Mappings vollständig erhalten. Storage zusätzlich ein 8-Register-FC04-Block alle 60 s.
+- Modellgenaue Derating-Codes aus V13/V16, Status-NaN 16777213 und U32-NaN ausgefiltert, unbekannte Codes unverfügbar. Alle neuen Eigenschaften optional für Readiness; keine Setter, Gerätekonfiguration oder Live-Brokeränderung.
+- Gerätescan belegt Lesbarkeit; GUI-/Verlaufsvergleich von Energie/Zeiten einschließlich Reset-/Zählumfang und spätere MQTT-/openHAB-Abnahme offen. Alternativerträge, Schein-/Blindleistung und aktuell ungültige Ereignisregister bleiben außerhalb dieser Ergänzung.
+
+- Endprüfung: alle 221 Offline-Tests, vollständiger Linter über 127 Dateien, Compose-Parität und git diff --check bestanden. Neuer Umfang: zwei Energie-, sechs Zeit- und drei Derating-Kanäle; noch kein Commit/Tag/Deploy.
