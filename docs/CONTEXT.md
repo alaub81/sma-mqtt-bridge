@@ -74,6 +74,14 @@ separate public XML reader. Preserve source units and timestamps; static metadat
 alone does not prove a live channel exists. Unit evidence and its acceptance limits
 are linked from [VALIDATION.md](VALIDATION.md#unit-and-protocol-evidence).
 
+For locally observed periodically refreshed eCharger channels, carry device age
+into a monotonic observation time so parsing/processing cannot restart a complete
+freshness window. Session energy and other unresolved timestamp families keep
+separate existing policies until evidence establishes their semantics. Source
+readiness and retained last-known MQTT values remain distinct; see
+[the channel evidence](ECHARGER_TIMESTAMP_ANALYSIS_2026-10-12.md) and
+[the configured lifetime contract](CONFIGURATION.md#echarger-measurement-lifetime).
+
 Portal minimum PV is a preference. Its complementary allowed grid share is
 `100 - minPvPercentage`; neither is a measurement of current charging mix. Observed
 consumer-balance PV/battery/grid percentages describe period energy shares. A live

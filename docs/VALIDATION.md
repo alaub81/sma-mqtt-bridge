@@ -699,3 +699,50 @@ confirmed sampled legacy paths absent and operating counters progressed.
 expected phase/delegated NaN, wallbox availability filtering and unused command
 results. Commands were not sent. Production/openHAB continuity, independent SMA
 counter comparison, charging under load and outage/reboot acceptance remain open.
+
+## Retained eCharger timestamp analysis, 2026-10-12
+
+[Analysis and classification matrix](ECHARGER_TIMESTAMP_ANALYSIS_2026-10-12.md)
+cover 4,597 supplied records over approximately 3 h 20 min, including idle and
+two positive-power periods. Power, current, total energy, vehicle status and
+plant-control observations refresh timestamps with unchanged numeric values.
+Session energy freezes while idle and crosses the existing 180-second filter
+despite fresh surrounding measurements. Fixed old health/event/mode/authorization
+timestamps remain unresolved. Phase voltage is fresh but lacks constant-value
+pairs. Review 4 remains open; no runtime, installation or freshness policy changed.
+
+Analysis validation: all 29 matrix keys are unique; counts reconcile to all 4,597
+records. Full lint over 130 files, all 221 offline tests and `git diff --check`
+passed. The initial sandbox test run blocked four loopback socket binds; the
+approved rerun passed. Raw input files remain unchanged.
+
+## Scoped eCharger remaining-lifetime correction, 2026-10-12
+
+Selected channels now propagate monotonic observation times from reader parsing
+through SourceState: charging power, API phase currents, the API primary total
+charging-energy counter, vehicle-status text/code, and the three SEMP plant-control
+observations. The observation anchor subtracts accepted device age; subsequent
+processing time consumes remaining lifetime. Repeated cached timestamps preserve
+the deadline, while unchanged numbers with a new timestamp refresh it. Settings,
+unknown state semantics, session energy, voltage/phase power and alternate energy
+channels keep their existing behavior. No added HTTP request, environment option,
+write path or topic is introduced. Plain-dict Modbus/UDP/portal reads remain
+receipt-based. Per-property configured limits still apply.
+
+Four intended end-to-end regressions failed before the fix. Eleven added tests
+cover exact/near-limit age, zero, processing delay, partial updates, repeated
+cached stamps, equal values with a new stamp, aliases, control ages, invalid
+monotonic metadata, shorter property limits, scaled primary energy and conservative
+alternate fallback, SEMP filtering without settings, API/SEMP independence in both
+directions, and no retained measurement replay/deletion on expiry or restart.
+Existing malformed/future/conflicting timestamp, settings confirmation, command
+and uncertainty tests remain part of the full suite.
+
+No installation, broker or device action was performed. Deployment and openHAB
+source gating under actual expiry remain unaccepted. Review 4 is partly addressed,
+not closed: unresolved channel policies and installation acceptance remain open.
+
+Final validation passed: all 232 offline tests, complete lint over 130 project
+files, standalone Compose parity including overrides and `git diff --check`.
+Tests used synthetic loopback servers outside the sandbox; no installation
+endpoint was contacted.

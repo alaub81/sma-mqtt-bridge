@@ -216,6 +216,24 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 
 The option list is expandable as adapters are implemented; add settings, their defaults and validation here and in `smab.example.env` in the same change. Validate Homie IDs as lowercase letters, digits and internal hyphens; derive one MQTT connection/Last Will per advertised device. Command gates never override a missing allowlist, missing rights, invalid bounds or readback requirements. Do not expose an editable installer setting merely because its metadata is writable.
 
+### eCharger measurement lifetime
+
+The existing API/SEMP `STALE_SECONDS` limits also bound the total device age of
+verified periodically refreshed observations: charging power, API phase current,
+API primary total-energy counter, vehicle status (text and code), and the three
+SEMP plant-control setpoints. Device age is preserved through decoding; monotonic
+processing time consumes the remaining lifetime. Repeated receipt of the same
+device timestamp cannot rejuvenate these values. See the
+[channel evidence](ECHARGER_TIMESTAMP_ANALYSIS_2026-10-12.md).
+
+Phase voltage/power, alternative energy channels, session energy and unresolved
+health/event/mode/authorization observations retain the existing timestamp filter
+and receipt-based runtime lifetime pending their separate classification. Confirmed
+settings keep their separate readback contract. No new environment option is needed.
+Source readiness follows its required fresh properties; aggregate device readiness
+does not certify every source. Expiry preserves MQTT's last retained observation
+and does not publish a replacement zero or delete its topic.
+
 ### Temporary eCharger timestamp observation
 
 Set `SMAB_ECHARGER_TIMESTAMP_DIAGNOSTICS_ENABLED=true` in the private root

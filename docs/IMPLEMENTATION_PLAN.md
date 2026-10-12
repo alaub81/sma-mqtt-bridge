@@ -14,11 +14,14 @@ The API confirmation/unit, integer-payload, node-metadata, MQTT future and CLI f
 offline; see the acceptance matrix.
 The remaining review findings are:
 
-1. Classify eCharger timestamps per channel and transport before changing freshness.
-   Then preserve remaining lifetime for verified acquisition timestamps instead of
-   restarting a full lifetime on receipt. Do not assume that old state/counter
-   timestamps prove invalid observations. Follow the targeted tests and observation
-   criteria in [the freshness investigation](VALIDATION.md#measurement-freshness-investigation-2026-10-11).
+1. Accept the scoped eCharger remaining-lifetime correction on the installation.
+   Periodically refreshed channels now retain device age through processing;
+   see [the implementation evidence](VALIDATION.md#scoped-echarger-remaining-lifetime-correction-2026-10-12).
+   Classify the remaining phase-voltage/power, alternate-counter and fixed old
+   state channels independently. Agree session-energy idle authority and reset
+   semantics before changing that filter. Review 4 remains partially open.
+   Follow the targeted observation/UI criteria in
+   [the freshness investigation](VALIDATION.md#measurement-freshness-investigation-2026-10-11).
 
 Run complete lint, offline tests and Compose parity. Record evidence and unresolved
 limits in the acceptance matrix. Green tests alone do not close a proven review gap.

@@ -10,7 +10,7 @@ from types import MappingProxyType
 
 from ..config import echarger_ssl_context
 from ..errors import AuthenticationError, ProtocolError
-from ..model import Property, number
+from ..model import Property, SampleValues, number
 from .http import HTTP
 
 NS = "http://www.sma.de/communication/schema/SEMP/v1"
@@ -167,6 +167,47 @@ SEMP_EXTRA = (
 ADVANCED_BASE_KEYS = {"measurements/vehicle-status-code", "parameters/nameplate-pkgrev"}
 
 
+# Only channels observed refreshing timestamps with unchanged numeric values.
+# Session energy, voltage, phase power and unresolved states retain their old policy.
+REFRESHED_CHANNELS = frozenset(
+    {
+        "Measurement.Metering.GridMs.TotWIn.ChaSta",
+        "Measurement.Metering.GridMs.TotWhIn.ChaSta",
+        "Measurement.Operation.EVeh.ChaStt",
+        "Setpoint.PlantControl.PCC.ChrgActCnt",
+        "Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMaxNom",
+        "Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMinNom",
+    }
+    | {f"Measurement.GridMs.A.phs{phase}" for phase in "ABC"}
+)
+BASE_TIMED_CHANNELS = {
+    "measurements/power": "Measurement.Metering.GridMs.TotWIn.ChaSta",
+    "measurements/vehicle-status": "Measurement.Operation.EVeh.ChaStt",
+    "measurements/vehicle-status-code": "Measurement.Operation.EVeh.ChaStt",
+}
+
+
+def observation_time(channel, value, timestamp, stale_seconds, now, monotonic):
+    """Anchor accepted device age to a monotonic clock before further processing."""
+    if channel not in REFRESHED_CHANNELS or value is None:
+        return None
+    if current_measurement(value, timestamp, stale_seconds, now) is None:
+        return None
+    measured = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+    return monotonic - (now - measured).total_seconds()
+
+
+def timed_values(values, channel_times, channels):
+    return SampleValues(
+        values,
+        {
+            key: channel_times[channel]
+            for key, channel in channels.items()
+            if key in values and values[key] is not None and channel in channel_times
+        },
+    )
+
+
 def base_properties(advanced):
     return tuple(p for p in BASE if advanced or p.key not in ADVANCED_BASE_KEYS)
 
@@ -312,7 +353,8 @@ def semp_values(
     text, stale_seconds, now=None, advanced=True, diagnostics=True, timestamp_observer=None
 ):
     root = xml_root(text)
-    catalog = {}
+    catalog, channel_times = {}, {}
+    monotonic = time.monotonic()
     now = datetime.now(timezone.utc) if now is None else now
     for p in root.findall(f"{{{NS}}}Parameters/{{{NS}}}Parameter"):
         channel = p.findtext(f"{{{NS}}}channelId")
@@ -324,6 +366,9 @@ def semp_values(
             if timestamp_observer is not None:
                 timestamp_observer.observe("semp", channel, raw, stamp, stale_seconds, now)
             raw = current_measurement(raw, stamp, stale_seconds, now)
+            observed = observation_time(channel, raw, stamp, stale_seconds, now, monotonic)
+            if observed is not None:
+                channel_times[channel] = observed
         catalog[channel] = raw
     result = base_values(catalog, advanced)
     # SEMP has no API confirmation/unit metadata; preserve its known raw-parameter contract.
@@ -334,7 +379,10 @@ def semp_values(
             for node, id, channel in extra_channels(advanced, diagnostics)
         }
     )
-    return result
+    channels = BASE_TIMED_CHANNELS | {
+        node + "/" + id: channel for node, id, channel in extra_channels(advanced, diagnostics)
+    }
+    return timed_values(result, channel_times, channels)
 
 
 class SempReader:
@@ -383,7 +431,9 @@ class SempReader:
             timestamp_observer=self.timestamp_observer,
         )
         if not self.include_settings:
-            values = {k: v for k, v in values.items() if not k.startswith("settings/")}
+            for key in tuple(values):
+                if key.startswith("settings/"):
+                    del values[key]
         return values
 
     async def close(self):
@@ -482,7 +532,8 @@ class EChargerReader:
                 )
                 if not isinstance(live, list):
                     raise ProtocolError("Unexpected live-measurement response")
-                values, phase_power_units = {}, {}
+                values, phase_power_units, channel_times = {}, {}, {}
+                property_channels = {}
                 for m in live:
                     if (
                         not isinstance(m, dict)
@@ -507,10 +558,21 @@ class EChargerReader:
                         and entry["timestamp"] != entry["time"]
                     ):
                         raise ProtocolError("Conflicting live measurement timestamps")
+                    monotonic = time.monotonic()
                     now = datetime.now(timezone.utc)
                     values[m["channelId"]] = current_measurement(
                         entry.get("value"), stamp, self.settings.stale_seconds, now
                     )
+                    observed = observation_time(
+                        m["channelId"],
+                        values[m["channelId"]],
+                        stamp,
+                        self.settings.stale_seconds,
+                        now,
+                        monotonic,
+                    )
+                    if observed is not None:
+                        channel_times[m["channelId"]] = observed
                     if self.timestamp_observer is not None:
                         self.timestamp_observer.observe(
                             "api",
@@ -521,14 +583,13 @@ class EChargerReader:
                             now,
                         )
                 for id, channels, _ in EXTRA:
-                    value = next(
-                        (
-                            number(values[c])
-                            for c in channels
-                            if c in values and number(values[c]) is not None
-                        ),
+                    selected = next(
+                        (c for c in channels if c in values and number(values[c]) is not None),
                         None,
                     )
+                    value = number(values[selected]) if selected is not None else None
+                    if selected is not None:
+                        property_channels["measurements/" + id] = selected
                     if channels[0] in PHASE_POWER_CHANNELS and not phase_power_unit_verified(
                         catalog, phase_power_units.get(channels[0], ())
                     ):
@@ -548,7 +609,8 @@ class EChargerReader:
                     baseline = base_values(combined, self.settings.advanced_channels_enabled)
                     baseline.pop("settings/charge-mode")
                     result.update(baseline)
-                return result
+                    property_channels.update(BASE_TIMED_CHANNELS)
+                return timed_values(result, channel_times, property_channels)
             except AuthenticationError:
                 self.token, self.expires = None, 0
                 if attempt:

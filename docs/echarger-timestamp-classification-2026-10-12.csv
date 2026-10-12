@@ -1,0 +1,30 @@
+source,channel,records,distinct_values,distinct_timestamps,min_age_seconds,max_age_seconds,fresh_records,stale_records,same_value_new_timestamp,changed_value_same_timestamp,classification
+api,Measurement.Acs.AuthRegistStt,41,1,1,7169611.963,7181399.674,0,41,0,0,fixed old timestamp; semantics unresolved
+api,Measurement.ChaSess.WhIn,64,27,29,0.015,10102.73,29,35,1,0,periodically refreshed observation
+api,Measurement.Chrg.ModSw,41,1,1,7169612.964,7181400.675,0,41,0,0,fixed old timestamp; semantics unresolved
+api,Measurement.GridMs.A.phsA,201,5,201,0.014,0.234,201,0,97,0,periodically refreshed observation
+api,Measurement.GridMs.A.phsB,201,4,201,0.009,0.235,201,0,95,0,periodically refreshed observation
+api,Measurement.GridMs.A.phsC,201,28,201,0.009,0.235,201,0,94,0,periodically refreshed observation
+api,Measurement.GridMs.PhV.phsA,201,198,201,0.015,0.234,201,0,0,0,fresh varying measurement; acquisition candidate
+api,Measurement.GridMs.PhV.phsB,202,193,202,0.01,0.235,202,0,0,0,fresh varying measurement; acquisition candidate
+api,Measurement.GridMs.PhV.phsC,202,193,202,0.01,0.235,202,0,0,0,fresh varying measurement; acquisition candidate
+api,Measurement.Metering.GridMs.TotWIn.ChaSta,202,25,202,0.011,0.236,202,0,175,0,periodically refreshed observation
+api,Measurement.Metering.GridMs.TotWhIn.ChaSta,202,27,202,0.011,0.238,202,0,175,0,periodically refreshed observation
+api,Measurement.Operation.EVeh.ChaStt,202,3,202,0.02,1.035,202,0,195,0,periodically refreshed observation
+api,Measurement.Operation.EVeh.Health,41,1,1,2673487.411,2685275.121,0,41,0,0,fixed old timestamp; semantics unresolved
+api,Measurement.Operation.Evt.Msg,41,1,1,2673487.406,2685275.116,0,41,0,0,fixed old timestamp; semantics unresolved
+api,Measurement.Operation.Health,41,1,1,2673487.41,2685275.12,0,41,0,0,fixed old timestamp; semantics unresolved
+api,Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMaxNom,202,1,201,0.055,44.636,202,0,200,0,periodically refreshed observation
+api,Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMinNom,202,1,201,0.055,44.636,202,0,200,0,periodically refreshed observation
+api,Setpoint.PlantControl.PCC.ChrgActCnt,202,2,201,0.055,44.636,202,0,198,0,periodically refreshed observation
+semp,Measurement.Acs.AuthRegistStt,41,1,1,7169567.357,7181394.657,0,41,0,0,fixed old timestamp; semantics unresolved
+semp,Measurement.ChaSess.WhIn,89,53,54,0.009,10086.615,54,35,0,0,activity-dependent; freezes while idle
+semp,Measurement.Chrg.ModSw,41,1,1,7169568.358,7181395.658,0,41,0,0,fixed old timestamp; semantics unresolved
+semp,Measurement.Metering.GridMs.TotWIn.ChaSta,402,45,402,0.001,0.21,402,0,350,0,periodically refreshed observation
+semp,Measurement.Operation.EVeh.ChaStt,402,4,402,0.003,1.006,402,0,394,0,periodically refreshed observation
+semp,Measurement.Operation.EVeh.Health,41,1,1,2673442.803,2685270.103,0,41,0,0,fixed old timestamp; semantics unresolved
+semp,Measurement.Operation.Evt.Msg,41,1,1,2673442.798,2685270.098,0,41,0,0,fixed old timestamp; semantics unresolved
+semp,Measurement.Operation.Health,41,1,1,2673442.802,2685270.102,0,41,0,0,fixed old timestamp; semantics unresolved
+semp,Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMaxNom,270,1,268,1.524,39.66,270,0,267,0,periodically refreshed observation
+semp,Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMinNom,270,1,268,1.524,39.66,270,0,267,0,periodically refreshed observation
+semp,Setpoint.PlantControl.PCC.ChrgActCnt,270,2,268,1.524,39.66,270,0,265,0,periodically refreshed observation
