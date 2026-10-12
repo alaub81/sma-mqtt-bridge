@@ -229,3 +229,14 @@ batterycurrent (A) and batteryvoltage (V). These are additive properties outside
 the original capability ledger. Old Items, quantities, maps, counter offsets,
 links and persistence remain unchanged. Preserve signed AC/battery observations;
 no battery charging-state convention is inferred from sign alone.
+
+## eCharger phase active power addition, 2026-10-12
+
+Local API now provides measurements/powerl1, powerl2 and powerl3, each float W and
+read-only, from GridMs.W.phsA/B/C. Existing measurements/power remains the total
+charging-power observation with its original source ownership. Keep existing Items,
+links and persistence; new phase Items may use Number:Power with Unit metadata W.
+No existing aggregate is replaced with a phase sum. The new properties follow the
+existing API measurement basic default and do not require an advanced flag.
+Rebuild/recreate the service to load the change, then verify broker metadata/values
+and new Item links separately. No running bridge or openHAB instance was changed.

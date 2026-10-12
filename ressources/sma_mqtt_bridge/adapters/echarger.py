@@ -122,10 +122,13 @@ EXTRA = [
         "kWh",
     )
 ]
+PHASE_POWER_CHANNELS = frozenset(f"Measurement.GridMs.W.phs{phase}" for phase in "ABC")
+
 for i, phase in enumerate("ABC", 1):
     EXTRA += [
         (f"current-l{i}", (f"Measurement.GridMs.A.phs{phase}",), "A"),
         (f"voltage-l{i}", (f"Measurement.GridMs.PhV.phs{phase}",), "V"),
+        (f"power-l{i}", (f"Measurement.GridMs.W.phs{phase}",), "W"),
     ]
 EXTRA.append(("frequency", ("Measurement.GridMs.Hz",), "Hz"))
 BASE = (
@@ -224,6 +227,17 @@ def parameter_unit(catalog, channel):
         and catalog.get("Parameter.Nameplate.PkgRev", {}).get("value") == "2.6.37.R"
     )
     return VERIFIED_LOCAL_UNITS.get(channel) if unit is None and verified_local else unit
+
+
+def phase_power_unit_verified(catalog, explicit_units):
+    """Accept explicit watts or the verified model/firmware WebUI scalar-W contract."""
+    units = tuple(unit for unit in explicit_units if unit is not None)
+    if units:
+        return all(unit == "W" for unit in units)
+    return (
+        catalog.get("Parameter.Nameplate.ModelStr", {}).get("value") == "EVC22-3AC-20"
+        and catalog.get("Parameter.Nameplate.PkgRev", {}).get("value") == "2.6.37.R"
+    )
 
 
 def settings_values(catalog, *, from_api=True):
@@ -468,7 +482,7 @@ class EChargerReader:
                 )
                 if not isinstance(live, list):
                     raise ProtocolError("Unexpected live-measurement response")
-                values = {}
+                values, phase_power_units = {}, {}
                 for m in live:
                     if (
                         not isinstance(m, dict)
@@ -482,6 +496,10 @@ class EChargerReader:
                     entry = entries[0] if entries else {}
                     if not isinstance(entry, dict):
                         raise ProtocolError("Invalid live measurement entry")
+                    if m["channelId"] in PHASE_POWER_CHANNELS:
+                        phase_power_units[m["channelId"]] = tuple(
+                            obj["unit"] for obj in (m, entry) if "unit" in obj
+                        )
                     stamp = entry.get("timestamp", entry.get("time"))
                     if (
                         "timestamp" in entry
@@ -511,6 +529,10 @@ class EChargerReader:
                         ),
                         None,
                     )
+                    if channels[0] in PHASE_POWER_CHANNELS and not phase_power_unit_verified(
+                        catalog, phase_power_units.get(channels[0], ())
+                    ):
+                        value = None
                     # Both total-energy channels report Wh; publish the engineering value in kWh.
                     result["measurements/" + id] = (
                         value / 1000 if id == "total-energy" and value is not None else value

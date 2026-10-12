@@ -1,5 +1,9 @@
 # SMA-Wertekatalog für die MQTT-Bridge
 
+> Current eCharger coverage and actual offered API/SEMP channels are recorded in
+> [the 2026-10-12 eCharger audit](ECHARGER_TOPIC_AUDIT.md). The historical inventories
+> below remain reference evidence; they do not certify complete topic coverage.
+>
 > For the current model-specific inverter completeness assessment, see the
 > [2026-10-12 Modbus topic audit](MODBUS_TOPIC_AUDIT.md). The older -40 inventory
 > below remains historical/comparative evidence, not the installed -41 profile.

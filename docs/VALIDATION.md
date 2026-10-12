@@ -519,3 +519,49 @@ three-character right-alignment delimiters (`--:`). Table contents and alignment
 are unchanged. Complete lint passed over 120 files, including all 27 Markdown
 files; all 214 offline tests passed. The initial sandbox run blocked four synthetic
 loopback server binds; the approved rerun passed. `git diff --check` passed.
+
+## eCharger API/SEMP completeness audit, 2026-10-12
+
+The [systematic audit](ECHARGER_TOPIC_AUDIT.md), channel matrix and standard-field
+matrix compare reference inventories with one current read cycle of each enabled
+local reader. API and SEMP identity checks passed using the existing TLS policy.
+The API offered 85 confirmed parameters and 44 measurement/setpoint entries; SEMP
+25 custom channels and 19 standard XML leaf paths. All 24 non-location custom SEMP
+channels have mappings; source ownership explains setting fallbacks. There are 26
+unmapped API live entries, of which twelve have a value and a currently accepted
+timestamp. Thirteen further entries have timestamp-filtered values and one has no value.
+Frequency is configured but absent; primary total energy is present.
+
+The matrices contain metadata/status categories only, without device values,
+identities, credentials, tokens, addresses or authenticated responses. Unique
+source/kind/channel keys and target-property declarations across ownership variants
+were checked. No runtime/topic/timestamp/command/openHAB changes or device writes
+were made. Unit validation, useful topic selection, API-only extra fallback coverage,
+standard SEMP field semantics and natural charging-state acceptance remain open.
+
+Audit validation: full lint over 123 files and all 214 offline tests passed. Matrix
+row uniqueness, counts, twelve fresh unmapped channels, standard-field inventory
+and value redaction passed direct consistency checks; `git diff --check` passed.
+
+## eCharger phase active power implementation, 2026-10-12
+
+The API reader now provides three read-only float-W measurements, powerl1/powerl2/
+powerl3, from the corresponding GridMs.W.phsA/B/C channels. Unit tag 18 = W and
+SCALAR/no raw multiplier are verified in retained official WebUI assets; hashes
+and the model/firmware-scoped fallback are recorded in the
+[phase-power evidence](ECHARGER_TOPIC_AUDIT.md#subsequent-phase-power-implementation-2026-10-12).
+Explicit non-W/conflicting units reject that phase; missing units on unverified
+firmware do not produce a value. Existing API identity gates remain unchanged.
+
+Synthetic regressions cover phase-to-topic mapping, fractional/signed/zero values,
+read-only float-W discovery and German labels, unchanged total-power ownership,
+SEMP independence, optional filters disabled, readiness exclusion, missing/NaN/
+Infinity/bool values, stale/future/malformed timestamps, conflicting unit levels
+and explicit-W versus missing-W behavior on unknown firmware. Reads still use
+only the existing search/live requests; no command endpoint or extra request was
+introduced. The earlier live audit established channel availability, not publication
+from the extended bridge. New MQTT/openHAB/physical acceptance remains pending.
+
+Full validation passed: all 217 offline tests, complete lint over 124 project files,
+separate Compose parity with overrides, and `git diff --check`. No live write,
+broker publication or physical charging experiment was used for this change.
