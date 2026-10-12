@@ -142,6 +142,17 @@
     "Grid frequency": "Netzfrequenz",
     "Grid current phase L1": "Netzstrom Phase L1",
     "Battery current": "Batteriestrom",
-    "Battery voltage": "Batteriespannung"
+    "Battery voltage": "Batteriespannung",
+    "DC current input A": "DC-Strom Eingang A",
+    "DC voltage input A": "DC-Spannung Eingang A",
+    "DC power input A": "DC-Leistung Eingang A",
+    "DC current input B": "DC-Strom Eingang B",
+    "DC voltage input B": "DC-Spannung Eingang B",
+    "DC power input B": "DC-Leistung Eingang B",
+    "Operating time": "Betriebszeit",
+    "Feed-in time": "Einspeisezeit",
+    "Reason for derating": "Grund der Abregelung",
+    "Battery charge energy": "Batterie-Ladeenergie",
+    "Battery discharge energy": "Batterie-Entladeenergie"
   }
 }

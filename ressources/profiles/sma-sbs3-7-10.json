@@ -117,6 +117,13 @@
       "start": 30851,
       "count": 2,
       "intervalSeconds": 5.0
+    },
+    {
+      "id": "battery-energy",
+      "function": 4,
+      "start": 31397,
+      "count": 8,
+      "intervalSeconds": 60.0
     }
   ],
   "properties": [
@@ -520,6 +527,103 @@
       "unit": "°C",
       "invalid": [
         -2147483648
+      ],
+      "datatype": "float",
+      "channelGroup": "basic"
+    },
+    {
+      "id": "operating-time",
+      "node": "measurements",
+      "name": "Operating time",
+      "poller": "yield",
+      "offset": 4,
+      "type": "uint64",
+      "length": 4,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "s",
+      "invalid": [
+        18446744073709551615
+      ],
+      "datatype": "integer",
+      "channelGroup": "advanced"
+    },
+    {
+      "id": "feed-in-time",
+      "node": "measurements",
+      "name": "Feed-in time",
+      "poller": "yield",
+      "offset": 8,
+      "type": "uint64",
+      "length": 4,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "s",
+      "invalid": [
+        18446744073709551615
+      ],
+      "datatype": "integer",
+      "channelGroup": "advanced"
+    },
+    {
+      "id": "derating-reason",
+      "node": "diagnostics",
+      "name": "Reason for derating",
+      "poller": "sma-status",
+      "offset": 18,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295,
+        16777213
+      ],
+      "datatype": "enum",
+      "channelGroup": "diagnostics",
+      "valueMap": {
+        "557": "Übertemperatur (TmpDrt)",
+        "884": "Keine Abregelung (NoneDrt)",
+        "1705": "Frequenzabweichung (HzDrt)",
+        "3520": "Spannungsabweichung (VDrt)"
+      }
+    },
+    {
+      "id": "battery-charge-energy",
+      "node": "measurements",
+      "name": "Battery charge energy",
+      "poller": "battery-energy",
+      "offset": 0,
+      "type": "uint64",
+      "length": 4,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.001,
+      "unit": "kWh",
+      "invalid": [
+        18446744073709551615
+      ],
+      "datatype": "float",
+      "channelGroup": "basic"
+    },
+    {
+      "id": "battery-discharge-energy",
+      "node": "measurements",
+      "name": "Battery discharge energy",
+      "poller": "battery-energy",
+      "offset": 4,
+      "type": "uint64",
+      "length": 4,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.001,
+      "unit": "kWh",
+      "invalid": [
+        18446744073709551615
       ],
       "datatype": "float",
       "channelGroup": "basic"

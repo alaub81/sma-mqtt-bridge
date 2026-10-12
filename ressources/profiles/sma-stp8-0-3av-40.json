@@ -266,7 +266,7 @@
     {
       "id": "current-a-input",
       "node": "measurements",
-      "name": "DC current input",
+      "name": "DC current input A",
       "poller": "power-a",
       "offset": 0,
       "type": "int32",
@@ -283,7 +283,7 @@
     {
       "id": "voltage-a-input",
       "node": "measurements",
-      "name": "DC voltage input",
+      "name": "DC voltage input A",
       "poller": "power-a",
       "offset": 2,
       "type": "int32",
@@ -300,7 +300,7 @@
     {
       "id": "power-a-input",
       "node": "measurements",
-      "name": "DC power input",
+      "name": "DC power input A",
       "poller": "power-a",
       "offset": 4,
       "type": "int32",
@@ -334,7 +334,7 @@
     {
       "id": "current-b-input",
       "node": "measurements",
-      "name": "DC current input",
+      "name": "DC current input B",
       "poller": "power-b",
       "offset": 0,
       "type": "int32",
@@ -351,7 +351,7 @@
     {
       "id": "voltage-b-input",
       "node": "measurements",
-      "name": "DC voltage input",
+      "name": "DC voltage input B",
       "poller": "power-b",
       "offset": 2,
       "type": "int32",
@@ -368,7 +368,7 @@
     {
       "id": "power-b-input",
       "node": "measurements",
-      "name": "DC power input",
+      "name": "DC power input B",
       "poller": "power-b",
       "offset": 4,
       "type": "int32",
@@ -522,6 +522,71 @@
       ],
       "datatype": "float",
       "channelGroup": "basic"
+    },
+    {
+      "id": "operating-time",
+      "node": "measurements",
+      "name": "Operating time",
+      "poller": "yield",
+      "offset": 4,
+      "type": "uint64",
+      "length": 4,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "s",
+      "invalid": [
+        18446744073709551615
+      ],
+      "datatype": "integer",
+      "channelGroup": "advanced"
+    },
+    {
+      "id": "feed-in-time",
+      "node": "measurements",
+      "name": "Feed-in time",
+      "poller": "yield",
+      "offset": 8,
+      "type": "uint64",
+      "length": 4,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "s",
+      "invalid": [
+        18446744073709551615
+      ],
+      "datatype": "integer",
+      "channelGroup": "advanced"
+    },
+    {
+      "id": "derating-reason",
+      "node": "diagnostics",
+      "name": "Reason for derating",
+      "poller": "sma-status",
+      "offset": 18,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295,
+        16777213
+      ],
+      "datatype": "enum",
+      "channelGroup": "diagnostics",
+      "valueMap": {
+        "557": "Übertemperatur (TmpDrt)",
+        "884": "Keine Abregelung (NoneDrt)",
+        "1705": "Frequenzabweichung (HzDrt)",
+        "3520": "Spannungsabweichung (VDrt)",
+        "3554": "Blindleistungspriorität (VArDmdDrt)",
+        "3556": "Hohe DC-Spannung (DcVolMaxDrt)",
+        "4560": "Externe Vorgabe (WSptMaxDrt)",
+        "4561": "Externe Vorgabe 2 (WSptMax2Drt)"
+      }
     }
   ],
   "commands": [],

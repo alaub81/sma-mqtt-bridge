@@ -142,6 +142,17 @@
     "Grid frequency": "Grid frequency",
     "Grid current phase L1": "Grid current phase L1",
     "Battery current": "Battery current",
-    "Battery voltage": "Battery voltage"
+    "Battery voltage": "Battery voltage",
+    "DC current input A": "DC current input A",
+    "DC voltage input A": "DC voltage input A",
+    "DC power input A": "DC power input A",
+    "DC current input B": "DC current input B",
+    "DC voltage input B": "DC voltage input B",
+    "DC power input B": "DC power input B",
+    "Operating time": "Operating time",
+    "Feed-in time": "Feed-in time",
+    "Reason for derating": "Reason for derating",
+    "Battery charge energy": "Battery charge energy",
+    "Battery discharge energy": "Battery discharge energy"
   }
 }
