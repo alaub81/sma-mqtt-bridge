@@ -165,3 +165,7 @@ Tripower exposes L1/L2/L3 currents, Storage only the available L1 current. Sunny
 retains its explicitly requested L2/L3 currents; the prior scan returned NaN for
 L1/L2 and a value for L3. No additional inactive-phase channels are added to Storage.
 The complete profiles now contain 63 measurement properties plus nine identities.
+
+## Sunny Boy DC input B extension, 2026-10-12
+
+The SB4.0-1AV-41 V16 list maps input B current/voltage/power to 30957/30959/30961 (S32, FIX3/FIX2/FIX0, A/V/W). The availability scan returned valid zero for all three. The profile now adds basic read-only `current-b-input`, `voltage-b-input`, `power-b-input` with scales 0.001/0.01/1 and SMA S32 sentinel -2147483648. A new six-register FC04 block polls every five seconds; existing blocks and input A properties are unchanged. These optional values do not gate readiness. Two independent MPP inputs are confirmed by the [official specification](https://manuals.sma.de/SBxx-1AV-41/de-DE/4177679243.html); installed string wiring remains unknown. Live publication remains pending.

@@ -606,3 +606,9 @@ display Status unbekannt. Connected/disconnected labels and source gating remain
 unchanged. Canonical source and generated MainUI import match. Full lint and all
 217 offline tests passed; local MQTT test servers required execution outside the
 sandbox. Installation and iPhone rendering acceptance remain pending.
+
+## Sunny Boy DC input B implementation, 2026-10-12
+
+The user requested both documented MPP inputs. Input B is now mapped as three basic read-only properties; the earlier production scan found valid zeros. Existing expansion regressions cover register addresses, FC04 intervals, scales, zero, S32 NaN and read-only discovery with advanced channels disabled. Live MQTT/openHAB acceptance remains pending; v0.3.3 predates this addition.
+
+Validation after the addition: all 217 offline tests, full repository lint over 126 files, Compose parity and `git diff --check` passed.

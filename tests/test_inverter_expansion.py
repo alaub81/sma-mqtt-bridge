@@ -56,6 +56,12 @@ class InverterExpansionTests(unittest.TestCase):
                     ("battery-current", 30843, -1234, Decimal("-1.234"), "A"),
                     ("battery-voltage", 30851, 45678, Decimal("456.78"), "V"),
                 ]
+            if index == 3:
+                cases += [
+                    ("current-b-input", 30957, 1234, Decimal("1.234"), "A"),
+                    ("voltage-b-input", 30959, 34567, Decimal("345.67"), "V"),
+                    ("power-b-input", 30961, 4321, Decimal(4321), "W"),
+                ]
             for key, address, raw, expected, unit in cases:
                 with self.subTest(profile=profile["id"], key=key):
                     prop = definitions[key]
@@ -91,7 +97,11 @@ class InverterExpansionTests(unittest.TestCase):
                 self.assertNotIn("current-l3", keys)
             if index == 3:
                 self.assertNotIn("current-l1", keys)
+                self.assertTrue({"current-b-input", "voltage-b-input", "power-b-input"} <= keys)
             topics = discovery("homie", "fixture", reader.properties, labels)
+            if index == 3:
+                for key in ("currentbinput", "voltagebinput", "powerbinput"):
+                    self.assertEqual(topics[f"homie/fixture/measurements/{key}/$settable"], "false")
             self.assertEqual(topics["homie/fixture/measurements/frequency/$name"], "Netzfrequenz")
             state = SourceState("fixture", "fixture", reader.properties, 60)
             state.update({"measurements/status": "Ok (Ok)", "measurements/frequency": None}, now=10)

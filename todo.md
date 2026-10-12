@@ -26,7 +26,7 @@ Die vollständigen Einzelbefunde stehen in [der Ergebnismatrix](docs/modbus-avai
 - [ ] M06 – Scheinleistung und Leistungsfaktor nach Nutzen auswählen: 30813 sowie Varianten 30949/31221 verfügbar. Unterschiedliche PF-Konventionen klären und nur eine passende Darstellung wählen. Blindleistung modell-/phasengenau prüfen; Tripower 31497 verfügbar, Storage/Sunny Boy 30805 NaN, keine unbelegte Ersatzzuordnung.
 - [ ] M07 – Alternative Ertragszähler 30513/30517 und Betriebs-/Einspeisedauern 30521/30525 bewerten. Units/Genauigkeit/32-/64-Bit-Alternativen prüfen; bestehende ganze-kWh-Topics und Historie erhalten. Nicht jede Darstellung als eigenen Standardkanal veröffentlichen.
 - [ ] M08 – Derating und Ereignisinformationen für spätere Advanced-/Diagnostics-Auswahl prüfen: 30219 liefert Werte, 30247 derzeit NaN. Enums belegen; ereignisabhängige NaN nicht als dauerhaft ununterstützt behaupten. Keine Fehler absichtlich erzeugen.
-- [ ] M09 – Sunny-Boy-DC-Eingang B nur bei Nutzen ergänzen: 30957/30959/30961 lesbar mit gültiger 0; tatsächliche Stringbelegung mit Andreas klären. Keine belegte zweite PV-Quelle behaupten und gültige 0 nicht als NaN ausschließen.
+- [x] M09 – Sunny-Boy-DC-Eingang B auf Andreas’ Wunsch ergänzt: Strom/Spannung/Leistung als Basis, read-only, FC04 30957/30959/30961 alle 5 s. Scan lieferte gültige 0; tatsächliche Stringbelegung bleibt offen. MQTT-/openHAB-Abnahme der Ergänzung ausstehend.
 - [ ] M10 – Ausschlussliste bewahren: 433 NaN und zwei nicht dekodierbare Storage-BMS-Strings bleiben aus der ersten Kandidatenliste ausgeschlossen. Bei Bedarf später gezielt unter natürlichen Lade-/Entlade-/Ereigniszuständen prüfen; kein erneuter Vollscan automatisch geplant. Identitäts-/Netzwerkwerte, Konfigurationsbeobachtungen und Dopplungen gemeinsam nach Nutzen behandeln; aus RO/RW/WO keine automatische Schreibfreigabe ableiten.
 
 - [ ] M02–M04-Abnahme – Neue Profilkanäle nach Image-Neubau/Neustart am Broker und mit passenden openHAB-Units prüfen. Gegebenenfalls ausgewählte Host-Profilkopien ausdrücklich erweitern. Neue Eigenschaften sind offline getestet; frühe Registerantworten allein bestätigen keine Veröffentlichung. Gemeinsamer späterer Gruppenreview bleibt offen.
@@ -449,3 +449,17 @@ Topic-Suffixe werden unter `homie/<konfigurierte Homie-ID>/` veröffentlicht. Di
 - Anschlusszeile zeigt bei bereiter Messquelle jetzt „Gesperrt“ und „Ladefehler“ statt „Anschluss unbekannt“. Unbekannte Zustände/nicht bereite Quelle zeigen kurz „Status unbekannt“. Bestehende Anschlussanzeigen und orange Farbe bleiben erhalten; keine Behauptung einer Kabelverbindung aus einer Sperre.
 - Kanonische YAML und nativer MainUI-Export aktualisiert. Offizielle openHAB-Dokumentation für Widget-Ausdrücke konsultiert.
 - Validierung: Linter über 126 Dateien, Exportparität und alle 217 Offline-Tests bestanden. Vier lokale MQTT-Testserver benötigten Ausführung außerhalb der Sandbox. Keine Geräteaktion oder Installation geändert; tatsächliche iPhone-Anzeige nach Übernahme noch offen. Bedeutung des kurzzeitigen Fahrzeugstatus „Gesperrt“ bleibt ohne gleichzeitige Rohcode-/Freigabebeobachtung offen.
+
+## 2026-10-12 – Sunny-Boy-DC-Eingang B vervollständigt
+
+- Andreas möchte beide dokumentierten MPP-Eingänge abbilden, unabhängig von momentaner Belegung. Drei Basis-Topics `measurements/currentbinput`, `voltagebinput`, `powerbinput` ergänzt; bestehende A-Kanäle unverändert.
+- Register 30957/30959/30961: S32, Skalen 0.001 A / 0.01 V / 1 W, eigener FC04-Block mit sechs Registern alle 5 s. Gültige Null bleibt Messwert; SMA-NaN bleibt unveröffentlicht und beeinflusst die Readiness nicht. Keine physische Belegung behauptet.
+- Diese Ergänzung erfolgt nach Tag v0.3.3 und ist darin noch nicht enthalten. Die bestätigte frühere 25er-Auswahl bleibt erhalten; folgende zusätzliche Auswahl ergänzt sie als Basis:
+
+- [ ] T26 – inverter3 `measurements/currentbinput` – DC-Strom Eingang B (A), Basis
+- [ ] T27 – inverter3 `measurements/voltagebinput` – DC-Spannung Eingang B (V), Basis
+- [ ] T28 – inverter3 `measurements/powerbinput` – DC-Leistung Eingang B (W), Basis
+
+- Prüfung nach Ergänzung: alle 217 Offline-Tests, vollständiger Linter über 126 Dateien, Compose-Parität und git diff --check bestanden.
+
+- Andreas beauftragt Commit, neuen Release-Tag v0.3.4 und Push. Der Tag umfasst die DC-B-Ergänzung sowie den bereits committeten aktuellen Projektstand; Build/Scans/Publikation erfolgen im vorhandenen GitHub-Release-Workflow.

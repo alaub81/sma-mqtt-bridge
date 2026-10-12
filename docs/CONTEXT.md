@@ -158,3 +158,7 @@ Andreas approved the classification of the 25 newly added properties listed in
 properties remain advanced; the other 19 measurement properties remain basic.
 The implementation already matches this selection. All 25 remain read-only;
 classification approval is separate from live MQTT and openHAB acceptance.
+
+## Sunny Boy DC completeness refinement, 2026-10-12
+
+At Andreas’ request, expose both documented DC MPP inputs as basic measurements, even when an input is unused or temporarily has no valid sample. Input B had valid zeros in the production scan. Preserve zero versus invalid-sample semantics; the mapping does not imply that both inputs are wired. Existing input A identities and history remain unchanged.

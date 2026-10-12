@@ -240,3 +240,7 @@ No existing aggregate is replaced with a phase sum. The new properties follow th
 existing API measurement basic default and do not require an advanced flag.
 Rebuild/recreate the service to load the change, then verify broker metadata/values
 and new Item links separately. No running bridge or openHAB instance was changed.
+
+## Sunny Boy DC input B addition, 2026-10-12
+
+Three additional basic read-only properties publish as `measurements/currentbinput` (A), `voltagebinput` (V), `powerbinput` (W). Input A IDs and history remain unchanged. Valid zero is published; missing or SMA-NaN observations preserve last valid retained values. These properties are added after v0.3.3 and need a subsequent deployment for live acceptance.
