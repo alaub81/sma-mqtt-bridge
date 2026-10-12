@@ -31,6 +31,13 @@ explicit image pinning. Complete resource recording before deploying pending
 runtime changes, keeping the baseline
 version and configuration stable for the measurement window.
 
+Additional local preparation exposes `portal/refresh/set` with payload `refresh`
+for an enabled portal adapter. This read-only action wakes the existing supervisor,
+coalesces requests and works without preference-write gates, including polling
+interval zero. Feedback is published on `portal/refresh`; existing preference
+topics are preserved. See the [MainUI setup](../openHAB/openHAB.md#manual-portal-refresh).
+This addition is not yet released or accepted live.
+
 ## v0.3.6 — 2026-10-12
 
 Preserve remaining measurement lifetime for the eCharger channels classified as

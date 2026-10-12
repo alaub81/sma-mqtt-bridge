@@ -85,8 +85,9 @@ are planned.
   metadata, bounds, units and controller interaction are confirmed.
 - Verify any additional portal values and a current charging mix from actual
   timestamped API evidence; period shares and minimum PV preference are insufficient.
-- Consider a read-only runtime diagnostic command, per-property age/quality and an
-  explicit portal read refresh without restarting a zero-interval service.
+- Accept the locally implemented manual portal read refresh after deployment,
+  including interval zero and MainUI feedback. Consider a read-only runtime
+  diagnostic command and per-property age/quality independently.
 
 Choose one evidenced improvement at a time. Keep Home Manager as charging controller;
 no paid Developer API or replacement regulation is planned.

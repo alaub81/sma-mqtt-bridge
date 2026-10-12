@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "labels": {
+    "Refresh portal": "Refresh portal",
     "Allowed grid preference": "Allowed grid preference",
     "Ambient Brightness": "Ambient Brightness",
     "Ambient Enabled": "Ambient Enabled",

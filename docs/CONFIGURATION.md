@@ -591,3 +591,26 @@ Wh counters are divided by 1000 once; no ENV scale override is needed. Update op
 unit metadata and remove any duplicate Wh-to-kWh link conversion. Follow the
 [history migration guide](../openHAB/openHAB.md#wallbox-total-energy-migration-to-kwh)
 for retained values and persistence before deployment. Session-energy scaling is unchanged.
+
+## Manual portal read refresh
+
+When `SMAB_PORTAL_ENABLED=true`, Homie `portal/refresh/set` accepts the exact
+non-retained string `refresh`. This read-only action needs neither the global
+command gate nor the portal preference-write gate. It is always available for
+an enabled portal adapter, independent of optional channel groups; no new ENV
+setting is required. Disabled portal adapters expose no refresh property and
+perform no portal I/O.
+
+The existing supervisor handles the request, retaining read-cycle timeouts,
+authentication blocking, session locking and bounded failure backoff. Pending
+requests are coalesced and a running read satisfies repeated requests. Successful
+reads update the existing preference topics and restart the configured polling
+wait. Interval zero waits for an explicit refresh rather than reading on startup
+(unless the existing CLI one-shot refresh is selected). MQTT reconnect does not
+request a refresh; retained requests are rejected.
+
+The retained `portal/refresh` string reports `queued`, `reading`, `completed`,
+`failed`, `auth-blocked`, `rejected`, `rejected-retained` or `rejected-busy`.
+It contributes no device readiness. `completed` confirms a validated read,
+not a preference write or physical charging action. See the
+[openHAB setup](../openHAB/openHAB.md#manual-portal-refresh).

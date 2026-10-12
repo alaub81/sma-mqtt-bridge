@@ -218,3 +218,14 @@ are added. Signed values and valid zero remain unchanged; nonfinite, missing and
 time-rejected observations remain unavailable under the existing policy.
 The direction/physical charging interpretation of a signed observation is not
 inferred from sign alone. No new phase control or SEMP controller is introduced.
+
+## Subsequent plant-control semantic review, 2026-10-12
+
+[Control observation review](ECHARGER_CONTROL_OBSERVATIONS.md) confirms that the
+three control properties are Advanced and SEMP-owned. Rechecked API/SEMP timestamp
+records show the active-count observation stays nonzero during waiting/zero-power
+intervals, so it must not be used as an instantaneous local charging flag. SMA's
+Multi-EVC description provides active-station/current-sharing context, with the
+raw-channel association explicitly marked as inference. Limit units, reference
+power, sign convention and control effectiveness remain unresolved. No mapping,
+metadata, channel group, configuration, request or setter was changed.

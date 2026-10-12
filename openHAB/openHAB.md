@@ -135,20 +135,67 @@ Number:Dimensionless Item caused an observed factor-of-100 error; Andreas confir
 switching to Dimmer corrected it. Do not compensate by scaling the MQTT value.
 
 State Description: minimum **0**, maximum **100**, step **1**, pattern **`%.0f %%`**.
-Default List Widget `oh-input-item` and Default Standalone Widget `oh-input-card`:
+Keep **Auto-update = false** and the Standard channel-link profile.
+
+For **Default List Widget**, use the following widget metadata:
 
 ```yaml
-type: number
-min: 0
-max: 100
-step: 1
-sendButton: true
-useDisplayState: false
+value: oh-slider-item
+config:
+  min: 0
+  max: 100
+  step: 1
+  ignoreDisplayState: false
+  releaseOnly: true
+  label: true
 ```
 
-Select the existing PV Item in both widgets. Input `60` means 60% minimum PV and at most
-40% grid share. A Dimmer normally suggests a slider, but the input widget provides explicit
-submission and avoids sending every intermediate change. `autoupdate=false` remains required.
+Use the existing PV Dimmer Item. A list component added directly to a custom page
+also needs its `item` set to that Item; the metadata above selects the Item's
+default list widget. `label` shows the selected value above the handle.
+With the integer-percent State Description, keep `ignoreDisplayState: false`
+to retain the formatted percent display. Raw-state mode is only needed if a
+display transformation or rounding makes the slider misinterpret the value.
+Do not set `unit: "%"`: the bridge expects a plain integer percentage command.
+Input `60` means 60% minimum PV and at most 40% allowed grid share, not a measured
+charging mix.
+
+`releaseOnly: true` prevents commands during dragging and sends on release.
+It does not require a separate Apply button. `type`, `sendButton` and
+`useDisplayState` belong to the input-widget configuration and are not supported
+slider-item settings. Use `ignoreDisplayState` to choose between display and
+raw state; false preserves this percent display.
+See the official [oh-slider-item options](https://www.openhab.org/docs/ui/components/oh-slider-item.html).
+
+For **Default Standalone Widget**, use a slider card with the same send policy:
+
+```yaml
+value: oh-slider-card
+config:
+  step: 1
+  min: 0
+  max: 100
+  ignoreDisplayState: false
+  releaseOnly: true
+  label: true
+  scaleSteps: 10
+  scale: true
+```
+
+`scale`/`scaleSteps` add visual scale markers; `step: 1` still controls the
+selectable values. If used directly on a page instead of as default Item metadata,
+use `component: oh-slider-card` and set `config.item` to the existing PV Dimmer.
+See the official [oh-slider-card options](https://www.openhab.org/docs/ui/components/oh-slider-card.html).
+
+For explicit submission, retain the input widget or use the comfort widget's
+variable-based PV slider plus **Apply**. Its slider changes only a draft and
+portal availability/command feedback gates the actual command. The standard
+slider item above sends immediately on release and does not inherit those custom
+widget gates; bridge validation and write gates remain authoritative.
+
+Default List Widget `oh-input-item` / Default Standalone Widget `oh-input-card`
+remain alternatives with `type: number`, `min: 0`, `max: 100`, `step: 1`,
+`sendButton: true` and `useDisplayState: false`. Choose the existing PV Item.
 
 ### Maximum charging power
 
@@ -488,3 +535,104 @@ No database rewrite is performed by this bridge change. The installation-specifi
 and any chosen migration remain pending until actual persistence samples are inspected.
 See official [Item units](https://www.openhab.org/docs/configuration/items.html) and
 [persistence](https://www.openhab.org/docs/configuration/persistence.html) documentation.
+
+## Home Manager plant time: display and rules
+
+The bridge's `measurements#planttime` reports Unix seconds (UTC) from register
+30193, not elapsed operating time. Keep the existing linked Number/Number:Time
+Item, its seconds unit, parent groups and numeric persistence unchanged. A numeric
+Item's date-format pattern alone cannot turn epoch seconds into a timestamp.
+
+For display, use the original Item's State Description `pattern`. JavaScript
+Scripting must be installed. This inline transformation accepts whole nonnegative
+seconds, optionally with a trailing `s`, rejects invalid input/the SMA U32 sentinel,
+and formats the instant in `Europe/Berlin` including daylight-saving changes:
+
+```text
+JS(|(function(i){var m=String(i).trim().match(/^([0-9]+)(?:\.0+)?(?:\s+s)?$/);if(!m)return 'Unbekannt';var n=Number(m[1]);if(!Number.isSafeInteger(n)||n<0||n>=4294967295)return 'Unbekannt';var t=Java.type('java.time.Instant').ofEpochSecond(n).atZone(Java.type('java.time.ZoneId').of('Europe/Berlin'));return Java.type('java.time.format.DateTimeFormatter').ofPattern('dd.MM.yyyy HH:mm:ss z').format(t);})(input)):%s
+```
+
+Paste the pattern directly into the UI field; its regular-expression backslashes
+are literal script characters. No channel profile is changed on the
+original Item. Display transformations leave the underlying numeric state intact.
+
+For comparisons/rules, create a separate DateTime Item with its own name. Add
+it to the appropriate equipment group without copying numeric persistence groups
+or replacing the original Item. Link it to the same existing Homie planttime
+channel. Select **SCRIPT ECMAScript** (`transform:JS`) and set only the Thing-to-Item
+transformation (`toItemScript`):
+
+```javascript
+|(function(i) {
+  var m = String(i).trim().match(/^([0-9]+)(?:\.0+)?(?:\s+s)?$/);
+  if (!m) return 'UNDEF';
+  var n = Number(m[1]);
+  if (!Number.isSafeInteger(n) || n < 0 || n >= 4294967295) return 'UNDEF';
+  return Java.type('java.time.Instant').ofEpochSecond(n)
+    .atZone(Java.type('java.time.ZoneId').of('Europe/Berlin'))
+    .toOffsetDateTime().toString();
+})(input)
+```
+
+Leave both Item-command-to-Thing and Item-state-to-Thing transformations blank,
+so nothing is propagated back to the read-only channel. Set the companion's
+State Description pattern to `%1$td.%1$tm.%1$tY %1$tH:%1$tM:%1$tS`, readOnly to
+true and autoupdate to false. It receives a real DateTime state from the source
+instant, rather than the wall clock when an update happened. Do not select a
+"timestamp on update/change" profile: that would represent receipt time.
+
+The companion can be used in DateTime comparisons. Check its source availability
+and timestamp age in any rule; a retained plant-time value is not proof of a live
+Home Manager. No rule, device command, polling or bridge restart is required for
+this link conversion. The existing numeric history remains the original series;
+companion persistence, if needed, is configured separately.
+
+References: official [transformations and script profiles](https://www.openhab.org/docs/configuration/transformations.html),
+[JavaScript Scripting](https://www.openhab.org/addons/automation/jsscripting/) and
+[Item types](https://www.openhab.org/docs/configuration/items.html).
+
+## Manual portal refresh
+
+With the portal adapter enabled, `portal/refresh` is a settable Homie string
+property, independent of Advanced/Diagnostics and preference-write gates. Send
+the exact non-retained payload `refresh` to
+`<prefix>/<echarger-id>/portal/refresh/set`. This only requests a read; it never
+changes the minimum PV preference or charging mode.
+
+In MainUI, link a **String** Item to `portal#refresh` using the standard profile
+and set `autoupdate=false`. Do not add restore-on-startup or a rule that sends
+commands when this Item receives a state update. The same Item receives progress:
+`queued`, `reading`, `completed`, `failed`, `auth-blocked`, or a rejection
+(`rejected`, `rejected-retained`, `rejected-busy`). These states are feedback,
+not commands. Existing PV Items keep their links and receive validated readback
+on their existing topics.
+
+Use this button inside an existing page/widget, replacing the example Item name:
+
+```yaml
+component: oh-button
+config:
+  text: Portal aktualisieren
+  iconF7: arrow_clockwise
+  action: command
+  actionItem: ECharger_Portal_Refresh
+  actionCommand: refresh
+```
+
+The existing portal supervisor performs the read with its normal authentication,
+identity validation, timeout and retry policy. Repeated requests before a read
+are merged; requests during a read share that read. A portal preference write
+uses the same reader lock, so requests cannot perform concurrent portal I/O.
+The MQTT consumer can reject a refresh while another command is in progress.
+Authentication failures stay blocked until the service is restarted after fixing
+the credentials or permissions; refresh does not bypass that protection.
+
+Periodic polling remains enabled at its configured interval, counted from the
+most recent successful read. With an interval of zero, refresh works without a
+startup read unless the existing one-shot CLI option is explicitly used. Transient
+failures retain normal bounded retries; clicks do not bypass retry delays.
+
+This addition requires a future bridge deployment. Broker discovery and live
+openHAB acceptance are still pending; the running resource baseline is unchanged.
+Sources: [Homie binding](https://www.openhab.org/addons/bindings/homie/) and
+[MainUI button](https://www.openhab.org/docs/ui/components/oh-button.html).

@@ -928,3 +928,90 @@ Validation passed: all 240 offline tests, complete lint over 134 files, standalo
 Compose parity with overrides and `git diff --check`. Compose and release workflow
 diffs contain comment changes only. Installation commands were reviewed locally,
 not executed against the production host.
+
+## Home Manager plant-time openHAB display and DateTime, 2026-10-12
+
+Direct MainUI inspection found the existing plant-time Item as Number:Time with
+unit s, its original Homie link and numeric InfluxDB persistence group. Its State
+Description now converts accepted whole Unix seconds through Java Instant and
+Europe/Berlin for display, preserving its original state/type/link and history.
+The live display showed a local date/time with CEST after saving.
+
+A distinct DateTime companion was created with autoupdate disabled and readOnly
+metadata, in the same equipment group without copying the numeric persistence
+group. Its link to the existing channel uses SCRIPT ECMAScript to return an ISO
+offset timestamp from the supplied Unix seconds. Command/state return scripts
+remain blank. After page reload, the stored link profile was inspected and
+successive date/time displays advanced in thirty-second steps. The companion is
+not separately persisted and no existing rule was changed.
+
+[Setup and exact transformations](../openHAB/openHAB.md#home-manager-plant-time-display-and-rules)
+follow official Item/transformations/JavaScript documentation. No device write,
+bridge restart/deployment or protocol/profile/interval change occurred. No private
+installation identifiers or raw telemetry are included here. ZoneId handles DST;
+actual time-change/startup behavior and future rule use need their own acceptance.
+
+Repository validation: all 240 offline tests and `git diff --check` passed;
+complete lint over 134 public files passed after correcting section spacing.
+The local machine has no Java runtime for an additional offline JVM execution;
+JavaScript/Java conversion and recurring DateTime updates were verified directly
+in the installation's openHAB runtime. No synthetic future date was injected into
+the live Item for DST testing.
+
+## Standard PV slider metadata documentation, 2026-10-12
+
+The MainUI guide now includes default-list `oh-slider-item` metadata for the
+existing PV Dimmer: 0–100, step 1, raw state through `ignoreDisplayState`,
+release-only sending and handle labels. Official component documentation supports
+those properties; `type`, `sendButton` and `useDisplayState` were removed from the
+slider example. The guide distinguishes release sending from the comfort widget's
+staged Apply workflow and preserves autoupdate=false/plain integer commands.
+This is documentation/configuration review only; no portal command or live widget
+change was performed. Installation behavior remains to be accepted separately.
+
+PV slider documentation refinement, 2026-10-12: the user reported loss of the
+percent display in raw-state mode. Current list/card examples retain display
+state (`ignoreDisplayState: false`) for the integer-percent Dimmer; raw mode
+is only an option when formatting causes misinterpretation. The supplied
+standalone card's scale/label/release-only options were checked against official
+component documentation. No live command or widget configuration was changed.
+
+## eCharger Advanced plant-control review, 2026-10-12
+
+[Findings and source limits](ECHARGER_CONTROL_OBSERVATIONS.md) reconcile runtime
+group/ownership with supplied timestamp recordings and official SMA Multi-EVC
+context. All three topics require SEMP plus Advanced; Diagnostics is independent.
+Active count remains nonzero during observed waiting/zero-power periods. The
+normalized limits are constant across the captured charging transitions, and
+matching API/SEMP metadata supplies no unit/reference-power contract. Exact
+semantics remain partly open; no runtime, group, configuration or live-I/O change
+was performed. This review does not authorize a setter or a new controller.
+
+Validation passed: all 240 offline tests, full lint over 135 public files and
+`git diff --check`. A separate non-I/O check of all four Advanced/Diagnostics
+combinations confirms that all three control properties depend on Advanced only.
+
+## Manual portal refresh, 2026-10-12
+
+Implemented locally: enabled portal adapters expose a settable string
+`portal/refresh`, accepting only non-retained `refresh` requests. The existing
+supervisor performs validated reads and updates existing preference topics;
+write gates need not be enabled. A separate non-availability feedback state
+reports progress and rejection. No new portal write method, session or ENV flag.
+
+Seven deterministic offline tests cover zero-interval idle startup, invalid and
+retained payloads, runtime discovery/routing with write gates off, disabled
+portal exclusion, periodic-wait wakeup, coalescing during a read, authentication
+blocking, preserved last values and retry backoff on transient failure, and real
+asyncio deadline cancellation/session reset. Existing MQTT transport and command
+tests cover shared consumer rejection and cleanup.
+
+MainUI String Item/standard link/autoupdate=false and command-button setup is
+documented against official Homie binding and button documentation. No live
+portal, broker or openHAB changes; deployment/discovery/button acceptance remains
+pending after the user-run resource baseline.
+
+Validation: all 247 offline tests passed, complete lint over 137 public files,
+standalone Compose parity including overrides, and diff hygiene passed. Existing
+loopback test servers required the approved run outside the filesystem sandbox;
+no installation endpoints were contacted.

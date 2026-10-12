@@ -89,6 +89,13 @@ charging-mix feature needs a verified endpoint, timestamp and consumer associati
 
 ## Commands and uncertainty
 
+An enabled portal adapter additionally accepts the read-only Homie action
+`portal/refresh/set` with payload `refresh`, independently of preference-write
+gates. It wakes the existing supervisor rather than creating a second reader.
+Requests coalesce; authentication blocking, read deadlines, retry backoff and
+the shared portal-session lock remain authoritative. The feedback property does
+not contribute availability. No retained replay or refresh on MQTT reconnect.
+
 Only confirmed writable parameters belong on Homie `/set`; measurements remain
 non-settable. Independent global, local and portal gates default to disabled.
 Validate identity, permissions, metadata choices, units and bounds before a write.

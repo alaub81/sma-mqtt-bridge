@@ -4,11 +4,13 @@ Die aktuelle Abnahme steht in [docs/VALIDATION.md](docs/VALIDATION.md), die Reih
 
 ## Aktive Aufgaben
 
+- [x] Manuelles Portal-Leseauffrischen am 12.10.2026 lokal umgesetzt: Homie `portal/refresh/set` mit String-Befehl `refresh`, Rückmeldung auf `portal/refresh`, bestehender Supervisor statt zusätzlichem Lesepfad. Unabhängig von Schreibfreigaben; laufende/ausstehende Reads zusammengefasst, retained Befehle abgewiesen, Auth-Sperre und Backoff erhalten. openHAB-String-Item/Button dokumentiert. Deployment und Live-Abnahme nach Ressourcenmessung offen.
+
 - [ ] Timestamp-Prüfungen überprüfen: klären, ob sie beibehalten, angepasst oder wieder entfernt werden sollen. Nutzen für Datenaktualität und mögliche Fehlalarme durch Gerätezeit, Zeitzonen oder fehlende Zeitstempel untersuchen; Entscheidung und Auswirkungen dokumentieren.
 
 - [ ] Ressourcenverbrauch der Bridge auf dem Zielhost messen und optimieren: CPU, Arbeitsspeicher, Netzwerkverkehr und Abfrageaufwand prüfen. Optimierungen ohne Verlust von Messwerten, Datenaktualität oder Reconnect-Stabilität umsetzen und durch Vorher-/Nachher-Messungen belegen.
 
-- [ ] Auf Andreas’ Wunsch vom 12.10.2026 die Home-Manager-Anlagenzeit (`measurements/planttime`) in openHAB als Datum/Uhrzeit darstellen. Unix-Sekunden in der Bridge unverändert erhalten; für reine Anzeige eine State-Description-Transformation verwenden, bei Zeitvergleichen/Regeln ein DateTime-Item mit geeigneter Umwandlung vorsehen. Zeitzone `Europe/Berlin` einschließlich Sommerzeit in openHAB behandeln; eine einfache Datumsformatierung eines Number-Items allein genügt nicht. Vor Umsetzung offizielle openHAB-Dokumentation konsultieren und bestehende Links/Item-Namen berücksichtigen.
+- [x] Home-Manager-Anlagenzeit am 12.10.2026 direkt in openHAB umgesetzt: numerisches Originalitem mit Sekundenwert/Link/Historie erhalten, State-Description-Anzeige mit Europe/Berlin und zusätzliches DateTime-Item für Regeln über einseitiges JavaScript-Linkprofil. Live-Anzeige und fortschreitende DateTime-Werte sowie gespeichertes Profil geprüft. Keine Bridge-/Pollingänderung.
 
 - [ ] Auf Andreas’ Wunsch vom 12.10.2026 die drei Wallbox-SEMP-Steuerwerte `control/activechargingcount` (`Setpoint.PlantControl.PCC.ChrgActCnt`), `control/powersetpointmaxpercent` (`Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMaxNom`) und `control/powersetpointminpercent` (`Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMinNom`) genauer erklären und belegen. Für ChrgActCnt Zählumfang und Vorgabe gegenüber tatsächlichem Zustand klären; für WSptMaxNom/WSptMinNom Einheit, Normierungsbasis, Vorzeichenkonvention und Wirksamkeit klären. Verhältnis zur Home-Manager-Laderegelung und zur separaten maximalen Ladeleistung untersuchen; offizielle Dokumentation/Metadaten und lesende Beobachtungen bei natürlichen Ladezustandswechseln verwenden. Bisherige Rohwerte 0/0/-100 reichen nicht als Semantikbeleg; keine PV-/Netzanteile ableiten und keine Setter oder Live-Schreibversuche daraus freigeben.
 
@@ -78,7 +80,7 @@ Die vollständigen Einzelbefunde stehen in [der Ergebnismatrix](docs/modbus-avai
 - [ ] Ladeziel-/Sitzungsenergie-Semantik, physische Zielerreichung und Rückwechsel prüfen. Die gemeldete 10-kWh-Planübertragung und Modusaktivierung sind keine vollständige Ladeabnahme.
 - [ ] Maximale Ladeleistung physisch abnehmen und einphasiges Winterladen untersuchen. Mindeststrom-Setter nur nach eigenen Metadaten-/Einheitenbelegen ergänzen; 4 kW sind laut geprüftem Limit unzulässig, 4,5 kW plus 10 A bleibt unbestätigter Versuchskandidat. Live-Versuche nur mit ausdrücklich angeforderten Zielwerten; Home Manager bleibt Regler. [Nachweise und offene Phasenfragen](docs/ECHARGER_POWER_LIMIT.md).
 - [ ] Zusätzliche Profile/Portalwerte und aktuellen Lademix nur mit bestätigten Messwerten, Einheiten, Zeitbezug und Identität ergänzen. Tagesanteile und Mindest-PV-Präferenz nicht als aktuellen Lademix veröffentlichen.
-- [ ] Kleine Diagnose-/Frischeverbesserungen und ausdrückliches Portal-Leseauffrischen ohne Neustart bewerten; anschließend gezielte Funktionsvereinfachung und zusätzliche Linterregeln. Keine allgemeine Adapterplattform bauen.
+- [ ] Kleine Diagnose-/Frischeverbesserungen bewerten; anschließend gezielte Funktionsvereinfachung und zusätzliche Linterregeln. Portal-Leseauffrischen lokal umgesetzt, Deployment-/Live-Abnahme separat offen. Keine allgemeine Adapterplattform bauen.
 - [ ] Später lhlab.wiki-Artikel aus [openHAB/openHAB.md](openHAB/openHAB.md) erstellen. Beispiel-Item-Dateien und Sitemaps bleiben auf Andreas’ Wunsch aus dem Umfang gestrichen.
 - [ ] Nächsten Release nach Ressourcenmessung bei ausdrücklichem Auftrag veröffentlichen: GitHub/GHCR und v0.3.6-Installation bereits vorhanden. Private Daten ausschließen, CI-/Releasejobs für den konkreten Tag prüfen und Upgrade abnehmen. Aktuelle Arbeit enthält keinen neuen Tag-/Pushauftrag.
 
@@ -602,3 +604,38 @@ Topic-Suffixe werden unter `homie/<konfigurierte Homie-ID>/` veröffentlicht. Di
 - Veraltete Vorbereitungs-/Publikationsaussagen in Konfiguration, Kontext, Plan, Compose-/Workflow-Kommentaren bereinigt. Änderungen dort nur Dokumentation/Kommentare, Runtime-Optionen und CI-/Releaseverhalten unverändert. GHCR-Deployment laut Andreas belegt; keine pauschale eigene Hosted-CI-Abnahme behauptet.
 - Weiterhin laufende 24-h-Messung nicht beeinflusst. Neue Veröffentlichung/Deployment nach Messung separat beauftragen.
 - Validierung: alle 240 Offline-Tests, vollständiger Linter über 134 Dateien, Compose-Parität mit Overrides und Diff-Prüfung bestanden. Compose-/Releaseworkflow-Diffs enthalten nur Kommentare; Installationsbefehle lokal geprüft, nicht auf dem Zielhost ausgeführt.
+
+## 2026-10-12 – Anlagenzeit-Anzeige und DateTime in openHAB umgesetzt
+
+- Andreas benötigt Anzeige und Regeln. Vorhandenes Number:Time-Item, Sekunden-Unit, Kanal-Link und Persistenzgruppe lesend inventarisiert; ursprüngliches Item nicht umbenannt oder typgeändert. Offizielle Item-/Transformations-/JavaScript-/YAML-Dokumentation konsultiert.
+- State-Description-Transformation mit Java Instant/ZoneId/DateTimeFormatter direkt über MainUI gespeichert; Anzeige zeigt korrekt Datum/Uhrzeit und CEST. Rohwert bleibt Unix-Sekunden. Kein bloßes Datumsformat auf Number und kein fester UTC-Offset.
+- Zusätzliches DateTime-Item in derselben Gerätegruppe angelegt, autoupdate=false/readOnly=true. Bestehenden Anlagenzeitkanal über SCRIPT ECMAScript verknüpft; toItemScript erzeugt ISO-Zeitpunkt aus Sekunden mit Berlin-Offset, beide Rückrichtungen leer. Neue Persistenz-/Regelzuordnungen nicht automatisch angelegt.
+- Live-Verknüpfung und erneutes Laden geprüft; DateTime-Anzeige schreitet in 30-s-Schritten fort. Öffentliche Anleitung ergänzt, keine privaten Thing-IDs/Adressen/Rohtelemetrie übernommen. Sommerzeit durch ZoneId geregelt; reale Zeitumstellungs-/Neustartabnahme bleibt separat. Keine Gerätebefehle, Bridge-Deployment oder Profil-/Pollingänderung.
+- Validierung: alle 240 Offline-Tests, vollständiger Linter über 134 öffentliche Dateien und Diff-Prüfung bestanden. Kein lokales JVM für zusätzliche Offline-Java-Ausführung vorhanden; Umwandlung und fortschreitende Werte direkt im openHAB-Laufzeitkontext geprüft. Keine synthetischen Zeitwerte oder Gerätebefehle live injiziert.
+
+## 2026-10-12 – Standard-PV-Slider dokumentiert
+
+- Andreas beauftragt die Ergänzung und legt oh-slider-item-Metadaten zur Prüfung vor. Offizielle openHAB-Komponentendokumentation geprüft: min/max/step und releaseOnly passen; statt useDisplayState=false ist ignoreDisplayState=true erforderlich. type und sendButton gehören nicht zu diesem Slider.
+- Anleitung enthält jetzt korrektes Default-List-Widget-YAML für 0–100 in 1-%-Schritten mit Werteanzeige und Rohwertverwendung. Senden erfolgt beim Loslassen, nicht über eine zusätzliche Bestätigung. Bestehender Variablen-Slider mit Übernehmen im Komfortwidget bleibt Alternative für ausdrücklich bestätigtes Senden.
+- Dimmer, Standard-Link, autoupdate=false und ganzzahlige Prozentbefehle erhalten; kein Prozent-Unit-Suffix auf den Befehl setzen. Keine Live-Einstellung, PV-Schreibaktion oder Widgetquellenänderung durchgeführt.
+
+## 2026-10-12 – Prozentanzeige und PV-Sliderkarte präzisiert
+
+- Andreas weist auf die fehlende Prozentanzeige bei ignoreDisplayState=true hin. Für den vorhandenen ganzzahligen Dimmer mit Prozent-State-Description ist false passend; Rohwertmodus nur bei tatsächlich störender Anzeige-Transformation/Rundung. Frühere pauschale Rohwertempfehlung in der aktuellen Anleitung korrigiert.
+- Vorgelegte oh-slider-card-Konfiguration anhand offizieller Dokumentation geprüft und als Default-Standalone-Widget ergänzt: 0–100/Schritt 1, Anzeigezustand, Loslassen zum Senden, Label und Skala. Kein sendButton; Standardkarte sendet beim Loslassen. Keine Live-Schreibaktion oder Widgetänderung.
+
+## 2026-10-12 – Drei SEMP-Steuerwerte fachlich erneut geprüft
+
+- Alle drei control-Topics sind Advanced und ausschließlich über SEMP gemappt; Diagnostics nicht erforderlich. Advanced-Default true, explizite ENV-/JSON-Abschaltung möglich. Keine Flagänderung während der Ressourcenmessung. [Bericht](docs/ECHARGER_CONTROL_OBSERVATIONS.md) ergänzt.
+- Aufzeichnungen getrennt für API/SEMP erneut geprüft: je 202/270 Records pro Kanal. ChrgActCnt hat je zwei Wertwechsel, beide Leistungsgrenzen keinen. Nichtzero-Zähler bleibt bei Fahrzeugstatus wartend und Ladeleistung null erhalten; daher ausdrücklich kein unmittelbarer lokaler Lädt-Status.
+- Offizielle SMA-Multi-EVC-Anleitung beschreibt vom Home Manager minütlich bereitgestellte Anzahl aktiver Ladestationen und Stromaufteilung. Plausibler Zusammenhang zu ChrgActCnt, aber exakte Kanalzuordnung/Definition aktiv und anlagenweiter Zählumfang weiterhin nicht nachgewiesen.
+- Max-/Min-Normierungswerte unverändert während beobachtetem Laden/Ruhe. API-Metadaten ohne Unit, SEMP ohne Referenzleistung-/Vorzeichenvertrag; passende offizielle exakte Kanaldefinition nicht gefunden. Einheit/Basis/Vorzeichen/Wirkung offen. Mindest-PV-Präferenz und WMaxIn-Limit bleiben getrennt. Keine Rohtelemetrie/Privatkennungen in den Bericht kopiert, keine Writes, Setter, Topics oder Gruppen geändert.
+- Validierung: alle 240 Offline-Tests, vollständiger Linter über 135 öffentliche Dateien und Diff-Prüfung bestanden. Vier Advanced-/Diagnostics-Kombinationen zusätzlich ohne Geräte-I/O geprüft; alle drei Steuerwerte ausschließlich Advanced-abhängig.
+
+## 2026-10-12 – Manuelles Portal-Leseauffrischen
+
+- Andreas bestätigt die vorgeschlagene MQTT-/openHAB-Button-Funktion. Lokal umgesetzt: `portal/refresh/set` akzeptiert exakt `refresh`, Rückmeldung auf `portal/refresh`. Bestehende Mindest-PV-/Netzanteil-Topics unverändert; keine Einstellung schreiben.
+- Portal-Supervisor durch Event wecken, keine parallele Abfrageschleife. Mehrere wartende Klicks zusammenfassen, laufenden Read teilen; ursprünglicher Session-Lock, Read-Watchdog, Auth-Sperre und Fehler-Backoff bleiben erhalten. Intervall null ohne automatische Startabfrage unterstützt; periodische Wartezeit beginnt nach erfolgreichem Read neu. Kein Auffrischen durch MQTT-Reconnect.
+- Aktiv nur bei eingeschaltetem Portaladapter, unabhängig von Advanced/Diagnostics und Schreibfreigaben. Keine neue ENV-Option. String-Item mit Standardprofil/autoupdate=false und MainUI-Button dokumentiert; keine Persistenz-/Startregel für Befehlswiederholung.
+- Sieben gezielte Offline-Tests bestanden; Veröffentlichung, Deployment und Live-Button-Abnahme bleiben offen. Laufende Zielhost-Ressourcenmessung und private Originale unverändert.
+- Abschlussprüfung: alle 247 Offline-Tests, vollständiger Linter über 137 öffentliche Dateien, Compose-Parität mit Overrides und Diff-Prüfung bestanden. Bestehende Loopback-Testserver im freigegebenen Lauf außerhalb der Sandbox, keine Installationsendpunkte kontaktiert.
