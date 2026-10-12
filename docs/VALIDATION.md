@@ -596,3 +596,13 @@ not this local image. Target-platform builds and scans remain the release workfl
 responsibility; these local checks do not prove target-host live publication.
 The [deployment checklist](MAC_TEST.md#accept-the-2026-10-12-topic-extension)
 records the remaining installation checks.
+
+## Garage connection indicator labels, 2026-10-12
+
+With a ready measurement source, the connection row now displays Gesperrt for
+that vehicle state and Ladefehler for Fehler am Ladepunkt. Both retain the orange
+indicator without asserting cable attachment. Unknown states or non-ready sources
+display Status unbekannt. Connected/disconnected labels and source gating remain
+unchanged. Canonical source and generated MainUI import match. Full lint and all
+217 offline tests passed; local MQTT test servers required execution outside the
+sandbox. Installation and iPhone rendering acceptance remain pending.

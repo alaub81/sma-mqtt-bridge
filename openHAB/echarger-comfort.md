@@ -181,11 +181,12 @@ actual device rendering and larger accessibility fonts still need review.
 
 A paired car (`iconify:mdi:car-outline`) and Type-2 plug
 (`iconify:mdi:ev-plug-type2`) indicator below the header shows
-Auto angeschlossen, Kein Auto angeschlossen or Anschluss unbekannt. It uses the
+Auto angeschlossen, Kein Auto angeschlossen, Gesperrt, Ladefehler or Status unbekannt. It uses the
 existing `statusItem` and `measurementStatusItem`; no extra Item is required.
 Only fresh Verbunden / wartend and Lädt states prove connection; Nicht verbunden
-proves disconnection. Gesperrt, error, unknown or stale states do not prove either
-and therefore show unknown. Charging permission and zero power are never used as
+proves disconnection. Fresh Gesperrt and Fehler am Ladepunkt states show the short labels Gesperrt and
+Ladefehler, retaining the orange indicator because attachment is not established.
+Unknown or non-ready sources show Status unbekannt. Charging permission and zero power are never used as
 attachment evidence. Per-property age remains unavailable in the existing bridge
 interface, so source readiness alone cannot guarantee the vehicle status timestamp.
 Set `demoConnected: false` to preview a disconnected vehicle without any device I/O.

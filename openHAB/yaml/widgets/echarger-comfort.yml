@@ -136,7 +136,7 @@ widgets:
                                 ? items[props.statusItem].state : ''UNDEF'') === ''Nicht verbunden'' ? ''disconnected'' : ''unknown'')) : ''unknown''))])'
                     - component: Label
                       config:
-                        text: '=({''connected'':''Auto angeschlossen'',''disconnected'':''Kein Auto angeschlossen'',''unknown'':''Anschluss unbekannt''}[(props.demoMode
+                        text: '=({''connected'':''Auto angeschlossen'',''disconnected'':''Kein Auto angeschlossen'',''unknown'':((props.measurementStatusItem && items[props.measurementStatusItem] ? items[props.measurementStatusItem].state : ''UNDEF'') === ''ready'' ? ({''Gesperrt'':''Gesperrt'',''Fehler am Ladepunkt'':''Ladefehler''}[(props.statusItem && items[props.statusItem] ? items[props.statusItem].state : ''UNDEF'')] || ''Status unbekannt'') : ''Status unbekannt'')}[(props.demoMode
                           ? (props.demoConnected === false ? ''disconnected'' : ''connected'') : (((props.measurementStatusItem && items[props.measurementStatusItem]
                           ? items[props.measurementStatusItem].state : ''UNDEF'') === ''ready'') ? ([''Verbunden / wartend'',''Lädt''].includes((props.statusItem
                           && items[props.statusItem] ? items[props.statusItem].state : ''UNDEF'')) ? ''connected'' : ((props.statusItem && items[props.statusItem]

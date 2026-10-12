@@ -443,3 +443,9 @@ Topic-Suffixe werden unter `homie/<konfigurierte Homie-ID>/` veröffentlicht. Di
 
 - MD060-Fehler in den Tabellen des eCharger-Audits und Home-Manager-Verfügbarkeitsberichts behoben: rechtsbündige Trennzellen auf den konfigurierten kompakten Stil gekürzt. Inhalte unverändert.
 - Validierung: vollständiger Linter über 126 Dateien einschließlich Markdown und alle 217 Offline-Tests bestanden. Vier lokale MQTT-Testserver benötigten einen Lauf außerhalb der Sandbox; keine Live-Geräteverbindung. `git diff --check` bestanden.
+
+## 2026-10-12 – Kurze Fahrzeugstatusanzeige im Garagenwidget
+
+- Anschlusszeile zeigt bei bereiter Messquelle jetzt „Gesperrt“ und „Ladefehler“ statt „Anschluss unbekannt“. Unbekannte Zustände/nicht bereite Quelle zeigen kurz „Status unbekannt“. Bestehende Anschlussanzeigen und orange Farbe bleiben erhalten; keine Behauptung einer Kabelverbindung aus einer Sperre.
+- Kanonische YAML und nativer MainUI-Export aktualisiert. Offizielle openHAB-Dokumentation für Widget-Ausdrücke konsultiert.
+- Validierung: Linter über 126 Dateien, Exportparität und alle 217 Offline-Tests bestanden. Vier lokale MQTT-Testserver benötigten Ausführung außerhalb der Sandbox. Keine Geräteaktion oder Installation geändert; tatsächliche iPhone-Anzeige nach Übernahme noch offen. Bedeutung des kurzzeitigen Fahrzeugstatus „Gesperrt“ bleibt ohne gleichzeitige Rohcode-/Freigabebeobachtung offen.
