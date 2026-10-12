@@ -164,7 +164,7 @@ SEMP_EXTRA = (
 )
 
 
-ADVANCED_BASE_KEYS = {"measurements/vehicle-status-code", "parameters/nameplate-pkgrev"}
+ADVANCED_BASE_KEYS = {"parameters/nameplate-pkgrev"}
 
 
 # Only channels observed refreshing timestamps with unchanged numeric values.
@@ -226,6 +226,7 @@ def base_values(catalog, advanced=True):
         "measurements/vehicle-status": VEHICLE.get(str(vehicle), "Unbekannter Fahrzeugstatus")
         if vehicle is not None
         else None,
+        "measurements/vehicle-status-code": number(vehicle),
         "measurements/health": HEALTH.get(str(catalog.get("Measurement.Operation.Health")))
         if catalog.get("Measurement.Operation.Health") is not None
         else None,
@@ -234,7 +235,6 @@ def base_values(catalog, advanced=True):
     }
 
     if advanced:
-        result["measurements/vehicle-status-code"] = number(vehicle)
         result["parameters/nameplate-pkgrev"] = catalog.get("Parameter.Nameplate.PkgRev")
     return result
 

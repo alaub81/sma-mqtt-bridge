@@ -226,7 +226,13 @@ class ReaderLifetimeTests(unittest.IsolatedAsyncioTestCase):
     stamp = MeasurementFreshnessTests.stamp
 
     async def read_api(self, rows, include_base=True):
-        reader = EChargerReader(ECharger(expected_serial="123"), 10000, include_base=include_base)
+        reader = EChargerReader(
+            ECharger(
+                expected_serial="123", advanced_channels_enabled=False, diagnostics_enabled=False
+            ),
+            10000,
+            include_base=include_base,
+        )
         reader.access_token = AsyncMock(return_value="fixture-token")
         catalog = [
             {
@@ -288,6 +294,7 @@ class ReaderLifetimeTests(unittest.IsolatedAsyncioTestCase):
         state.update(values, now=1000)
         self.assertEqual(state.fresh_values(1002)["measurements/total-energy"], "2")
         self.assertNotIn("measurements/power", values)
+        self.assertNotIn("measurements/vehicle-status-code", values)
         values, state = await self.read_api(
             [
                 ("Measurement.Metering.GridMs.TotWhIn.ChaSta", "1500", 179),

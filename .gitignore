@@ -23,3 +23,7 @@ build/
 
 # Image-generated version metadata must not override local Git identity.
 **/_build_version.txt
+
+# Private target-host resource observations.
+smab-resource-soak*.jsonl
+smab-resource-soak*.log
