@@ -51,7 +51,7 @@ Die vollständigen Einzelbefunde stehen in [der Ergebnismatrix](docs/modbus-avai
 
 - [x] Wallbox `measurements/vehiclestatuscode` am 12.10.2026 lokal in die Basisgruppe übernommen. Topic/Integerwerte, Read-only-Metadaten und Zeitstempelbehandlung erhalten; bestehende API-/SEMP- und Discoverytests bei deaktivierten optionalen Gruppen erweitert. Deployment nach Ressourcenmessung offen.
 
-- [ ] Release-Dokumentation aktualisieren: Änderungen und Upgrade-Hinweise zusammenstellen; README vom Vorbereitungsstand auf die tatsächlich verfügbare GHCR-Veröffentlichung umstellen. Produktionsbetrieb mit veröffentlichtem Image und Beispiel-Compose laut Andreas bereits vorhanden; keine erneute Veröffentlichung dafür erforderlich.
+- [x] Release-Dokumentation am 12.10.2026 lokal aktualisiert: README beschreibt verfügbares GHCR-Image, docs/RELEASES.md trennt v0.3.6 von unveröffentlichten Änderungen und enthält Upgrade-/Rollback-Hinweise. Keine erneute Veröffentlichung oder Deployment dafür erforderlich.
 
 - [ ] Watchtower und Autoheal auf dem Zielhost einrichten: automatische Container-Updates und Neustarts bei Docker-unhealthy konfigurieren und prüfen. Persistente Zustandsdaten erhalten und Wiederanlauf ohne Befehlswiederholung sicherstellen.
 - [ ] Review 4 abschließen: Restlaufzeit eindeutig periodisch erneuerter Kanäle am 12.10.2026 lokal korrigiert; Live-/UI-Abnahme und übrige Zeitstempelregeln offen. Nachweise und Fundstellen im [archivierten Review](docs/archive/2026-10-11/todo.md#2026-10-11--repository--und-codereview); Umsetzungsschritte im Plan. Bestehende Unsicherheitssperren und retained Beobachtungen erhalten.
@@ -80,7 +80,7 @@ Die vollständigen Einzelbefunde stehen in [der Ergebnismatrix](docs/modbus-avai
 - [ ] Zusätzliche Profile/Portalwerte und aktuellen Lademix nur mit bestätigten Messwerten, Einheiten, Zeitbezug und Identität ergänzen. Tagesanteile und Mindest-PV-Präferenz nicht als aktuellen Lademix veröffentlichen.
 - [ ] Kleine Diagnose-/Frischeverbesserungen und ausdrückliches Portal-Leseauffrischen ohne Neustart bewerten; anschließend gezielte Funktionsvereinfachung und zusätzliche Linterregeln. Keine allgemeine Adapterplattform bauen.
 - [ ] Später lhlab.wiki-Artikel aus [openHAB/openHAB.md](openHAB/openHAB.md) erstellen. Beispiel-Item-Dateien und Sitemaps bleiben auf Andreas’ Wunsch aus dem Umfang gestrichen.
-- [ ] Öffentlichen Stand später nach [GitHub](https://github.com/alaub81/sma-mqtt-bridge) hochladen und GHCR-Release vorbereiten. Private Daten ausschließen, neue Release-/CI-Verknüpfung und GHCR-Installation prüfen; bestehende GitHub-CI einschließlich beider Architekturen und Sicherheitsprüfungen laut Andreas mehrfach erfolgreich; Veröffentlichung ist durch diesen Cleanup nicht beauftragt.
+- [ ] Nächsten Release nach Ressourcenmessung bei ausdrücklichem Auftrag veröffentlichen: GitHub/GHCR und v0.3.6-Installation bereits vorhanden. Private Daten ausschließen, CI-/Releasejobs für den konkreten Tag prüfen und Upgrade abnehmen. Aktuelle Arbeit enthält keinen neuen Tag-/Pushauftrag.
 
 ## Offene Fragen und geklärte Teile
 
@@ -594,3 +594,11 @@ Topic-Suffixe werden unter `homie/<konfigurierte Homie-ID>/` veröffentlicht. Di
 - Bestehende Filter-/Discovery-/Stateprüfungen angepasst; API-Read-/Restlaufzeitfälle nun mit deaktivierten Advanced-/Diagnostics-Gruppen. Ohne Pflicht-Leistungsmessung erzeugt der Statuscode kein ready; API ohne Basiseigentum erzeugt kein konkurrierendes Code-Topic. Keine neuen Abfragen, Setter, ENV-Optionen, Pollintervalle oder Identitäts-/Unitregeln.
 - Produktions-/Discovery-Abnahme und Deployment erst nach Ressourcenmessung. Keine Geräte-/Brokeraktion oder Veröffentlichung.
 - Validierung: alle 240 Offline-Tests, vollständiger Linter über 133 Dateien, Compose-Parität einschließlich Overrides und Diff-Prüfung bestanden.
+
+## 2026-10-12 – Lokale Änderungen committet, Release-Dokumentation aktualisiert
+
+- Auf Andreas’ Auftrag Commit 41c9953 erstellt: Basis-Fahrzeugstatuscode, zusätzliche Ausfalltests, Host-Ressourcenrecorder und dokumentierte Betriebsabnahmen. Kein Tag, Push oder Deployment.
+- Anschließend nächsten vereinbarten Punkt umgesetzt: README mit veröffentlichtem GHCR-Setup, expliziter Versionswahl und passenden Compose-Befehlen aktualisiert; docs/RELEASES.md mit v0.3.6-Änderungen, unveröffentlichten Ergänzungen und Upgrade-/Rollback-Verfahren erstellt.
+- Veraltete Vorbereitungs-/Publikationsaussagen in Konfiguration, Kontext, Plan, Compose-/Workflow-Kommentaren bereinigt. Änderungen dort nur Dokumentation/Kommentare, Runtime-Optionen und CI-/Releaseverhalten unverändert. GHCR-Deployment laut Andreas belegt; keine pauschale eigene Hosted-CI-Abnahme behauptet.
+- Weiterhin laufende 24-h-Messung nicht beeinflusst. Neue Veröffentlichung/Deployment nach Messung separat beauftragen.
+- Validierung: alle 240 Offline-Tests, vollständiger Linter über 134 Dateien, Compose-Parität mit Overrides und Diff-Prüfung bestanden. Compose-/Releaseworkflow-Diffs enthalten nur Kommentare; Installationsbefehle lokal geprüft, nicht auf dem Zielhost ausgeführt.

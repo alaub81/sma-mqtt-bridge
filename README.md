@@ -8,26 +8,38 @@ Reads and allowlisted controls are implemented and offline tested. Selected inst
 checks have passed; full production acceptance and openHAB migration remain pending.
 See the [current acceptance matrix](docs/VALIDATION.md) for dated evidence and gaps.
 
-## Local setup
+## Install the published image
 
 Preserve any existing root `smab.env`. On a fresh installation, copy
 [smab.example.env](smab.example.env) to `smab.env` and configure only required settings.
 Sources and command gates default to disabled. Additional JSON is optional.
 See [configuration, TLS and state storage](docs/CONFIGURATION.md).
 
-Build and validate locally; GHCR publication remains a later milestone:
+Published images are available at `ghcr.io/alaub81/sma-mqtt-bridge` for Linux
+amd64 and arm64. Release v0.3.6 is reported deployed and healthy on the target
+installation. For a reproducible deployment, set `SMAB_BRIDGE_VERSION=0.3.6` in
+`smab.env`; image tags omit the Git tag's `v`. The default `latest` follows the
+newest successfully published stable release. See [release and upgrade notes](docs/RELEASES.md).
+
+```sh
+docker compose --env-file smab.env -f docker-compose.example.yml pull
+docker compose --env-file smab.env -f docker-compose.example.yml run --rm --no-deps sma-mqtt-bridge --check-config
+docker compose --env-file smab.env -f docker-compose.example.yml up -d
+```
+
+Follow [the installation acceptance procedure](docs/MAC_TEST.md) for enabled
+sources. Both Compose files are standalone and share runtime settings: development
+builds `Dockerfile-SMAB`; the example pulls the published GHCR image.
+`--env-file smab.env` applies Compose interpolation settings such as data path,
+UID/GID and image version as well as preserving the documented service ENV file.
+Keep the `data_smab_state` volume when replacing a container.
+
+## Local development
 
 ```sh
 ./tools/build_image.sh
 docker compose --env-file smab.env -f docker-compose.dev.yml run --rm sma-mqtt-bridge --check-config
 ```
-
-To start selected, explicitly enabled sources, follow
-[the installation acceptance procedure](docs/MAC_TEST.md).
-Both Compose files are standalone and share runtime settings: development builds
-`Dockerfile-SMAB`; the example pulls the selected GHCR version after publication.
-`--env-file smab.env` also applies Compose interpolation settings such as data path,
-UID/GID and image version. Preserve the `data_smab_state` volume when replacing a container.
 
 For native diagnostics and offline tests, use Python 3.14+:
 
@@ -49,7 +61,7 @@ python3.14 -m venv .lint-venv
 .lint-venv/bin/python -m pip install --requirement tests/requirements-lint.txt
 .lint-venv/bin/python tests/install_lint_tools.py
 ./tests/linter-check.sh
-python3 tests/compose_check.py
+python3.14 tests/compose_check.py
 ```
 
 The lint check rejects Python tool versions that differ from the CI pins. After
@@ -59,8 +71,10 @@ All public repository files receive hygiene checks and applicable language linte
 Ruff uses E4/E7/E9/F/I and checks Python formatting (100-column target, double
 quotes, four-space indentation). Pylint checks errors/fatal diagnostics. Widget
 export parity is included. Offline tests use deterministic fixtures and local test servers.
-CI is prepared for Compose parity and amd64/arm64 image tests; local checks do not
-prove that hosted CI, security scans or release jobs have run.
+CI runs on main-branch pushes and pull requests. Stable tag pushes invoke the
+release workflow, which requires reusable CI before building/scanning and publishing
+GHCR images. This includes Compose parity and amd64/arm64 image checks. Local test
+success is separate from a hosted workflow result.
 
 To apply only import ordering and formatting with the pinned local Ruff:
 
@@ -79,6 +93,7 @@ The linter-check command itself remains read-only.
 | [Profiles](docs/PROFILES.md), [register evidence](docs/REGISTER_VALIDATION.md) | Reusable model mappings and polling validation |
 | [Architecture](docs/CONTEXT.md) | Scope and durable design decisions |
 | [Validation](docs/VALIDATION.md) | Current acceptance status and evidence |
+| [Releases](docs/RELEASES.md) | Published/unreleased changes, image tags and upgrade checks |
 | [Plan](docs/IMPLEMENTATION_PLAN.md), [todo.md](todo.md) | Future milestones, active German tasks and diary |
 | [Archive](docs/archive/README.md) | Preserved earlier working documents and diary entries |
 | [Migration](docs/MIGRATION.md), [ledger](docs/migration-coverage.csv), [value catalogue](docs/WERTEKATALOG.md) | Existing openHAB capabilities, units and remaining continuity checks |
@@ -89,8 +104,9 @@ The linter-check command itself remains read-only.
 
 Private `smab.env`, installation data and original references stay outside Git and
 Docker image inputs. Configuration, tests and documents stay outside `ressources/`.
-Publication and releases require a separate milestone. No paid SMA Developer API or
-replacement charging controller is used.
+Publication of new commits/tags is explicit release work; local changes are not
+automatically published. No paid SMA Developer API or replacement charging
+controller is used.
 
 ## License
 

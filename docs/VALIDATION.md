@@ -59,7 +59,7 @@ Additional lint rules remain a separate planned improvement.
 | Garage widget | PV operation/staging and iOS layout accepted by user, 2026-10-11; canonical source/export parity checked locally | Existing acceptance remains; future behavior changes need a new check |
 | openHAB migration | 100-row ledger, 34 linked inverter Items, four Home Manager Items and ten derived capabilities inventoried | Seven unidentified Item links; full rules/UI/units/offsets/persistence continuity |
 | External monitoring and alarms | Setup reported complete by user, 2026-10-11 | Specific monitored signals and triggered alarm scenarios not supplied; host reboot/state restoration remain separate |
-| Docker and publication | Existing GitHub CI including lint, tests, Compose checks, amd64/arm64 builds, container tests and scans reported repeatedly successful by user, 2026-10-11; target-host update checklist accepted | New release-to-CI dependency needs a hosted run; GHCR publication/pull acceptance remains separate |
+| Docker and publication | Existing GitHub CI including both architecture builds/scans repeatedly successful according to user, 2026-10-11; v0.3.6 GHCR pull/version and healthy startup reported by user, 2026-10-12 | Future releases need their own hosted results and deployment checks |
 
 Unavailable readings are not a successful measurement. Reported acceptance of one
 command or UI action does not certify every control or completed physical charging.
@@ -912,3 +912,19 @@ until the resource baseline recording is complete.
 Validation passed: all 240 offline tests, full lint over 133 files, standalone
 Compose parity including overrides and `git diff --check`. No installation
 endpoint was contacted.
+
+## Publication documentation reconciliation, 2026-10-12
+
+README and [release notes](RELEASES.md) now describe the existing GHCR image
+and separate published v0.3.6 behavior from local unreleased additions. Installation
+uses explicit Compose interpolation via root smab.env and supports exact image
+version pinning. Upgrade/rollback preserve the Compose project, state volume,
+manifest and uncertainty journals. Obsolete future-publication statements were
+removed from configuration/context/plan and Compose/workflow comments. Runtime
+options and workflow behavior are unchanged. No new tag, push or deployment
+was performed.
+
+Validation passed: all 240 offline tests, complete lint over 134 files, standalone
+Compose parity with overrides and `git diff --check`. Compose and release workflow
+diffs contain comment changes only. Installation commands were reviewed locally,
+not executed against the production host.

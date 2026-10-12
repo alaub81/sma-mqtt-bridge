@@ -108,7 +108,7 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 
 | Variable | Default | Meaning / validation |
 | --- | --- | --- |
-| `SMAB_BRIDGE_VERSION` | `latest` | Compose image tag; select a published version for deployment. No release exists yet. |
+| `SMAB_BRIDGE_VERSION` | `latest` | Compose image tag; pin a published version such as `0.3.6` for deployment. Image tags omit the Git tag’s `v`; see [release notes](RELEASES.md). |
 | `SMAB_DATA_DIR` | `./data/sma-mqtt-bridge` | Compose host bind directory. |
 | `SMAB_ENV_FILE` | `./smab.env` | Compose service ENV file; optional for diagnostics. |
 | `SMAB_UID`, `SMAB_GID` | `10001` | Compose-only integer user/group IDs; align file access with the host account. |

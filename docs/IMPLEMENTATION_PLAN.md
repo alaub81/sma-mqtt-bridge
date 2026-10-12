@@ -104,16 +104,19 @@ ordering are already enforced by the repository check.
 Do not convert style hints into a broad rewrite or introduce a generic adapter platform.
 Keep current status in one acceptance matrix and archive completed diary periods.
 
-## 6. Prepare publication and release
+## 6. Maintain release validation
 
-Publication remains separately authorized work. Before a GitHub upload or GHCR
-release, verify private-data exclusions, namespace/tags, hosted CI/security scans and
-amd64/arm64 images. Recheck stable official Python tags before updating the image.
-The release workflow now requires the reusable full CI for the tagged commit before
-publication, including lint, tests, Compose checks and amd64/arm64 image builds,
-container tests and scans. Repeated successful hosted runs of the existing CI were
-reported by the user on 2026-10-11. Verify the newly added release-to-CI dependency
-in a hosted run; release publication remains separately authorized.
+GitHub/GHCR publication and target-host image pull are already operational;
+v0.3.6 deployment and healthy startup were confirmed by Andreas. Maintain
+[release notes](RELEASES.md) and verify each tagged commit's hosted CI/security
+results and amd64/arm64 images. Do not equate local success with hosted checks.
+
+Before future releases, verify private-data exclusions, namespace/tags and
+upgrade/state continuity. Recheck stable official Python tags before image
+updates. The workflow requires reusable CI before publication, including lint,
+tests, Compose parity, architecture image tests and scans. Future tag/push work
+needs an explicit release request. Bundle pending local changes after the
+24-hour resource baseline; do not alter that running installation mid-recording.
 
 ## Complete model-specific Modbus coverage
 

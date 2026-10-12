@@ -1,4 +1,4 @@
-# Standalone deployment service; requires a future published GHCR image.
+# Standalone deployment service using the published GHCR image.
 # Runtime options must match docker-compose.dev.yml (checked by tests/compose_check.py).
 services:
   sma-mqtt-bridge:

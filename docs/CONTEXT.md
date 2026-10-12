@@ -44,7 +44,7 @@ command uncertainty journals and process-lock protection during storage changes.
 Resolved environment secrets must never be written into generated configuration.
 
 Both standalone Compose files share runtime settings. Development builds
-`Dockerfile-SMAB`; the example selects a GHCR image after publication.
+`Dockerfile-SMAB`; the example selects a published GHCR image.
 `ressources/` contains image inputs only: the Python package, bundled profiles and
 runtime dependencies, copied into `/app`. Documentation and tooling stay outside it.
 Use a verified stable official Python image; recheck published tags before updates.
@@ -139,7 +139,9 @@ its exporter and lint check prevent divergent copies. Consult
 Keep active German tasks and decisions in [todo.md](../todo.md). Archive earlier
 working documents without deleting entries or unresolved questions. Configuration,
 profile, migration and technical evidence documents remain maintained contracts.
-GitHub publication and releases require a separate later milestone.
+GitHub/GHCR publication is operational. New commits/tags are published only as
+explicitly requested release work; local preparation does not automatically
+authorize a push or deployment.
 
 ## Complete register coverage decision, 2026-10-12
 
