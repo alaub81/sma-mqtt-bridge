@@ -180,7 +180,7 @@ intervals are preserved.
 | --- | --- | --: | --- | --- |
 | All three | measurements/operatingtime | 30521 | U64 seconds, scale 1, integer s | Advanced |
 | All three | measurements/feedintime | 30525 | U64 seconds, scale 1, integer s | Advanced |
-| All three | diagnostics/deratingreason | 30219 | U32 TAGLIST, model-specific enum | Diagnostics |
+| All three | diagnostics/deratingreason | 30219 | U32 TAGLIST, model-specific enum | Basic (since 2026-10-13) |
 | Storage only | measurements/batterychargeenergy | 31397 | U64 FIX0 Wh / float kWh, scale 0.001 | Basic |
 | Storage only | measurements/batterydischargeenergy | 31401 | U64 FIX0 Wh / float kWh, scale 0.001 | Basic |
 

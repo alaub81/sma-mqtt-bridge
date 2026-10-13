@@ -28,8 +28,8 @@ Die vollständigen Einzelbefunde stehen in [der Ergebnismatrix](docs/modbus-avai
 - [x] M03 – Kleine AC-Auswahl umgesetzt: Netzfrequenz aller drei Wechselrichter, Ströme Tripower L1/L2/L3 und Storage L1; Sunny Boy L2/L3 bereits in M01 ergänzt. Neue Messwerte mit bestehendem Basic-Default, fünf Sekunden für neue kleine Pollblöcke. Zusätzliche Tripower-/Storage-Phasenspannung/-leistung war nicht Teil dieses Auftrags und bleibt eine mögliche spätere Auswahl.
 - [x] M04 – Storage signed AC-Gesamtleistung, Batteriestrom und Batteriespannung 30775/30843/30851 ergänzt. Vorzeichen unverändert erhalten, keine Ladezustandsableitung aus dem Vorzeichen. Bestehende Batteriemessungen und langsame Poller unverändert.
 - [x] M05 – Storage-Energiezähler 31397/31401 nach ausdrücklichem Umsetzungsauftrag ergänzt: U64/FIX0, Herstellerquelle Wh, Veröffentlichung kWh mit Faktor 0.001. Gültige 0 erhalten; alter 30531/30537-kWh-Sonderfall nicht übertragen. Direkter GUI-/Verlaufsvergleich, Reset-/Zählumfang und neue MQTT-/openHAB-Abnahme bleiben separat offen.
-- [ ] M07 – Betriebs-/Einspeisedauern 30521/30525 am 12.10.2026 als U64-Sekunden/Advanced umgesetzt; MQTT in DEV am 12.10.2026 geprüft, openHAB-Abnahme offen. Alternative Ertragszähler 30513/30517 und 32-Bit-Zeitdopplungen weiterhin nur nach Nutzen bewerten; bestehende ganze-kWh-Topics und Historie erhalten.
-- [ ] M08 – Derating-Grund 30219 am 12.10.2026 als modellgenauer Diagnostics-Enum umgesetzt, NaN/Unbekannt bleibt unveröffentlicht. Ereignisregister 30247 weiterhin wegen NaN aus erster Auswahl ausgeschlossen; spätere natürliche Ereignisbeobachtung möglich. DEV-Enum-Veröffentlichung geprüft; weitere Ereignis-/Fehlerszenarien offen, keine Fehler absichtlich erzeugen.
+- [x] M07 – Betriebs-/Einspeisedauern 30521/30525 als U64-Sekunden/Advanced umgesetzt; MQTT in DEV am 12.10.2026 geprüft. Andreas bestätigt am 13.10.2026 übereinstimmende openHAB-/SMA-Anzeigen, Wertevergleich abgenommen. Fortschreibung unter wechselnden Betriebszuständen nicht separat belegt. Alternative Ertragszähler/32-Bit-Zeitdopplungen bleiben zurückgestellte Auswahl, bestehende ganze-kWh-Topics und Historie erhalten.
+- [ ] M08 – Derating-Grund 30219 am 12.10.2026 als modellgenauer Enum umgesetzt, seit 13.10.2026 lokal Basic statt Diagnostics; NaN/Unbekannt bleibt unveröffentlicht. Ereignisregister 30247 weiterhin wegen NaN aus erster Auswahl ausgeschlossen; spätere natürliche Ereignisbeobachtung möglich. DEV-Enum-Veröffentlichung geprüft; weitere Ereignis-/Fehlerszenarien offen, keine Fehler absichtlich erzeugen.
 - [x] M09 – Sunny-Boy-DC-Eingang B auf Andreas’ Wunsch ergänzt: Strom/Spannung/Leistung als Basis, read-only, FC04 30957/30959/30961 alle 5 s. Scan lieferte gültige 0; tatsächliche Stringbelegung bleibt offen. MQTT-Veröffentlichung in DEV am 12.10.2026 geprüft; openHAB-Abnahme der Ergänzung ausstehend.
 - [ ] M10 – Ausschlussliste bewahren: 433 NaN und zwei nicht dekodierbare Storage-BMS-Strings bleiben aus der ersten Kandidatenliste ausgeschlossen. Bei Bedarf später gezielt unter natürlichen Lade-/Entlade-/Ereigniszuständen prüfen; kein erneuter Vollscan automatisch geplant. Identitäts-/Netzwerkwerte, Konfigurationsbeobachtungen und Dopplungen gemeinsam nach Nutzen behandeln; aus RO/RW/WO keine automatische Schreibfreigabe ableiten.
 
@@ -701,3 +701,33 @@ Topic-Suffixe werden unter `homie/<konfigurierte Homie-ID>/` veröffentlicht. Di
 ## 2026-10-13 – Wallbox-Phasenvergleich zurückgestellt
 
 - Andreas kann das Auto derzeit nicht laden. Vergleich von L1/L2/L3 mit Gesamtladeleistung bis zum nächsten möglichen Ladevorgang zurückgestellt; keine aktive Testaufforderung oder automatische Wiederholung geplant. Vorhandene Veröffentlichungsnachweise und offene Abnahme erhalten.
+
+## 2026-10-13 – Betriebs-/Einspeisedauern abgeglichen
+
+- Andreas bestätigt übereinstimmende openHAB-/SMA-Werte für die besprochenen Betriebs-/Einspeisedauern. Advanced-Zuordnung und Anzeigevergleich abgenommen; keine konkreten Zahlen/Zeitpunkte oder geräteweise Vergleichsliste geliefert, keine eigene Live-Prüfung.
+- M07-Wertevergleich geschlossen. Gesonderte 15-Minuten-Fortschreibung und Verhalten bei Betriebszustandswechseln nicht behauptet. Keine Item-/Geräte-/Pollingänderung.
+
+## 2026-10-13 – Storage-Messwerte abgeglichen
+
+- Andreas bestätigt nach der gezielten Storage-Prüffrage, dass die Werte vorhanden sind und passen: AC-Gesamtleistung, Batteriestrom und Batteriespannung. AC-Gesamtleistung als Basic/read-only/W mit Vorzeichen erläutert. Wertevergleich für diese Storage-Ergänzungen von Andreas abgenommen.
+- Keine konkreten Vergleichszahlen/Zeitpunkte geliefert, keine eigene Live-Prüfung. Tripower-/Sunny-Boy-Wertevergleich und übrige M02–M04-Teile bleiben separat offen. Keine Geräte-/Item-/Pollingänderung.
+
+## 2026-10-13 – Tripower-Messwerte abgeglichen
+
+- Andreas bestätigt den Vergleich von Netzfrequenz und Strömen L1/L2/L3 zwischen openHAB und SMA. Wertevergleich dieser vier Basic-Ergänzungen abgenommen; keine konkreten Zahlen/Zeitpunkte oder eigene Live-Prüfung. Übrige neue Kanäle separat offen, keine Geräte-/Item-/Pollingänderung.
+
+## 2026-10-13 – Sunny-Boy-Messwerte abgeglichen
+
+- Andreas bestätigt übereinstimmende openHAB-/SMA-Werte für die besprochenen Ergänzungen: L3-Leistung/-Spannung/-Strom, Netzfrequenz sowie DC-Eingang B. Wertevergleich abgenommen; konkrete Zahlen/Zeitpunkte und tatsächliche Stringbelegung nicht separat geliefert, keine eigene Live-Prüfung.
+- Keine Aussage über gültige L2-Messwerte daraus ableiten. Übrige Abnahmeteile wie Host-Profilkopien, Typ-/Leistungsgrenzen und Derating bleiben separat; keine Geräte-/Item-/Pollingänderung.
+
+## 2026-10-13 – Typ-/Leistungsgrenzen abgeglichen
+
+- Andreas bestätigt den besprochenen Vergleich von measurements/type, maxpower und setmaxpower für Tripower und Storage. Advanced/read-only sowie W für beide Leistungsgrenzen erläutert; Wertevergleich von Andreas abgenommen. Keine konkreten Zahlen/Zeitpunkte oder eigene Live-Prüfung.
+- Aus dem Namen setmaxpower folgt kein Setter. Host-Profilkopien und verbleibende Kanal-/Betriebsabnahmen separat; keine Geräte-/Item-/Pollingänderung.
+
+## 2026-10-13 – Derating-Grund in Basic übernommen
+
+- Andreas meldet aktuell „Keine Abregelung“ und beauftragt Übernahme in Basic. Alle drei gebündelten Profile lokal auf channelGroup basic geändert; diagnostics/deratingreason bleibt unverändert. Enum-/NaN-Verhalten, Register/Poller, Read-only und Status-basierte Readiness erhalten.
+- Bestehende Gruppierungs-/Discoverytests prüfen Verfügbarkeit bei deaktiviertem Advanced und Diagnostics, identische Metadaten und fehlenden Readiness-Ersatz. Host-Profilkopien müssen dieselbe Gruppenänderung übernehmen; Veröffentlichung/Deployment offen. Aktueller Null-Abregelungszustand ist kein Nachweis anderer Ereignisse.
+- Validierung: alle 250 Offline-Tests, vollständiger Linter über 139 öffentliche Dateien, Compose-Parität mit Overrides und Diff-Prüfung bestanden.

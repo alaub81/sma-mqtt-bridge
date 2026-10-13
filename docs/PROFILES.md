@@ -113,7 +113,9 @@ explicit interval overrides and required status-based readiness remain unchanged
 ## Selected counter and diagnostic properties
 
 The three bundled inverter profiles add advanced `operating-time` and
-`feed-in-time` measurements in seconds, plus diagnostics `derating-reason`.
+`feed-in-time` measurements in seconds, plus basic `derating-reason` under the unchanged
+`diagnostics` node. Since 2026-10-13 it remains available with both optional
+groups disabled; a node name does not determine the explicit channel group.
 The Storage profile adds basic `battery-charge-energy` and
 `battery-discharge-energy` in kWh (source Wh divided by 1000). Existing yield and
 status blocks retain their intervals; Storage energy uses a separate 60-second

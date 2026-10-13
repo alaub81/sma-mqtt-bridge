@@ -1107,3 +1107,61 @@ counter polls. Deployment and live derived-topic acceptance remain pending.
 Validation: all 250 offline tests and Compose parity including overrides passed;
 complete lint over 139 public files and diff hygiene checked. No installation
 changes or release/deployment for this addition.
+
+## Operating/feed-in duration comparison, 2026-10-13
+
+Andreas confirms that the discussed openHAB operating/feed-in duration values
+match the SMA display after the Advanced-channel and unit setup discussion.
+The user-reported display comparison for M07 is accepted. No concrete readings,
+timestamps or device-by-device list were supplied; no independent live inspection
+or separate 15-minute progression/operating-state transition test is claimed.
+No Item, device or polling changes were made.
+
+## Storage electrical measurement comparison, 2026-10-13
+
+Following the targeted Storage comparison question, Andreas confirms that the
+values are present and match: signed AC active power, battery current and battery
+voltage. The user-reported comparison for these Storage additions is accepted.
+No concrete readings/timestamps or independent live inspection were supplied.
+Tripower/Sunny Boy comparisons and the remaining M02–M04 properties are separate;
+this does not establish acceptance for every new inverter channel. No changes
+to device settings, Item configuration or polling.
+
+## Tripower electrical measurement comparison, 2026-10-13
+
+Andreas confirms that grid frequency and phase currents L1/L2/L3 match between
+openHAB and SMA. The user-reported comparison for these four basic additions is
+accepted. No concrete readings/timestamps or independent live inspection were
+supplied. Other channel comparisons remain separate; no device, Item or polling
+changes were made.
+
+## Sunny Boy additional measurement comparison, 2026-10-13
+
+Andreas confirms matching openHAB/SMA readings for the discussed L3 active power,
+voltage and current, grid frequency and DC input B measurements. This
+user-reported value comparison is accepted. No concrete readings/timestamps,
+independent live inspection or separate evidence of actual input-B wiring were
+supplied. Valid L2 payloads, host-profile reconciliation and other new channels
+are not established by this confirmation. No device, Item or polling changes.
+
+## Tripower/Storage type and power-limit comparison, 2026-10-13
+
+Andreas confirms the discussed comparison of measurements/type, maxpower and
+setmaxpower for Tripower and Storage. These advanced properties remain read-only;
+both power limits use W. The user-reported value comparison is accepted. No
+concrete readings/timestamps or independent live inspection were supplied.
+Host-profile reconciliation and other acceptance criteria remain separate;
+no device, Item or polling changes were made.
+
+## Basic derating reason, 2026-10-13
+
+On Andreas' request, the three bundled profiles classify derating-reason as Basic.
+The existing diagnostics/deratingreason topic, model-scoped enums, invalid-value
+handling, register blocks and read-only/readiness semantics are preserved.
+Existing tests now verify presence with Advanced/Diagnostics disabled, unchanged
+Homie metadata and valid no-derating state without replacing required status.
+Andreas reports the current no-derating display; other event states are not live
+accepted. Host-profile reconciliation and deployment remain pending.
+
+Validation: all 250 offline tests, complete lint over 139 public files, Compose
+parity with overrides and diff hygiene passed.

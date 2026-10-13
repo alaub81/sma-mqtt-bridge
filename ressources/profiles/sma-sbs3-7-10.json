@@ -584,7 +584,7 @@
         16777213
       ],
       "datatype": "enum",
-      "channelGroup": "diagnostics",
+      "channelGroup": "basic",
       "valueMap": {
         "557": "Übertemperatur (TmpDrt)",
         "884": "Keine Abregelung (NoneDrt)",

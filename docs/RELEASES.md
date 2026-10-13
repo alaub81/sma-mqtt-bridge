@@ -14,6 +14,11 @@ successful image publication. Current installation acceptance belongs in
 
 ## Unreleased
 
+- Derating reason is now Basic in all three bundled inverter profiles. Existing
+  `diagnostics/deratingreason` IDs and enum values remain; Advanced/Diagnostics
+  may be disabled without hiding this property. Host overrides need the matching
+  `channelGroup: basic` update; deployment is pending.
+
 - Basic read-only `measurements/batteryefficiency` (%) derives the cumulative
   discharged/charged energy ratio from a profile's same-poll kWh battery counters.
   No extra Modbus request, counter/history change or readiness dependency.

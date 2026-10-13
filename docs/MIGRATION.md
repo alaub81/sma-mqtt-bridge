@@ -248,7 +248,7 @@ Three additional basic read-only properties publish as `measurements/currentbinp
 ## Selected counters and derating channels, 2026-10-12
 
 New additive topics are `measurements/operatingtime` and `feedintime` (integer s,
-Advanced) plus `diagnostics/deratingreason` (enum, Diagnostics) on all three
+Advanced) plus `diagnostics/deratingreason` (enum, Basic since 2026-10-13) on all three
 inverters, and `measurements/batterychargeenergy`/`batterydischargeenergy` (float
 kWh, Basic) on Storage. Published IDs are compact; internal profile IDs retain
 hyphens. Existing Items, yield counters, offsets and history are unchanged.
