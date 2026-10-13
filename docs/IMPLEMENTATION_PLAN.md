@@ -1,144 +1,107 @@
 # Implementation and acceptance plan
 
-This plan contains future work. Implemented capabilities and live acceptance are
-recorded in [VALIDATION.md](VALIDATION.md); architecture decisions live in
-[CONTEXT.md](CONTEXT.md). The [German diary](../todo.md) tracks active tasks and
-questions. Earlier plans remain in the [archive](archive/README.md).
+Updated: **2026-10-13**. This plan covers remaining work. Current acceptance and
+its evidence limits belong in [VALIDATION.md](VALIDATION.md); architecture decisions
+in [CONTEXT.md](CONTEXT.md); active tasks and question references in
+[the German diary](../todo.md). The
+[pre-cleanup snapshot](archive/2026-10-13/IMPLEMENTATION_PLAN.md) preserves older plans.
 
-## 1. Resolve the code-review findings
+## 1. Publish and accept the locally tagged v0.3.8 changes
 
-Use deterministic regression cases before changing behavior. Preserve existing
-Channel IDs, retained last-known measurements and all uncertainty guards.
+The target host runs published v0.3.7. Local tag v0.3.8 adds the battery energy
+return ratio, Basic derating reason and Basic ISO Home Manager plant time, with
+Advanced raw Unix seconds. The local suite has 253 passing tests, lint and
+Compose parity; hosted publication and live acceptance still require a release
+request. See [release notes](RELEASES.md).
 
-The API confirmation/unit, integer-payload, node-metadata, MQTT future and CLI findings are resolved
-offline; see the acceptance matrix.
-The remaining review findings are:
+Before deployment, reconcile actually used host-profile overrides, preserve
+state-volume/manifest/journals and existing numeric Items/history. Verify hosted
+CI/security results and both image architectures, then installed version/health
+and the new channel behavior. Switch the existing DateTime link to ISO only with
+preserved Item identity/dependencies and live verification.
 
-1. Accept the scoped eCharger remaining-lifetime correction on the installation.
-   Periodically refreshed channels now retain device age through processing;
-   see [the implementation evidence](VALIDATION.md#scoped-echarger-remaining-lifetime-correction-2026-10-12).
-   Classify the remaining phase-voltage/power, alternate-counter and fixed old
-   state channels independently. Agree session-energy idle authority and reset
-   semantics before changing that filter. Review 4 remains partially open.
-   Follow the targeted observation/UI criteria in
-   [the freshness investigation](VALIDATION.md#measurement-freshness-investigation-2026-10-11).
+## 2. Resolve remaining eCharger freshness semantics (Review 4)
 
-Run complete lint, offline tests and Compose parity. Record evidence and unresolved
-limits in the acceptance matrix. Green tests alone do not close a proven review gap.
+The scoped remaining-lifetime fix for evidenced periodically refreshed channels
+is implemented and deployed. Remaining semantic questions concern session energy
+at idle/reset, fixed old state/event channels, phase measurements and alternative
+counters. Analyze API and SEMP independently using natural operating transitions.
+See [the timestamp analysis](ECHARGER_TIMESTAMP_ANALYSIS_2026-10-12.md).
 
-## 2. Complete operational acceptance
-
-Continue target-host operational acceptance beyond the completed checks. Source
-availability with optional diagnostics disabled, startup summary, Home Manager
-init/ready and eCharger total-energy kWh checks were accepted by the user on
-2026-10-11; see the acceptance matrix. Preserve the existing state volume and
-command journals.
-
-- Verify inverter morning wake-up after the reported successful evening behavior;
-  distinguish sleep from a connection or data-quality failure.
-- Accept remaining target-host fault scenarios. Resource acceptance was closed
-  by Andreas on 2026-10-13 using the stable 22-hour measurement; see
-  [the analysis](RESOURCE_SOAK_ANALYSIS_2026-10-13.md).
-  Extended virtual twelve-hour supervisor/MQTT sequences and repeated actual
-  watchdog cancellations are implemented; see
-  [operational evidence](OPERATIONAL_ACCEPTANCE.md#extended-deterministic-fault-sequences-2026-10-12).
-  They verify recovery/session cleanup, not a real memory/network soak.
-- Test abrupt process/host failures, Last Will, broker restart, TLS trust and topic
-  retirement. Controlled stop/start acceptance does not cover these failures.
-- External monitoring and alarm setup was reported complete by the user on
-  2026-10-11. Verify host reboot and state restoration; record specific monitored
-  signals and alarm scenarios when evidence is available.
-- For Home Manager Modbus deployment, evaluate the planned switch from host to
-  Docker bridge networking in both Compose files. Verify device, broker, DNS and
-  TLS reachability; retain UDP multicast as an independently documented alternative.
-- Accept Pi multicast only when UDP is actually selected. Direct Modbus evidence
-  does not certify UDP/interface/VLAN behavior.
-
-Follow the [installation test procedure](MAC_TEST.md). A live write still requires
-an explicitly requested action with concrete target values.
+Decide retain/change/remove behavior per channel, then implement any needed
+regression cases and UI acceptance. Do not refresh old device samples merely on
+receipt, replace missing values with zero or loosen uncertainty guards. Decide
+separately whether to stop/archive timestamp diagnostics after the investigation.
 
 ## 3. Finish openHAB and history continuity
 
-Accept all 100 [migration rows](migration-coverage.csv) through aligned parallel
-measurements, not discovery alone. Resolve the seven inverter channels without an
-identified Item and the remaining rule/UI/persistence inventory. Preserve Item names,
-maps, private counter offsets, quantity units, polling and history semantics.
+Complete the 100-row [migration ledger](migration-coverage.csv), remaining legacy
+Item associations, maps, offsets, rules, UI, persistence and midnight/DST behavior.
+Existing user-accepted value comparisons and selected restart/history checks
+remain accepted; do not repeat them as blanket pending work.
 
-Build Grafana comparisons of existing openHAB and bridge time series with matching
-units and measurement times. Verify energy scaling, midnight/DST boundaries, gaps
-and restart behavior for remaining migration capabilities. The eCharger total-energy
-kWh unit, scaling and existing history were accepted by the user on 2026-10-11;
-see the acceptance matrix.
+Build aligned Grafana comparisons only for unresolved series. Remaining selected
+measurement checks include Storage frequency/current L1; other Derating states
+need natural occurrences. Battery-counter measurement boundary/reset semantics
+remain distinct from plausible readouts and user-confirmed common counter start.
+Sunny Boy L2 had no valid scan payload; never reinterpret existing L1 history.
 
 Keep Shelly-derived charging state, Smart-Grid consumers and InfluxDB calculations
-in openHAB until equivalent behavior is accepted. Maintain
-[the MainUI guide](../openHAB/openHAB.md); prepare the requested lhlab.wiki article
-only after the installation procedure is accepted. No example Item or sitemap files
-are planned.
+in openHAB until equivalent behavior is accepted. Preserve Item identities, units,
+private offsets and persistence. No example Item files or sitemaps are planned.
 
-## 4. Verify charging semantics and assess small features
+## 4. Resume charging checks when the vehicle can charge
 
-- Observe physical target charging, session-energy semantics and the return from
-  target mode. Reported 10-kWh plan transmission and mode activation do not settle
-  cumulative-versus-additional energy or completed charging.
-- Accept maximum-power limiting with explicitly requested values and measured phase
-  currents/power. Investigate winter single-phase behavior and minimum current using
-  [the power-limit evidence](ECHARGER_POWER_LIMIT.md). Add a setter only after its
-  metadata, bounds, units and controller interaction are confirmed.
-- Verify any additional portal values and a current charging mix from actual
-  timestamped API evidence; period shares and minimum PV preference are insufficient.
-- Accept the locally implemented manual portal read refresh after deployment,
-  including interval zero and MainUI feedback. Consider a read-only runtime
-  diagnostic command and per-property age/quality independently.
+The wallbox phase-power comparison is deferred until Andreas can charge again.
+Compare phase and total active power with matching units and aligned updates.
+Then assess physical target attainment, session-energy semantics and return from
+target mode. Maximum-power limiting/winter single-phase behavior has separate
+[evidence and bounds](ECHARGER_POWER_LIMIT.md).
 
-Choose one evidenced improvement at a time. Keep Home Manager as charging controller;
-no paid Developer API or replacement regulation is planned.
+Live writes require explicitly requested target values. Home Manager remains the
+charging controller; metadata editability alone never authorizes another setter.
 
-## 5. Simplify maintenance incrementally
+## 5. Infrastructure changes and maintenance
 
-After correctness fixes, split large configuration/session/command functions into
-small named steps where this removes duplicated responsibilities. Named immutable
-setting definitions are implemented and checked against the previous mappings.
-Simplify repeated widget
-expressions only with preserved gating and visible behavior.
+Operational/recovery acceptance and the stable 22-hour resource baseline were
+closed by Andreas on 2026-10-13. See
+[the user acceptance](VALIDATION.md#remaining-operational-acceptance-closed-by-user-2026-10-13)
+and [resource analysis](RESOURCE_SOAK_ANALYSIS_2026-10-13.md). Additional scenario
+details were not supplied; preserve that evidence limit without scheduling reruns.
 
-Consider selected additional lint rules in focused changes; formatting and import
-ordering are already enforced by the repository check.
-Do not convert style hints into a broad rewrite or introduce a generic adapter platform.
-Keep current status in one acceptance matrix and archive completed diary periods.
+Watchtower/Autoheal setup and a possible switch to Docker bridge networking are
+future changes requiring their own focused verification. Align automatic updates
+with version pinning; preserve recovery state. UDP multicast checks apply only
+when that transport is selected. Document vendor polling/connection limits and
+specific alarm thresholds if needed; current operational acceptance stays closed.
 
-## 6. Maintain release validation
+Simplify large functions or repeated widget expressions only for concrete
+maintenance benefits and preserved behavior. Formatting, import ordering and
+named immutable setting definitions and ten focused correctness lint rules are
+already implemented. Further rules require a concrete benefit; do not build a
+generic adapter platform or broad rewrite.
+Duplicate JSON decoding checks were consolidated on 2026-10-13 with unchanged
+caller-specific errors and offline acceptance. Further consolidation requires
+proven equivalent behavior; authentication, freshness and command flows need
+separate focused changes.
+Maintain the [MainUI guide](../openHAB/openHAB.md) and later prepare the wiki article.
 
-GitHub/GHCR publication and target-host image pull are already operational;
-v0.3.6 deployment and healthy startup were confirmed by Andreas. Maintain
-[release notes](RELEASES.md) and verify each tagged commit's hosted CI/security
-results and amd64/arm64 images. Do not equate local success with hosted checks.
+## 6. Deferred extensions
 
-Before future releases, verify private-data exclusions, namespace/tags and
-upgrade/state continuity. Recheck stable official Python tags before image
-updates. The workflow requires reusable CI before publication, including lint,
-tests, Compose parity, architecture image tests and scans. Future tag/push work
-needs an explicit release request. The resource baseline is complete: Andreas accepted the measured 22 hours on
-2026-10-13. Pending changes may now be bundled for an explicitly requested release.
+Additional Modbus/wallbox/SEMP mappings, power-factor/reactive/apparent values,
+I/O/event diagnostics, further charging parameters and detailed interpretation of
+three existing SEMP control properties remain deferred until reprioritized.
+Additional portal values/current charging mix need verified units, time scope and
+identity. Period shares and minimum-PV preference are not live charging mix.
+The [active diary](../todo.md#zurückgestellte-erweiterungen) retains candidates,
+unresolved questions and audit references; no automatic expansion is planned.
 
-## Complete model-specific Modbus coverage
+API-only fallback expansion for operation without SEMP was removed from scope.
+Preserve existing ownership, topics and documented availability exclusions.
 
-Use the [full topic audit](MODBUS_TOPIC_AUDIT.md) as the expansion ledger. Validate
-all readable measurements and RW observations in coherent groups, preserving
-existing IDs and separating alternative counters and conditional equipment. Agree
-basic/advanced/diagnostics with Andreas before assigning new groups. File-based
-profile extensions need verified units, enums/sentinels and suitable poll intervals.
-Review WO/RW commands separately; documentation access flags alone never enable setters.
+## Release validation for every future version
 
-## Deferred expansion scope, 2026-10-13
-
-Andreas removed additional API-only fallback mappings for operation without SEMP
-from scope. Preserve existing API/SEMP ownership and the documented inventory;
-no fallback expansion is planned.
-
-Further Modbus, wallbox and SEMP extensions, including detailed interpretation
-of the three existing SEMP plant-control properties, are deferred until the user
-prioritizes them again. The German diary holds the deferred candidate list.
-Existing topics remain available; their unresolved semantics are not accepted
-by this scheduling decision. Acceptance of implemented measurements and the
-remaining freshness and operational checks continues independently.
+Publication requires an explicit request. Verify private-data exclusions,
+namespace/tags, hosted CI/security gates, amd64/arm64 images and target upgrade
+continuity. Recheck stable official Python tags when changing the base image.
+Local tests alone do not establish hosted success or deployment.

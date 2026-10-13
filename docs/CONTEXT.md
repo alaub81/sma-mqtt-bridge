@@ -146,6 +146,10 @@ its exporter and lint check prevent divergent copies. Consult
 Keep active German tasks and decisions in [todo.md](../todo.md). Archive earlier
 working documents without deleting entries or unresolved questions. Configuration,
 profile, migration and technical evidence documents remain maintained contracts.
+Configuration files and HTTP responses share the pure JSON decoder in `json_codec.py`
+for duplicate-key and non-standard numeric-constant rejection. Callers retain
+their own file/network handling, schema checks and redacted error boundaries;
+sharing decoding does not merge local API and portal sessions or command policies.
 GitHub/GHCR publication is operational. New commits/tags are published only as
 explicitly requested release work; local preparation does not automatically
 authorize a push or deployment.

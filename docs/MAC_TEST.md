@@ -111,7 +111,7 @@ A local commit alone does not update the GHCR image.
   starting normal polling. Confirm expected enabled sources and profile IDs.
 - [ ] Container becomes healthy; enabled sources and MQTT recover without restart
   loops, identity failures, decoding errors or new recurring connection errors.
-- [ ] All 25 new properties in the [approved selection](../todo.md#auswahl-der-25-neu-ergänzten-topics)
+- [ ] All 25 new properties in the [approved selection](archive/2026-10-13/todo.md#auswahl-der-25-neu-ergänzten-topics)
   have expected discovery metadata when their group is enabled. Inverter1/2
   `type`, `maxpower`, `setmaxpower` require the respective advanced flag; the
   other 19 are basic. Every new property has `$settable=false`.

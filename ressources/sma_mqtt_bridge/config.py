@@ -1,7 +1,6 @@
 """Strict defaults < profile < JSON < ENV precedence and local file reads, without network I/O."""
 
 import ipaddress
-import json
 import math
 import os
 import re
@@ -12,6 +11,7 @@ from urllib.parse import urlsplit
 from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from .errors import ConfigError
+from .json_codec import strict_json
 
 DATA = "/data/sma-mqtt-bridge"
 ID = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
@@ -197,21 +197,9 @@ def camel(name):
 
 def read_json(path):
     """Reject ambiguous keys and non-standard numbers without echoing file data."""
-
-    def pairs(items):
-        result = {}
-        for key, value in items:
-            if key in result:
-                raise ValueError
-            result[key] = value
-        return result
-
-    def constant(_):
-        raise ValueError
-
     try:
         with Path(path).open(encoding="utf-8") as stream:
-            return json.load(stream, object_pairs_hook=pairs, parse_constant=constant)
+            return strict_json(stream.read())
     except OSError, ValueError, UnicodeError:
         raise ConfigError("Cannot read a valid JSON configuration/profile file") from None
 

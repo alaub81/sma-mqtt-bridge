@@ -25,6 +25,23 @@ remain unchanged. The repository linter checks that the generated file is curren
 For manual import, paste the generated file into the MainUI widget editor instead
 of also installing the file configuration below.
 
+## Shared expressions and update check
+
+The existing `oh-context` defines `localWriteAllowed`, `portalWriteAllowed` and
+`chargingMode`. These functions preserve the previous expressions and are
+reevaluated on each call and dependency change, as described in the official
+[context documentation](https://www.openhab.org/docs/ui/components/oh-context.html).
+Device-specific Item checks, plan/PV input validation, demo actions and command
+payloads remain at their original controls.
+
+Before replacing an installed widget, save its current YAML. Update the existing
+UID through the same installation method, keeping its configured props. Check
+layout, demo mode changes, PV/plan staging and settings expansion. With real Items,
+check that missing Items, unavailable API/portal and running or uncertain commands
+still block the corresponding controls; check status changes without reloading.
+A visual/gating check does not require sending a device command. Restore the saved
+YAML through the same method if rendering or reactive updates differ.
+
 ## Install for a first visual review
 
 Copy the single file [echarger-comfort.yml](yaml/widgets/echarger-comfort.yml) to

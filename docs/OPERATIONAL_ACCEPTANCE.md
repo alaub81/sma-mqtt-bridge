@@ -1,5 +1,12 @@
 # Polling, timeouts and alarm acceptance
 
+Current status, 2026-10-13: Andreas reports further own tests and closes remaining
+operational acceptance, including recovery/state restoration tasks. Existing
+procedures below remain reusable references, not outstanding requests to rerun
+accepted tests. Additional per-scenario evidence/version details were not supplied;
+see [the acceptance note](VALIDATION.md#remaining-operational-acceptance-closed-by-user-2026-10-13).
+Future releases and infrastructure changes retain separate validation.
+
 ## Effective installation limits
 
 Run against the updated image in the existing service, without stopping it:

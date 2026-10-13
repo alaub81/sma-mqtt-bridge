@@ -6,6 +6,18 @@ statements. Use the current documents for configuration, status and next actions
 Relative Markdown links were adjusted for the archive location; the earlier content
 and diary entries are retained. Archived `todo.md` remains in German.
 
+## 2026-10-13 task-list cleanup
+
+| Snapshot | Current document and purpose |
+| --- | --- |
+| [todo.md](2026-10-13/todo.md) | [Active tasks and German diary](../../todo.md) |
+| [IMPLEMENTATION_PLAN.md](2026-10-13/IMPLEMENTATION_PLAN.md) | [Current future milestones](../IMPLEMENTATION_PLAN.md) |
+
+Completed tasks and daily reports were removed from the active list after this
+snapshot. Unresolved work remains in the current list, consolidated and updated
+with user acceptance. Snapshots preserve the pre-cleanup state; old pending
+statements are historical, not current instructions.
+
 ## 2026-10-11 documentation cleanup
 
 | Snapshot | Current document and purpose |

@@ -1,11 +1,24 @@
 # Current validation and acceptance
 
-Updated: **2026-10-12**. This is the current status reference. Historical checkpoints
+Updated: **2026-10-13**. This is the current status reference. Historical checkpoints
 and detailed investigation evidence remain in the [archive](archive/README.md).
 A user-reported result is identified separately from a direct observation or an
-automated test. Full production acceptance and openHAB migration remain open.
+automated test. Operational acceptance was closed by Andreas on 2026-10-13;
+full openHAB migration, charging semantics and unresolved channel freshness remain
+separate. See the user acceptance note below.
 
 ## Local verification
+
+On 2026-10-13, the configuration and HTTP JSON duplicate-key/non-standard-constant
+checks were moved into one pure decoder. Three new boundary regressions cover
+valid values, nested/escaped duplicate keys, malformed input, NaN/Infinity,
+invalid UTF-8 and unchanged redacted error types/messages across configuration,
+HTTP and persistent-state readers. All 58 focused tests passed before and after
+the extraction. The full working-tree suite passed **256 offline tests** and
+Compose parity/overrides. The first sandbox run failed only at four localhost
+server binds; the successful rerun allowed local test sockets. No installation
+device, portal or broker was contacted, and no deployment was performed.
+Complete repository lint over 144 public files and diff hygiene also passed.
 
 On 2026-10-13, a reported container-suite failure exhausted the 15-second
 wall-clock guard in the mixed-source twelve-hour simulation. The same test passed
@@ -19,13 +32,14 @@ this does not establish hosted ARM64 success or live outage acceptance.
 The documentation/widget cleanup preserved the bridge runtime and device configuration.
 The subsequent API fix changes confirmation and unit checks; it does not activate
 adapters or command gates.
-The current offline suite contains **240 tests**. Repository lint covers all public
+The current working-tree offline suite contains **256 tests**; the local v0.3.8
+tag has 253. Repository lint covers all public
 tracked and non-ignored files, including generated widget parity. Compose parity
 checks both standalone files and deployment overrides. Final cleanup results are
-recorded in [todo.md](../todo.md#2026-10-11--dokumente-und-widgetquellen-aufgeräumt).
+recorded in [todo.md](archive/2026-10-13/todo.md#2026-10-11--dokumente-und-widgetquellen-aufgeräumt).
 The subsequent API confirmation/unit fix adds five regression tests, including
 uncertain-command polling, retained observations and contradictory plan readback.
-Results are recorded in [the new diary entry](../todo.md#2026-10-11--review-1-api-bestätigung-und-plan-einheiten).
+Results are recorded in [the new diary entry](archive/2026-10-13/todo.md#2026-10-11--review-1-api-bestätigung-und-plan-einheiten).
 The subsequent integer-payload fix adds two regressions for canonical formatting,
 signed 64-bit bounds, invalid inputs and unchanged float handling.
 The subsequent node-metadata fix adds a required-attribute regression across normal,
@@ -1182,6 +1196,43 @@ profile overrides require reconciliation; UDP source is unaffected.
 
 Validation: all 253 offline tests, complete lint over 140 public files, Compose
 parity with overrides and diff hygiene passed.
+
+## Remaining operational acceptance closed by user, 2026-10-13
+
+Andreas reports conducting additional tests and explicitly requests closing the
+remaining operational acceptance. Remaining outage/recovery and host-state
+restoration tasks are therefore accepted by the user. Existing individually
+documented restart, broker recovery, healthy startup and 22-hour resource
+observations remain the concrete evidence.
+
+No additional scenario list, durations, logs or tested version was supplied.
+This acceptance is not a new independent observation of TLS alarms, journals,
+process-lock behavior or topic retirement, nor acceptance of the not-yet-deployed
+local v0.3.8 changes. Earlier procedural/evidence gaps remain methodological
+limits rather than a request to repeat the accepted operating tests.
+
+Unresolved measurement timestamp semantics, full openHAB/history migration,
+physical charging checks, planned infrastructure changes and future release
+validation remain separate tasks. No live action was performed for this closure.
+
+## Widget expression simplification, 2026-10-13
+
+The canonical garage widget and generated MainUI import replace 29 repeated
+expressions with three functions in the existing `oh-context`: local write gate,
+portal write gate and charging mode. No new scope or variable defaults were added.
+Parsed YAML equality against the pre-change widget, after expanding every function
+call and removing only the new function definitions, confirms unchanged expressions,
+layout, props, command payloads and per-control validation. Functions retain dynamic
+Item/prop/variable evaluation; see the official
+[oh-context contract](https://www.openhab.org/docs/ui/components/oh-context.html).
+
+All 253 offline tests passed with local test-server sockets permitted. The initial
+sandboxed run could not bind four localhost transport fixtures. Complete lint and
+generated export parity passed. MainUI rendering and reactive dependency tracking
+remain pending installation acceptance; offline YAML equivalence does not certify
+the UI renderer. The [widget guide](../openHAB/echarger-comfort.md#shared-expressions-and-update-check)
+documents visual/gating checks and restoring the saved installed YAML. No live
+openHAB change or device command was performed.
 
 ## Focused correctness lint rules, 2026-10-13
 
