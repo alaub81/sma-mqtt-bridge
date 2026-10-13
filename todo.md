@@ -250,3 +250,23 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
   vollständiger Linter und Compose-Prüfung samt Overrides erfolgreich.
 - Nächster begrenzter Schritt: unveränderliche Metadaten zwischenspeichern,
   Messwert-/Frische-/Rechte-Caches vermeiden und Vergleichsmessung durchführen.
+
+## 2026-10-13 – Metadaten-Caches mit Gegenprüfung
+
+- Property-Index und voreingestellte Readiness-Schlüssel pro Quelle wiederverwenden;
+  neue Property-Tupel ersetzen den Cache. Konfigurierbare Frische und aktuelle
+  Messwerte bleiben dynamisch. MQTT-Beschreibungen nur bei Inventar-/Flag-/Monitor-
+  Änderungen neu konstruieren, einschließlich später Home-Manager-Zuordnungen.
+- Drei neue Regressionen prüfen aktuelle Verfallsgrenzen, ungültige Messwerte,
+  geänderte Units/Typen/Inventare, Readiness-Overrides und Discovery-Retirement.
+  Unabhängiger Vergleich: 168 Fälle mit ursprünglichem SourceState bytegleich.
+- Wiederholbarer Offline-Benchmark mit sieben Quellen/150 Properties:
+  Status-/Frischepfade ca. 42 % weniger CPU-Zeit (Median 0,436556 s auf 0,251237 s,
+  jeweils 2.000 Zyklen, fünf Wiederholungen); Prüfsumme der Ausgaben unverändert.
+  Keine Hochrechnung auf gesamte Geräte-/Container-CPU oder tatsächliche HDD-I/O.
+- Alle 264 Tests, sämtliche Linter und Compose-Parität erfolgreich. Unabhängig
+  hinzugekommene Compose-Kommentare und .env.example bleiben außerhalb dieses
+  Commits; keine fremden Änderungen überschrieben.
+- Weiterer konkreter Härtungsbefund: kurze numerische Exponentwerte können beim
+  MQTT-Payload-Formatieren sehr große Strings erzeugen. Vor einer Freigabe dieses
+  Optimierungsstands eine konfigurierbare Ausgabebegrenzung gezielt prüfen.

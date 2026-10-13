@@ -9,6 +9,21 @@ separate. See the user acceptance note below.
 
 ## Local verification
 
+The subsequent metadata optimization passed **264 offline tests**, full lint
+and Compose parity/overrides. Three new regressions cover inventory/type/TTL
+replacement, runtime readiness/default-lifetime changes, per-sample device age,
+invalid observations, dataclass copies and late monitor/diagnostic changes with
+retained discovery retirement. An independent comparison against the previous
+SourceState implementation matched all outputs across 168 phase/time cases.
+The reproducible `tests/runtime_benchmark.py` fixture uses seven synthetic sources
+and 150 bundled properties without device I/O. Five repetitions of 2,000 cycles
+reduced median process CPU from 0.436556 s to 0.251237 s (approximately 42%)
+for snapshot/status/missing-critical work on the local Python 3.14.8 environment.
+Snapshots at five freshness boundaries retained the same SHA-256 digest:
+`32d9f1c27f8a54fbc7a2523e88edf5f5142a0655ac87d5670cc91ce9b3d5be50`.
+Twenty heartbeat writes changed from 40 explicit sync calls to zero. These are
+local microbenchmark results, not new target-host CPU or HDD measurements.
+
 On 2026-10-13, a fresh complete review baseline passed all 259 offline tests,
 repository lint and Compose parity. The first resource optimization separates
 atomic liveness heartbeat replacement from durable recovery-state storage.

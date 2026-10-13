@@ -361,8 +361,22 @@ class HomiePublisher:
     ):
         mqtt, runtime = self.config.mqtt, self.config.runtime
         declared = self.properties(states) if declared is None else declared
+        current = declared
+        inventory = None
         while not stop.is_set():
-            current = self.properties(states)
+            observed_inventory = tuple(
+                (
+                    s.id,
+                    s.properties,
+                    s.contributes_availability,
+                    s.diagnostics_enabled,
+                    s.monitor is not None,
+                )
+                for s in states
+            )
+            if observed_inventory != inventory:
+                current = self.properties(states)
+                inventory = observed_inventory
             if current != declared:
                 # Inventory changes require a new Homie description and retained retirement.
                 device = states[0].device

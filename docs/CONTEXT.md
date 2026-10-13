@@ -128,6 +128,11 @@ Owned topic names are persisted for retirement after source/ID/prefix changes.
 Command journals and topic ownership remain durable through file and directory
 sync. Liveness heartbeats are atomically replaced without forcing disk sync;
 their current process and monotonic age must still pass the health probe.
+SourceState caches only immutable property descriptions/readiness defaults and
+invalidates them when its inventory tuple is replaced. The MQTT publication loop
+reuses descriptions until source IDs, property tuples, diagnostics/availability
+flags or monitor presence change. Samples, expiry, status and command rights are
+always evaluated from current observations.
 Preserve the state volume to clean up old discovery. Moving brokers also requires
 retirement on the old broker. One client and Last Will per Homie device maintain
 independent availability. Commands are never replayed during recovery.
