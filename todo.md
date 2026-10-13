@@ -6,7 +6,7 @@ Die aktuelle Abnahme steht in [docs/VALIDATION.md](docs/VALIDATION.md), die Reih
 
 - [ ] „Operation Time“ im openHAB-Item als lesbare Betriebsdauer darstellen, beispielsweise in Tagen, Stunden und Minuten. Quelleneinheit prüfen und numerischen Rohwert, Channel-Link sowie bestehende Historie und Regelverwendung erhalten.
 
-- [x] Manuelles Portal-Leseauffrischen am 12.10.2026 lokal umgesetzt: Homie `portal/refresh/set` mit String-Befehl `refresh`, Rückmeldung auf `portal/refresh`, bestehender Supervisor statt zusätzlichem Lesepfad. Unabhängig von Schreibfreigaben; laufende/ausstehende Reads zusammengefasst, retained Befehle abgewiesen, Auth-Sperre und Backoff erhalten. openHAB-String-Item/Button dokumentiert. Deployment und Live-Abnahme nach Ressourcenmessung offen.
+- [x] Manuelles Portal-Leseauffrischen am 12.10.2026 lokal umgesetzt: Homie `portal/refresh/set` mit String-Befehl `refresh`, Rückmeldung auf `portal/refresh`, bestehender Supervisor statt zusätzlichem Lesepfad. Unabhängig von Schreibfreigaben; laufende/ausstehende Reads zusammengefasst, retained Befehle abgewiesen, Auth-Sperre und Backoff erhalten. openHAB-String-Item/Button dokumentiert. Mit v0.3.7 am 13.10.2026 deployed; openHAB-Button-/Live-Abnahme offen.
 
 - [ ] Timestamp-Prüfungen überprüfen: klären, ob sie beibehalten, angepasst oder wieder entfernt werden sollen. Nutzen für Datenaktualität und mögliche Fehlalarme durch Gerätezeit, Zeitzonen oder fehlende Zeitstempel untersuchen; Entscheidung und Auswirkungen dokumentieren.
 
@@ -45,7 +45,7 @@ Die vollständigen Einzelbefunde stehen in [der Ergebnismatrix](docs/modbus-avai
 
 ### Weitere aktive Aufgaben
 
-- [x] Wallbox `measurements/vehiclestatuscode` am 12.10.2026 lokal in die Basisgruppe übernommen. Topic/Integerwerte, Read-only-Metadaten und Zeitstempelbehandlung erhalten; bestehende API-/SEMP- und Discoverytests bei deaktivierten optionalen Gruppen erweitert. Deployment nach Ressourcenmessung offen.
+- [x] Wallbox `measurements/vehiclestatuscode` am 12.10.2026 lokal in die Basisgruppe übernommen. Topic/Integerwerte, Read-only-Metadaten und Zeitstempelbehandlung erhalten; bestehende API-/SEMP- und Discoverytests bei deaktivierten optionalen Gruppen erweitert. Mit v0.3.7 am 13.10.2026 deployed; neue Kanalabnahme separat offen.
 
 - [x] Release-Dokumentation am 12.10.2026 lokal aktualisiert: README beschreibt verfügbares GHCR-Image, docs/RELEASES.md trennt v0.3.6 von unveröffentlichten Änderungen und enthält Upgrade-/Rollback-Hinweise. Keine erneute Veröffentlichung oder Deployment dafür erforderlich.
 
@@ -75,7 +75,7 @@ Die vollständigen Einzelbefunde stehen in [der Ergebnismatrix](docs/modbus-avai
 - [ ] Maximale Ladeleistung physisch abnehmen und einphasiges Winterladen untersuchen. Mindeststrom-Setter nur nach eigenen Metadaten-/Einheitenbelegen ergänzen; 4 kW sind laut geprüftem Limit unzulässig, 4,5 kW plus 10 A bleibt unbestätigter Versuchskandidat. Live-Versuche nur mit ausdrücklich angeforderten Zielwerten; Home Manager bleibt Regler. [Nachweise und offene Phasenfragen](docs/ECHARGER_POWER_LIMIT.md).
 - [ ] Kleine Diagnose-/Frischeverbesserungen bewerten; anschließend gezielte Funktionsvereinfachung und zusätzliche Linterregeln. Portal-Leseauffrischen lokal umgesetzt, Deployment-/Live-Abnahme separat offen. Keine allgemeine Adapterplattform bauen.
 - [ ] Später lhlab.wiki-Artikel aus [openHAB/openHAB.md](openHAB/openHAB.md) erstellen. Beispiel-Item-Dateien und Sitemaps bleiben auf Andreas’ Wunsch aus dem Umfang gestrichen.
-- [ ] Nächsten Release nach Ressourcenmessung bei ausdrücklichem Auftrag veröffentlichen: GitHub/GHCR und v0.3.6-Installation bereits vorhanden. Private Daten ausschließen, CI-/Releasejobs für den konkreten Tag prüfen und Upgrade abnehmen. Aktuelle Arbeit enthält keinen neuen Tag-/Pushauftrag.
+- [x] Release v0.3.7 am 13.10.2026 auf Andreas’ ausdrücklichen Auftrag veröffentlicht und deployed: Commit/Tag atomar gepusht, Hosted CI/Release inklusive amd64/arm64 und Sicherheitsprüfungen erfolgreich, GHCR-Image gepullt und Compose-Version gepinnt. Version/healthy/alle Datenquellen ready und fünf MQTT-Verbindungen geprüft. openHAB-Button und übrige Migration separat offen.
 
 ## Zurückgestellte Erweiterungen
 
@@ -673,3 +673,9 @@ Topic-Suffixe werden unter `homie/<konfigurierte Homie-ID>/` veröffentlicht. Di
 
 - Andreas beauftragt Veröffentlichung und Deployment des nächsten Releases. Remote-main entspricht v0.3.6, Tag v0.3.7 noch frei. Umfang: Basis-Fahrzeugstatuscode, Portal-Refresh, Ausfalltests/Ressourcenwerkzeug und aktuelle Dokumentation.
 - SSH-Zugriff auf Zielhost erfolgreich; laufende Bridge meldet v0.3.6 und healthy. Zustandsspeicher bei Upgrade erhalten, keine Gerätebefehle auslösen. Hosted CI/GHCR und Deployment separat prüfen.
+
+## 2026-10-13 – v0.3.7 veröffentlicht und auf Zielhost installiert
+
+- Release-Commit 6a143df, Tag v0.3.7 und main atomar veröffentlicht. GitHub-Main-CI und Release-Workflow erfolgreich, einschließlich Linter, Tests, Compose, amd64/arm64-Imageprüfungen und Sicherheits-Gates. Multi-Arch-GHCR-Publikation erfolgreich.
+- Auf Zielhost Image 0.3.7 gepullt und Version zuerst ohne Netzwerk geprüft. Compose-Image über private .env auf 0.3.7 gepinnt; vorherige .env (falls vorhanden) und Image-ID für Rollback lokal gesichert. Bestehendes Zustandsvolume/Compose-Projekt erhalten, nur Bridge-Service ersetzt.
+- CLI 0.3.7 und healthy direkt geprüft. Startübersicht um 19:23:40 Europe/Berlin und anschließender Heartbeat bestätigen sieben Datenquellen ready/fünf MQTT-Verbindungen. Keine Gerätebefehle oder geänderten Poller; openHAB-Refresh-Button und vollständige Historien-/Migrationstests weiterhin offen.

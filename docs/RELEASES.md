@@ -29,10 +29,11 @@ successful image publication. Current installation acceptance belongs in
 - Further optional extensions are deferred; additional API-only fallback mappings
   for operation without SEMP are removed from scope. Existing mappings remain.
 
-Local validation: 247 offline tests, complete lint and Compose parity. Hosted
-release validation and deployment are tracked separately in VALIDATION.md.
-The image is published by the stable-tag workflow after CI and security checks;
-writing these notes alone does not establish publication or installation.
+Validation: 247 local offline tests, complete lint and Compose parity; hosted
+CI and release checks passed for amd64/arm64. GHCR 0.3.7 was published and deployed
+on the target host, with version 0.3.7, healthy and all data sources/MQTT recovered.
+Detailed workflow links, digest and acceptance limits are in
+[VALIDATION.md](VALIDATION.md#v037-release-and-target-host-deployment-2026-10-13).
 
 The new refresh channel needs discovery after upgrade. Follow the
 [MainUI instructions](../openHAB/openHAB.md#manual-portal-refresh); do not send

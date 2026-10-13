@@ -1046,3 +1046,30 @@ is indicated. This does not assert a complete 24-hour recording. Accounting
 limits remain. Andreas confirms target-host recorder/file cleanup; repository
 tooling remains available. No direct cleanup inspection, live source-level
 acceptance or release/deployment.
+
+## v0.3.7 release and target-host deployment, 2026-10-13
+
+Release commit `6a143dfb327e8170149b315d0337bbe8cfec5942` and annotated tag
+`v0.3.7` were atomically pushed on Andreas' explicit request. Both
+[release workflow](https://github.com/alaub81/sma-mqtt-bridge/actions/runs/38437253361)
+and [main CI](https://github.com/alaub81/sma-mqtt-bridge/actions/runs/38437254996)
+succeeded: lint, offline tests/Compose parity, amd64/arm64 image tests and security
+gates, followed by multi-architecture GHCR publication.
+
+The target host pulled `ghcr.io/alaub81/sma-mqtt-bridge:0.3.7`, digest
+`sha256:57a508291a9569817f9a767df9a6b0a0ae87b117c5b70e29d6d35fd5298d62b1`.
+An isolated network-disabled version check passed before replacement. Compose
+image interpolation was pinned to 0.3.7 in the host's `.env`; previous `.env`
+(if present) and image ID were saved in a host-private rollback directory.
+The existing Compose project and state-volume mount were preserved; no volume
+removal, polling adjustment or device preference command was performed.
+
+Compose replacement completed healthy and the installed CLI reports 0.3.7.
+At 19:23:40 Europe/Berlin, startup reports all seven data sources ready and all
+five MQTT connections connected. A subsequent heartbeat independently confirms
+those source/connection states. Auxiliary write-result states remain init until
+a command occurs and do not contribute availability.
+
+The deployment is accepted for version/health/startup recovery. New MainUI refresh
+Item/button setup, live command feedback and full openHAB/history continuity
+remain separate checks; no preference writes or comprehensive migration acceptance.
