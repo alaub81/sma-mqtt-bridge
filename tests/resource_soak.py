@@ -8,6 +8,17 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
+PROCESS_IO_FIELDS = (
+    "rchar",
+    "wchar",
+    "syscr",
+    "syscw",
+    "read_bytes",
+    "write_bytes",
+    "cancelled_write_bytes",
+)
+CGROUP_IO_FIELDS = ("rbytes", "wbytes", "rios", "wios")
+
 
 def command(args):
     try:
@@ -39,7 +50,7 @@ def process_memory(pids):
             peak += fields.get("VmHWM", 0) * 1024
             threads += fields.get("Threads", 0)
             available += 1
-        except (OSError, ValueError, IndexError):
+        except (OSError, ValueError, IndexError, UnicodeError):
             continue
     return {
         "processesExpected": len(pids),
@@ -50,8 +61,64 @@ def process_memory(pids):
     }
 
 
+def process_io(pids):
+    counters = {}
+    for pid in pids:
+        try:
+            # PID plus kernel start time distinguishes a reused PID. Neither is saved.
+            fields = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()
+            started = int(fields[19])
+            values = {}
+            for line in Path(f"/proc/{pid}/io").read_text().splitlines():
+                key, separator, value = line.partition(":")
+                if key in PROCESS_IO_FIELDS:
+                    if not separator or key in values:
+                        raise ValueError
+                    values[key] = int(value)
+            if set(values) != set(PROCESS_IO_FIELDS) or min(values.values()) < 0 or started < 0:
+                raise ValueError
+            counters[(pid, started)] = values
+        except (OSError, ValueError, IndexError, UnicodeError):
+            continue
+    return {
+        "processIoExpected": len(pids),
+        "processIoRead": len(counters),
+        "processIo": {
+            key: sum(values[key] for values in counters.values()) for key in PROCESS_IO_FIELDS
+        }
+        if counters
+        else None,
+    }, counters if counters and len(counters) == len(pids) else None
+
+
+def cgroup_io(path):
+    try:
+        devices = {}
+        for line in (path / "io.stat").read_text().splitlines():
+            device, *fields = line.split()
+            if (
+                len(device.split(":")) != 2
+                or not all(part.isdecimal() for part in device.split(":"))
+                or device in devices
+            ):
+                raise ValueError
+            values = {}
+            for field in fields:
+                key, separator, value = field.partition("=")
+                if key in CGROUP_IO_FIELDS:
+                    if not separator or key in values:
+                        raise ValueError
+                    values[key] = int(value)
+            if set(values) != set(CGROUP_IO_FIELDS) or min(values.values()) < 0:
+                raise ValueError
+            devices[device] = values
+        return devices
+    except (OSError, ValueError):
+        return None
+
+
 def cgroup_metrics(pid):
-    result = {"cgroupCpuUsec": None, "cgroupMemoryBytes": None}
+    result = {"cgroupCpuUsec": None, "cgroupMemoryBytes": None, "cgroupIo": None}
     try:
         group = next(
             line[3:]
@@ -62,12 +129,16 @@ def cgroup_metrics(pid):
         # Never fall back to root-cgroup totals if the container group is unknown.
         if group == "/" or ".." in Path(group).parts:
             return result
-        result["cgroupMemoryBytes"] = integer_file(path / "memory.current")
+    except (OSError, ValueError, StopIteration):
+        return result
+    result["cgroupMemoryBytes"] = integer_file(path / "memory.current")
+    result["cgroupIo"] = cgroup_io(path)
+    try:
         for line in (path / "cpu.stat").read_text().splitlines():
             key, value = line.split()
             if key == "usage_usec":
                 result["cgroupCpuUsec"] = int(value)
-    except (OSError, ValueError, StopIteration):
+    except (OSError, ValueError):
         pass
     return result
 
@@ -94,34 +165,53 @@ def host_network():
 
 
 def sample(compose):
-    row = {"timestampUtc": datetime.now(timezone.utc).isoformat(), "status": "unavailable"}
+    row = {
+        "schemaVersion": 2,
+        "timestampUtc": datetime.now(timezone.utc).isoformat(),
+        "status": "unavailable",
+    }
     container = command(compose + ["ps", "--all", "-q", "sma-mqtt-bridge"])
     if not container or len(container.splitlines()) != 1:
-        return row, None
+        return row, None, None
     template = (
         "{{.State.Pid}} {{.RestartCount}} {{.State.Status}} "
         "{{if .State.Health}}{{.State.Health.Status}}{{else}}none{{end}} {{.State.StartedAt}}"
     )
     state = command(["docker", "inspect", "--format", template, container])
     if not state or len(state.split()) != 5:
-        return row, None
+        return row, None, None
     pid, restarts, status, health, started = state.split()
     row.update(status=status, health=health, restartCount=int(restarts))
     identity = container, started  # Used internally only; do not save installation IDs.
     if status != "running" or not pid.isdigit() or pid == "0":
-        return row, identity
+        return row, identity, None
     process_list = command(["docker", "top", container, "-eo", "pid"])
     pids = [p.strip() for p in (process_list or "").splitlines()[1:] if p.strip().isdigit()]
     row.update(process_memory(pids))
+    io, counters = process_io(pids)
+    row.update(io)
     row.update(cgroup_metrics(pid))
     row.update(host_network())
-    return row, identity
+    return row, identity, counters
 
 
 def cpu_percent(previous, current, elapsed):
     if previous is None or current is None or elapsed <= 0 or current < previous:
         return None
     return (current - previous) / (elapsed * 10000)
+
+
+def counter_rates(previous, current, elapsed):
+    """Do not compare different devices/process lifetimes or reset counters."""
+    if previous is None or current is None or elapsed <= 0 or set(previous) != set(current):
+        return None
+    result = {}
+    for identity, values in current.items():
+        old = previous[identity]
+        if set(old) != set(values) or any(values[key] < old[key] for key in values):
+            return None
+        result[identity] = {key: (value - old[key]) / elapsed for key, value in values.items()}
+    return result
 
 
 def main():
@@ -137,12 +227,13 @@ def main():
     if args.compose_file:
         compose += ["-f", args.compose_file]
     previous_identity, previous_cpu, previous_time, generation = None, None, None, 0
+    previous_cgroup_io, previous_process_io = None, None
     started = time.monotonic()
     deadline = started + args.duration_seconds
     # Exclusive creation prevents overwriting previous measurements.
     with args.output.open("x", encoding="utf-8") as output:
         while True:
-            row, identity = sample(compose)
+            row, identity, process_counters = sample(compose)
             measured = time.monotonic()
             row["elapsedSeconds"] = round(measured - started, 3)
             if identity != previous_identity:
@@ -155,6 +246,19 @@ def main():
                 and previous_time is not None
                 else None
             )
+            same_generation = (
+                identity is not None and identity == previous_identity and previous_time is not None
+            )
+            elapsed = measured - previous_time if same_generation else 0
+            row["cgroupIoPerSecond"] = counter_rates(
+                previous_cgroup_io, row.get("cgroupIo"), elapsed
+            )
+            rates = counter_rates(previous_process_io, process_counters, elapsed)
+            row["processIoPerSecond"] = (
+                {key: sum(values[key] for values in rates.values()) for key in PROCESS_IO_FIELDS}
+                if rates
+                else None
+            )
             output.write(json.dumps(row, allow_nan=False, sort_keys=True) + "\n")
             output.flush()
             previous_identity, previous_cpu, previous_time = (
@@ -162,6 +266,7 @@ def main():
                 row.get("cgroupCpuUsec"),
                 measured,
             )
+            previous_cgroup_io, previous_process_io = row.get("cgroupIo"), process_counters
             if measured >= deadline:
                 break
             time.sleep(min(args.interval_seconds, deadline - measured))

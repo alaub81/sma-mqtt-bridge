@@ -124,18 +124,32 @@ Defaults are 24 hours and a 60-second sampling interval. CLI flags
 `--duration-seconds` (1..86400), `--interval-seconds` (1..3600), `--output` and
 optional `--compose-file` configure this host tool, not the service runtime.
 No additional service environment variables or image dependencies are introduced.
+Use the actual installed Compose filename if it differs from the example below.
 
-Copy the script onto the host, then run a short two-minute check first:
+Copy the current script onto the host. Updating the bridge image does not update
+this separately copied host tool. For v0.3.11, download the tagged source:
 
 ```sh
-python3 resource_soak.py --duration-seconds 120 --output smab-resource-soak-check.jsonl
+curl -fL https://raw.githubusercontent.com/alaub81/sma-mqtt-bridge/v0.3.11/tests/resource_soak.py \
+  -o resource_soak.py
+```
+
+Run a short two-minute check first. Reading another UID's `/proc/PID/io` may need
+root permissions; run only this read-only host recorder with `sudo` when needed,
+without changing the service user, capabilities or kernel controllers:
+
+```sh
+sudo python3 resource_soak.py --compose-file docker-compose.example.yml \
+  --duration-seconds 120 --output smab-resource-soak-v0311-check.jsonl
 ```
 
 After checking the output, start the bounded recording:
 
 ```sh
-nohup python3 resource_soak.py --output smab-resource-soak-24h.jsonl \
-  > smab-resource-soak-24h.log 2>&1 < /dev/null &
+sudo -v
+nohup sudo -n python3 resource_soak.py --compose-file docker-compose.example.yml \
+  --output smab-resource-soak-v0311-24h.jsonl \
+  > smab-resource-soak-v0311-24h.log 2>&1 < /dev/null &
 ```
 
 The output file is created exclusively: existing observations are never
@@ -155,6 +169,42 @@ processes disappear during a sample, expected/read counts expose partial results
 Missing memory controllers/cgroup metrics produce null, never a fabricated zero.
 The first CPU sample and discontinuities produce null rather than invalid rates.
 No container IDs, addresses, command lines or ENV values are saved.
+
+Schema 2 additionally records:
+
+| Field | Meaning |
+| --- | --- |
+| `cgroupIo` | Kernel `io.stat` counters per block-device major:minor: `rbytes`, `wbytes`, `rios`, `wios`. Device numbers are kernel accounting keys, not serial numbers. |
+| `cgroupIoPerSecond` | Per-device byte/s and I/O/s deltas with the same keys, only within the same container generation and unchanged device set; resets produce null. |
+| `processIo` | Summed `/proc/PID/io` counters: `rchar`, `wchar`, `syscr`, `syscw`, `read_bytes`, `write_bytes`, `cancelled_write_bytes`. |
+| `processIoExpected`, `processIoRead` | Expected versus readable process accounting snapshots. Partial raw totals are marked by these counts. |
+| `processIoPerSecond` | Counter deltas per second, only for complete snapshots with identical PID/start-time membership and no counter reset. Process identities are used internally and never serialized. |
+
+Logical `rchar`/`wchar` and syscall counts include non-disk I/O and page-cache hits;
+they are not HDD operations. Process `write_bytes` is accounted when pages become
+dirty; subsequent deletion/truncation can cancel writes, tracked separately rather
+than silently subtracted. cgroup I/O is block-layer accounting per device, not
+direct physical drive wear or seek measurements. Keep devices separate to avoid
+blindly adding stacked-device accounting. Read cgroup CPU, memory and I/O
+independently: a missing controller must not hide another available metric.
+Missing/denied I/O metrics are null. An available empty `io.stat` is `{}` and means
+no device counters reported, not a general proof of zero storage activity.
+See the official kernel [proc I/O definitions](https://docs.kernel.org/filesystems/proc.html#proc-pid-io-display-the-io-accounting-fields)
+and [cgroup-v2 I/O controller](https://docs.kernel.org/admin-guide/cgroup-v2.html#io).
+
+Minute-scale process snapshots can miss short-lived health probes; cgroup totals
+include their accounted activity. Docker daemon log persistence and the external
+recorder's own output are outside the bridge cgroup. `fsync` calls are not counted
+by these interfaces. Test permissions in the short run before collecting overnight;
+inspect `processIoRead` and `cgroupIo` rather than interpreting null as zero.
+
+For the optimization comparison, deploy the new image first and verify its version
+and health. Keep polling intervals, adapter flags and timestamp diagnostics aligned
+with the previous run. CPU can be compared with the accepted 4.355% one-core mean;
+the old recording has no I/O baseline, so storage figures initially establish a
+new baseline. This voluntary comparison does not reopen the previous operational
+acceptance. Andreas performs deployment and starts the recording; the release itself
+does not launch it. Use a fresh output filename for any repeated run.
 
 Host physical-interface traffic includes other services and excludes loopback;
 it is context only, not Bridge-specific throughput. Interface resets or membership

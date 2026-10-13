@@ -12,10 +12,10 @@ wie „noch offen“ beschreiben den damaligen Stand, nicht die aktuelle Aufgabe
 
 ## Nächste Schritte
 
-- [ ] Lokalen Tag **v0.3.8** bei ausdrücklichem Veröffentlichungsauftrag pushen,
-  Hosted CI/Sicherheitsprüfungen und GHCR-Publikation prüfen, anschließend deployen.
-  Enthält Energierückgabegrad, Derating als Basic und ISO-Anlagenzeit. Der Zielhost
-  läuft auf v0.3.7; noch kein Push-/Deploymentauftrag für v0.3.8.
+- [ ] Beauftragtes Release **v0.3.11** veröffentlichen und Hosted CI/Sicherheits-
+  prüfungen sowie GHCR-Builds für ARM64/AMD64 abschließend prüfen. Deployment macht
+  Andreas. v0.3.8–v0.3.10 sind laut öffentlichen Workflows bereits veröffentlicht;
+  daraus keine Zielhost-Version ableiten.
 - [ ] Vor diesem Deployment verwendete Host-Profilkopien mit den gebündelten
   Änderungen abgleichen (M01–M04/M09 und neue Gruppierungen), Zustandsvolume und
   bestehende Links/Historien erhalten. Nur tatsächlich genutzte Overrides ändern.
@@ -309,3 +309,28 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
 - Akzeptierte Ressourcen-/Betriebsprüfung bleibt geschlossen. Keine neue Live-
   CPU-/HDD-Ersparnis behauptet; Migration, Laden und Zeitstempel-Restfragen bleiben
   nach vorhandener Priorisierung offen. Kein Push, Release oder Deployment.
+
+## 2026-10-13 – Ressourcenrecorder für Optimierungsvergleich erweitert
+
+- Andreas beauftragt Erweiterung, Commit und neues Release; Deployment und Start
+  der Aufzeichnung übernimmt er. Nächste freie Version nach Remote-Prüfung: v0.3.11.
+- Schema 2 erfasst je Blockgerät cgroup-I/O (Bytes/Operationen) und Prozess-I/O
+  (logische Bytes, Syscalls, Storage-/stornierte Schreibbytes). Read-only, keine
+  zusätzlichen Geräteabfragen, Pakete oder Service-ENV-Einstellungen.
+- Änderungsraten nur bei gleichem Containersegment, unveränderten Geräten und
+  vollständiger Prozessmenge mit gleicher PID/Startzeit. Resets, Berechtigungs-
+  fehler oder fehlende Controller ergeben null statt falscher Einsparungen.
+  Prozess-/Containeridentitäten werden ausschließlich intern verwendet.
+- Offizielle Kernel-Dokumentation geprüft. Logische Bytes, Dirty-Page-Zähler und
+  Block-I/O unterscheiden; daraus keine direkten HDD-Seeks/Verschleißwerte ableiten.
+  Docker-Logschreiben und Recorder-Ausgabe liegen außerhalb der Bridge-cgroup.
+- Sechs zusätzliche Regressionen bestehen; Python-3.9-Syntax bleibt gültig.
+  Vollständige Tests: 275 erfolgreich. Finaler Linter-/Compose-Lauf und Release-
+  Prüfung folgen. Alten Recorder separat auf dem Host ersetzen; zweiminütige
+  Berechtigungsprüfung vor Nachtlauf, ggf. sudo ohne Service-Rechte zu erweitern.
+- Der alte Lauf bleibt akzeptiert. Neuer Lauf ist freiwilliger Optimierungsvergleich;
+  CPU-Vergleich zur alten Basis möglich, HDD/I/O erhält erst jetzt eine Basis.
+
+- Finaler Linter über 150 öffentliche Dateien und Compose-Parität erfolgreich;
+  zusätzlicher echter Linux-procfs-Test im isolierten ARM64-Container bestanden.
+  Keine Zielhost-Aufzeichnung gestartet, keine Service-Rechte verändert.

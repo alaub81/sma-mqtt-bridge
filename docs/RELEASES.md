@@ -12,7 +12,38 @@ hosted validation and release results. A tag existing alone does not establish
 successful image publication. Current installation acceptance belongs in
 [VALIDATION.md](VALIDATION.md).
 
-## v0.3.9 — 2026-10-13 (local historical baseline tag)
+## v0.3.11 — 2026-10-13 (release preparation)
+
+- Heartbeats retain atomic replacement and existing liveness checks without forcing
+  disk sync. Command uncertainty journals and topic ownership remain durable.
+- Reuse immutable source metadata and MQTT descriptions with inventory/flag/monitor
+  invalidation; measurements, freshness, identity and command rights stay current.
+- Bound observation payload expansion before allocating fixed-point strings.
+  `SMAB_MAX_PAYLOAD_BYTES` / JSON `runtime.maxPayloadBytes` defaults to 4096 UTF-8
+  bytes. Normal telemetry is unchanged; invalid/oversized values preserve the
+  last-known retained observation and never fabricate zero.
+- Extend the separately copied Linux resource recorder with cgroup block I/O,
+  process logical/storage counters and continuity-safe rates. Missing metrics
+  remain null; device/process changes and resets invalidate rates. No process or
+  container identities are saved. Host Python 3.9+ remains supported.
+
+Local validation: 275 offline tests, complete lint and Compose parity. Hosted
+CI/security and amd64/arm64 publication are checked after the requested tag push.
+Andreas performs deployment. Preserve the state volume and existing installation
+settings. The host recorder must be copied again independently of the image;
+see [the overnight comparison instructions](OPERATIONAL_ACCEPTANCE.md#bounded-linux-host-resource-recording).
+The old resource recording provides a CPU baseline, but no storage baseline.
+
+## v0.3.10 — 2026-10-13
+
+Includes the shared strict JSON decoder, equivalent Modbus property metadata
+construction, simplified widget expressions and focused correctness lint rules.
+The existing topics, polling, device settings and uncertainty protection remain.
+Hosted [CI](https://github.com/alaub81/sma-mqtt-bridge/actions/runs/38449973600)
+and [release](https://github.com/alaub81/sma-mqtt-bridge/actions/runs/38450118099)
+completed successfully. No new target-host version is inferred from publication.
+
+## v0.3.9 — 2026-10-13 (historical baseline tag)
 
 At Andreas' request, this annotated local tag points to `e1c9a2d`, the last
 commit before the shared JSON decoder and widget-expression refactoring in
@@ -21,14 +52,16 @@ refactoring. The existing branch history was not rewritten.
 
 An isolated source snapshot of the tagged commit passed all **253 offline tests**,
 complete lint over 140 public files and Compose parity/overrides. The tag is a
-source rollback point; it has not been pushed, built as a release image, published
-to GHCR or deployed. Changes after this tag remain development changes.
+source rollback point. At that checkpoint publication was pending; the later
+[hosted release](https://github.com/alaub81/sma-mqtt-bridge/actions/runs/38450117939)
+completed successfully. No deployment is inferred. Refactorings follow this tag.
 
-## v0.3.8 — 2026-10-13 (local tag)
+## v0.3.8 — 2026-10-13
 
 Prepared locally with 253 passing offline tests, complete lint and Compose parity.
-Remote tag push, hosted release checks, GHCR publication and deployment are pending.
-The existing 0.3.7 target-host installation is unchanged.
+The later [hosted release](https://github.com/alaub81/sma-mqtt-bridge/actions/runs/38448474116)
+completed successfully. Deployment/channel checks below describe the acceptance
+limits at preparation; publication alone does not confirm them.
 
 - Home Manager Modbus adds Basic `measurements/planttimeiso`, an ISO 8601 UTC
   string from the existing clock read. Raw `measurements/planttime` becomes
@@ -45,7 +78,7 @@ The existing 0.3.7 target-host installation is unchanged.
   discharged/charged energy ratio from a profile's same-poll kWh battery counters.
   No extra Modbus request, counter/history change or readiness dependency.
   See [the calculation and interpretation](REGISTER_VALIDATION.md#derived-battery-energy-return-ratio-2026-10-13).
-  This is a locally tagged release, not yet published to GHCR or deployed.
+  Physical interpretation and deployment acceptance remain separate from publication.
 
 ## v0.3.7 — 2026-10-13
 

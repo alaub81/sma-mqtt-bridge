@@ -9,6 +9,17 @@ separate. See the user acceptance note below.
 
 ## Local verification
 
+The external Linux resource recorder now includes schema-2 cgroup block I/O and
+process logical/storage counters plus continuity-safe rates. Six new regressions
+cover multiple devices, empty versus unavailable controllers, malformed/duplicate
+counters, independent controller failures, process start time, partial snapshots,
+membership/reset boundaries and exclusion of internal identities from output.
+All **275 offline tests**, complete repository lint and Compose parity/overrides
+pass. Python 3.9 syntax remains supported. A Linux ARM64 container additionally
+verified actual `/proc/self/io` sampling without external networking. This does
+not verify target-host procfs permissions or create a target-host I/O baseline.
+Andreas requested v0.3.11 publication and will deploy/start the recorder himself.
+
 Final container validation of runtime `e378535e` built
 `0.3.10-dev.3+e378535e` for Linux ARM64 and AMD64. Each image passes all 269
 offline tests with external networking disabled and public read-only fixtures.
