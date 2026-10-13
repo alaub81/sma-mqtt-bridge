@@ -6,7 +6,7 @@ import time
 from ..config import Inverter
 from ..errors import ProtocolError
 from ..model import Property
-from .modbus import ModbusException, ModbusReader, decode
+from .modbus import ModbusException, ModbusReader, decode, profile_property
 
 
 class HomeManagerModbusReader(ModbusReader):
@@ -93,14 +93,11 @@ class HomeManagerModbusReader(ModbusReader):
                         p for p in self.profile["delegated"]["pollers"] if p["id"] == v["poller"]
                     )
                     props.append(
-                        Property(
-                            node,
-                            v["id"],
-                            v["name"],
-                            v["datatype"],
-                            v["unit"],
-                            ",".join(dict.fromkeys(v.get("valueMap", {}).values())),
-                            max(self.settings.stale_seconds, 2 * self.interval(p)),
+                        profile_property(
+                            v,
+                            node=node,
+                            stale_seconds=max(self.settings.stale_seconds, 2 * self.interval(p)),
+                            include_format=True,
                         )
                     )
         if self.home_settings.diagnostics_enabled:
