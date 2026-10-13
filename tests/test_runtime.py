@@ -660,7 +660,7 @@ class AsyncRuntimeTests(unittest.IsolatedAsyncioTestCase):
                 def __init__(self, *args):
                     pass
 
-                async def run(self, stop):
+                async def run(self, stop, cancelled=cancelled):
                     if cancelled:
                         raise asyncio.CancelledError
 
