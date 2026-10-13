@@ -9,6 +9,14 @@ separate. See the user acceptance note below.
 
 ## Local verification
 
+Final container validation of runtime `e378535e` built
+`0.3.10-dev.3+e378535e` for Linux ARM64 and AMD64. Each image passes all 269
+offline tests with external networking disabled and public read-only fixtures.
+ARM64 version/configuration/image-exclusion checks passed. Runtime dependencies,
+base image and Compose runtime settings were not changed by this review.
+The [complete performance review](PERFORMANCE_REVIEW_2026-10-13.md) records
+measured gains, cache invalidation, hardening and remaining evidence limits.
+
 Resource hardening additionally bounds observation payloads with the configurable
 `SMAB_MAX_PAYLOAD_BYTES` / JSON `runtime.maxPayloadBytes` (4096 bytes by default).
 The previous encoder expanded a nine-byte `1e1000000` value into 1,000,001 bytes;

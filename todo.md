@@ -289,3 +289,23 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
   Keine deutschsprachigen Quellkommentare bei ergänzender Sichtung gefunden.
 - Separater lokaler Härtungscommit. Container-Gegenprüfung und Abschlussbericht
   folgen; keine Veröffentlichung oder Zielhoständerung.
+
+## 2026-10-13 – Gesamtprüfung und Ressourcenrunde abgeschlossen
+
+- Eigene Umsetzungsschritte separat committed: d570a36 (Heartbeat-Sync), 4da4293
+  (Metadaten-Caches), e378535 (Payload-Begrenzung). Unabhängige Änderungen an
+  Compose-Kommentaren/.env.example erhalten und nicht in diese Commits aufgenommen.
+- Aktueller Quellstand als 0.3.10-dev.3+e378535e mit unveränderten gepinnten
+  Abhängigkeiten für ARM64/AMD64 gebaut. Je Architektur alle 269 Tests ohne
+  externes Netzwerk bestanden; native ARM64 ca. 7,8 s, emulierte AMD64 ca. 11,2 s.
+  Version, deaktivierte Quellen und Image-Ausschlüsse zusätzlich auf ARM64 geprüft.
+- Erster Buildversuch mit --network=none konnte die Installationsschicht nicht
+  wiederverwenden und scheiterte am Paketdownload. Normaler Build mit vorhandenem
+  Cache erfolgreich; beide eigentlichen Container-Testläufe blieben netzwerkisoliert.
+- Abschlussbericht: docs/PERFORMANCE_REVIEW_2026-10-13.md. Weitere Ansatzpunkte
+  sind Diagnose-/Docker-Logs, separater Healthcheck-Prozess, MQTT-State-Bestätigung
+  und identische Manifest-Speicherungen. Erst Kosten isolieren, dann gezielt ändern;
+  keine pauschalen Frische-, Rechte- oder Geräteidentitäts-Caches.
+- Akzeptierte Ressourcen-/Betriebsprüfung bleibt geschlossen. Keine neue Live-
+  CPU-/HDD-Ersparnis behauptet; Migration, Laden und Zeitstempel-Restfragen bleiben
+  nach vorhandener Priorisierung offen. Kein Push, Release oder Deployment.

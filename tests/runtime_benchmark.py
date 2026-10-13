@@ -26,7 +26,16 @@ from sma_mqtt_bridge.runtime import sources  # noqa: E402
 
 def fixture(state_dir):
     """Use bundled mappings and synthetic values, without opening network sessions."""
-    config = load_config({"SMAB_STATE_DIR": state_dir})
+    filename = Path(state_dir) / "config-fixture.json"
+    filename.write_text("{}\n", encoding="utf-8")
+    config = load_config(
+        {
+            "SMAB_CONFIG_FILE": str(filename),
+            "SMAB_STATE_DIR": state_dir,
+            "SMAB_PROFILE_DIR": str(Path(state_dir) / "profiles"),
+            "SMAB_TRANSLATE_DIR": str(Path(state_dir) / "translate"),
+        }
+    )
     profiles = {
         device.id: load_profile(profile, "/nonexistent-smab-benchmark")
         for device, profile in zip(config.inverters, DEFAULT_PROFILES, strict=True)

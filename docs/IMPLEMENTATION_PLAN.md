@@ -63,6 +63,12 @@ charging controller; metadata editability alone never authorizes another setter.
 
 ## 5. Infrastructure changes and maintenance
 
+The complete quality/resource review and three focused optimizations on
+2026-10-13 are documented in [the performance review](PERFORMANCE_REVIEW_2026-10-13.md).
+Heartbeats avoid forced disk sync, immutable metadata is reused and observation
+payload expansion is bounded. Further optimization needs isolated probe/logging/
+broker I/O evidence; do not add measurement or command-rights caches.
+
 Operational/recovery acceptance and the stable 22-hour resource baseline were
 closed by Andreas on 2026-10-13. See
 [the user acceptance](VALIDATION.md#remaining-operational-acceptance-closed-by-user-2026-10-13)
