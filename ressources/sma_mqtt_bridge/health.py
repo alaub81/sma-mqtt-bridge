@@ -7,7 +7,8 @@ import time
 from pathlib import Path
 
 
-def atomic_json(path, data):
+def atomic_json(path, data, *, durable=True):
+    """Replace complete JSON atomically; recovery state also needs durable storage."""
     path = Path(path)
     path.parent.mkdir(parents=True, exist_ok=True)
     temporary = path.with_name(path.name + ".tmp")
@@ -16,8 +17,11 @@ def atomic_json(path, data):
         json.dump(data, stream, allow_nan=False, sort_keys=True)
         stream.write("\n")
         stream.flush()
-        os.fsync(stream.fileno())
+        if durable:
+            os.fsync(stream.fileno())
     temporary.replace(path)
+    if not durable:
+        return
     # Persist the renamed journal/manifest entry as well as its file contents.
     directory = os.open(path.parent, os.O_RDONLY)
     try:
@@ -44,6 +48,7 @@ def heartbeat(config, states, mqtt, mqtt_diagnostics=None):
             },
             "mqttDiagnostics": mqtt_diagnostics or {},
         },
+        durable=False,
     )
 
 

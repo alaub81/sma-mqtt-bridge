@@ -221,6 +221,35 @@ class ModelTests(unittest.TestCase):
             self.assertGreaterEqual(delay, 1)
             self.assertLessEqual(delay, 60)
 
+    def test_heartbeat_avoids_disk_sync_but_recovery_state_keeps_both_syncs(self):
+        from sma_mqtt_bridge.storage import read_state, write_state
+
+        with tempfile.TemporaryDirectory() as tmp:
+            config = load_config({"SMAB_STATE_DIR": tmp})
+            with patch("sma_mqtt_bridge.health.os.fsync", wraps=os.fsync) as sync:
+                heartbeat(config, [self.state()], {})
+                self.assertTrue(healthy(tmp, 5))
+                sync.assert_not_called()
+                path = Path(tmp) / "recovery.json"
+                write_state(path, {"pending": True}, 1000)
+                self.assertEqual(read_state(path, 1000), {"pending": True})
+                self.assertEqual(sync.call_count, 2)
+                atomic_json(Path(tmp) / "heartbeat.json", {"status": "stopped"}, durable=False)
+                self.assertFalse(healthy(tmp, 5))
+                self.assertEqual(sync.call_count, 2)
+
+    def test_failed_heartbeat_replacement_preserves_previous_complete_file(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            config = load_config({"SMAB_STATE_DIR": tmp})
+            heartbeat(config, [self.state()], {})
+            path = Path(tmp) / "heartbeat.json"
+            before = path.read_bytes()
+            with patch("sma_mqtt_bridge.health.Path.replace", side_effect=OSError):
+                with self.assertRaises(OSError):
+                    heartbeat(config, [], {})
+            self.assertEqual(path.read_bytes(), before)
+            self.assertTrue(healthy(tmp, 5))
+
     def test_disabled_sources_create_no_sessions(self):
         with (
             patch("sma_mqtt_bridge.runtime.ModbusReader", side_effect=AssertionError),
