@@ -8,6 +8,19 @@ indent-style = "space"
 
 [lint]
 select = ["E4", "E7", "E9", "F", "I"]
+# Focused correctness checks; keep broad style/modernization families opt-in.
+extend-select = [
+    "B006", # Mutable defaults shared across calls.
+    "B008", # Calls evaluated once in default arguments.
+    "B012", # Control flow in finally can suppress exceptions.
+    "B018", # Discarded expressions can conceal missing work.
+    "B020", # Loop target overwrites its iterable.
+    "B023", # Callbacks capture changing loop variables.
+    "B025", # Duplicate exception handlers.
+    "B032", # Accidental annotation instead of assignment.
+    "RUF006", # Async tasks without a retained reference.
+    "RUF100", # Stale noqa suppressions.
+]
 
 [lint.isort]
 known-first-party = ["sma_mqtt_bridge", "tests"]

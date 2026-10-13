@@ -428,7 +428,9 @@ class AsyncProtocolTests(unittest.IsolatedAsyncioTestCase):
             for status in (408, 429, 500, 502, 503, 504):
                 adapter = PortalReader(Portal(), 1000)
 
-                async def request(method, url, **kwargs):
+                async def request(
+                    method, url, *, status=status, phase=phase, adapter=adapter, **kwargs
+                ):
                     from urllib.parse import parse_qs, urlsplit
 
                     if "/protocol/openid-connect/auth?" in url:

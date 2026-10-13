@@ -174,7 +174,7 @@ class WriteTests(unittest.IsolatedAsyncioTestCase):
             self.local.reader.http.get_json.side_effect = None
             reads = 0
 
-            async def read(*args, **kwargs):
+            async def read(*args, partial=partial, **kwargs):
                 nonlocal reads
                 reads += 1
                 return self.reply(self.initial if reads == 1 else partial)

@@ -1182,3 +1182,23 @@ profile overrides require reconciliation; UDP source is unaffected.
 
 Validation: all 253 offline tests, complete lint over 140 public files, Compose
 parity with overrides and diff hygiene passed.
+
+## Focused correctness lint rules, 2026-10-13
+
+Ruff's pinned version and existing E4/E7/E9/F/I selection are retained. Ten
+additional explicit rules are enabled: B006, B008, B012, B018, B020, B023, B025,
+B032, RUF006 and RUF100. They cover shared/evaluated defaults, suppressed
+exceptions, discarded expressions, loop bindings, duplicate handlers, accidental
+annotations, unreferenced asyncio tasks and stale noqa directives. No broad style
+family, global ignore or version upgrade was introduced.
+
+Eight loop-variable diagnostics across three existing test files were resolved
+by binding fixture values at callback definition time. Existing test assertions
+and production watchdogs were preserved. An additional binding in the separately
+added JSON parsing test was fixed in the shared workspace and remains with that
+pending JSON change. Concurrent JSON/widget edits are not part of the lint commit.
+
+Each enabled rule rejected a synthetic erroneous snippet using the actual project
+configuration. Complete lint over 144 public files, all 256 working-tree offline
+tests, Compose parity with overrides and diff hygiene passed. This lint change
+has no production runtime edit, publication or deployment.

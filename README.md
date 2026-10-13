@@ -68,8 +68,16 @@ The lint check rejects Python tool versions that differ from the CI pins. After
 changing `tests/requirements-lint.txt`, rerun the pip install command above.
 
 All public repository files receive hygiene checks and applicable language linters.
-Ruff uses E4/E7/E9/F/I and checks Python formatting (100-column target, double
-quotes, four-space indentation). Pylint checks errors/fatal diagnostics. Widget
+Ruff uses E4/E7/E9/F/I plus the focused correctness rules listed in `ruff.toml`:
+B006/B008 (shared defaults), B012 (exception suppression in finally), B018/B032
+(discarded expressions or accidental annotations), B020/B023 (loop bindings),
+B025 (duplicate handlers), RUF006 (unreferenced asyncio tasks), and RUF100 (stale
+noqa suppressions). Broad style/modernization families remain opt-in. See the
+[rule reference](https://docs.astral.sh/ruff/rules/), especially
+[loop callbacks](https://docs.astral.sh/ruff/rules/function-uses-loop-variable/)
+and [async task references](https://docs.astral.sh/ruff/rules/asyncio-dangling-task/).
+Python formatting uses a 100-column target, double quotes and four-space
+indentation. Pylint checks errors/fatal diagnostics. Widget
 export parity is included. Offline tests use deterministic fixtures and local test servers.
 CI runs on main-branch pushes and pull requests. Stable tag pushes invoke the
 release workflow, which requires reusable CI before building/scanning and publishing

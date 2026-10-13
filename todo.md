@@ -743,3 +743,10 @@ Topic-Suffixe werden unter `homie/<konfigurierte Homie-ID>/` veröffentlicht. Di
 
 - Andreas schließt den Punkt Betriebsdauer lesbar anzeigen nach Klärung Zeitspanne gegenüber Unix-Zeit; State-Description reicht aus. ISO-Anlagenzeit ist eine getrennte Ergänzung.
 - Alle offenen ISO-Anlagenzeit-/Profil-/Test-/Dokumentationsänderungen committen und nächsten lokalen Patch-Tag v0.3.8 erstellen. Enthält seit v0.3.7 auch Energierückgabegrad, Derating Basic und emulationstolerante Test-Wartegrenzen. Kein neuer Push- oder Deploymentauftrag in dieser Aufforderung.
+
+## 2026-10-13 – Gezielte zusätzliche Linterregeln
+
+- Auf Andreas’ Auftrag zehn Ruff-Regeln ergänzt: B006/B008 (Default-Argumente), B012 (Kontrollfluss in finally), B018/B032 (verlorene Ausdrücke/versehentliche Annotation), B020/B023 (Schleifenbindung), B025 (doppelte Exceptionhandler), RUF006 (Async-Task-Referenzen), RUF100 (veraltete noqa-Ausnahmen). Gepinnte Ruff-Version und read-only Linterablauf erhalten, keine pauschale neue Stilfamilie.
+- Zunächst acht Closure-Hinweise in drei vorhandenen Testdateien gefunden; zusätzlich Schleifenbindung in der inzwischen hinzugekommenen JSON-Parsing-Testdatei korrigiert. Testvariante per Default-Argument fest binden; keine neue Ausnahme/Unterdrückung und keine Änderung von Assertions, virtuellen Zeiten oder Produktions-Timeouts.
+- README mit Regelumfang/Herstellerreferenzen aktualisiert. Eigenständige Widget-/JSON-Änderungen im gemeinsamen Arbeitsverzeichnis gehören nicht zur Linter-Erweiterung; Runtime-Protokolle durch diese Arbeit unverändert.
+- Validierung: alle zehn aktivierten Regeln erkennen ihre synthetischen Fehlerbeispiele mit der tatsächlichen Projektkonfiguration. Vollständiger Linter über 144 öffentliche Dateien, alle 256 Offline-Tests, Compose-Parität mit Overrides und Diff-Prüfung bestanden. Kein Commit/Push/Deployment.
