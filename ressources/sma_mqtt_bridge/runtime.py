@@ -140,6 +140,7 @@ def sources(config):
         }
     )
     for state, reader, _interval in result:
+        state.max_payload_bytes = config.runtime.max_payload_bytes
         device, attr = settings[state.id]
         value = getattr(device, attr)
         state.ready_properties = tuple(value.split(",")) if value else ()
@@ -363,6 +364,8 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
         portal_controller = PortalCommands(config, portal_state, result_state, reader=portal_reader)
     if local_controller is not None or portal_controller is not None or portal_refresh is not None:
         controller = CommandRouter(local_controller, portal_controller, portal_refresh)
+    for state in states:
+        state.max_payload_bytes = config.runtime.max_payload_bytes
     publisher = publisher_factory(config, states)
     if controller is not None:
         publisher.command_controller = controller

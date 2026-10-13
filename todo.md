@@ -270,3 +270,22 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
 - Weiterer konkreter Härtungsbefund: kurze numerische Exponentwerte können beim
   MQTT-Payload-Formatieren sehr große Strings erzeugen. Vor einer Freigabe dieses
   Optimierungsstands eine konfigurierbare Ausgabebegrenzung gezielt prüfen.
+
+## 2026-10-13 – Übergrößen beim MQTT-Payload begrenzt
+
+- Vorheriger Befund behoben: neuer positiver Integer SMAB_MAX_PAYLOAD_BYTES,
+  Standard 4096 UTF-8-Bytes, JSON runtime.maxPayloadBytes mit normaler Präzedenz.
+  Erwartete feste Dezimallänge vor dem Formatieren prüfen, keine riesigen
+  Exponent-Strings erzeugen. Ungültige Unicode-Surrogate ebenfalls zurückweisen.
+- Neue Grenze für normale und Feedback-Quellen übernommen. Übliche Werte,
+  ganzzahlige Homie-Darstellung, Nullwerte, Units und Topic-IDs unverändert.
+  Übergrößen sind ungültige Beobachtungen, erfinden keine Null und erneuern keine
+  Frische; MQTT erhält die letzte gültige Beobachtung wie bisher.
+- Fünf Regressionen inklusive Extremexponenten ohne Formatieraufruf,
+  positiven/negativen Längengrenzen, UTF-8-Bytes, Sign-/Nullfällen sowie JSON-/ENV-
+  Präzedenz und Adapterübernahme erfolgreich. ENV-Beispiel vollständig nachgeprüft.
+- Alle 269 Offline-Tests, sämtliche Linter, Compose-Parität mit Overrides,
+  Python-Kompilierung, lokale Dokumentationslinks und Diff-Prüfung bestanden.
+  Keine deutschsprachigen Quellkommentare bei ergänzender Sichtung gefunden.
+- Separater lokaler Härtungscommit. Container-Gegenprüfung und Abschlussbericht
+  folgen; keine Veröffentlichung oder Zielhoständerung.

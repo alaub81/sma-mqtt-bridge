@@ -122,6 +122,7 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 | `SMAB_SHUTDOWN_TIMEOUT_SECONDS` | `10` | Bounded graceful shutdown. |
 | `SMAB_RECONNECT_MIN_SECONDS` | `1` | Initial supervised reconnection delay, with jitter. |
 | `SMAB_MAX_RESPONSE_BYTES` | `1048576` | Positive integer HTTP response limit, including decompressed data. |
+| `SMAB_MAX_PAYLOAD_BYTES` | `4096` | Positive integer UTF-8 observation payload limit; JSON `runtime.maxPayloadBytes`. Reject oversized values before publication, including fixed-point exponent expansion. |
 | `SMAB_MAX_STATE_BYTES` | `1048576` | Positive integer size limit per topic manifest/command journal; oversized state fails closed. |
 | `SMAB_READ_CYCLE_TIMEOUT_SECONDS` | `120` | Positive whole read-cycle watchdog in seconds; excludes poll/backoff/idle waits. |
 | `SMAB_FAILURE_LOG_INTERVAL_SECONDS` | `300` | Positive interval between repeated outage log summaries in seconds; transitions are immediate. |
@@ -326,6 +327,16 @@ Stop the bridge before copying state. Copy the existing `heartbeat.json` and `mq
 See [Docker volume lifecycle and migration](https://docs.docker.com/engine/storage/volumes/) and [Compose volume naming](https://docs.docker.com/reference/compose-file/volumes/).
 
 ## Failure supervision and healthcheck
+
+Observation payloads are limited by `SMAB_MAX_PAYLOAD_BYTES` (default 4096 UTF-8
+bytes), also configurable as JSON `runtime.maxPayloadBytes`. Numeric fixed-point
+length is checked before expansion, so a short extreme exponent cannot allocate
+an arbitrarily large payload. Oversized values and invalid Unicode are invalid
+samples: they do not refresh readiness or replace previously retained observations
+with zero. This does not change topic IDs, units, command bounds or device polling.
+Choose a limit sufficient for normal device values; a deliberately small override
+can make otherwise valid samples unavailable. Discovery labels retain their own
+metadata validation and are outside this observation limit.
 
 Runtime log records start with an ISO 8601 timestamp including milliseconds and
 the UTC offset, followed by severity and message. `SMAB_TIMEZONE` (default

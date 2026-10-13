@@ -9,6 +9,18 @@ separate. See the user acceptance note below.
 
 ## Local verification
 
+Resource hardening additionally bounds observation payloads with the configurable
+`SMAB_MAX_PAYLOAD_BYTES` / JSON `runtime.maxPayloadBytes` (4096 bytes by default).
+The previous encoder expanded a nine-byte `1e1000000` value into 1,000,001 bytes;
+the new length check rejects extreme positive/negative exponents before formatting.
+Five regressions cover fixed-point boundaries, zero/signed zero, integer/enum/
+boolean payloads, UTF-8 byte boundaries, invalid Unicode, invalid-sample readiness,
+JSON/ENV precedence and propagation to source states. All **269 offline tests**,
+full repository lint, Compose parity/overrides, Python compilation and local
+documentation-link checks passed. The benchmark snapshot checksum stays unchanged;
+the final local median was 0.255259 s for the same 2,000 cycles (about 42% below
+the 0.436556 s original baseline). No live-device test or deployment was performed.
+
 The subsequent metadata optimization passed **264 offline tests**, full lint
 and Compose parity/overrides. Three new regressions cover inventory/type/TTL
 replacement, runtime readiness/default-lifetime changes, per-sample device age,

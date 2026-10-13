@@ -13,6 +13,7 @@
     "reconnectMinSeconds": 1.0,
     "reconnectMaxSeconds": 60.0,
     "maxResponseBytes": 1048576,
+    "maxPayloadBytes": 4096,
     "maxStateBytes": 1048576,
     "readCycleTimeoutSeconds": 120.0,
     "failureLogIntervalSeconds": 300.0
