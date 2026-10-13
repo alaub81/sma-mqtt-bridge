@@ -87,18 +87,28 @@ class SourceState:
     monitor: object = None
     contributes_availability: bool = True
     initialization_deadline: float | None = None
+    _indexed_properties: tuple | None = field(default=None, init=False, repr=False, compare=False)
+    _by_key: dict = field(default_factory=dict, init=False, repr=False, compare=False)
+    _default_required_keys: tuple = field(default=(), init=False, repr=False, compare=False)
+
+    def property_index(self):
+        """Cache immutable descriptions, rebuilding when the inventory tuple changes."""
+        if self._indexed_properties is not self.properties:
+            self._by_key = {p.key: p for p in self.properties}
+            self._default_required_keys = tuple(
+                p.key for p in self.properties if p.required_for_ready
+            ) or tuple(p.key for p in self.properties if p.node == "measurements")
+            self._indexed_properties = self.properties
+        return self._by_key
 
     def __post_init__(self):
-        if set(self.ready_properties) - {p.key for p in self.properties}:
+        if set(self.ready_properties) - self.property_index().keys():
             raise ConfigError("Readiness references an unavailable property")
 
     @property
     def required_keys(self):
-        return (
-            self.ready_properties
-            or tuple(p.key for p in self.properties if p.required_for_ready)
-            or tuple(p.key for p in self.properties if p.node == "measurements")
-        )
+        self.property_index()
+        return self.ready_properties or self._default_required_keys
 
     def missing_critical(self, now=None):
         return sorted(set(self.required_keys) - set(self.fresh_values(now)))
@@ -112,8 +122,8 @@ class SourceState:
     def update(self, values, now=None, timestamp=None):
         now = time.monotonic() if now is None else now
         observed_at = values.observed_at if isinstance(values, SampleValues) else {}
-        by_key = {p.key: p for p in self.properties}
-        if set(values) - set(by_key):
+        by_key = self.property_index()
+        if set(values) - by_key.keys():
             raise ProtocolError("Adapter returned an undeclared property")
         usable = False
         for key, value in values.items():
@@ -136,14 +146,18 @@ class SourceState:
 
     def fresh_values(self, now=None):
         now = time.monotonic() if now is None else now
-        expiry = {
-            p.key: p.stale_seconds if p.stale_seconds is not None else self.stale_seconds
-            for p in self.properties
-        }
+        by_key = self.property_index()
         return {
             k: value
             for k, (value, received) in self.values.items()
-            if math.isfinite(received) and 0 <= now - received <= expiry[k]
+            if math.isfinite(received)
+            and 0
+            <= now - received
+            <= (
+                by_key[k].stale_seconds
+                if by_key[k].stale_seconds is not None
+                else self.stale_seconds
+            )
         }
 
     def status(self, now=None):
