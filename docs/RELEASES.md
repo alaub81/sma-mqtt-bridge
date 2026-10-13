@@ -27,9 +27,8 @@ Local commit `41c9953` includes these additions, not yet in a new published imag
   and inverter morning wake-up evidence.
 
 Installation/release documentation now covers published GHCR deployment and
-explicit image pinning. Complete resource recording before deploying pending
-runtime changes, keeping the baseline
-version and configuration stable for the measurement window.
+explicit image pinning. Andreas accepted the stable 22-hour resource recording
+on 2026-10-13, closing the resource prerequisite for a requested future deployment.
 
 Additional local preparation exposes `portal/refresh/set` with payload `refresh`
 for an enabled portal adapter. This read-only action wakes the existing supervisor,

@@ -36,7 +36,9 @@ command journals.
 
 - Verify inverter morning wake-up after the reported successful evening behavior;
   distinguish sleep from a connection or data-quality failure.
-- Accept remaining target-host fault scenarios and measure real resource behavior.
+- Accept remaining target-host fault scenarios. Resource acceptance was closed
+  by Andreas on 2026-10-13 using the stable 22-hour measurement; see
+  [the analysis](RESOURCE_SOAK_ANALYSIS_2026-10-13.md).
   Extended virtual twelve-hour supervisor/MQTT sequences and repeated actual
   watchdog cancellations are implemented; see
   [operational evidence](OPERATIONAL_ACCEPTANCE.md#extended-deterministic-fault-sequences-2026-10-12).
@@ -116,8 +118,8 @@ Before future releases, verify private-data exclusions, namespace/tags and
 upgrade/state continuity. Recheck stable official Python tags before image
 updates. The workflow requires reusable CI before publication, including lint,
 tests, Compose parity, architecture image tests and scans. Future tag/push work
-needs an explicit release request. Bundle pending local changes after the
-24-hour resource baseline; do not alter that running installation mid-recording.
+needs an explicit release request. The resource baseline is complete: Andreas accepted the measured 22 hours on
+2026-10-13. Pending changes may now be bundled for an explicitly requested release.
 
 ## Complete model-specific Modbus coverage
 
@@ -127,3 +129,16 @@ existing IDs and separating alternative counters and conditional equipment. Agre
 basic/advanced/diagnostics with Andreas before assigning new groups. File-based
 profile extensions need verified units, enums/sentinels and suitable poll intervals.
 Review WO/RW commands separately; documentation access flags alone never enable setters.
+
+## Deferred expansion scope, 2026-10-13
+
+Andreas removed additional API-only fallback mappings for operation without SEMP
+from scope. Preserve existing API/SEMP ownership and the documented inventory;
+no fallback expansion is planned.
+
+Further Modbus, wallbox and SEMP extensions, including detailed interpretation
+of the three existing SEMP plant-control properties, are deferred until the user
+prioritizes them again. The German diary holds the deferred candidate list.
+Existing topics remain available; their unresolved semantics are not accepted
+by this scheduling decision. Acceptance of implemented measurements and the
+remaining freshness and operational checks continues independently.

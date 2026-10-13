@@ -1015,3 +1015,34 @@ Validation: all 247 offline tests passed, complete lint over 137 public files,
 standalone Compose parity including overrides, and diff hygiene passed. Existing
 loopback test servers required the approved run outside the filesystem sandbox;
 no installation endpoints were contacted.
+
+## Selected additional topics visible, 2026-10-13
+
+Andreas confirms that all topics in the supplied acceptance list are present:
+inverter frequency, operating/feed-in duration and derating reason; Tripower
+phase currents; Storage AC power/current, battery current/voltage and charge/
+discharge energy counters; Sunny Boy L2/L3 and DC input B; inverter1/2 device
+type and power limits; and eCharger phase active power.
+
+This is user-reported topic visibility, not a direct broker inspection. The
+confirmation does not separately establish numeric payload availability for
+every operating state, openHAB links/units or an independent device-value
+comparison. Those acceptance steps remain open. No installation changes.
+
+## Target-host resource recording, 2026-10-13
+
+The user supplied 1,324 samples covering 22 h 06 min, plus the three-sample
+recorder check. All long-run samples report running/healthy, restart count 0 and
+one generation. CPU average 4.355% of one core, sampled maximum 5.708%; two-process
+RSS median 53.250 MiB and first/last-hour medians 53.094/53.188 MiB. Temporary
+third-process snapshots explain the distinct summed-memory population, without
+identifying that process. Two process snapshots are partial; cgroup memory is
+unavailable and networking counters are host-wide.
+
+See [the analysis](RESOURCE_SOAK_ANALYSIS_2026-10-13.md) for methodology and limits.
+**Resource acceptance closed by Andreas on 2026-10-13**: the measured 22 h 06 min
+is explicitly sufficient; no additional recording is required. No optimization
+is indicated. This does not assert a complete 24-hour recording. Accounting
+limits remain. Andreas confirms target-host recorder/file cleanup; repository
+tooling remains available. No direct cleanup inspection, live source-level
+acceptance or release/deployment.
