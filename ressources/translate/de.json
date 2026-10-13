@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "labels": {
+    "Battery energy return ratio": "Batterie-Energierückgabegrad",
     "Refresh portal": "Portal aktualisieren",
     "Allowed grid preference": "Erlaubter Netzanteil",
     "Ambient Brightness": "Helligkeit der Umgebungsbeleuchtung",

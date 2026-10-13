@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "labels": {
+    "Battery energy return ratio": "Battery energy return ratio",
     "Refresh portal": "Refresh portal",
     "Allowed grid preference": "Allowed grid preference",
     "Ambient Brightness": "Ambient Brightness",

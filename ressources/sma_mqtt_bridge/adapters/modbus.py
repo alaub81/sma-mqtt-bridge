@@ -90,6 +90,29 @@ class ModbusReader:
             )
             for p in self.definitions
         )
+        energies = {
+            p["id"]: p
+            for p in self.definitions
+            if p["node"] == "measurements"
+            and p["id"] in ("battery-charge-energy", "battery-discharge-energy")
+        }
+        self.energy_ratio = (
+            len(energies) == 2
+            and len({p["poller"] for p in energies.values()}) == 1
+            and all(p["unit"] == "kWh" for p in energies.values())
+        )
+        if self.energy_ratio:
+            lifetime = min(p.stale_seconds for p in self.properties if p.id in energies)
+            self.properties += (
+                Property(
+                    "measurements",
+                    "battery-efficiency",
+                    "Battery energy return ratio",
+                    "float",
+                    "%",
+                    stale_seconds=lifetime,
+                ),
+            )
 
     def channel_enabled(self, prop):
         group = prop.get(
@@ -175,6 +198,12 @@ class ModbusReader:
                     for p in self.definitions
                     if p["poller"] in selected
                 }
+                if self.energy_ratio and "measurements/battery-charge-energy" in result:
+                    charged = result["measurements/battery-charge-energy"]
+                    discharged = result.get("measurements/battery-discharge-energy")
+                    result["measurements/battery-efficiency"] = energy_return_ratio(
+                        charged, discharged
+                    )
                 for poller in self.pollers:
                     if poller["id"] in selected:
                         self.next_due[poller["id"]] = now + self.interval(poller)
@@ -190,3 +219,10 @@ class ModbusReader:
 
     async def close(self):
         pass
+
+
+def energy_return_ratio(charged, discharged):
+    """Cumulative counter ratio, not an independently verified physical efficiency."""
+    if charged is None or discharged is None or charged <= 0 or discharged < 0:
+        return None
+    return (discharged / charged * 100).quantize(Decimal("0.01"))
