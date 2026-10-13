@@ -12,7 +12,7 @@ hosted validation and release results. A tag existing alone does not establish
 successful image publication. Current installation acceptance belongs in
 [VALIDATION.md](VALIDATION.md).
 
-## v0.3.11 — 2026-10-13 (release preparation)
+## v0.3.11 — 2026-10-13
 
 - Heartbeats retain atomic replacement and existing liveness checks without forcing
   disk sync. Command uncertainty journals and topic ownership remain durable.
@@ -27,8 +27,13 @@ successful image publication. Current installation acceptance belongs in
   remain null; device/process changes and resets invalidate rates. No process or
   container identities are saved. Host Python 3.9+ remains supported.
 
-Local validation: 275 offline tests, complete lint and Compose parity. Hosted
-CI/security and amd64/arm64 publication are checked after the requested tag push.
+Local validation: 275 offline tests, complete lint and Compose parity, plus all
+275 tests in each local ARM64/AMD64 release image with exact version 0.3.11.
+Hosted [CI](https://github.com/alaub81/sma-mqtt-bridge/actions/runs/38454497216)
+and [release](https://github.com/alaub81/sma-mqtt-bridge/actions/runs/38454496808)
+completed successfully, including both container suites and security gates.
+GHCR publishes `0.3.11` for Linux amd64/arm64, index digest
+`sha256:39512557b7da42d7f3bb0a6da251d746ec1620b42d3f521399637667d057aedc`.
 Andreas performs deployment. Preserve the state volume and existing installation
 settings. The host recorder must be copied again independently of the image;
 see [the overnight comparison instructions](OPERATIONAL_ACCEPTANCE.md#bounded-linux-host-resource-recording).

@@ -6,11 +6,11 @@ in [CONTEXT.md](CONTEXT.md); active tasks and question references in
 [the German diary](../todo.md). The
 [pre-cleanup snapshot](archive/2026-10-13/IMPLEMENTATION_PLAN.md) preserves older plans.
 
-## 1. Publish v0.3.11 and preserve upgrade continuity
+## 1. Deploy v0.3.11 and preserve upgrade continuity
 
 Andreas requested the v0.3.11 release after the performance/hardening review and
-resource-recorder extension. Publish only the requested branch/tag and verify
-hosted CI/security plus both architectures. Andreas performs deployment and starts
+resource-recorder extension. Publication is complete: hosted CI/security and
+both architectures passed. Andreas performs deployment and starts
 the voluntary overnight comparison; see [release notes](RELEASES.md) and
 [the recorder procedure](OPERATIONAL_ACCEPTANCE.md#bounded-linux-host-resource-recording).
 Public v0.3.8–v0.3.10 workflows have completed successfully. The last documented

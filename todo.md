@@ -12,10 +12,10 @@ wie „noch offen“ beschreiben den damaligen Stand, nicht die aktuelle Aufgabe
 
 ## Nächste Schritte
 
-- [ ] Beauftragtes Release **v0.3.11** veröffentlichen und Hosted CI/Sicherheits-
-  prüfungen sowie GHCR-Builds für ARM64/AMD64 abschließend prüfen. Deployment macht
-  Andreas. v0.3.8–v0.3.10 sind laut öffentlichen Workflows bereits veröffentlicht;
-  daraus keine Zielhost-Version ableiten.
+- [ ] Veröffentlichtes **v0.3.11** durch Andreas deployen und den separat kopierten
+  Recorder nach kurzem Berechtigungstest für den freiwilligen Nachtvergleich starten.
+  Veröffentlichung/CI/Sicherheitsgates/ARM64/AMD64 sind abgeschlossen; daraus keine
+  Zielhost-Version oder bereits laufende Aufzeichnung ableiten.
 - [ ] Vor diesem Deployment verwendete Host-Profilkopien mit den gebündelten
   Änderungen abgleichen (M01–M04/M09 und neue Gruppierungen), Zustandsvolume und
   bestehende Links/Historien erhalten. Nur tatsächlich genutzte Overrides ändern.
@@ -334,3 +334,17 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
 - Finaler Linter über 150 öffentliche Dateien und Compose-Parität erfolgreich;
   zusätzlicher echter Linux-procfs-Test im isolierten ARM64-Container bestanden.
   Keine Zielhost-Aufzeichnung gestartet, keine Service-Rechte verändert.
+
+## 2026-10-13 – v0.3.11 veröffentlicht, Deployment bei Andreas
+
+- Commit 058738e und annotierten Tag v0.3.11 atomar gepusht. Beide lokalen
+  Release-Images melden exakt 0.3.11 und bestehen jeweils alle 275 Tests.
+- Hosted CI 38454497216 und Release 38454496808 vollständig erfolgreich,
+  einschließlich ARM64/AMD64-Containerprüfungen und Trivy-Sicherheitsgates.
+- GHCR-Manifest 0.3.11 direkt geprüft: ARM64/AMD64 und Provenance vorhanden;
+  Index-Digest in docs/VALIDATION.md. Öffentlicher Recorder exakt taggleich,
+  Download-Link und zweiminütiger sudo-/Berechtigungstest dokumentiert.
+- Beide veröffentlichten Plattformimages per Digest lokal heruntergeladen und
+  ohne externes Containernetzwerk gestartet: jeweils exakt Version 0.3.11.
+- Release-Aufgabe erledigt. Andreas deployt und startet die neue Aufzeichnung;
+  kein Zielhostzugriff oder Live-CPU-/HDD-Vergleich durch Codex durchgeführt.

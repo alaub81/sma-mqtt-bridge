@@ -7,6 +7,35 @@ automated test. Operational acceptance was closed by Andreas on 2026-10-13;
 full openHAB migration, charging semantics and unresolved channel freshness remain
 separate. See the user acceptance note below.
 
+## v0.3.11 release publication, 2026-10-13
+
+At Andreas' explicit request, `main` and annotated `v0.3.11` were pushed atomically
+to commit `058738ecaef469b2047c7d2c971f9bb86c04ce47`. The recorder extension
+follows the separately committed heartbeat, metadata-cache and payload hardening.
+All 275 tests pass locally and in both local release images; each image reports
+exactly `sma-mqtt-bridge 0.3.11`. Unrelated Compose comments and `.env.example`
+were preserved outside the release.
+
+Hosted [CI run 38454497216](https://github.com/alaub81/sma-mqtt-bridge/actions/runs/38454497216)
+and [release run 38454496808](https://github.com/alaub81/sma-mqtt-bridge/actions/runs/38454496808)
+completed successfully. Tests/lint, amd64/arm64 container tests and Trivy gates
+all passed, followed by successful publication. GHCR index
+`ghcr.io/alaub81/sma-mqtt-bridge:0.3.11` was directly inspected and contains
+Linux amd64 and arm64 manifests, plus their provenance attestations:
+
+- Index: `sha256:39512557b7da42d7f3bb0a6da251d746ec1620b42d3f521399637667d057aedc`
+- amd64: `sha256:6eb84e43ccc6ba19e41cfc3a3c7474290bf7fecc14a5bbb3aa00b2299ffb2414`
+- arm64: `sha256:afa7c41ab48e4435de3e5d6dea3bf79d2edeaea230470cd584156f59862cebb8`
+
+Both published platform images were pulled by the index digest and run locally
+with external networking disabled; each reports exactly
+`sma-mqtt-bridge 0.3.11`.
+
+The publicly downloadable recorder matches the tagged source exactly (SHA-256
+`b4bfb6ec2d109c6a7a668ab6e5db5b422404606950d55a07308a55790959e95c`).
+No target-host deployment, recorder launch or new CPU/I/O acceptance was performed;
+Andreas owns those steps. The earlier resource/operational acceptance stays closed.
+
 ## Local verification
 
 The external Linux resource recorder now includes schema-2 cgroup block I/O and
