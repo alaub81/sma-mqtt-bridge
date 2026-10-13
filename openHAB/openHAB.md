@@ -607,7 +607,33 @@ commands when this Item receives a state update. The same Item receives progress
 not commands. Existing PV Items keep their links and receive validated readback
 on their existing topics.
 
-Use this button inside an existing page/widget, replacing the example Item name:
+For the Item's **Default List Item Widget**, use the following metadata code.
+Replace `ECharger_Portal_Refresh` with your actual String Item name:
+
+```yaml
+value: oh-list-item
+config:
+  title: Portal aktualisieren
+  listButton: true
+  action: command
+  actionItem: ECharger_Portal_Refresh
+  actionCommand: refresh
+```
+
+For the Item's **Default Standalone Widget**, use a clickable status card:
+
+```yaml
+value: oh-label-card
+config:
+  title: Portal aktualisieren
+  item: ECharger_Portal_Refresh
+  action: command
+  actionItem: ECharger_Portal_Refresh
+  actionCommand: refresh
+```
+
+These are Item widget metadata (`listWidget` and `widget`), using `value` and
+`config`. A button placed directly inside a page/widget instead uses `component`:
 
 ```yaml
 component: oh-button
@@ -632,7 +658,15 @@ most recent successful read. With an interval of zero, refresh works without a
 startup read unless the existing one-shot CLI option is explicitly used. Transient
 failures retain normal bounded retries; clicks do not bypass retry delays.
 
-This addition requires a future bridge deployment. Broker discovery and live
-openHAB acceptance are still pending; the running resource baseline is unchanged.
-Sources: [Homie binding](https://www.openhab.org/addons/bindings/homie/) and
-[MainUI button](https://www.openhab.org/docs/ui/components/oh-button.html).
+Available in v0.3.7. For a live check, change and save the PV preference in the
+SMA app, then click refresh and compare the actual PV/grid preference Items.
+Andreas confirmed updated values after approximately 3–5 seconds on 2026-10-13.
+`completed` is also published after automatic reads and may already be displayed;
+short-lived `queued`/`reading` states may not be visible. An unchanged completion
+label alone does not establish that the click failed. Use the changed preference
+values as the observable result, not only the status label.
+
+Sources: [Homie binding](https://www.openhab.org/addons/bindings/homie/),
+[MainUI list item](https://www.openhab.org/docs/ui/components/oh-list-item.html),
+[label card](https://www.openhab.org/docs/ui/components/oh-label-card.html) and
+[button](https://www.openhab.org/docs/ui/components/oh-button.html).

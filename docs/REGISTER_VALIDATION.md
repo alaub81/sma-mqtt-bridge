@@ -208,3 +208,26 @@ These properties are optional for readiness and expose no setter. Do not infer
 daily/session/lifetime reset behavior, battery efficiency or a physical charging
 scenario from the new counters without aligned observations. Live publication
 and counter-growth comparisons remain pending.
+
+## Derived battery energy return ratio, 2026-10-13
+
+When a profile exposes battery-charge-energy and battery-discharge-energy in
+kWh in the same poller, the reader adds basic read-only float
+`measurements/batteryefficiency` with unit `%`. It computes discharge / charge
+× 100 from that response, rounded to two decimal places; no extra register read.
+Its lifetime is the shorter lifetime of the two counters and it never affects
+readiness. Missing/invalid/negative counters or zero charged energy yield no
+valid ratio; zero discharged energy yields 0%. Intermediate polls do not renew
+the ratio. Values above 100% are not clamped, since differing initial stored energy
+or counter/reset scope can make a raw ratio exceed 100%.
+
+Andreas confirms a common counter start for his installation. His observed
+8507 kWh charged and 6699 kWh discharged produce 78.75%. The complementary
+21.25% is the unreturned share, not the efficiency. The AC/DC measurement boundary
+and reset scope remain unverified; this cumulative energy return ratio is not
+an independently measured cell or full-system round-trip efficiency. Comparable
+state of charge at the interval boundaries improves period comparisons; monthly
+ratios require counter deltas and are not provided by this cumulative property.
+
+Host profile overrides missing the counter pair receive no derived topic.
+Existing counter IDs/units/history, polling and invalid-value behavior remain.

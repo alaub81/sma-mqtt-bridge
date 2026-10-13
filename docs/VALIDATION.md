@@ -1073,3 +1073,28 @@ a command occurs and do not contribute availability.
 The deployment is accepted for version/health/startup recovery. New MainUI refresh
 Item/button setup, live command feedback and full openHAB/history continuity
 remain separate checks; no preference writes or comprehensive migration acceptance.
+
+## MainUI portal refresh acceptance, 2026-10-13
+
+Andreas supplied the configured String Item with autoupdate=false, the
+portal#refresh link and command actions in both default list and standalone
+widget metadata. After the proposed app-change/refresh check, Andreas reports
+that the values arrive after approximately 3–5 seconds. Manual refresh is
+user-accepted for this observed test; no independent MQTT trace or exhaustive
+failure/rate-limit acceptance is implied. The setup guide now includes both
+Item metadata widget configurations and distinguishes them from page buttons.
+
+## Battery energy return ratio, 2026-10-13
+
+Andreas reports both Storage counters visible and plausible in openHAB and
+confirms a common counter start. Independent SMA-GUI comparison, reset behavior
+and measurement boundary are not separately confirmed. The requested cumulative
+ratio is implemented locally as measurements/batteryefficiency (%), basic,
+read-only, using the existing same-poll kWh counter pair. Three new offline tests
+cover arithmetic, zero/invalid inputs, unclamped ratios above 100%, compatible
+profile selection, metadata, same-response computation and no refresh between
+counter polls. Deployment and live derived-topic acceptance remain pending.
+
+Validation: all 250 offline tests and Compose parity including overrides passed;
+complete lint over 139 public files and diff hygiene checked. No installation
+changes or release/deployment for this addition.

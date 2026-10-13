@@ -6,7 +6,7 @@ Die aktuelle Abnahme steht in [docs/VALIDATION.md](docs/VALIDATION.md), die Reih
 
 - [ ] „Operation Time“ im openHAB-Item als lesbare Betriebsdauer darstellen, beispielsweise in Tagen, Stunden und Minuten. Quelleneinheit prüfen und numerischen Rohwert, Channel-Link sowie bestehende Historie und Regelverwendung erhalten.
 
-- [x] Manuelles Portal-Leseauffrischen am 12.10.2026 lokal umgesetzt: Homie `portal/refresh/set` mit String-Befehl `refresh`, Rückmeldung auf `portal/refresh`, bestehender Supervisor statt zusätzlichem Lesepfad. Unabhängig von Schreibfreigaben; laufende/ausstehende Reads zusammengefasst, retained Befehle abgewiesen, Auth-Sperre und Backoff erhalten. openHAB-String-Item/Button dokumentiert. Mit v0.3.7 am 13.10.2026 deployed; openHAB-Button-/Live-Abnahme offen.
+- [x] Manuelles Portal-Leseauffrischen am 12.10.2026 lokal umgesetzt: Homie `portal/refresh/set` mit String-Befehl `refresh`, Rückmeldung auf `portal/refresh`, bestehender Supervisor statt zusätzlichem Lesepfad. Unabhängig von Schreibfreigaben; laufende/ausstehende Reads zusammengefasst, retained Befehle abgewiesen, Auth-Sperre und Backoff erhalten. openHAB-String-Item/Button dokumentiert. Mit v0.3.7 am 13.10.2026 deployed; Andreas bestätigt Refresh-Werte nach etwa 3–5 s. Listen-/Standalone-Widgeteinrichtung dokumentiert.
 
 - [ ] Timestamp-Prüfungen überprüfen: klären, ob sie beibehalten, angepasst oder wieder entfernt werden sollen. Nutzen für Datenaktualität und mögliche Fehlalarme durch Gerätezeit, Zeitzonen oder fehlende Zeitstempel untersuchen; Entscheidung und Auswirkungen dokumentieren.
 
@@ -679,3 +679,15 @@ Topic-Suffixe werden unter `homie/<konfigurierte Homie-ID>/` veröffentlicht. Di
 - Release-Commit 6a143df, Tag v0.3.7 und main atomar veröffentlicht. GitHub-Main-CI und Release-Workflow erfolgreich, einschließlich Linter, Tests, Compose, amd64/arm64-Imageprüfungen und Sicherheits-Gates. Multi-Arch-GHCR-Publikation erfolgreich.
 - Auf Zielhost Image 0.3.7 gepullt und Version zuerst ohne Netzwerk geprüft. Compose-Image über private .env auf 0.3.7 gepinnt; vorherige .env (falls vorhanden) und Image-ID für Rollback lokal gesichert. Bestehendes Zustandsvolume/Compose-Projekt erhalten, nur Bridge-Service ersetzt.
 - CLI 0.3.7 und healthy direkt geprüft. Startübersicht um 19:23:40 Europe/Berlin und anschließender Heartbeat bestätigen sieben Datenquellen ready/fünf MQTT-Verbindungen. Keine Gerätebefehle oder geänderten Poller; openHAB-Refresh-Button und vollständige Historien-/Migrationstests weiterhin offen.
+
+## 2026-10-13 – Portal-Refresh-Widgets dokumentiert und live bestätigt
+
+- Vorhandene Anleitung enthielt String-Item/Link/autoupdate=false und einen Seitenbutton. Jetzt zusätzlich Default-Listenwidget mit oh-list-item/listButton und Default-Standalone-Widget mit anklickbarer oh-label-card ergänzt; Metadatenwert gegenüber Seitenkomponente ausdrücklich getrennt. Öffentliche Beispiele ohne private Item-/Thingkennungen.
+- Andreas liefert konfigurierte Item-/Widgetdefinition und bestätigt aktualisierte Werte nach etwa 3–5 s. Live-Refresh für diesen Versuch abgenommen; completed kann bereits von automatischer Abfrage stammen und allein kein Klicknachweis sein. Keine eigene MQTT-Aufzeichnung oder pauschale Fehlerfallabnahme.
+
+## 2026-10-13 – Zählerbasierter Batterie-Energierückgabegrad
+
+- Andreas bestätigt beide Batterieenergiezähler in openHAB als plausibel und gemeinsamen Zählbeginn; meldet 8507 kWh Ladung/6699 kWh Entladung. Verhältnis ergibt 78,75 %, nicht zurückgelieferter Anteil 21,25 %. Messgrenze/Resetverhalten und unabhängiger SMA-Vergleich bleiben unbestätigt.
+- Auf Wunsch lokal read-only Basic-Topic measurements/batteryefficiency (%) ergänzt: Entladung/Ladung × 100, zwei Nachkommastellen, bestehendes gemeinsames Pollergebnis ohne neue Geräteabfrage. Profil muss beide kWh-Zähler im selben Poller bereitstellen; keine modellabhängige Adapterverzweigung.
+- Null-Ladeenergie/fehlende/ungültige/negative Zähler erzeugen keinen gültigen Quotienten, Entladung null ergibt 0 %. Keine Begrenzung auf 100 %, keine Erneuerung durch andere Poller; Lifetime von Quellen übernommen. Bestehende Zähler/History/Readiness unverändert. Veröffentlichung und Live-Abnahme offen.
+- Validierung: alle 250 Offline-Tests, Compose-Parität mit Overrides und Diff-Prüfung bestanden; drei neue gezielte Tests. Vollständiger Linter über 139 öffentliche Dateien geprüft. Keine Live-Schreibaktion, Veröffentlichung oder Deployment.

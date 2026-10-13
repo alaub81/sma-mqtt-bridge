@@ -12,6 +12,14 @@ hosted validation and release results. A tag existing alone does not establish
 successful image publication. Current installation acceptance belongs in
 [VALIDATION.md](VALIDATION.md).
 
+## Unreleased
+
+- Basic read-only `measurements/batteryefficiency` (%) derives the cumulative
+  discharged/charged energy ratio from a profile's same-poll kWh battery counters.
+  No extra Modbus request, counter/history change or readiness dependency.
+  See [the calculation and interpretation](REGISTER_VALIDATION.md#derived-battery-energy-return-ratio-2026-10-13).
+  This is local preparation, not yet released or deployed.
+
 ## v0.3.7 — 2026-10-13
 
 - `measurements/vehiclestatuscode` is now a basic eCharger channel. Its ID,
