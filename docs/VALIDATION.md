@@ -9,6 +9,18 @@ separate. See the user acceptance note below.
 
 ## Local verification
 
+On 2026-10-13, inverter and delegated Home Manager property metadata construction
+was consolidated into `profile_property`. Sorted snapshots of all property fields,
+Homie discovery, readiness keys, pollers and definitions remained byte-identical
+across 240 cases: three bundled inverter profiles, synthetic mapped types,
+Home Manager core/delegated properties, duplicate/invalid assignments, channel
+flags, interval overrides and stale-time floors. Three additional regressions
+preserve enum order, the distinct non-enum format policies, readiness and lifetimes.
+All 30 focused tests passed before and after the extraction; the full suite passed
+**259 offline tests**, and Compose parity/overrides passed. No device/broker I/O,
+profile-file modification, command or deployment was performed.
+Complete repository lint over 145 public files and diff hygiene also passed.
+
 The local historical release tag `v0.3.9` points to `e1c9a2d`, before the first
 JSON/widget refactoring. On 2026-10-13, an isolated source snapshot passed all
 253 offline tests, complete lint over 140 public files and Compose parity with
@@ -39,7 +51,7 @@ this does not establish hosted ARM64 success or live outage acceptance.
 The documentation/widget cleanup preserved the bridge runtime and device configuration.
 The subsequent API fix changes confirmation and unit checks; it does not activate
 adapters or command gates.
-The current working-tree offline suite contains **256 tests**; the local v0.3.8
+The current working-tree offline suite contains **259 tests**; the local v0.3.8
 tag has 253. Repository lint covers all public
 tracked and non-ignored files, including generated widget parity. Compose parity
 checks both standalone files and deployment overrides. Final cleanup results are

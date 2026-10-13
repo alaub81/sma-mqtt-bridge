@@ -12,9 +12,9 @@ wie „noch offen“ beschreiben den damaligen Stand, nicht die aktuelle Aufgabe
 
 ## Nächste Schritte
 
-- [ ] Risikoarme Zusammenführungsrunde abschließen: gemeinsame Modbus-
-  Messwertbeschreibungen auf Verhaltensgleichheit prüfen/vereinfachen, danach
-  Docker-Image lokal bauen und im Container testen. Jeden weiteren Umbau nach
+- [ ] Risikoarme Zusammenführungsrunde abschließen: JSON- und Modbus-
+  Messwertbeschreibungsumbau lokal geprüft; Docker-Image noch lokal bauen und im
+  Container testen. Jeden weiteren Umbau nach
   erfolgreichen lokalen Prüfungen separat committen. Lokaler Tag v0.3.9 bewahrt
   den Stand vor dem ersten JSON-/Widget-Umbau; Veröffentlichung bleibt separat.
 
@@ -193,3 +193,25 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
 - Weitere Umsetzung: ein kleiner Modbus-Metadatenumbau mit eigenem geprüften
   Commit, anschließend Gesamtvergleich und lokaler Docker-/Container-Test.
   Keine Tag-/Commit-Veröffentlichung oder Zielhoständerung beauftragt.
+
+## 2026-10-13 – Modbus-Messwertbeschreibungen zusammengeführt
+
+- Zweiter kleiner Umbau: reine Property-Konstruktion nach profile_property in
+  adapters/modbus.py extrahiert. Wechselrichter und delegierte Home-Manager-Werte
+  verwenden benannte Argumente für Node, Frische, Format- und Readiness-Auswahl.
+- Gefundene Unterschiede bewusst erhalten: Wechselrichter publizieren Formate nur
+  für Enums und übernehmen requiredForReady; delegierte Home-Manager-Werte behalten
+  ihre bisherigen Formate auch bei anderen Wertemappings und bleiben optional.
+  Format-Reihenfolge samt Entfernung gleicher Einträge unverändert.
+- Unabhängige Vergleichssnapshots mit 240 Fällen vor/nach Umbau bytegleich:
+  sämtliche Property-Felder, MQTT-Discovery, Readiness-Schlüssel, Poller und
+  Definitionen. Drei gebündelte Wechselrichterprofile, synthetische Enum-/Bool-/
+  String-Mappings, Home-Manager-Zuordnungen samt doppelten/ungültigen Units,
+  Gruppenflags, Intervall-Overrides und Frischeuntergrenzen abgedeckt.
+- Drei neue Regressionen und 30 gezielte Tests vor/nach Umbau bestanden;
+  vollständige 259 Offline-Tests und Compose-Parität mit Overrides erfolgreich.
+  Registerdekodierung, Profile, Geräteidentität, Verbindungs-/Pollingabläufe,
+  Readiness-Semantik und Schreibfreigaben unverändert. Kein Installationszugriff.
+- Vollständiger Linter über 145 öffentliche Dateien und Diff-Prüfung bestanden.
+  Eigener lokaler Umbau-Commit; anschließend noch
+  abschließender Docker-Build und Container-Tests. Kein Push oder Deployment.

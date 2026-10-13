@@ -65,6 +65,22 @@ def decode(registers, prop):
     return scaled
 
 
+def profile_property(definition, *, node, stale_seconds, include_format, required_for_ready=False):
+    """Build read metadata while callers retain format and readiness policies."""
+    return Property(
+        node=node,
+        id=definition["id"],
+        name=definition["name"],
+        datatype=definition["datatype"],
+        unit=definition["unit"],
+        format=",".join(dict.fromkeys(definition.get("valueMap", {}).values()))
+        if include_format
+        else "",
+        stale_seconds=stale_seconds,
+        required_for_ready=required_for_ready,
+    )
+
+
 class ModbusReader:
     def __init__(self, settings, profile, interval_override=False):
         self.settings, self.profile = settings, profile
@@ -75,20 +91,15 @@ class ModbusReader:
         active = {p["poller"] for p in self.definitions}
         self.pollers = [p for p in profile["pollers"] if p["id"] in active]
         self.properties = tuple(
-            Property(
-                p["node"],
-                p["id"],
-                p["name"],
-                p["datatype"],
-                p["unit"],
-                ",".join(dict.fromkeys(p.get("valueMap", {}).values()))
-                if p["datatype"] == "enum"
-                else "",
-                max(
+            profile_property(
+                p,
+                node=p["node"],
+                stale_seconds=max(
                     settings.stale_seconds,
                     2
                     * self.interval(next(b for b in profile["pollers"] if b["id"] == p["poller"])),
                 ),
+                include_format=p["datatype"] == "enum",
                 required_for_ready=p.get("requiredForReady", False),
             )
             for p in self.definitions

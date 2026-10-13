@@ -150,6 +150,9 @@ Configuration files and HTTP responses share the pure JSON decoder in `json_code
 for duplicate-key and non-standard numeric-constant rejection. Callers retain
 their own file/network handling, schema checks and redacted error boundaries;
 sharing decoding does not merge local API and portal sessions or command policies.
+Inverter and delegated Home Manager metadata use the same `profile_property`
+constructor. Callers explicitly retain their format and readiness policies;
+polling, decoding, identity checks and lifetime calculations stay in the readers.
 GitHub/GHCR publication is operational. New commits/tags are published only as
 explicitly requested release work; local preparation does not automatically
 authorize a push or deployment.
