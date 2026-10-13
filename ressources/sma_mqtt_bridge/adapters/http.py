@@ -1,27 +1,16 @@
 """Bounded asynchronous HTTP; never log URLs, tokens, bodies or exceptions."""
 
 import asyncio
-import json
 
 import aiohttp
 
 from ..errors import AuthenticationError, ProtocolError, ProtocolTimeout
+from ..json_codec import strict_json
 
 
 def json_data(text):
-    def constant(_):
-        raise ValueError
-
-    def pairs(items):
-        result = {}
-        for k, v in items:
-            if k in result:
-                raise ValueError
-            result[k] = v
-        return result
-
     try:
-        return json.loads(text, parse_constant=constant, object_pairs_hook=pairs)
+        return strict_json(text)
     except ValueError, TypeError:
         raise ProtocolError("Invalid JSON protocol response") from None
 
