@@ -9,6 +9,17 @@ separate. See the user acceptance note below.
 
 ## Local verification
 
+On 2026-10-13, a fresh complete review baseline passed all 259 offline tests,
+repository lint and Compose parity. The first resource optimization separates
+atomic liveness heartbeat replacement from durable recovery-state storage.
+Two regressions verify that running/stopped heartbeats avoid explicit disk sync,
+recovery files still perform both file and directory sync, and a failed heartbeat
+rename leaves the previous complete observation readable. All **261 offline tests**,
+repository lint and Compose parity/overrides passed. At default intervals this
+removes 17,280 explicit heartbeat sync calls per day, while atomic replacements
+and health age/PID checks remain. This counts application calls, not measured
+physical HDD operations. No target-host deployment or new resource recording.
+
 On 2026-10-13, inverter and delegated Home Manager property metadata construction
 was consolidated into `profile_property`. Sorted snapshots of all property fields,
 Homie discovery, readiness keys, pollers and definitions remained byte-identical

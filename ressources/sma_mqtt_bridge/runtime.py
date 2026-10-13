@@ -419,6 +419,8 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
         await asyncio.gather(*tasks, return_exceptions=True)
         if controller is not None:
             await controller.close()
-        atomic_json(Path(config.runtime.state_dir) / "heartbeat.json", {"status": "stopped"})
+        atomic_json(
+            Path(config.runtime.state_dir) / "heartbeat.json", {"status": "stopped"}, durable=False
+        )
         for sig in installed:
             loop.remove_signal_handler(sig)

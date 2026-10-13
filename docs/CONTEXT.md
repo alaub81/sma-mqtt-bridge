@@ -125,6 +125,9 @@ Keep receipt timestamps distinct from device measurement timestamps. The remaini
 freshness gap and offline MQTT cleanup evidence are tracked in the acceptance matrix.
 
 Owned topic names are persisted for retirement after source/ID/prefix changes.
+Command journals and topic ownership remain durable through file and directory
+sync. Liveness heartbeats are atomically replaced without forcing disk sync;
+their current process and monotonic age must still pass the health probe.
 Preserve the state volume to clean up old discovery. Moving brokers also requires
 retirement on the old broker. One client and Last Will per Homie device maintain
 independent availability. Commands are never replayed during recovery.

@@ -385,7 +385,14 @@ must alert on this state; automatic recovery from an event-loop hang needs an ex
 Do not restart the bridge repeatedly merely because a device or broker is offline.
 See [Docker restart policy](https://docs.docker.com/reference/compose-file/services/#restart).
 
-State writes sync file contents and the parent directory after atomic rename. A process-lifetime
+Recovery-state writes (command journals and the topic manifest) sync file contents
+and the parent directory after atomic rename. Heartbeats use the same complete-file
+atomic replacement without `fsync`: they report current process liveness and do not
+need to survive a host power failure. Their interval, schema, PID and monotonic age
+checks remain unchanged. A filesystem write/rename error still fails the runtime;
+an old heartbeat expires normally. At the default 10-second interval, this avoids
+17,280 explicit sync calls per day; it does not eliminate file writes or guarantee
+zero physical disk activity. A process-lifetime
 exclusive `state/bridge.lock` lease rejects a second runtime using the same state directory before
 device/MQTT I/O. The kernel releases it on process death; never delete/replace that file while running.
 This protects shared state, not separate volumes using duplicate MQTT client IDs. Keep the state

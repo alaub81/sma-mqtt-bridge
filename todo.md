@@ -232,3 +232,21 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
 - Runde abgeschlossen. Jeder künftige Umbau bekommt nach Prüfung einen eigenen
   Commit. Größere Authentifizierungs-/Frische-/Schreibumbauten bleiben außerhalb
   dieser Runde. Kein Commit-/Tag-Push, GHCR-Release oder Deployment durch Codex.
+
+## 2026-10-13 – Vollständige Nachprüfung und Heartbeat-Dateizugriffe
+
+- Neuer Auftrag: gesamte Anwendung auf Codequalität, Dokumentation, Stabilität und
+  CPU-/HDD-Verbrauch prüfen. Ausgangsstand: 259 Offline-Tests, sämtliche Linter und
+  Compose-Parität bestanden. Die akzeptierte 22-Stunden-Messung zeigt stabile
+  CPU-/Speichernutzung; HDD-Zähler und Prozessidentitäten fehlen darin.
+- Heartbeats bleiben vollständige atomare Dateiersetzungen, erzwingen aber kein
+  fsync mehr. Bei Standardintervall 10 s entfallen 17.280 explizite Sync-Aufrufe
+  täglich. Keine Behauptung über tatsächliche HDD-Schreibmenge; OS-Dateicache und
+  Docker-Logging bleiben eigene Einflussgrößen.
+- Dauerhafte Befehlsjournale und Topic-Manifest behalten Datei-/Verzeichnis-Sync.
+  Prozess-/Altersprüfung, Intervalle, Schreibsperren und Wiederanlauf unverändert.
+- Zwei Regressionen: laufend/gestoppt ohne Sync, Recovery-State mit beiden Syncs;
+  fehlgeschlagene Ersetzung erhält vorherige vollständige Datei. Alle 261 Tests,
+  vollständiger Linter und Compose-Prüfung samt Overrides erfolgreich.
+- Nächster begrenzter Schritt: unveränderliche Metadaten zwischenspeichern,
+  Messwert-/Frische-/Rechte-Caches vermeiden und Vergleichsmessung durchführen.
