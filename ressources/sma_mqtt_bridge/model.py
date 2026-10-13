@@ -26,11 +26,18 @@ class Property:
         return self.node + "/" + self.id
 
 
-def payload(value, prop):
+def bounded_payload(text, max_bytes):
+    try:
+        return text if len(text.encode("utf-8")) <= max_bytes else None
+    except UnicodeError:
+        return None
+
+
+def payload(value, prop, max_bytes=4096):
     if value is None:
         return None
     if prop.datatype == "boolean":
-        return str(value).lower() if type(value) is bool else None
+        return bounded_payload(str(value).lower(), max_bytes) if type(value) is bool else None
     if prop.datatype in ("integer", "float"):
         if isinstance(value, bool):
             return None
@@ -41,13 +48,19 @@ def payload(value, prop):
             if prop.datatype == "integer":
                 if number != number.to_integral_value() or not -(2**63) <= number < 2**63:
                     return None
-                return str(int(number))
-            return format(number, "f")
+                return bounded_payload(str(int(number)), max_bytes)
+            sign, digits, exponent = number.as_tuple()
+            if exponent >= 0:
+                length = sign + (len(digits) + exponent if number else 1)
+            else:
+                length = sign + max(len(digits) + 1, 2 - exponent)
+            # Fixed-point expansion must be bounded before allocating its string.
+            return format(number, "f") if length <= max_bytes else None
         except ValueError, ArithmeticError:
             return None
     if prop.datatype == "enum" and str(value) not in prop.format.split(","):
         return None
-    return str(value) if isinstance(value, (str, int)) else None
+    return bounded_payload(str(value), max_bytes) if isinstance(value, (str, int)) else None
 
 
 def number(value):
@@ -87,6 +100,7 @@ class SourceState:
     monitor: object = None
     contributes_availability: bool = True
     initialization_deadline: float | None = None
+    max_payload_bytes: int = 4096
     _indexed_properties: tuple | None = field(default=None, init=False, repr=False, compare=False)
     _by_key: dict = field(default_factory=dict, init=False, repr=False, compare=False)
     _default_required_keys: tuple = field(default=(), init=False, repr=False, compare=False)
@@ -127,7 +141,7 @@ class SourceState:
             raise ProtocolError("Adapter returned an undeclared property")
         usable = False
         for key, value in values.items():
-            encoded = payload(value, by_key[key])
+            encoded = payload(value, by_key[key], self.max_payload_bytes)
             if encoded is None:
                 self.values.pop(key, None)
             else:

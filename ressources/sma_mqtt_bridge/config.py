@@ -39,6 +39,7 @@ class Runtime(SafeRepr):
     reconnect_min_seconds: float = 1.0
     reconnect_max_seconds: float = 60.0
     max_response_bytes: int = 1048576
+    max_payload_bytes: int = 4096
     max_state_bytes: int = 1048576
     read_cycle_timeout_seconds: float = 120.0
     failure_log_interval_seconds: float = 300.0
@@ -266,6 +267,7 @@ def section(defaults, data, env, prefix, recognized):
             elif field.name in (
                 "max_queue_messages",
                 "max_response_bytes",
+                "max_payload_bytes",
                 "max_state_bytes",
                 "keepalive_seconds",
             ):
