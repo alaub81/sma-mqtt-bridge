@@ -12,7 +12,17 @@ hosted validation and release results. A tag existing alone does not establish
 successful image publication. Current installation acceptance belongs in
 [VALIDATION.md](VALIDATION.md).
 
-## Unreleased
+## v0.3.8 — 2026-10-13 (local tag)
+
+Prepared locally with 253 passing offline tests, complete lint and Compose parity.
+Remote tag push, hosted release checks, GHCR publication and deployment are pending.
+The existing 0.3.7 target-host installation is unchanged.
+
+- Home Manager Modbus adds Basic `measurements/planttimeiso`, an ISO 8601 UTC
+  string from the existing clock read. Raw `measurements/planttime` becomes
+  Advanced. Keep Advanced enabled for existing numeric Items and update host
+  overrides before switching links. New openHAB DateTime setup is documented;
+  live acceptance and deployment are pending.
 
 - Derating reason is now Basic in all three bundled inverter profiles. Existing
   `diagnostics/deratingreason` IDs and enum values remain; Advanced/Diagnostics
@@ -23,7 +33,7 @@ successful image publication. Current installation acceptance belongs in
   discharged/charged energy ratio from a profile's same-poll kWh battery counters.
   No extra Modbus request, counter/history change or readiness dependency.
   See [the calculation and interpretation](REGISTER_VALIDATION.md#derived-battery-energy-return-ratio-2026-10-13).
-  This is local preparation, not yet released or deployed.
+  This is a locally tagged release, not yet published to GHCR or deployed.
 
 ## v0.3.7 — 2026-10-13
 

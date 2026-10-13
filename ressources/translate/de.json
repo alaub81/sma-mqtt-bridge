@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "labels": {
+    "Plant time (ISO 8601)": "Anlagenzeit (ISO 8601)",
     "Battery energy return ratio": "Batterie-Energierückgabegrad",
     "Refresh portal": "Portal aktualisieren",
     "Allowed grid preference": "Erlaubter Netzanteil",

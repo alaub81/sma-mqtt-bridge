@@ -538,6 +538,34 @@ See official [Item units](https://www.openhab.org/docs/configuration/items.html)
 
 ## Home Manager plant time: display and rules
 
+### New ISO channel (local preparation)
+
+The new `measurements#planttimeiso` channel is Basic and carries ISO 8601 UTC
+text with `Z`. The original `measurements#planttime` seconds channel becomes
+Advanced; retain that group while existing numeric Items/history need it.
+This requires a future release/deployment and matching host-profile updates.
+
+Homie 4 advertises ISO values as `string`, so discovery may offer a String Item.
+For your existing DateTime Item, retain its name/groups and change its link to
+`measurements#planttimeiso`. Use **SCRIPT / ECMAScript** with `toItemScript`:
+
+```javascript
+|input
+```
+
+The profile parses the ISO result for the linked DateTime Item; leave both
+outgoing script directions empty. There is no epoch arithmetic, timezone offset
+calculation or seconds-to-date transformation to maintain. Keep autoupdate=false
+and the existing date/time State Description. Validate live DateTime updates and
+local-time display after deployment; this new link has not been tested live.
+Do not attach both old and new time channels to the same DateTime Item.
+
+The previously deployed seconds-based setup below remains valid with Advanced
+enabled. Preserve the numeric original Item and its persistence; do not replace
+its history with strings or dates.
+
+### Existing seconds-based setup
+
 The bridge's `measurements#planttime` reports Unix seconds (UTC) from register
 30193, not elapsed operating time. Keep the existing linked Number/Number:Time
 Item, its seconds unit, parent groups and numeric persistence unchanged. A numeric

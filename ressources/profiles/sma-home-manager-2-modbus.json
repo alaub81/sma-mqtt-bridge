@@ -326,7 +326,27 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "advanced"
+    },
+    {
+      "id": "plant-time-iso",
+      "node": "measurements",
+      "name": "Plant time (ISO 8601)",
+      "poller": "plant-time",
+      "offset": 0,
+      "length": 2,
+      "type": "uint32",
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "string",
+      "channelGroup": "basic",
+      "format": "unix-time-iso"
     },
     {
       "id": "plant-status",

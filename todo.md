@@ -4,7 +4,7 @@ Die aktuelle Abnahme steht in [docs/VALIDATION.md](docs/VALIDATION.md), die Reih
 
 ## Aktive Aufgaben
 
-- [ ] „Operation Time“ im openHAB-Item als lesbare Betriebsdauer darstellen, beispielsweise in Tagen, Stunden und Minuten. Quelleneinheit prüfen und numerischen Rohwert, Channel-Link sowie bestehende Historie und Regelverwendung erhalten.
+- [x] Betriebsdauer-Anzeige am 13.10.2026 auf Andreas’ Wunsch abgeschlossen: Sekunden als Zeitspanne über openHAB-State-Description darstellen; kein zusätzlicher DateTime-/Timestamp-Kanal für Betriebsdauer nötig. Numerischer Rohwert, Channel-Link, Historie und Regelverwendung erhalten. Keine eigene Live-Änderung der Anzeige behauptet.
 
 - [x] Manuelles Portal-Leseauffrischen am 12.10.2026 lokal umgesetzt: Homie `portal/refresh/set` mit String-Befehl `refresh`, Rückmeldung auf `portal/refresh`, bestehender Supervisor statt zusätzlichem Lesepfad. Unabhängig von Schreibfreigaben; laufende/ausstehende Reads zusammengefasst, retained Befehle abgewiesen, Auth-Sperre und Backoff erhalten. openHAB-String-Item/Button dokumentiert. Mit v0.3.7 am 13.10.2026 deployed; Andreas bestätigt Refresh-Werte nach etwa 3–5 s. Listen-/Standalone-Widgeteinrichtung dokumentiert.
 
@@ -731,3 +731,15 @@ Topic-Suffixe werden unter `homie/<konfigurierte Homie-ID>/` veröffentlicht. Di
 - Andreas meldet aktuell „Keine Abregelung“ und beauftragt Übernahme in Basic. Alle drei gebündelten Profile lokal auf channelGroup basic geändert; diagnostics/deratingreason bleibt unverändert. Enum-/NaN-Verhalten, Register/Poller, Read-only und Status-basierte Readiness erhalten.
 - Bestehende Gruppierungs-/Discoverytests prüfen Verfügbarkeit bei deaktiviertem Advanced und Diagnostics, identische Metadaten und fehlenden Readiness-Ersatz. Host-Profilkopien müssen dieselbe Gruppenänderung übernehmen; Veröffentlichung/Deployment offen. Aktueller Null-Abregelungszustand ist kein Nachweis anderer Ereignisse.
 - Validierung: alle 250 Offline-Tests, vollständiger Linter über 139 öffentliche Dateien, Compose-Parität mit Overrides und Diff-Prüfung bestanden.
+
+## 2026-10-13 – ISO-Anlagenzeit zusätzlich, Unix-Sekunden Advanced
+
+- Andreas beauftragt separates ISO-Topic und Unix-Rohkanal Advanced. Gebündeltes Home-Manager-Modbus-Profil ergänzt Basic measurements/planttimeiso, Rohkanal measurements/planttime nach Advanced verschoben. Beide aus demselben Register/30-s-Poller, keine neue Geräteabfrage oder neue ENV-Option.
+- Wiederverwendbares Profilformat unix-time-iso für unskaliertes U32/String/keine Unit oder Zahlenbounds; Sentinel vor Umrechnung prüfen. Ausgabe UTC mit Z, keine lokale Zeitzone und kein Ersatz durch Bridge-Zeit. Read-only/Lifetime erhalten, UDP ohne diesen Kanal.
+- Bestehende numerische Items/History brauchen weiterhin Advanced. DateTime-Item kann nach Deployment auf ISO-Kanal mit SCRIPT/ECMAScript |input wechseln; Homie-String ist kein nativer DateTime-Datentyp. Alten Sekunden-Link nicht parallel erhalten. Host-Override und Live-Umstellung offen, keine openHAB-Änderung durch Codex.
+- Validierung: alle 253 Offline-Tests, vollständiger Linter über 140 öffentliche Dateien, Compose-Parität mit Overrides und Diff-Prüfung bestanden. Keine Veröffentlichung oder Live-Umstellung.
+
+## 2026-10-13 – Betriebsdauer-Punkt geschlossen, Commit und Tag beauftragt
+
+- Andreas schließt den Punkt Betriebsdauer lesbar anzeigen nach Klärung Zeitspanne gegenüber Unix-Zeit; State-Description reicht aus. ISO-Anlagenzeit ist eine getrennte Ergänzung.
+- Alle offenen ISO-Anlagenzeit-/Profil-/Test-/Dokumentationsänderungen committen und nächsten lokalen Patch-Tag v0.3.8 erstellen. Enthält seit v0.3.7 auch Energierückgabegrad, Derating Basic und emulationstolerante Test-Wartegrenzen. Kein neuer Push- oder Deploymentauftrag in dieser Aufforderung.

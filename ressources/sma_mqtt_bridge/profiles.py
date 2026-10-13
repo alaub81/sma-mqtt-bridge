@@ -232,13 +232,17 @@ def validate_mappings(poller_list, property_list):
             raise ConfigError("Invalid property encoding/Homie datatype")
         convert(prop["scale"], float, "property scale")
         if "format" in prop and (
-            prop["format"] != "sma-firmware"
+            prop["format"] not in ("sma-firmware", "unix-time-iso")
             or prop["type"] != "uint32"
             or prop["datatype"] != "string"
             or prop["scale"] != 1
             or "valueMap" in prop
         ):
-            raise ConfigError("Invalid firmware format/encoding")
+            raise ConfigError("Invalid property format/encoding")
+        if prop.get("format") == "unix-time-iso" and (
+            prop["unit"] != "" or "minimum" in prop or "maximum" in prop
+        ):
+            raise ConfigError("ISO time format requires no unit or numeric bounds")
         if not isinstance(prop["invalid"], list) or any(
             type(v) not in (int, str) for v in prop["invalid"]
         ):

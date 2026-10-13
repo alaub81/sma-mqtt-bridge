@@ -37,7 +37,8 @@ Base topics are `homie/<HOME_MANAGER_HOMIE_ID>/`. All Home Manager properties ha
 | 1 | 30057 | `identity/serial-copy` | U32 | 60 s |
 | 1 | 30193 | `parameters/system-time` | U32, Unix UTC seconds | 60 s |
 | 1 | 43090 | `parameters/grid-guard-unlocked-devices` | U32, device count on read; never a code | 60 s |
-| 2 | 30193 | `measurements/plant-time` | U32, Unix UTC seconds | 30 s |
+| 2 | 30193 | `measurements/plant-time` | U32, Unix UTC seconds; Advanced | 30 s |
+| 2 | 30193 | `measurements/plant-time-iso` | ISO 8601 UTC string; Basic, same read | 30 s |
 | 2 | 30201 | `measurements/plant-status` | U32 enum: ok/warning/error | 30 s |
 | 2 | 30581 | `measurements/energy-import` | U32 Wh → kWh | 60 s |
 | 2 | 30583 | `measurements/energy-export` | U32 Wh → kWh | 60 s |
@@ -102,3 +103,19 @@ live identity, all fixed property, complete assignment-table and delegated-read
 evidence. All fixed properties were valid; only delegated 30233 returned values in
 the three occupied slots, while fifteen other parameters per slot returned NaN.
 This updates read availability evidence, not full MQTT/openHAB/operational acceptance.
+
+## ISO plant time, 2026-10-13
+
+The bundled profile maps register 30193 twice within the existing single poll:
+Advanced raw seconds (`measurements/planttime`) and Basic ISO UTC text
+(`measurements/planttimeiso`), for example `2026-10-13T17:00:00Z`.
+The generic profile format `unix-time-iso` requires unscaled U32, string datatype,
+empty unit and no value map or numeric bounds. Raw invalid sentinels are checked
+before conversion; no current bridge timestamp is substituted. Both channels
+retain the same read interval/lifetime and remain read-only.
+
+This changes discovery with Advanced disabled: the raw channel is no longer
+published. Keep Advanced enabled if existing numeric Items/history or epoch-link
+profiles still depend on it. Host overrides need the new mapping and raw group
+change explicitly; UDP meter transport does not provide this device clock.
+See the [openHAB migration instructions](../openHAB/openHAB.md#home-manager-plant-time-display-and-rules).

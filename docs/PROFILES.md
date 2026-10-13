@@ -122,3 +122,11 @@ status blocks retain their intervals; Storage energy uses a separate 60-second
 eight-register FC04 block. All properties are optional, read-only and group
 filtered. Host profile overrides must incorporate the mappings explicitly. See
 [register evidence](REGISTER_VALIDATION.md#selected-counters-and-derating-extension-2026-10-12).
+
+## Unix seconds as ISO text
+
+`format: unix-time-iso` converts an unscaled uint32 value to an ISO 8601 UTC
+string with whole seconds and `Z`. It requires datatype string, scale 1, an empty
+unit, and no valueMap/minimum/maximum. Explicit raw invalid sentinels are applied
+before conversion. The Home Manager profile uses it for an additional Basic
+plant-time-iso mapping alongside Advanced raw plant-time, without another poll.

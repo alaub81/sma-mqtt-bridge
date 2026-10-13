@@ -1165,3 +1165,20 @@ accepted. Host-profile reconciliation and deployment remain pending.
 
 Validation: all 250 offline tests, complete lint over 139 public files, Compose
 parity with overrides and diff hygiene passed.
+
+## Home Manager ISO plant time, 2026-10-13
+
+Locally implemented Basic measurements/planttimeiso and Advanced raw
+measurements/planttime via two profile mappings of one existing register read.
+Three tests cover U32 boundaries/invalid sentinel, UTC/DST instants, incompatible
+format configuration, optional-group discovery, one-call raw/ISO consistency,
+invalid responses and no cached re-publication between polls. Existing basic-only
+Home Manager filtering checks verify raw exclusion and ISO inclusion.
+
+No live deployment or DateTime-link acceptance. Homie 4 uses string metadata;
+MainUI instructions use the SCRIPT profile to parse ISO into the DateTime Item.
+Existing raw numeric history requires Advanced and remains untouched. Host
+profile overrides require reconciliation; UDP source is unaffected.
+
+Validation: all 253 offline tests, complete lint over 140 public files, Compose
+parity with overrides and diff hygiene passed.
