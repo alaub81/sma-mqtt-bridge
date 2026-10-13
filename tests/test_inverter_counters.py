@@ -92,7 +92,25 @@ class InverterCounterTests(unittest.TestCase):
             keys = {p.id for p in basic.properties}
             self.assertNotIn("operating-time", keys)
             self.assertNotIn("feed-in-time", keys)
-            self.assertNotIn("derating-reason", keys)
+            self.assertIn("derating-reason", keys)
+            basic_topics = discovery("homie", "fixture", basic.properties, labels)
+            root = "homie/fixture/diagnostics/deratingreason"
+            for suffix in ("/$datatype", "/$format", "/$unit", "/$settable", "/$retained"):
+                self.assertEqual(basic_topics.get(root + suffix), topics.get(root + suffix))
+            derating = next(p for p in basic.properties if p.id == "derating-reason")
+            self.assertFalse(derating.required_for_ready)
+            definition = next(p for p in profile["properties"] if p["id"] == "derating-reason")
+            self.assertEqual(definition["channelGroup"], "basic")
+            self.assertIn(definition["poller"], {p["id"] for p in basic.pollers})
+            basic_state = SourceState("fixture", "fixture", basic.properties, 60)
+            basic_state.update(
+                {"diagnostics/derating-reason": "Keine Abregelung (NoneDrt)"}, now=10
+            )
+            self.assertEqual(
+                basic_state.fresh_values(10)["diagnostics/derating-reason"],
+                "Keine Abregelung (NoneDrt)",
+            )
+            self.assertNotEqual(basic_state.status(10), "ready")
             if index == 1:
                 self.assertIn("battery-charge-energy", keys)
                 self.assertIn("battery-discharge-energy", keys)
