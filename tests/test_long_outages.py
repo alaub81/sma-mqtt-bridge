@@ -17,6 +17,10 @@ from sma_mqtt_bridge.homie import HomiePublisher, backoff
 from sma_mqtt_bridge.model import Property, SampleValues, SourceState
 from sma_mqtt_bridge.runtime import supervise
 
+# Bound fixture deadlocks while allowing asyncio debug overhead under CI QEMU.
+# This wall-clock guard is independent of virtual time and production watchdogs.
+VIRTUAL_SEQUENCE_TIMEOUT_SECONDS = 120
+
 
 class VirtualClock:
     def __init__(self):
@@ -138,7 +142,7 @@ class LongOutageTests(unittest.IsolatedAsyncioTestCase):
                 ),
             ]
             try:
-                await asyncio.wait_for(asyncio.gather(*tasks), 15)
+                await asyncio.wait_for(asyncio.gather(*tasks), VIRTUAL_SEQUENCE_TIMEOUT_SECONDS)
             finally:
                 for task in tasks:
                     task.cancel()
@@ -264,7 +268,9 @@ class LongOutageTests(unittest.IsolatedAsyncioTestCase):
             patch("sma_mqtt_bridge.homie.wait_stop", side_effect=wait),
             self.assertLogs("sma_mqtt_bridge.availability") as logs,
         ):
-            await asyncio.wait_for(publisher.serve_device("fixture", [state], stop), 15)
+            await asyncio.wait_for(
+                publisher.serve_device("fixture", [state], stop), VIRTUAL_SEQUENCE_TIMEOUT_SECONDS
+            )
         self.assertGreater(stats["attempts"], 500)
         self.assertGreater(stats["lost-acks"], 20)
         self.assertEqual(stats["closed"], stats["lost-acks"] + 1)

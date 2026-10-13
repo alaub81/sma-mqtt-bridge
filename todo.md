@@ -39,7 +39,7 @@ Die vollständigen Einzelbefunde stehen in [der Ergebnismatrix](docs/modbus-avai
 - [x] Wallbox-API-/SEMP-Vollständigkeitsabgleich am 12.10.2026 abgeschlossen: [Bericht](docs/ECHARGER_TOPIC_AUDIT.md), vollständige Kanalmatrix und Standard-SEMP-Feldmatrix. Aktuell 85 API-Parameter, 44 API-Mess-/Setpointkanäle und 25 SEMP-Parameterkanäle lesend erfasst. 24 SEMP-Kanäle gemappt, Standort bewusst ausgeschlossen; API-Lücken und Quelleneigentum einzeln dokumentiert. Keine automatische Topic-Erweiterung oder neue Setter.
 
 - [x] E01 – Wallbox-Phasenwirkleistung am 12.10.2026 lokal ergänzt: `measurements/powerl1`, `powerl2`, `powerl3` aus GridMs.W.phsA/B/C, Float/W/read-only. Offizielle lokale WebUI-Metadaten bestätigen unit 18 = W und SCALAR ohne Rohskalierung; fehlende Unit nur für geprüftes Modell/Firmware erlaubt, widersprüchliche Units blockieren den Wert. Vorzeichen/Bruchteile/Null unverändert; keine physische Flussrichtung aus dem Vorzeichen behauptet.
-- [ ] E01-Abnahme – Neue W-Metadaten und L1/L2/L3-Veröffentlichung in Produktion und DEV geprüft. Offen: Vergleich während tatsächlichen Ladens und bei Bedarf neue openHAB-Number:Power-Items mit Unit W; bestehende Gesamtladeleistung/Historie erhalten.
+- [ ] E01-Abnahme – Am 13.10.2026 auf Andreas’ Wunsch bis zum nächsten möglichen Laden des Autos zurückgestellt. Neue W-Metadaten und L1/L2/L3-Veröffentlichung in Produktion und DEV geprüft. Offen: Vergleich während tatsächlichen Ladens und bei Bedarf neue openHAB-Number:Power-Items mit Unit W; bestehende Gesamtladeleistung/Historie erhalten.
 - [x] E04 – API-only-Fallback-Erweiterung am 13.10.2026 auf Andreas’ Wunsch aus dem Umfang gestrichen. Bestehende API-/SEMP-Mappings bleiben erhalten; keine zusätzlichen Mappings für den Betrieb ohne SEMP geplant. Inventarisierte Abdeckungslücken bleiben als Befund dokumentiert.
 - [ ] E07 – Aktuelle Wallbox-Verfügbarkeitsbefunde behalten: Frequenzkanal Measurement.GridMs.Hz nicht angeboten; alternativer Gesamtenergiekanal fehlt, primärer ChaSta-Zähler verfügbar. Gesundheit/Sitzungsenergie/mehrere Ereigniscodes haben Werte, werden aber derzeit wegen Zeitstempel ausgefiltert. In bestehende Zeitstempeluntersuchung einbeziehen und später unter natürlichen Lade-/Ruheübergängen gezielt prüfen; kein neuer wiederkehrender Test geplant.
 
@@ -691,3 +691,13 @@ Topic-Suffixe werden unter `homie/<konfigurierte Homie-ID>/` veröffentlicht. Di
 - Auf Wunsch lokal read-only Basic-Topic measurements/batteryefficiency (%) ergänzt: Entladung/Ladung × 100, zwei Nachkommastellen, bestehendes gemeinsames Pollergebnis ohne neue Geräteabfrage. Profil muss beide kWh-Zähler im selben Poller bereitstellen; keine modellabhängige Adapterverzweigung.
 - Null-Ladeenergie/fehlende/ungültige/negative Zähler erzeugen keinen gültigen Quotienten, Entladung null ergibt 0 %. Keine Begrenzung auf 100 %, keine Erneuerung durch andere Poller; Lifetime von Quellen übernommen. Bestehende Zähler/History/Readiness unverändert. Veröffentlichung und Live-Abnahme offen.
 - Validierung: alle 250 Offline-Tests, Compose-Parität mit Overrides und Diff-Prüfung bestanden; drei neue gezielte Tests. Vollständiger Linter über 139 öffentliche Dateien geprüft. Keine Live-Schreibaktion, Veröffentlichung oder Deployment.
+
+## 2026-10-13 – CI-Zeitlimit der virtuellen Ausfalltests
+
+- Gemeldeter Containerlauf: 247 Tests, Timeout der gemischten Zwölfstunden-Simulation nach 15 s. Lokal gezielt in etwa 0,4 s bestanden; QEMU-Overhead der ARM64-CI als Ursache vermutet, ohne Hosted-Wiederholung nicht bestätigt.
+- Äußere Echtzeitgrenze beider langer virtueller Sequenzen auf 120 s angehoben; Deadlocks weiterhin begrenzt. Simulationsdauer, Assertions und produktive Read-/Shutdown-Watchdogs unverändert. Keine Runtime-/Geräteänderung.
+- Validierung: 250 Offline-Tests, vollständiger Repository-Linter und Compose-Parität bestanden. Loopback-Testserver benötigen Ausführung außerhalb der Sandbox; keine Installationsendpunkte kontaktiert. Hosted ARM64-Wiederholung bleibt offen, kein Push/Release/Deployment.
+
+## 2026-10-13 – Wallbox-Phasenvergleich zurückgestellt
+
+- Andreas kann das Auto derzeit nicht laden. Vergleich von L1/L2/L3 mit Gesamtladeleistung bis zum nächsten möglichen Ladevorgang zurückgestellt; keine aktive Testaufforderung oder automatische Wiederholung geplant. Vorhandene Veröffentlichungsnachweise und offene Abnahme erhalten.

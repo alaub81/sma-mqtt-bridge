@@ -7,6 +7,15 @@ automated test. Full production acceptance and openHAB migration remain open.
 
 ## Local verification
 
+On 2026-10-13, a reported container-suite failure exhausted the 15-second
+wall-clock guard in the mixed-source twelve-hour simulation. The same test passed
+locally in approximately 0.4 seconds. CI also runs ARM64 images under QEMU;
+emulation overhead is the suspected cause, not yet confirmed by a hosted rerun.
+Both twelve-hour virtual sequences now use a bounded 120-second fixture guard.
+Virtual durations, assertions and production read/shutdown watchdogs are unchanged.
+Local validation passed all 250 offline tests, repository lint and Compose parity;
+this does not establish hosted ARM64 success or live outage acceptance.
+
 The documentation/widget cleanup preserved the bridge runtime and device configuration.
 The subsequent API fix changes confirmation and unit checks; it does not activate
 adapters or command gates.
