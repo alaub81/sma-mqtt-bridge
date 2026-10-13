@@ -91,6 +91,8 @@ class ChannelAsyncTests(unittest.IsolatedAsyncioTestCase):
         reader = HomeManagerModbusReader(settings, profile())
         self.assertEqual(len(reader.properties), 6)
         self.assertTrue(all(p.node == "measurements" for p in reader.properties))
+        self.assertIn("measurements/plant-time-iso", {p.key for p in reader.properties})
+        self.assertNotIn("measurements/plant-time", {p.key for p in reader.properties})
         self.assertTrue(all(p["unitId"] == 2 for p in reader.pollers))
         self.assertEqual(reader.inventory_pollers, [])
         identities = {

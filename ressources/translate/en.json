@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "labels": {
+    "Plant time (ISO 8601)": "Plant time (ISO 8601)",
     "Battery energy return ratio": "Battery energy return ratio",
     "Refresh portal": "Refresh portal",
     "Allowed grid preference": "Allowed grid preference",

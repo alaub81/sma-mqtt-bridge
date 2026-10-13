@@ -4,6 +4,7 @@ import asyncio
 import math
 import struct
 import time
+from datetime import datetime, timezone
 from decimal import Decimal
 
 from ..errors import ProtocolError
@@ -40,6 +41,8 @@ def decode(registers, prop):
         value = int.from_bytes(raw, "big", signed=kind.startswith("int"))
     if value in prop["invalid"] or str(value) in prop["invalid"]:
         return None
+    if prop.get("format") == "unix-time-iso":
+        return datetime.fromtimestamp(value, timezone.utc).isoformat().replace("+00:00", "Z")
     if prop.get("format") == "sma-firmware":
         major, minor, build, release = value.to_bytes(4, "big")
         if any(b >> 4 > 9 or b & 15 > 9 for b in (major, minor)):
