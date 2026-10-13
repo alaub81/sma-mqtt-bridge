@@ -12,12 +12,6 @@ wie „noch offen“ beschreiben den damaligen Stand, nicht die aktuelle Aufgabe
 
 ## Nächste Schritte
 
-- [ ] Risikoarme Zusammenführungsrunde abschließen: JSON- und Modbus-
-  Messwertbeschreibungsumbau lokal geprüft; Docker-Image noch lokal bauen und im
-  Container testen. Jeden weiteren Umbau nach
-  erfolgreichen lokalen Prüfungen separat committen. Lokaler Tag v0.3.9 bewahrt
-  den Stand vor dem ersten JSON-/Widget-Umbau; Veröffentlichung bleibt separat.
-
 - [ ] Lokalen Tag **v0.3.8** bei ausdrücklichem Veröffentlichungsauftrag pushen,
   Hosted CI/Sicherheitsprüfungen und GHCR-Publikation prüfen, anschließend deployen.
   Enthält Energierückgabegrad, Derating als Basic und ISO-Anlagenzeit. Der Zielhost
@@ -215,3 +209,26 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
 - Vollständiger Linter über 145 öffentliche Dateien und Diff-Prüfung bestanden.
   Eigener lokaler Umbau-Commit; anschließend noch
   abschließender Docker-Build und Container-Tests. Kein Push oder Deployment.
+
+## 2026-10-13 – Zusammenführungsrunde mit Container-Prüfung abgeschlossen
+
+- Eigener lokaler Metadaten-Umbau-Commit bf21423; der zuvor vorhandene JSON-/
+  Widget-Commit 73a60bd wurde nicht umgeschrieben. Annotierter Rückkehrtag v0.3.9
+  unverändert auf e1c9a2d vor beiden Umbauten. Nachweise/Commit-Regel zuvor in
+  eigenem Dokumentationscommit 0e7b43a festgehalten.
+- Aus bf21423 mit unverändertem gepinntem Dockerfile lokale ARM64-/AMD64-Images
+  gebaut: Version 0.3.9-dev.3+bf214232. ARM64 nativ, AMD64 emuliert. Je Architektur
+  alle 259 Offline-Tests im Container erfolgreich, außerdem exakte Versionsprüfung,
+  check-config mit null aktivierten Quellen und Image-Ausschlüsse geprüft.
+  Kein pip/ensurepip, private Konfiguration oder Git-Metadaten im Image.
+- Container ohne externes Netzwerk und mit ausschließlich öffentlichen read-only
+  Testmounts. Keine Installationsgeräte, Portalzugänge oder Broker verwendet.
+  Lokale Testimages refactor-check-arm64/refactor-check-amd64 bleiben für Prüfung
+  verfügbar; keine laufenden Testcontainer zurückgelassen.
+- Abschließender Runtime-Diff gegenüber v0.3.9 umfasst nur JSON-/Metadaten-
+  Extraktion in fünf Paketdateien. Profile, Runtime-Abhängigkeiten, Dockerfile,
+  Compose-Einstellungen und private Daten unverändert. Verhaltensvergleich,
+  lokale Tests und Linter bereits erfolgreich; Abschlussnachweise separat committen.
+- Runde abgeschlossen. Jeder künftige Umbau bekommt nach Prüfung einen eigenen
+  Commit. Größere Authentifizierungs-/Frische-/Schreibumbauten bleiben außerhalb
+  dieser Runde. Kein Commit-/Tag-Push, GHCR-Release oder Deployment durch Codex.

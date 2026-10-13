@@ -21,6 +21,19 @@ All 30 focused tests passed before and after the extraction; the full suite pass
 profile-file modification, command or deployment was performed.
 Complete repository lint over 145 public files and diff hygiene also passed.
 
+Final local image verification built `bf21423` as
+`0.3.9-dev.3+bf214232` for Linux ARM64 and AMD64 using the unchanged pinned
+Dockerfile. ARM64 ran natively on the local Docker host; AMD64 ran under emulation.
+Both images passed all **259 offline tests**, exact version checks, disabled-source
+`--check-config`, and image guards excluding private configuration, Git metadata,
+pip and ensurepip. Containers used `--network none` and read-only public test
+mounts. Local image names are `sma-mqtt-bridge:refactor-check-arm64` and
+`sma-mqtt-bridge:refactor-check-amd64`. The final source comparison against
+`v0.3.9` contains only the JSON and Modbus metadata extractions under `ressources/`;
+bundled profiles, requirements, Dockerfile and Compose templates are unchanged.
+No hosted CI/security result, release image publication or live device acceptance
+is inferred from these local checks. The rollback tag remains on `e1c9a2d`.
+
 The local historical release tag `v0.3.9` points to `e1c9a2d`, before the first
 JSON/widget refactoring. On 2026-10-13, an isolated source snapshot passed all
 253 offline tests, complete lint over 140 public files and Compose parity with

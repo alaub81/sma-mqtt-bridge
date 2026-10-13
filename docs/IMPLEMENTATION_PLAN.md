@@ -86,9 +86,10 @@ proven equivalent behavior; authentication, freshness and command flows need
 separate focused changes.
 The local historical tag `v0.3.9` preserves the source before that refactoring;
 it is not a published image. Shared Modbus property metadata construction is also
-implemented and equivalent across 240 offline comparison cases. Finish this
-limited round with a local image build and container tests. Validate and commit
-each implementation step separately.
+implemented and equivalent across 240 offline comparison cases. This limited
+round passed local ARM64/AMD64 image builds and all 259 tests in each container.
+The metadata refactoring is recorded separately in `bf21423`; validate and commit
+any future implementation step separately. Publication remains a separate request.
 Maintain the [MainUI guide](../openHAB/openHAB.md) and later prepare the wiki article.
 
 ## 6. Deferred extensions
