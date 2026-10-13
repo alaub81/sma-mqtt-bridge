@@ -668,3 +668,8 @@ Topic-Suffixe werden unter `homie/<konfigurierte Homie-ID>/` veröffentlicht. Di
 - Andreas akzeptiert die ausgewerteten 22 h 06 min ausdrücklich als ausreichend und schließt die Ressourcenprüfung. Keine weitere Datei oder Verlängerung erforderlich; keine 24-h-Messung behaupten. Ergebnisse und Accounting-Grenzen bleiben dokumentiert, aktuell kein Optimierungsbedarf.
 - Andreas bestätigt das Aufräumen auf dem Zielhost nach den bereitgestellten Recorder-/Datei-Befehlen. Keine eigene Prozess-/Dateiprüfung; Repository-Recorder und Tests bleiben als Werkzeug erhalten. Separate eCharger-Zeitstempeldiagnose davon unabhängig.
 - Messbedingte Deployment-Zurückstellung aufgehoben. Commit/Release/Deployment bleiben eigene Aufträge; übrige Betriebs-, Frische- und openHAB-Abnahmen unverändert offen.
+
+## 2026-10-13 – Release v0.3.7 beauftragt
+
+- Andreas beauftragt Veröffentlichung und Deployment des nächsten Releases. Remote-main entspricht v0.3.6, Tag v0.3.7 noch frei. Umfang: Basis-Fahrzeugstatuscode, Portal-Refresh, Ausfalltests/Ressourcenwerkzeug und aktuelle Dokumentation.
+- SSH-Zugriff auf Zielhost erfolgreich; laufende Bridge meldet v0.3.6 und healthy. Zustandsspeicher bei Upgrade erhalten, keine Gerätebefehle auslösen. Hosted CI/GHCR und Deployment separat prüfen.

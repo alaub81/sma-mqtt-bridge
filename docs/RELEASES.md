@@ -12,30 +12,31 @@ hosted validation and release results. A tag existing alone does not establish
 successful image publication. Current installation acceptance belongs in
 [VALIDATION.md](VALIDATION.md).
 
-## Unreleased
+## v0.3.7 — 2026-10-13
 
-Local commit `41c9953` includes these additions, not yet in a new published image:
+- `measurements/vehiclestatuscode` is now a basic eCharger channel. Its ID,
+  integer values, read-only metadata and timestamp policy are preserved.
+- An enabled portal adapter accepts `refresh` on `portal/refresh/set` without
+  preference-write gates. It wakes the existing read supervisor, coalesces
+  requests and reports progress on `portal/refresh`. Read deadlines,
+  authentication blocking and retry backoff remain in force. Interval zero is
+  supported without a startup read unless explicitly requested.
+- MainUI setup documents the portal refresh button, Home Manager plant-time
+  display/DateTime link and minimum-PV sliders. Existing Items/history remain.
+- Extended deterministic outage tests and a reusable external resource recorder
+  accompany the release. Andreas accepted the stable 22-hour resource baseline;
+  see [the analysis](RESOURCE_SOAK_ANALYSIS_2026-10-13.md).
+- Further optional extensions are deferred; additional API-only fallback mappings
+  for operation without SEMP are removed from scope. Existing mappings remain.
 
-- Vehicle-status raw integer code `measurements/vehiclestatuscode` joins the basic
-  eCharger group, so Advanced may remain disabled. Topic ID, values, read-only
-  metadata and timestamp policy are unchanged; existing links need no rename.
-- Extended deterministic supervisor/MQTT outage sequences and repeated watchdog
-  cancellations. These are offline tests, not a real target-host resource soak.
-- External Linux host recorder `tests/resource_soak.py` with optional cgroup
-  metrics and process-memory sampling. It is not an image/runtime dependency.
-- User-reported restart, broker recovery, selected history/settings continuity
-  and inverter morning wake-up evidence.
+Local validation: 247 offline tests, complete lint and Compose parity. Hosted
+release validation and deployment are tracked separately in VALIDATION.md.
+The image is published by the stable-tag workflow after CI and security checks;
+writing these notes alone does not establish publication or installation.
 
-Installation/release documentation now covers published GHCR deployment and
-explicit image pinning. Andreas accepted the stable 22-hour resource recording
-on 2026-10-13, closing the resource prerequisite for a requested future deployment.
-
-Additional local preparation exposes `portal/refresh/set` with payload `refresh`
-for an enabled portal adapter. This read-only action wakes the existing supervisor,
-coalesces requests and works without preference-write gates, including polling
-interval zero. Feedback is published on `portal/refresh`; existing preference
-topics are preserved. See the [MainUI setup](../openHAB/openHAB.md#manual-portal-refresh).
-This addition is not yet released or accepted live.
+The new refresh channel needs discovery after upgrade. Follow the
+[MainUI instructions](../openHAB/openHAB.md#manual-portal-refresh); do not send
+retained refresh requests or add automatic replay rules.
 
 ## v0.3.6 — 2026-10-12
 
