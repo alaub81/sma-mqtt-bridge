@@ -84,6 +84,10 @@ Duplicate JSON decoding checks were consolidated on 2026-10-13 with unchanged
 caller-specific errors and offline acceptance. Further consolidation requires
 proven equivalent behavior; authentication, freshness and command flows need
 separate focused changes.
+The local historical tag `v0.3.9` preserves the source before that refactoring;
+it is not a published image. Finish this limited round with shared Modbus property
+metadata construction if equivalent behavior is established, then a local image
+build and container tests. Validate and commit each implementation step separately.
 Maintain the [MainUI guide](../openHAB/openHAB.md) and later prepare the wiki article.
 
 ## 6. Deferred extensions

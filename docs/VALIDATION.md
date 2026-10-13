@@ -9,6 +9,13 @@ separate. See the user acceptance note below.
 
 ## Local verification
 
+The local historical release tag `v0.3.9` points to `e1c9a2d`, before the first
+JSON/widget refactoring. On 2026-10-13, an isolated source snapshot passed all
+253 offline tests, complete lint over 140 public files and Compose parity with
+overrides. This proves local source checks for the rollback point, not release
+image publication, hosted CI or target-host acceptance. The first JSON refactoring
+is already recorded in `73a60bd`; subsequent refactorings receive separate commits.
+
 On 2026-10-13, the configuration and HTTP JSON duplicate-key/non-standard-constant
 checks were moved into one pure decoder. Three new boundary regressions cover
 valid values, nested/escaped duplicate keys, malformed input, NaN/Infinity,

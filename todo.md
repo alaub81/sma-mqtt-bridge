@@ -12,6 +12,12 @@ wie „noch offen“ beschreiben den damaligen Stand, nicht die aktuelle Aufgabe
 
 ## Nächste Schritte
 
+- [ ] Risikoarme Zusammenführungsrunde abschließen: gemeinsame Modbus-
+  Messwertbeschreibungen auf Verhaltensgleichheit prüfen/vereinfachen, danach
+  Docker-Image lokal bauen und im Container testen. Jeden weiteren Umbau nach
+  erfolgreichen lokalen Prüfungen separat committen. Lokaler Tag v0.3.9 bewahrt
+  den Stand vor dem ersten JSON-/Widget-Umbau; Veröffentlichung bleibt separat.
+
 - [ ] Lokalen Tag **v0.3.8** bei ausdrücklichem Veröffentlichungsauftrag pushen,
   Hosted CI/Sicherheitsprüfungen und GHCR-Publikation prüfen, anschließend deployen.
   Enthält Energierückgabegrad, Derating als Basic und ISO-Anlagenzeit. Der Zielhost
@@ -170,3 +176,20 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
   Authentifizierung, Zeitstempel, Wiederverbindung und Befehlsabläufe bleiben eigene
   spätere Schritte. Keine privaten Originale verändert, keine Installationsabfrage,
   Gerätebefehle, Veröffentlichung oder Deployment durchgeführt.
+
+## 2026-10-13 – Release-Rückkehrpunkt vor dem ersten Umbau
+
+- Andreas beauftragt einen neuen Release-Tag vor dem ersten Umbau sowie einen
+  Commit nach jedem weiteren Umbau. Direkten Vorgänger e1c9a2d eindeutig geprüft:
+  bisherige JSON-Routinen und ursprüngliches Widget vorhanden; gemeinsame
+  JSON-Hilfsdatei noch nicht enthalten.
+- Annotierten lokalen Tag v0.3.9 auf e1c9a2d gesetzt. Isolierter Git-Quellsnapshot
+  besteht 253 Offline-Tests, vollständigen Linter über 140 öffentliche Dateien
+  und Compose-Parität einschließlich Overrides. Kein Release-Image oder Live-
+  Abnahmestand aus dem Tag abgeleitet.
+- JSON-Umbau inzwischen im vorhandenen Commit 73a60bd zusammen mit Widget-
+  Vereinfachung und Dokumentation enthalten. Bestehende Historie bleibt erhalten;
+  keine nachträgliche Aufteilung, kein Reset oder Force-Push.
+- Weitere Umsetzung: ein kleiner Modbus-Metadatenumbau mit eigenem geprüften
+  Commit, anschließend Gesamtvergleich und lokaler Docker-/Container-Test.
+  Keine Tag-/Commit-Veröffentlichung oder Zielhoständerung beauftragt.

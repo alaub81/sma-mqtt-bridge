@@ -12,6 +12,18 @@ hosted validation and release results. A tag existing alone does not establish
 successful image publication. Current installation acceptance belongs in
 [VALIDATION.md](VALIDATION.md).
 
+## v0.3.9 — 2026-10-13 (local historical baseline tag)
+
+At Andreas' request, this annotated local tag points to `e1c9a2d`, the last
+commit before the shared JSON decoder and widget-expression refactoring in
+`73a60bd`. It includes the v0.3.8 features and focused lint rules, but neither
+refactoring. The existing branch history was not rewritten.
+
+An isolated source snapshot of the tagged commit passed all **253 offline tests**,
+complete lint over 140 public files and Compose parity/overrides. The tag is a
+source rollback point; it has not been pushed, built as a release image, published
+to GHCR or deployed. Changes after this tag remain development changes.
+
 ## v0.3.8 — 2026-10-13 (local tag)
 
 Prepared locally with 253 passing offline tests, complete lint and Compose parity.
