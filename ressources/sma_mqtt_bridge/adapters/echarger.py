@@ -1,6 +1,7 @@
 """Known eCharger read channels, separate API/SEMP sessions and no setters."""
 
 import asyncio
+import hashlib
 import time
 import xml.etree.ElementTree as ET
 from collections.abc import Mapping
@@ -598,6 +599,14 @@ class EChargerReader:
                     result["measurements/" + id] = (
                         value / 1000 if id == "total-energy" and value is not None else value
                     )
+                energy_channel = property_channels.get("measurements/total-energy")
+                self.identity_fingerprint = (
+                    hashlib.sha256(
+                        (self.settings.expected_serial + ":" + energy_channel).encode()
+                    ).hexdigest()
+                    if energy_channel is not None
+                    else ""
+                )
                 if self.include_base:
                     # Do not bypass confirmation through the manual-approval display alias.
                     combined = {

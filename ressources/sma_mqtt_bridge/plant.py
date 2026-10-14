@@ -202,6 +202,12 @@ class PlantEngine:
         self.expected_units.update(
             {ref: FIELDS["grid"][metric] for metric, ref in self.grid.items()}
         )
+        self.wallbox = (
+            Input("api", "measurements/total-energy") if config.echarger.enabled else None
+        )
+        if self.wallbox is not None:
+            self.expected_units[self.wallbox] = "kWh"
+            self.nonnegative.add(self.wallbox)
         self.recipes = {}
         self.last_packet = None
         self.account_frames = {}
@@ -226,6 +232,32 @@ class PlantEngine:
             Property("diagnostics", "battery-energy-boundary", "Battery energy boundary", "string"),
             Property("diagnostics", "power-input-status", "Power input availability", "string"),
         ]
+        if self.wallbox is not None:
+            properties += [
+                Property("wallbox", "daily-consumption", "Daily wallbox consumption", unit="kWh"),
+                Property(
+                    "house",
+                    "daily-consumption-without-wallbox",
+                    "Daily house consumption without wallbox",
+                    unit="kWh",
+                ),
+                Property("diagnostics", "wallbox-day-status", "Wallbox day coverage", "string"),
+                Property(
+                    "diagnostics",
+                    "house-without-wallbox-day-status",
+                    "House without wallbox day coverage",
+                    "string",
+                ),
+                Property(
+                    "diagnostics", "wallbox-energy-time", "Energy snapshot time (UTC)", "string"
+                ),
+                Property(
+                    "diagnostics",
+                    "housewithoutwallbox-energy-time",
+                    "Energy snapshot time (UTC)",
+                    "string",
+                ),
+            ]
         properties += [
             Property("diagnostics", name + "-energy-time", "Energy snapshot time (UTC)", "string")
             for name in ("import", "export", "house")
@@ -266,6 +298,17 @@ class PlantEngine:
         ]
         for key in ("house/daily-consumption", "house/total-consumption"):
             self.state.guards[key] = tuple(energy_inputs)
+        if self.wallbox is not None:
+            prop = self.sources["api"].property_index().get(self.wallbox.key)
+            if prop is None or prop.unit != "kWh" or prop.datatype not in ("integer", "float"):
+                raise ConfigError(
+                    "Plant wallbox requires the local API total energy counter in kWh"
+                )
+            self.state.guards["wallbox/daily-consumption"] = (self.wallbox,)
+            self.state.guards["house/daily-consumption-without-wallbox"] = (
+                *energy_inputs,
+                self.wallbox,
+            )
         selected_sources = {ref.source for refs in self.state.guards.values() for ref in refs}
         self.state.sources = {source: self.sources[source] for source in selected_sources}
 
@@ -330,6 +373,12 @@ class PlantEngine:
             token = getattr(source, "identity_fingerprint", "")
             if ref.source == "home-manager":
                 token = hashlib.sha256(self.config.home_manager.serial.encode()).hexdigest()
+            elif ref.source == "api" and token:
+                token = hashlib.sha256(
+                    json.dumps(
+                        (token, self.config.echarger.host, self.config.echarger.port)
+                    ).encode()
+                ).hexdigest()
             hardware.append((ref.source, token))
         if max(stamps) - min(stamps) > self.config.plant.max_skew_seconds:
             return None
@@ -374,6 +423,7 @@ class PlantEngine:
             wall,
             oldest_wall,
             sample_wall=wall - timedelta(seconds=now - latest),
+            daily_only=name in ("wallbox", "housewithoutwallbox"),
         )
         result = (daily, total, status, (oldest, deadline))
         self.account_frames[name] = (token, result)
@@ -460,6 +510,27 @@ class PlantEngine:
         else:
             status = "unsupported-battery-boundary"
         packet["diagnostics/house-energy-status"] = status
+        if self.wallbox is not None:
+            daily, _, wallbox_status, age = self.account("wallbox", [(self.wallbox, 1)], now, wall)
+            key = "wallbox/daily-consumption"
+            packet[key] = daily
+            accounts["wallbox"] = {key: daily}
+            if age:
+                observed[key], deadlines[key] = age
+            packet["diagnostics/wallbox-day-status"] = wallbox_status
+            if self.boundary in ("ac", "none"):
+                # One counter vector gives both terms the same baseline and coverage.
+                daily, _, without_status, age = self.account(
+                    "housewithoutwallbox", [*inputs, (self.wallbox, -1)], now, wall
+                )
+                key = "house/daily-consumption-without-wallbox"
+                packet[key] = daily
+                accounts["housewithoutwallbox"] = {key: daily}
+                if age:
+                    observed[key], deadlines[key] = age
+            else:
+                without_status = "unsupported-battery-boundary"
+            packet["diagnostics/house-without-wallbox-day-status"] = without_status
         packet["diagnostics/local-date"] = wall.astimezone(self.zone).date().isoformat()
         packet["diagnostics/battery-energy-boundary"] = self.boundary
         # A critical state transition is durable before its derived value reaches MQTT.
