@@ -101,6 +101,7 @@ class SourceState:
     contributes_availability: bool = True
     initialization_deadline: float | None = None
     max_payload_bytes: int = 4096
+    identity_fingerprint: str = field(default="", repr=False)
     _indexed_properties: tuple | None = field(default=None, init=False, repr=False, compare=False)
     _by_key: dict = field(default_factory=dict, init=False, repr=False, compare=False)
     _default_required_keys: tuple = field(default=(), init=False, repr=False, compare=False)

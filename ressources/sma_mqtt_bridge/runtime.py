@@ -167,7 +167,9 @@ async def reset_reader(reader, config):
             await reader.close()
 
 
-async def supervise(state, reader, interval, config, stop, refresh_portal=False, refresh=None):
+async def supervise(
+    state, reader, interval, config, stop, refresh_portal=False, refresh=None, on_change=None
+):
     attempt = 0
     state.monitor = state.monitor or Availability(
         "Source " + state.id, config.runtime.failure_log_interval_seconds
@@ -195,6 +197,7 @@ async def supervise(state, reader, interval, config, stop, refresh_portal=False,
                     state.properties = reader.properties
                     keys = {p.key for p in state.properties}
                     state.values = {k: v for k, v in state.values.items() if k in keys}
+                state.identity_fingerprint = getattr(reader, "identity_fingerprint", "")
                 state.update(values)
                 if refresh is not None:
                     refresh.finish("completed")
@@ -205,6 +208,8 @@ async def supervise(state, reader, interval, config, stop, refresh_portal=False,
                 if state.status() == "ready":
                     monitor.success()
                 monitor.observe(state.status())
+                if on_change is not None:
+                    on_change()
                 attempt = 0
                 if interval == 0:
                     monitor.progress("idle")
@@ -228,6 +233,8 @@ async def supervise(state, reader, interval, config, stop, refresh_portal=False,
                 monitor.failure(reason="AuthenticationError")
                 monitor.progress("auth-blocked")
                 monitor.observe("error")
+                if on_change is not None:
+                    on_change()
                 LOG.error(
                     "Source %s authentication blocked; resolve credentials/permissions before restart",
                     state.id,
@@ -242,6 +249,8 @@ async def supervise(state, reader, interval, config, stop, refresh_portal=False,
                 monitor.failure(is_timeout(error), type(error).__name__)
                 monitor.progress("retrying")
                 monitor.observe("error")
+                if on_change is not None:
+                    on_change()
                 if is_timeout(error):
                     await reset_reader(reader, config)
                 await wait_stop(
@@ -288,6 +297,8 @@ def log_startup_status(config, states, mqtt_status, deadline, now=None):
         "semp",
         "portal",
     ]
+    if config.plant.enabled:
+        configured.append("plant")
     sources_text = ", ".join(f"{key}={source_status.get(key, 'disabled')}" for key in configured)
     mqtt_text = (
         ", ".join(
@@ -311,6 +322,12 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
     installed = []
     readers = sources(config)
     states = [s for s, _, _ in readers]
+    plant = None
+    if config.plant.enabled:
+        from .plant import PlantEngine
+
+        plant = PlantEngine(config, states)
+        states.append(plant.state)
     controller = None
     local_controller, portal_controller = None, None
     portal_refresh = None
@@ -385,10 +402,13 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
                 stop,
                 refresh_portal and state.id == "portal",
                 portal_refresh if state.id == "portal" else None,
+                plant.changed.set if plant is not None else None,
             )
         )
         for state, reader, interval in readers
     ]
+    if plant is not None:
+        tasks.append(asyncio.create_task(plant.run(stop)))
     tasks.append(asyncio.create_task(publisher.run(stop)))
     startup_deadline = time.monotonic() + config.runtime.read_cycle_timeout_seconds
     startup_reported = False

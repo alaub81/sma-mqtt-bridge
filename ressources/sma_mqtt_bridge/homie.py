@@ -101,7 +101,9 @@ class HomiePublisher:
         states = [s for s in self.states if s.device == device]
         inverter = next((s.id[8:] for s in states if s.id.startswith("inverter")), None)
         role = (
-            "Home Manager"
+            "Plant"
+            if any(s.id == "plant" for s in states)
+            else "Home Manager"
             if any(s.id == "home-manager" for s in states)
             else ("eCharger" if any(s.id in ("api", "semp", "portal") for s in states) else device)
         )
