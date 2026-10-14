@@ -182,6 +182,7 @@
     "House consumption including battery charging": "House consumption including battery charging",
     "Energy snapshot time (UTC)": "Energy snapshot time (UTC)",
     "House energy start (UTC)": "House energy start (UTC)",
-    "Available plant properties": "Available plant properties"
+    "Available plant properties": "Available plant properties",
+    "Power input availability": "Power input availability"
   }
 }
