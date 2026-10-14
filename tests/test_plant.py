@@ -262,6 +262,71 @@ class PlantConfigurationTests(PlantFixture):
 
 
 class PlantMeasurementTests(PlantFixture):
+    def test_live_invalid_pv_power_is_named_and_retained_zero_is_not_reused(self):
+        engine = self.engine()
+        overrides = {
+            "inverter1": {"activepower": 0},
+            "inverter3": {"activepower": 0},
+            "inverter2": {"presbatcharge": 0, "presbattdischarge": 234},
+            "home-manager": {"powerimport": 400, "powerexport": 0},
+        }
+        self.fill(engine, 100, overrides)
+        engine.refresh(100, self.wall)
+        self.assertEqual(engine.state.fresh_values(100)["house/consumption"], "634")
+        for slot in ("inverter1", "inverter3"):
+            engine.sources[slot].update({"measurements/active-power": None}, now=101)
+        engine.refresh(101, self.wall + timedelta(seconds=1))
+        values = engine.state.fresh_values(101)
+        self.assertNotIn("house/consumption", values)
+        self.assertNotIn("pv/totalactivepower", values)
+        self.assertIn("pv/totalyield", values)
+        self.assertEqual(
+            json.loads(values["diagnostics/power-input-status"]),
+            {
+                "inverter1/measurements/active-power": "missing-or-invalid",
+                "inverter3/measurements/active-power": "missing-or-invalid",
+            },
+        )
+        self.fill(engine, 102, overrides)
+        engine.refresh(102, self.wall + timedelta(seconds=2))
+        self.assertEqual(engine.state.fresh_values(102)["house/consumption"], "634")
+        self.assertEqual(
+            json.loads(engine.state.fresh_values(102)["diagnostics/power-input-status"]),
+            {"status": "ready"},
+        )
+
+    def test_power_diagnostics_separate_age_skew_source_error_and_units(self):
+        engine = self.engine(env={"SMAB_PLANT_MAX_SKEW_SECONDS": "1"})
+        engine.sources["inverter1"].update({"measurements/active-power": 1000}, now=102)
+        problems = engine.power_input_problems(102)
+        self.assertEqual(problems["inverter3/measurements/active-power"], "sample-skew")
+        problems = engine.power_input_problems(10000)
+        self.assertEqual(problems["inverter1/measurements/active-power"], "stale")
+        engine.sources["inverter1"].error = True
+        self.assertEqual(
+            engine.power_input_problems(102)["inverter1/measurements/active-power"],
+            "source-error",
+        )
+        source = engine.sources["inverter3"]
+        source.properties = tuple(
+            replace(p, unit="kWh") if p.id == "active-power" else p for p in source.properties
+        )
+        self.assertEqual(
+            engine.power_input_problems(102)["inverter3/measurements/active-power"],
+            "unit-or-type-mismatch",
+        )
+
+    def test_negative_power_balance_has_distinct_diagnosis(self):
+        engine = self.engine()
+        self.fill(engine, 100, {"home-manager": {"powerexport": 10000}})
+        engine.refresh(100, self.wall)
+        values = engine.state.fresh_values(100)
+        self.assertNotIn("house/consumption", values)
+        self.assertEqual(
+            json.loads(values["diagnostics/power-input-status"])["house/consumption"],
+            "negative-balance",
+        )
+
     def test_golden_power_yield_sums_topic_names_units_and_no_setters(self):
         engine = self.engine()
         engine.refresh(100, self.wall)

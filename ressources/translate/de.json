@@ -182,6 +182,7 @@
     "House consumption including battery charging": "Hausverbrauchsleistung inklusive Batterieladung",
     "Energy snapshot time (UTC)": "Zeitpunkt Energiebilanz (UTC)",
     "House energy start (UTC)": "Beginn Hausenergiezählung (UTC)",
-    "Available plant properties": "Aktuell verfügbare Anlageneigenschaften"
+    "Available plant properties": "Aktuell verfügbare Anlageneigenschaften",
+    "Power input availability": "Verfügbarkeit der Leistungseingänge"
   }
 }

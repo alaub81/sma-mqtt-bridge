@@ -446,3 +446,53 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
   0.3.11-dev.1+plant. Keine Veröffentlichung, Aktivierung oder Änderung bestehender
   openHAB-Regeln/Items/Links/Historien. Nächster Schritt: getrennten Build deployen
   und Werte parallel vergleichen; Teil-Tage und Neustart live prüfen.
+
+## 2026-10-14 – Batterie-Historien für AC/DC-Prüfung inventarisiert
+
+- Nach Anmeldung durch Andreas InfluxDB ausschließlich lesend geprüft. Die letzten
+  30 Tage enthalten alte und neue Lade-/Entladeleistungen sowie Gesamtertrag,
+  aber keine Messreihen der fünf benötigten neuen Vergleichsitems: Leistung,
+  Batteriestrom, Batteriespannung, BatterieLadeenergie und BatterieEntladeenergie
+  unter dem bestehenden smainv2battery-Präfix. Gezielte Sieben-Tage-Abfrage
+  bestätigt vorhandene Leistungs-/Ertragsdaten mit Feld value; kein AC/DC-Nachweis.
+- Alle fünf Items haben in openHAB aktuelle Zahlenwerte und zeigen in den
+  Itemdetails InfluxDB: 0 / Not persisted. Die bestehende Iteminventur bestätigt
+  ausschließlich die Geräte-Gruppe, keine Persistenzgruppe. Keine fehlenden Werte
+  als Null oder als Gerätefehler interpretiert; der Bridge-Empfang funktioniert
+  zum Prüfzeitpunkt, die notwendige Historie fehlt.
+- Bestehende InfluxDB-Richtlinien lesend geprüft: pEveryUpdate speichert everyUpdate
+  mit restoreOnStartup; weitere Gruppen haben Änderungs-/Zeitfilter und Cron.
+  Offizielle openHAB-Persistenzdokumentation konsultiert. Nächster konkreter
+  Schritt: diese fünf Items in eine passende Aufzeichnung aufnehmen und normale
+  Lade-/Entladephasen sammeln; danach AC-Integral, Zählerdifferenzen und passende
+  DC-Gegenprobe vergleichen. Keine Aufzeichnung, Itemgruppe oder Regel geändert.
+- Keine Rohzeitreihen, Messzustände, Adressen oder Zugangsdaten ins Repository
+  übernommen. AC/DC-Messgrenze bleibt unbestätigt; Haus-kWh nicht freigegeben.
+
+## 2026-10-14 – Fehlende Anlagenleistung live eingegrenzt
+
+- MQTT Explorer lesend geprüft: neue Anlage verbunden, plantstatus stale,
+  PV-Tages-/Gesamterträge gültig; Netz-Tageszähler partial und Haus-kWh wegen
+  unbestätigter Batterie-Messgrenze gesperrt. Andreas bestätigt im Startlog alle
+  sieben Gerätequellen ready und sämtliche MQTT-Verbindungen connected.
+- Einmalige direkte, ausschließlich lesende Registerprüfung mit den drei lokal
+  konfigurierten aktivierten Wechselrichtern: beide PV-Wirkleistungen ungültig,
+  Batterie-Wirkleistung und Lade-/Entladerichtungen dagegen gültig. Keine zusätzlichen
+  Poller aktiviert, keine Einstellungen geschrieben und keine MQTT-Nachricht gesendet.
+  Adressen, Identitäten, Zugangsdaten und Messstände nicht gespeichert.
+- Ursache der fehlenden aktuellen W damit eingegrenzt: ungültige PV-Beiträge,
+  keine fehlende Plant-Aktivierung oder MQTT-Verbindung. Gespeicherte MQTT-Nullen
+  beweisen keine aktuelle Gültigkeit. Pauschale Nacht-Null aus Uhrzeit bleibt
+  ausgeschlossen; ein bestätigter Zustand für Ersatzwerte wäre separat zu prüfen.
+- Diagnose powerinputstatus ergänzt: blockierende logische Quelle/Property und
+  Grund, einschließlich ungültig/fehlend, veraltet, Quellfehler, Units, Zeitversatz
+  und negativer Hausbilanz. Die Messwert- und Gültigkeitsregeln bleiben erhalten.
+  Regressionsfall mit zwei ungültigen PV-Werten nach zuvor gültigen Nullen ergänzt;
+  Wiederaufnahme erst nach gültiger Messung. Live-Anzeige dieses neuen Diagnosetopics
+  benötigt den aktualisierten Build; noch nicht deployed.
+
+- Validierung des Diagnosezusatzes: 313 Tests auf Host und jeweils im ARM64-/AMD64-
+  Container ohne Netzwerk bestanden; vollständiger Linter, Compose-Parität mit
+  Overrides und Diff-Hygiene erfolgreich. Lokale Testversion 0.3.11-dev.2+plant.
+  Keine automatische Nacht-Null ergänzt; künftige Freigabe über eindeutig belegte
+  Gerätezustände bleibt eine offene Mess-/Entscheidungsfrage.

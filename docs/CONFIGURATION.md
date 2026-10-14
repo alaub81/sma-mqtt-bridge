@@ -691,7 +691,17 @@ choosing a verified opening value; keep the volume, manifests and command journa
 `diagnostics/importdaystatus`, `exportdaystatus`, `houseenergystatus`, `localdate`,
 `batteryenergyboundary`, `importenergytime`, `exportenergytime`, `houseenergytime`
 and `houseenergystart` expose coverage and scope. `diagnostics/validproperties`
-lists the currently usable measurement topic paths, including freshness checks. Values can include `partial`,
+lists the currently usable measurement topic paths, including freshness checks.
+`diagnostics/powerinputstatus` is a JSON object naming blocked power inputs by
+logical source and internal property key. Reasons distinguish `missing-or-invalid`,
+`stale`, `source-error`, `unit-or-type-mismatch`, `invalid`,
+`negative-directional-flow` and `sample-skew`; negative household results are
+identified by `house/consumption` or `house/consumptionwithcharging` with
+`negative-balance`. With no blocking input/balance it reports `{"status":"ready"}`.
+This diagnostic remains available when optional source diagnostics are disabled.
+A retained device value is not evidence of a currently valid source observation.
+Invalid PV power blocks both PV power sums and household W, including at night;
+calendar darkness alone never converts an invalid register into a measured zero. Values can include `partial`,
 `complete`, `gap`, `reset`, `clock-error`, `configuration-changed`, `inconsistent`,
 `unavailable`, `invalid`, `init` and `unsupported-battery-boundary`. `complete` means
 covered within configured sampling tolerance, not an exact midnight meter read.

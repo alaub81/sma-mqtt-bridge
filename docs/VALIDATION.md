@@ -1427,3 +1427,34 @@ fixtures test the full software path without accepting real device semantics.
 Whole-kWh PV counters limit precision. Live value comparison, midnight/restart
 acceptance, finer counters and battery AC evidence remain pending. Existing
 Influx power integrals and new counter deltas need a measured parallel comparison.
+
+## Blocked plant power inputs, 2026-10-14
+
+Read-only MQTT Explorer inspection and Andreas' startup log confirm the plant
+is connected while its source status is stale; all seven physical adapters report
+ready. PV daily/lifetime sums are available. Grid daily counters remain partial
+on the initial day, and household energy reports unsupported-battery-boundary.
+Those conditions are separate from missing household W.
+
+A one-shot read-only probe used the locally configured enabled inverters with
+identity validation and only the existing active/charge/discharge power mappings.
+Both PV active-power results decoded as invalid while Storage power results were
+valid. No Modbus write, MQTT connection/publication or source configuration change
+was performed. No identities, addresses, credentials or raw measurements were
+saved as acceptance evidence. Retained MQTT zero is not a fresh source sample;
+source ready does not establish every optional property as currently valid.
+
+The new always-available diagnostics/powerinputstatus JSON names blocked logical
+source/property inputs and distinguishes missing/invalid data, expiry, source
+errors, unit/type mismatches, negative directional values, sample skew and negative
+household balances. Calculation eligibility and retained/current separation are
+unchanged. A calendar-only nighttime zero substitution remains excluded; any
+state-based fallback needs separate documented semantics and acceptance.
+
+All 313 offline tests passed on the host and in isolated ARM64/AMD64 containers,
+including three new power-diagnosis regressions. The invalid-PV case starts with
+valid measured zeros, removes invalid observations, preserves other sums and
+resumes only after valid power observations return. Full lint, Compose parity
+including overrides and diff hygiene passed. Local images are
+0.3.11-dev.2+plant. No publication/deployment or live acceptance of the added
+MQTT diagnostic occurred; the live observation confirms the blocker only.

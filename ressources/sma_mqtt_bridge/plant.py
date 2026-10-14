@@ -224,6 +224,7 @@ class PlantEngine:
             Property("diagnostics", "house-energy-status", "House energy coverage", "string"),
             Property("diagnostics", "local-date", "Local accounting date", "string"),
             Property("diagnostics", "battery-energy-boundary", "Battery energy boundary", "string"),
+            Property("diagnostics", "power-input-status", "Power input availability", "string"),
         ]
         properties += [
             Property("diagnostics", name + "-energy-time", "Energy snapshot time (UTC)", "string")
@@ -378,12 +379,50 @@ class PlantEngine:
         self.account_frames[name] = (token, result)
         return result
 
+    def power_input_problems(self, now):
+        """Identify blocked power inputs without exposing device identities or addresses."""
+        problems, stamps = {}, {}
+        for ref, _ in self.recipes["house/consumption"][2]:
+            source = self.sources[ref.source]
+            prop = source.property_index().get(ref.key)
+            if source.error:
+                reason = "source-error"
+            elif ref.key not in source.values:
+                reason = "missing-or-invalid"
+            elif (
+                prop is None
+                or prop.unit != self.expected_units[ref]
+                or prop.datatype not in ("integer", "float")
+            ):
+                reason = "unit-or-type-mismatch"
+            elif ref.key not in source.fresh_values(now):
+                reason = "stale"
+            elif (value := number(source.values[ref.key][0])) is None:
+                reason = "invalid"
+            elif ref in self.nonnegative and value < 0:
+                reason = "negative-directional-flow"
+            else:
+                stamps[ref.identity] = source.values[ref.key][1]
+                continue
+            problems[ref.identity] = reason
+        if stamps:
+            latest = max(stamps.values())
+            problems.update(
+                {
+                    key: "sample-skew"
+                    for key, stamp in stamps.items()
+                    if latest - stamp > self.state.max_skew
+                }
+            )
+        return problems
+
     def refresh(self, now=None, wall=None):
         now = time.monotonic() if now is None else now
         wall = datetime.now(timezone.utc) if wall is None else wall
         packet = {p.key: None for p in self.state.properties}
         observed, deadlines = {}, {}
         accounts = {}
+        power_problems = self.power_input_problems(now)
         for key, (_, _, inputs) in self.recipes.items():
             frame = self.frame(inputs, now)
             if frame is not None:
@@ -391,6 +430,11 @@ class PlantEngine:
                 value = sum(values.values(), Decimal(0))
                 if not key.startswith("house/") or value >= 0:
                     packet[key], observed[key], deadlines[key] = value, oldest, deadline
+                else:
+                    power_problems[key] = "negative-balance"
+        packet["diagnostics/power-input-status"] = json.dumps(
+            power_problems or {"status": "ready"}, sort_keys=True, separators=(",", ":")
+        )
         for name, metric in (("import", "energyimport"), ("export", "energyexport")):
             daily, _, status, age = self.account(name, [(self.grid[metric], 1)], now, wall)
             key = "grid/daily-energy-" + name
