@@ -1,0 +1,130 @@
+item,label,type,unit,pattern,groups,tags,scope,observed_date,evidence
+Inverter1,SMA Tripower 8.0,Group,,,PV_Plant,Inverter,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+Inverter2,SMA Sunny Boy Storage 3.7,Group,,,PV_Plant,Inverter,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+PV_Plant,PV Anlage,Group,,,C_TechnicRoom,Inverter,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+PowerConsumptionBatIncl,Gesamtstromverbrauch inkl. Batterieladung,Number:Power,W,%.0f W,Inverter1;pEveryUpdate30s,Measurement;Power,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+SMAEnergyMeter,SMA Home Manager 2.0,Group,,,PV_Plant,Inverter,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+SMAEnergyMeter_BezogeneEnergie,Bezogene Energie,Number:Energy,kWh,%.1f %unit%,SMAEnergyMeter;pEveryChangeCron15min,Measurement;Energy,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+SMAEnergyMeter_BezogeneLeistung,Leistung Bezug,Number:Power,,,SMAEnergyMeter;pEveryUpdate30s,Measurement;Power,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+SMAEnergyMeter_EingespeisteEnergie,Eingespeiste Energie,Number:Energy,,,SMAEnergyMeter;pEveryChangeCron15min,Measurement;Energy,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+SMAEnergyMeter_EingespeisteLeistung,Leistung Einspeisung,Number:Power,,,SMAEnergyMeter;pEveryUpdate30s,Measurement;Power,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+Strom_Durchschnitt_Tagesverbrauch_Number_Result,Stromverbrauch Tagesdurchschnitt,Number:Energy,kWh,%.1f %unit%,Home;pEveryUpdate,Measurement;Energy,external-dependency,2026-10-14,live REST metadata; no state or credential retained
+Strom_Tagesbezug,Strom Tagesbezug,Number:Energy,kWh,%.1f %unit%,pEveryChange;PV_Plant,Measurement;Energy,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+Strom_Tageseinspeisung,Strom Tageseinspeisung,Number:Energy,kWh,%.1f %unit%,PV_Plant;pEveryChange,Measurement;Energy,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+Strom_Tagesverbrauch_Number_Result,Strom Tagesverbrauch,Number:Energy,kWh,%.0f %unit%,Home;pEveryChangeCron15min,Measurement;Energy,external-dependency,2026-10-14,live REST metadata; no state or credential retained
+TotalPowerConsumption,Gesamtstromverbrauch,Number:Power,W,%.0f W,pEveryUpdate30s;Inverter1;Watt_ALL,Measurement;Power,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+TotalPowerEarnings,Gesamt Stromverdienst,Number:Currency,,%.2f %unit%,pEveryUpdate;PV_Plant,Measurement;Info,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+Wallbox_Switch,Wallbox,Switch,,,Shelly_Wallbox;pEveryChange,Switch;Power,external-dependency,2026-10-14,live REST metadata; no state or credential retained
+Wallbox_Tagesverbrauch,Wallbox Tagesverbrauch,Number:Energy,,%.3f %unit%,Shelly_Wallbox;pEveryChange,Measurement;Energy,external-dependency,2026-10-14,live REST metadata; no state or credential retained
+inverter1ActivePower,PV Produktion,Number:Power,W,%.0f W,Inverter1;pEveryUpdate30s,Measurement;Power,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter1DC1Cur_input,DC Strom Eingang SO,Number:ElectricCurrent,A,%.3f A,Inverter1;pEveryUpdate30s,Measurement;Current,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter1DC1Volt_input,DC Spannung Eingang SO,Number:ElectricPotential,V,%.2f V,Inverter1;pEveryUpdate30s,Measurement;Voltage,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter1DC2Cur_input,DC Strom Eingang NW,Number:ElectricCurrent,A,%.3f A,Inverter1;pEveryUpdate30s,Measurement;Current,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter1DC2Volt_input,DC Spannung Eingang NW,Number:ElectricPotential,V,%.2f V,Inverter1;pEveryUpdate30s,Measurement;Voltage,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter1DailyYield,Tagesertrag,Number:Energy,kWh,%.0f %unit%,Inverter1;pEveryChangeCron,Measurement;Energy,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter1GridContactor,Netzrelais,String,,,pEveryChange;Inverter1,Status;Mode,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter1InternalTemperature,STP-8.0 Temperatur,Number:Temperature,°C,%.1f °C,Inverter1;pEveryChangeCron15min,Status;Temperature,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter1PowerA,DC Leistung Eingang SO,Number:Power,W,%.0f W,Inverter1;pEveryUpdate30s,Measurement;Power,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter1PowerB,DC Leistung Eingang NW,Number:Power,W,%.0f W,Inverter1;pEveryUpdate30s,Measurement;Power,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter1PowerDrawn,Leistung Bezug,Number:Power,W,%.0f W,Inverter1;pEveryUpdate30s,Measurement;Power,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter1PowerGridFeedIn,Leistung Einspeisung,Number:Power,W,%.0f W,Inverter1;pEveryUpdate30s,Measurement;Power,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter1Status,Geräte Status,String,,,Inverter1,Status;Mode,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter1TotalYield,Gesamtertrag,Number:Energy,kWh,%.0f kWh,Inverter1;pEveryChangeCron15min,Measurement;Energy,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter2BatCapacity,PV-Speicher Batteriekapazität,Number:Dimensionless,%,%.0f %%,pEveryChangeCron;Inverter2,Measurement;Info,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter2BatStateCharge,PV-Speicher Batterieladung,Number:Dimensionless,%,%d %unit%,pEveryChangeCron;Inverter2,Measurement;BatteryState,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter2BatTemp,BYD Batterie Temperatur,Number:Temperature,°C,%.1f °C,Inverter2;pEveryChangeCron15min,Status;Temperature,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter2BatteryStatus,Batterie Status,String,,,Inverter2,Status;Mode,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter2DayYield,Tagesverbrauch,Number:Energy,kWh,%.0f kWh,Inverter2;pEveryChangeCron,Measurement;Energy,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter2GridRelay,Netzrelais,String,,,Inverter2,Status;Mode,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter2InternalTemperature,SBS-3.7 Temperatur,Number:Temperature,°C,%.1f °C,Inverter2;pEveryChangeCron15min,Status;Temperature,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter2PreBatCharge,Momentane Batterieladung,Number:Power,W,%.0f W,Inverter2;pEveryUpdate30s,Measurement;Power,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter2PreBatDischarge,Momentane Batterieentladung,Number:Power,W,%.0f W,Inverter2;pEveryUpdate30s,Measurement;Power,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter2Status,Geräte Status,String,,,Inverter2,Status;Mode,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter2TotalYield,Gesamtertrag,Number:Energy,kWh,%.0f kWh,Inverter2;pEveryChangeCron15min,Measurement;Energy,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter3,SMA Sunny Boy 4.0,Group,,,PV_Plant,Inverter,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter3ActivePower,PV Produktion,Number:Power,,,inverter3;pEveryUpdate30s,Measurement;Power,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter3DC1Cur_input,DC Strom Eingang SW,Number:ElectricCurrent,,%.2f %unit%,inverter3;pEveryUpdate30s,Measurement;Current,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter3DC1Volt_input,DC Spannung Eingang SW,Number:ElectricPotential,,%.2f %unit%,inverter3;pEveryUpdate30s,Measurement;Voltage,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter3DailyYield,Tagesertrag,Number:Energy,,,inverter3;pEveryChangeCron,Measurement;Energy,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter3GridContactor,Netzrelais,String,,,inverter3;pEveryChange,Status;Mode,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter3InternalTemperature,SB-40 Temperatur,Number:Temperature,, %.1f %unit%,inverter3;pEveryChangeCron15min,Measurement;Temperature,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter3PowerA,DC Leistung Eingang SW,Number:Power,,,inverter3;pEveryUpdate30s,Measurement;Power,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter3Status,Geräte Status,String,,,inverter3,Status;Mode,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverter3TotalYield,Gesamtertrag,Number:Energy,,,inverter3;pEveryChangeCron15min,Measurement;Energy,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverterActivePower,PV Produktion,Number:Power,,,pEveryUpdate30s;PV_Plant,Measurement;Power,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverterDailyYield,Tagesertrag,Number:Energy,,,pEveryChangeCron;PV_Plant,Measurement;Energy,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+inverterTotalYield,Gesamtertrag,Number:Energy,,,PV_Plant;pEveryChangeCron15min,Measurement;Energy,legacy-pv-tree,2026-10-14,live REST metadata; no state or credential retained
+smahomemanager,sma-home-manager,Group,,,,Inverter,bridge-home-manager,2026-10-14,live REST metadata; no state or credential retained
+smahomemanager_Anlagenstatus,Anlagenstatus,String,,,smahomemanager;pEveryChange,Point,bridge-home-manager,2026-10-14,live REST metadata; no state or credential retained
+smahomemanager_Anlagenzeit,Anlagenzeit,Number:Time,s,JS(|(function(i){var m=String(i).trim().match(/^([0-9]+)(?:\.0+)?(?:\s+s)?$/);if(!m)return 'Unbekannt';var n=Number(m[1]);if(!Number.isSafeInteger(n)||n<0||n>=4294967295)return 'Unbekannt';var t=Java.type('java.time.Instant').ofEpochSecond(n).atZone(Java.type('java.time.ZoneId').of('Europe/Berlin'));return Java.type('java.time.format.DateTimeFormatter').ofPattern('dd.MM.yyyy HH:mm:ss z').format(t);})(input)):%s,smahomemanager;pEveryChange,Point,bridge-home-manager,2026-10-14,live REST metadata; no state or credential retained
+smahomemanager_Anlagenzeit_DateTime,Anlagenzeit (Datum/Uhrzeit),DateTime,,%1$td.%1$tm.%1$tY %1$tH:%1$tM:%1$tS,smahomemanager,Point,bridge-home-manager,2026-10-14,live REST metadata; no state or credential retained
+smahomemanager_Bezogene_Energie,Bezogene Energie,Number:Energy,kWh,,smahomemanager;pEveryChange,Point,bridge-home-manager,2026-10-14,live REST metadata; no state or credential retained
+smahomemanager_Eingespeiste_Energie,Eingespeiste Energie,Number:Energy,kWh,,smahomemanager;pEveryChange,Point,bridge-home-manager,2026-10-14,live REST metadata; no state or credential retained
+smahomemanager_Einspeiseleistung,Einspeiseleistung,Number:Power,W,,smahomemanager;pEveryChange,Point,bridge-home-manager,2026-10-14,live REST metadata; no state or credential retained
+smahomemanager_Netzbezugsleistung,Netzbezugsleistung,Number:Power,W,,smahomemanager;pEveryChange,Point,bridge-home-manager,2026-10-14,live REST metadata; no state or credential retained
+smahomemanager_Verfugbarkeit_der_Datenquelle,Verfügbarkeit der Datenquelle,String,,,smahomemanager,Point,bridge-home-manager,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof,sma-inv1-roof,Group,,,,Inverter,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof_Bezogene_Leistung,Bezogene Leistung,Number:Power,W,,smainv1roof;pEveryChange,Point,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof_Gesamtertrag,Gesamtertrag,Number:Energy,kWh,,smainv1roof;pEveryChange,Point,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof_Interne_Temperatur,Interne Temperatur,Number:Temperature,°C,,smainv1roof;pEveryChange,Point,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof_Leistung,Leistung,Number:Power,W,,smainv1roof;pEveryChange,Point,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof_Measurements_Currentainput,DC-Eingangsstrom,Number:ElectricCurrent,A,,smainv1roof;pEveryChange,Point,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof_Measurements_Currentbinput,DC-Eingangsstrom,Number:ElectricCurrent,A,,smainv1roof;pEveryChange,Point,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof_Measurements_Powerainput,DC-Eingangsleistung,Number:Power,W,,smainv1roof;pEveryChange,Point,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof_Measurements_Powerbinput,DC-Eingangsleistung,Number:Power,W,,smainv1roof;pEveryChange,Point,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof_Measurements_Voltageainput,DC-Eingangsspannung,Number:ElectricPotential,V,,smainv1roof;pEveryChange,Point,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof_Measurements_Voltagebinput,DC-Eingangsspannung,Number:ElectricPotential,V,,smainv1roof;pEveryChange,Point,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof_Netzeinspeiseleistung,Netzeinspeiseleistung,Number:Power,W,,smainv1roof;pEveryChange,Point,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof_Netzfrequenz,Netzfrequenz,Number:Frequency,Hz,,smainv1roof,Point,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof_NetzrelaisSchutz,Netzrelais/Schütz,String,,,smainv1roof;pEveryChange,Point,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof_Netzstrom_Phase_L1,Netzstrom Phase L1,Number:ElectricCurrent,A,,smainv1roof,Point,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof_Netzstrom_Phase_L2,Netzstrom Phase L2,Number:ElectricCurrent,A,,smainv1roof,Point,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof_Netzstrom_Phase_L3,Netzstrom Phase L3,Number:ElectricCurrent,A,,smainv1roof,Point,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof_Tagesertrag,Tagesertrag,Number:Energy,kWh,,smainv1roof;pEveryChange,Point,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof_Verfugbarkeit_der_Datenquelle,Verfügbarkeit der Datenquelle,String,,,smainv1roof,Point,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv1roof_Zustand,Zustand,String,,,smainv1roof;pEveryChange,Point,bridge-inverter1,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery,sma-inv2-battery,Group,,,,Inverter,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery_BatterieEntladeenergie,Batterie-Entladeenergie,Number:Energy,kWh,,smainv2battery,Point,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery_BatterieLadeenergie,Batterie-Ladeenergie,Number:Energy,kWh,,smainv2battery,Point,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery_Batterieentladeleistung,Batterieentladeleistung,Number:Power,W,,smainv2battery;pEveryChange,Point,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery_Batteriekapazitat,Batteriekapazität,Number:Dimensionless,%,,smainv2battery;pEveryChange,Point,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery_Batterieladeleistung,Batterieladeleistung,Number:Power,W,,smainv2battery;pEveryChange,Point,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery_Batterieladezustand,Batterieladezustand,Number:Dimensionless,%,,smainv2battery;pEveryChange,Point,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery_Batteriespannung,Batteriespannung,Number:ElectricPotential,V,,smainv2battery,Point,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery_Batteriestatus,Batteriestatus,String,,,smainv2battery;pEveryChange,Point,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery_Batteriestrom,Batteriestrom,Number:ElectricCurrent,A,,smainv2battery,Point,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery_Batterietemperatur,Batterietemperatur,Number:Temperature,°C,,smainv2battery;pEveryChange,Point,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery_Gehausetemperatur,Gehäusetemperatur,Number:Temperature,°C,,smainv2battery;pEveryChange,Point,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery_Geratezustand,Gerätezustand,String,,,smainv2battery;pEveryChange,Point,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery_Gesamtertrag,Gesamtertrag,Number:Energy,kWh,,smainv2battery;pEveryChange,Point,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery_Leistung,Leistung,Number:Power,W,,smainv2battery,Point,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery_Netzfrequenz,Netzfrequenz,Number:Frequency,Hz,,smainv2battery,Point,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery_Netzschaltzustand,Netzschaltzustand,String,,,smainv2battery;pEveryChange,Point,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery_Netzstrom_Phase_L1,Netzstrom Phase L1,Number:ElectricCurrent,A,,smainv2battery,Point,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery_Tagesertrag,Tagesertrag,Number:Energy,kWh,,smainv2battery;pEveryChange,Point,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv2battery_Verfugbarkeit_der_Datenquelle,Verfügbarkeit der Datenquelle,String,,,smainv2battery,Point,bridge-inverter2,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport,sma-inv3-carport,Group,,,,Inverter,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_Bezogene_Leistung,Bezogene Leistung,Number:Power,W,,smainv3carport;pEveryChange,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_DCEingangsleistung,DC-Eingangsleistung,Number:Power,W,,smainv3carport;pEveryChange,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_DCEingangsspannung,DC-Eingangsspannung,Number:ElectricPotential,V,,smainv3carport;pEveryChange,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_DCEingangsstrom,DC-Eingangsstrom,Number:ElectricCurrent,A,,smainv3carport;pEveryChange,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_DCLeistung_Eingang_B,DC-Leistung Eingang B,Number:Power,W,,smainv3carport,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_DCSpannung_Eingang_B,DC-Spannung Eingang B,Number:ElectricPotential,V,,smainv3carport,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_DCStrom_Eingang_B,DC-Strom Eingang B,Number:ElectricCurrent,A,,smainv3carport,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_Gesamtertrag,Gesamtertrag,Number:Energy,kWh,,smainv3carport;pEveryChange,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_Interne_Temperatur,Interne Temperatur,Number:Temperature,°C,,smainv3carport;pEveryChange,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_Leistung,Leistung,Number:Power,W,,smainv3carport;pEveryChange,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_Leistung_Phase_L1,Leistung Phase L1,Number:Power,W,,smainv3carport;pEveryChange,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_Leistung_Phase_L2,Leistung Phase L2,Number:Power,W,,smainv3carport,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_Leistung_Phase_L3,Leistung Phase L3,Number:Power,W,,smainv3carport,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_Netzeinspeiseleistung,Netzeinspeiseleistung,Number:Power,W,,smainv3carport;pEveryChange,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_Netzfrequenz,Netzfrequenz,Number:Frequency,Hz,,smainv3carport,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_NetzrelaisSchutz,Netzrelais/Schütz,String,,,smainv3carport;pEveryChange,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_Netzspannung_Phase_L1,Netzspannung Phase L1,Number:ElectricPotential,V,,smainv3carport;pEveryChange,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_Netzspannung_Phase_L2,Netzspannung Phase L2,Number:ElectricPotential,V,,smainv3carport,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_Netzspannung_Phase_L3,Netzspannung Phase L3,Number:ElectricPotential,V,,smainv3carport,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_Netzstrom_Phase_L2,Netzstrom Phase L2,Number:ElectricCurrent,A,,smainv3carport,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_Netzstrom_Phase_L3,Netzstrom Phase L3,Number:ElectricCurrent,A,,smainv3carport,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_Tagesertrag,Tagesertrag,Number:Energy,kWh,,smainv3carport;pEveryChange,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_Verfugbarkeit_der_Datenquelle,Verfügbarkeit der Datenquelle,String,,,smainv3carport,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained
+smainv3carport_Zustand,Zustand,String,,,smainv3carport;pEveryChange,Point,bridge-inverter3,2026-10-14,live REST metadata; no state or credential retained

@@ -1,6 +1,7 @@
 """Generic FC03/FC04 reader with profile-defined decoding and identity gate."""
 
 import asyncio
+import hashlib
 import math
 import struct
 import time
@@ -201,6 +202,9 @@ class ModbusReader:
                     if p["id"] in identity_refs:
                         values[p["id"]] = decode(blocks[p["poller"]], p)
                 verify_identity(self.profile, values, self.settings.expected_serial)
+                self.identity_fingerprint = hashlib.sha256(
+                    str(values[self.profile["identity"]["serial"]]).encode()
+                ).hexdigest()
                 now, selected = time.monotonic(), set()
                 for poller in self.pollers:
                     if now >= self.next_due.get(poller["id"], 0):

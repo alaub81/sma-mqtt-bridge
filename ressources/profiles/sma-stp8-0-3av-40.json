@@ -594,5 +594,13 @@
     "model": "model",
     "serial": "serial",
     "firmware": "firmware"
+  },
+  "plant": {
+    "evidence": "Existing model-specific AC output and yield read mappings. Whole-kWh yields; see docs/REGISTER_VALIDATION.md.",
+    "pv": {
+      "activepower": "measurements/active-power",
+      "dayyield": "measurements/day-yield",
+      "totalyield": "measurements/total-yield"
+    }
   }
 }

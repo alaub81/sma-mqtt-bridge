@@ -610,6 +610,100 @@ unit metadata and remove any duplicate Wh-to-kWh link conversion. Follow the
 [history migration guide](../openHAB/openHAB.md#wallbox-total-energy-migration-to-kwh)
 for retained values and persistence before deployment. Session-energy scaling is unchanged.
 
+## Plant aggregates and energy state
+
+Plant calculations are optional, read-only and disabled by default. Keep the
+existing adapter enable flags, addresses, identity guards and command gates.
+After installing a version containing this feature, this minimal addition enables
+the three-inverter installation described in the migration inventory:
+
+```dotenv
+SMAB_PLANT_ENABLED=true
+SMAB_INVERTER1_ROLE=pv
+SMAB_INVERTER2_ROLE=battery
+SMAB_INVERTER3_ROLE=pv
+SMAB_PLANT_GRID_SOURCE=home-manager
+```
+
+Home Manager and the participating inverters must already be independently
+enabled. A role never activates device I/O. Host profile overrides must explicitly
+contain the [contribution mappings](PROFILES.md#plant-contribution-mappings);
+old overrides without them fail validation before any connection. No extra
+device polling or InfluxDB credentials are required.
+
+| ENV | Default | Contract |
+| --- | --- | --- |
+| `SMAB_INVERTER<n>_ROLE` | `none` | `none`, `pv`, `battery` or `hybrid`; applies to any numbered inverter slot. |
+| `SMAB_PLANT_ENABLED` | `false` | Boolean; independently activates local calculations. |
+| `SMAB_PLANT_HOMIE_ID` | `sma-plant` | Valid unique Homie device ID. |
+| `SMAB_PLANT_GRID_SOURCE` | `home-manager` | One enabled grid source; alternatively an enabled inverter slot with complete verified `grid` mappings. |
+| `SMAB_PLANT_UPDATE_INTERVAL_SECONDS` | `1` | Positive seconds; maximum wait for expiry/calendar/checkpoint checks. New source receipts/errors wake calculation immediately. |
+| `SMAB_PLANT_MAX_SKEW_SECONDS` | `240` | Positive seconds, at most 3600; maximum spread of contributing observation times, in addition to individual freshness. |
+| `SMAB_PLANT_BOUNDARY_TOLERANCE_SECONDS` | `240` | Positive seconds, at most 900; bounded uncertainty for real counter snapshots around local midnight. No extrapolation. |
+| `SMAB_PLANT_CHECKPOINT_INTERVAL_SECONDS` | `300` | Positive seconds; regular durable energy snapshot/publication cadence. Initial baselines, boundary transitions and resets are saved immediately. |
+| `SMAB_PLANT_INITIAL_CONSUMPTION_KWH` | `0` | Finite nonnegative number; verified opening house energy for a new common-baseline ledger. Changing it requires reconciliation of existing state. |
+| `SMAB_PLANT_DIAGNOSTICS_ENABLED` | `true` | Boolean; optional source receipt diagnostics. Per-value coverage/date/boundary diagnostics remain available. |
+
+JSON uses `plant.enabled`, `homieId`, `gridSource`, `updateIntervalSeconds`,
+`maxSkewSeconds`, `boundaryToleranceSeconds`, `checkpointIntervalSeconds`,
+`initialConsumptionKwh`, `diagnosticsEnabled`; each inverter gains `role`.
+The normal defaults < optional JSON < explicit ENV precedence applies.
+Calendar accounting reuses `SMAB_TIMEZONE`, default `Europe/Berlin`.
+
+The [topic table](PV_AGGREGATION_DESIGN.md#implemented-homie-layout) documents the
+compact wire IDs. PV/storage sum topics are declared only with at least two
+configured enabled contributors in that group. A failed contributor does not
+reduce the sum's membership or become zero. Household power is computed even with
+one PV/storage contributor; `consumptionwithcharging` preserves the distinct old
+power balance including battery charging. Negative household results and negative
+separate directional flows are unavailable rather than clamped. Current PV active
+power remains signed. Inverter/PV/storage units and hybrid separation are validated.
+
+Power sums and direct PV/storage counter sums update from received source samples;
+durable grid/house balances publish only committed snapshots. Their actual oldest
+input time is retained, not renewed on calculation or MQTT reconnect. All required
+inputs must remain fresh and within skew limits; last-known retained values remain
+distinct from current validity. Existing per-device topics are unchanged.
+
+Counter accounting persists `energy-balances.json` under `SMAB_STATE_DIR`, normally
+`/data/sma-mqtt-bridge/state/energy-balances.json` in volume `data_smab_state`.
+It holds UTC snapshot/start times, local accounting dates, counter baselines,
+confirmed values and configuration/hardware fingerprints. It contains no account
+credentials, tokens, addresses or raw serials. Saves use atomic replacement with
+file/directory sync; checkpoint publication follows successful persistence. The
+topic manifest and command journals retain their existing independent files.
+
+The first partial day is unavailable, not zero. Subsequent full days require
+bounded observations around local midnight, including 23/25-hour DST days. A
+midnight-spanning outage gives `gap`; do not interpret retained yesterday values as
+today's measurement. `reset` blocks affected lifetime accounting until manual
+reconciliation; daily accounting can start again at a covered next midnight.
+Backward wall-clock observations give `clock-error`. Nonmonotone derived house
+energy gives `inconsistent`, with no fabricated zero or lower confirmed counter.
+
+Changed configuration/membership/timezone or hardware produces
+`configuration-changed` without overwriting the old baselines; current power sums
+continue independently. A corrupt/unreadable/symlink/oversize state file stops
+startup before connections. Preserve the file for reconciliation. Starting a new
+ledger deliberately requires stopping the service, backing up the old file and
+choosing a verified opening value; keep the volume, manifests and command journals.
+
+`diagnostics/importdaystatus`, `exportdaystatus`, `houseenergystatus`, `localdate`,
+`batteryenergyboundary`, `importenergytime`, `exportenergytime`, `houseenergytime`
+and `houseenergystart` expose coverage and scope. `diagnostics/validproperties`
+lists the currently usable measurement topic paths, including freshness checks. Values can include `partial`,
+`complete`, `gap`, `reset`, `clock-error`, `configuration-changed`, `inconsistent`,
+`unavailable`, `invalid`, `init` and `unsupported-battery-boundary`. `complete` means
+covered within configured sampling tolerance, not an exact midnight meter read.
+
+The bundled Storage counter mapping deliberately remains `energyBoundary=unverified`.
+Its original battery counters and requested power calculations remain available,
+but house daily/lifetime kWh has no value and reports `unsupported-battery-boundary`.
+Do not change that declaration to `ac` without matching evidence. Verified synthetic
+AC fixtures exercise the complete accounting path offline. Whole-kWh PV counters
+also limit balance precision; finer source registers remain a separate validation.
+The feature has not been deployed or live accepted by these tests.
+
 ## Manual portal read refresh
 
 When `SMAB_PORTAL_ENABLED=true`, Homie `portal/refresh/set` accepts the exact

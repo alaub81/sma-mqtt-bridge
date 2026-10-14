@@ -10,8 +10,10 @@ in [CONTEXT.md](CONTEXT.md); active tasks and question references in
 
 Andreas requested the v0.3.11 release after the performance/hardening review and
 resource-recorder extension. Publication is complete: hosted CI/security and
-both architectures passed. Andreas performs deployment and starts
-the voluntary overnight comparison; see [release notes](RELEASES.md) and
+both architectures passed. Andreas supplied the completed voluntary 24-hour post-update comparison on
+2026-10-14; see [the analysis](RESOURCE_SOAK_ANALYSIS_2026-10-14.md). The recording
+shows stable sampled health and resources but does not record the installed
+version. For deployment and recorder procedure, see [release notes](RELEASES.md) and
 [the recorder procedure](OPERATIONAL_ACCEPTANCE.md#bounded-linux-host-resource-recording).
 Public v0.3.8–v0.3.10 workflows have completed successfully. The last documented
 target-host version here is v0.3.7; do not infer later deployment from publication.
@@ -37,6 +39,18 @@ receipt, replace missing values with zero or loosen uncertainty guards. Decide
 separately whether to stop/archive timestamp diagnostics after the investigation.
 
 ## 3. Finish openHAB and history continuity
+
+The optional [plant aggregation implementation](PV_AGGREGATION_DESIGN.md) now has
+explicit per-inverter PV/storage/hybrid roles, profile contribution mappings,
+SMAB_TIMEZONE and a separate Homie plant identity. The 2026-10-14 live inventory
+and comparison manifest provide current Item names and rule/query dependencies.
+PV/storage sums, current household power and durable counter balances are
+implemented locally and disabled by default. Deploy a separately tested build
+when requested, activate configured roles, and compare values in parallel.
+Finer PV counter units and verified AC battery measurement boundaries remain
+prerequisites for accepting household counter accounting.
+Inventory Grafana/InfluxDB datasource/schema before building the later old/new
+comparison dashboard; preserve existing histories and control ownership.
 
 Complete the 100-row [migration ledger](migration-coverage.csv), remaining legacy
 Item associations, maps, offsets, rules, UI, persistence and midnight/DST behavior.

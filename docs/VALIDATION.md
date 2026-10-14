@@ -1371,3 +1371,59 @@ Each enabled rule rejected a synthetic erroneous snippet using the actual projec
 configuration. Complete lint over 144 public files, all 256 working-tree offline
 tests, Compose parity with overrides and diff hygiene passed. This lint change
 has no production runtime edit, publication or deployment.
+
+## Read-only PV inventory and aggregation design, 2026-10-14
+
+The [plant design and supplementary CSVs](PV_AGGREGATION_DESIGN.md) record live
+Item metadata, channel-link identities, rule dependencies and four query methods.
+The 129 scoped entries contain 51 old PV-tree entries including groups, four new
+Homie device groups with 70 non-group Items, and four external dependencies.
+All 109 listed rule code views were read; 29 relevant rules recorded, including
+five additional presence/season/controller dependencies outside obvious PV names.
+Literal-reference extraction does not prove dynamic-name/imported-code coverage.
+
+All 70 new links and the 38 corresponding old links were inspected through UI.
+The latter remain 34 Modbus and four SMA Energy Meter binding links. Comparison
+manifest identities match observed new channels and current Item types; 38 pairs
+are existing, eight aggregate destinations proposed, four old-only and 32 new-only.
+This is source/mapping evidence, not persisted time-series agreement, an installed
+Grafana dashboard, aggregate runtime acceptance or complete openHAB migration.
+
+CSV column structure, unique Item identities, references, pair type/topic matches,
+counts and enabled/disabled rule states passed consistency checks. Berlin calendar
+examples for 2026-03-29 and 2026-10-25 confirmed 23/25-hour local days; no daily
+runtime has been implemented. All 275 existing offline regressions passed with
+local test-server permission. No device/broker/portal action or target-host change.
+Private thresholds, tariffs, endpoints, credentials, states and raw scripts are
+excluded from saved inventories; original private references remain unchanged.
+
+## Optional plant calculations, 2026-10-14
+
+The locally implemented feature adds explicit generic contributor roles,
+profile-defined mappings, complete PV/storage sums, both legacy household power
+balances and persistent grid/house counter accounting. It is disabled by default.
+No polling registers, live device settings, openHAB Items/rules/links or histories
+were changed. The published v0.3.11 does not contain this feature.
+
+All 310 offline regressions passed on the host and independently inside ARM64
+and AMD64 images, including 35 new plant/ledger tests. Container tests used
+network isolation and synthetic fixtures. Coverage includes unit/profile/role
+validation before connection, hybrid overlap rejection, fixed membership,
+single-member suppression, valid zero, invalid/stale/skewed contributions,
+oldest observation age, retained/current validity, both household power formulas,
+UTC/local dates, Berlin 23/25-hour days, partial starts, midnight gaps, resets,
+clock reversal, restart, configuration/hardware changes and durable checkpoint
+publication. State corruption, symlinks, size limits and persistence failures are
+checked; shutdown is tested with mocked sources and publisher.
+
+Full lint, Compose parity including overrides and diff hygiene passed. Both local
+images report 0.3.11-dev.1+plant; default configuration reports zero enabled sources.
+Image exclusions for private configuration, Git metadata, pip and ensurepip were
+verified. No base-image, dependency, publication or deployment change occurred.
+
+The bundled battery energy boundary remains unverified. Household daily/lifetime
+kWh is unavailable with unsupported-battery-boundary; verified synthetic AC
+fixtures test the full software path without accepting real device semantics.
+Whole-kWh PV counters limit precision. Live value comparison, midnight/restart
+acceptance, finer counters and battery AC evidence remain pending. Existing
+Influx power integrals and new counter deltas need a measured parallel comparison.

@@ -95,6 +95,114 @@ The Home Manager has four linked Items: `SMAEnergyMeter_BezogeneEnergie` (`energ
 
 The active consumption rule calls `present()`. Its separate `average()` function is not called by the inspected script. Do not mistake that unused function for the active calculation. Likewise, `Tagesstromverbrauch` is disabled and references `DailyEnergyConsumption`, for which the Item search returned no result; it is not the active house-day calculation.
 
+### Requested bridge calculations: feasibility review, 2026-10-14
+
+Andreas requested daily grid import, daily grid export, daily household energy
+and household total consumption in the bridge where practical. This review uses
+the existing MainUI inventory above and bundled profiles; it adds no runtime
+calculation or migration acceptance.
+
+| Requested value | Available bridge inputs | Remaining equivalence decision |
+| --- | --- | --- |
+| Daily grid import | Inverter1 grid-import power in W; Home Manager import counter in kWh | Existing calculation integrates persisted inverter1 power. A Home Manager midnight counter difference is an alternative method, not an equivalent implementation established by this review. |
+| Daily grid export | Inverter1 grid-export power in W; Home Manager export counter in kWh | Current openHAB formula, Item and persistence source are not recorded in the inspected baseline; obtain them before selecting integration or counter differences. |
+| Daily household energy | Inputs for the existing household-power balance | Current result integrates persisted `TotalPowerConsumption` with 10-second mean windows in InfluxDB. An online integrator has different sampling and outage behavior and cannot recover historical gaps without additional evidence/data. |
+| Household total consumption | PV1/PV3 active power, Storage charge/discharge power, inverter1 grid-import/export power, all in W | Confirm that the requested label means instantaneous `TotalPowerConsumption`, rather than cumulative energy or `PowerConsumptionBatIncl`. Preserve the existing choice of grid source and negative-result policy. |
+
+The smallest prospective runtime step is the stateless household-power balance,
+once its Item/meaning is confirmed. Require enabled source roles, matching units
+and fresh valid inputs; do not use last-known retained MQTT values as current
+inputs, substitute missing inputs with zero, or clamp a negative balance to zero.
+The existing openHAB rule skips negative results and keeps its prior value;
+publication and internal freshness must be considered separately. Measurement
+skew and the existing signed-value versus legacy-transform differences need a
+focused comparison before switching ownership.
+
+Daily calculations require an explicit `Europe/Berlin` calendar boundary,
+including 23/25-hour DST days, and a documented method per value. A counter-based
+method needs persisted date/baselines and identity/reset guards; absent midnight
+baselines, first starts partway through a day and outages across midnight must
+not invent a complete-day result. A power integrator must define sample gaps,
+midnight splitting and restart continuity. Existing per-inverter daily yields
+alone do not establish household daily energy because battery and grid flows
+also contribute. Fixed historical counter offsets cancel only for unchanged
+counter baselines; existing openHAB offsets and histories stay in place.
+
+Before implementation, obtain the four current rules/queries and exact Item
+names/units, then choose the compatible method and test midnight, DST, resets,
+missing/stale samples and restart behavior. Publish any new measurements in
+parallel first and preserve existing Item identities, rules and persistence until
+comparison is accepted. Official background: [openHAB persistence](https://www.openhab.org/docs/configuration/persistence)
+and [units of measurement](https://www.openhab.org/docs/concepts/units-of-measurement.html).
+
+### Counter-based energy design clarified, 2026-10-14
+
+Andreas clarified that all four requested outputs are energy counters in kWh,
+including household total consumption. Exact reproduction of the old InfluxDB
+queries is not requested: design a new calculation from available cumulative
+device counters first. The preceding feasibility table preserves the historical
+comparison; its instantaneous-household-power assumption and request for all old
+queries no longer define this new feature. Implementation remains deferred while
+the calculation is discussed.
+
+For an aligned interval, define each delta as `counter(end) - counter(start)`:
+
+- Daily grid import: Home Manager import counter now minus its midnight baseline.
+- Daily grid export: Home Manager export counter now minus its midnight baseline.
+- Household energy candidate: PV1 delta + PV3 delta + grid import delta
+  - grid export delta + battery discharge delta - battery charge delta.
+- Daily household energy uses the same balance from local midnight; cumulative
+  household energy uses a shared commissioning baseline and an optional verified
+  opening reading, with persisted continuity across restarts.
+
+For example, 20 kWh PV, 6 kWh imported, 8 kWh exported, 5 kWh battery discharge
+and 7 kWh battery charge give `20 + 6 - 8 + 5 - 7 = 16 kWh`, conditional on matching
+AC measurement boundaries. Do not sum unrelated lifetime counters directly:
+their initial dates, offsets and stored battery energy need not align. The
+Storage yield counter is not a third PV generator and must not be counted twice.
+Wallbox and other consumers downstream of the household meter already contribute
+to household energy; adding their counters again would double-count them.
+
+Two evidence gaps limit the household formula. Published PV yields currently
+have whole-kWh resolution; float output would not create finer source precision.
+Previously audited Wh-resolution alternatives require independent unit/live
+verification before adding mappings. Battery counters 31397/31401 have verified
+Wh encoding but their AC/DC boundary remains unverified; the official Storage
+V13 rows only label them Battery charge/discharge. Do not certify the candidate
+as AC household consumption or infer a loss correction from the cumulative return
+ratio. Confirm compatible Storage AC energy flows, or assess a separately labelled
+power-integrated alternative, before choosing the final household method.
+
+Grid-counter differences are the first independently supported part. Calendar
+baseline, reset, freshness and missing-data rules from the preceding review still
+apply. A first partial day must be labelled partial/unavailable, and an outage
+across midnight cannot be assigned exactly to separate days without boundary data.
+The later optional implementation below uses existing observations without new polling.
+
+### Current PV inventory and aggregation implementation, 2026-10-14
+
+The requested current read-only installation inventory is now available in
+[PV_AGGREGATION_DESIGN.md](PV_AGGREGATION_DESIGN.md), with Item, Homie-link, rule,
+query and comparison CSVs. It includes the previously missing
+`Strom_Tageseinspeisung` Item/query and confirms that existing
+`TotalPowerConsumption` is W. The newly requested household lifetime counter
+remains kWh; Andreas additionally requests current household power and generic
+PV/storage sums. Explicit contributor roles and a separate logical Homie plant
+device are implemented locally, disabled by default, and await deployment.
+See [configuration](CONFIGURATION.md#plant-aggregates-and-energy-state) for settings,
+coverage diagnostics and energy-balances.json recovery. Profile host overrides
+need explicit contribution mappings. Existing Items, links, rules and persistence
+remain active until each comparison passes. Household kWh is deliberately blocked
+with the bundled unverified battery measurement boundary; synthetic AC tests
+establish software behavior only.
+
+All 109 listed rules were read and 29 relevant rules recorded. This updates
+observed dependencies without accepting dynamic-name/imported-code coverage,
+controller equivalence, migration or measurement agreement. Existing maps,
+private offsets, UI and persistence must still be preserved. The original
+100-row ledger stays intact; the supplementary comparison manifest prepares
+future Grafana validation rather than claiming a completed dashboard.
+
 The Wallbox charging-state rule infers `Wallbox_Switch` from a Shelly power threshold. That switch also determines which days enter the household consumption average. Preserve this dependency; do not automatically substitute the eCharger's charging enum without checking equivalence.
 
 Smart-Grid rules consume exact mapped contactor strings (`Geschlossen (Cls)` / `Offen (Opn)`), battery SOC, PV/feed-in/consumption history and forecasts. They control the heat pump and other consumers. Their complete timer, seasonal threshold and trigger audit remains pending. These rules should initially stay in openHAB with their existing source Item names; supplying measurements through Homie does not require moving household control into the bridge.

@@ -139,6 +139,20 @@ independent availability. Commands are never replayed during recovery.
 
 ## openHAB continuity and repository maintenance
 
+The [2026-10-14 plant aggregation design](PV_AGGREGATION_DESIGN.md) implements an optional
+separate logical Homie plant device for PV/storage sums, current household power
+and daily/lifetime energy. Explicit configured roles and file-based contribution
+mappings must prevent grid duplicates and hybrid PV/storage double-counting.
+The existing validated SMAB_TIMEZONE controls local calendar boundaries; freshness
+remains monotonic. Atomic energy-balances.json checkpoints in the existing state
+volume preserve counter baselines; only durable snapshots are published.
+Missing inputs never become zero or partial sums. Single-member groups retain
+only their device topics. The bundled battery energy boundary is unverified,
+so household kWh remains unavailable until matching AC evidence exists.
+Implementation is offline tested; deployment and live acceptance remain pending.
+The current Item/rule/query inventory and old/new comparison manifest supplement
+the historical migration ledger without changing current openHAB ownership.
+
 Keep existing Items, maps, offsets, rules, units, UI dependencies and persistence
 until each [migration-ledger](migration-coverage.csv) row is accepted.
 [MIGRATION.md](MIGRATION.md) records the existing calculations, InfluxDB day boundaries,

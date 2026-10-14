@@ -64,6 +64,47 @@ Its schema has `schemaVersion`, `id`, `kind`, `evidence`, `identity`, `pollers`,
 
 `inventory` defines the assignment table start, number of four-register slots (at most 245), and positive `intervalSeconds`. `delegated` holds reusable poller/property templates without a fixed unit ID. Only assigned units 3–247 are queried, using the freshly read table; duplicate units follow SMA's first-slot rule. Both mapping sections use the documented numeric/enum/scaling/sentinel rules above. Unit 2 intervals can be explicitly overridden; identity, inventory and delegated intervals remain profile-defined. All mappings are read-only, including source registers documented RW. See [coverage and acceptance](HOME_MANAGER_MODBUS.md).
 
+## Plant contribution mappings
+
+An optional inverter-profile `plant` object supplies model-independent semantic
+references for explicit configured roles. Existing profiles without it remain
+usable with role `none`; participating roles require complete enabled mappings.
+No device activation, role or physical measurement boundary is inferred from
+the profile's model name.
+
+```json
+{
+  "evidence": "Reference establishing these AC PV contributions",
+  "pv": {
+    "activepower": "measurements/active-power",
+    "dayyield": "measurements/day-yield",
+    "totalyield": "measurements/total-yield"
+  }
+}
+```
+
+`pv` requires the three fields above, in W/kWh/kWh respectively. `battery`
+requires `presbatcharge`, `presbattdischarge`, `batterychargeenergy`,
+`batterydischargeenergy` references in W/W/kWh/kWh, plus `energyBoundary` of
+`unverified`, `ac` or `dc`. A confirmed `ac`/`dc` boundary requires nonempty
+`energyEvidence`. The bundled SBS references the existing four battery properties
+and keeps the boundary unverified; a property name/unit alone does not prove AC.
+House energy uses only confirmed compatible AC storage counters, or no storage.
+
+Optional `grid` requires distinct `powerimport`, `powerexport`, `energyimport`,
+`energyexport` references in W/W/kWh/kWh. Select that inverter explicitly as the
+single plant grid source. Home Manager's existing four meter properties are
+selected through `gridSource=home-manager` instead. Directional flows and all
+energy counters must be nonnegative; signed PV AC power is preserved.
+
+Every reference names an existing numeric `node/property`, with matching unit.
+Unknown, duplicate, overlapping and filtered selected references fail before
+connections. `hybridSeparated=true` additionally requires both PV and battery
+groups with distinct independently verified contributions. Do not map a hybrid's
+combined AC output as PV and add its battery output again. Host files provide
+new mappings without model-specific adapter code; no new register read is added
+by a contribution reference alone. See [plant configuration](CONFIGURATION.md#plant-aggregates-and-energy-state).
+
 ## Channel groups
 
 `requiredForReady=true` marks a critical fresh value for source availability. All enabled marked

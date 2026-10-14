@@ -67,6 +67,7 @@ class MQTT(SafeRepr):
 
 @dataclass(frozen=True, repr=False)
 class Inverter(SafeRepr):
+    role: str = "none"
     ready_properties: str = ""
     advanced_channels_enabled: bool = True
     diagnostics_enabled: bool = True
@@ -169,6 +170,19 @@ class Commands(SafeRepr):
 
 
 @dataclass(frozen=True, repr=False)
+class Plant(SafeRepr):
+    enabled: bool = False
+    homie_id: str = "sma-plant"
+    grid_source: str = "home-manager"
+    update_interval_seconds: float = 1.0
+    max_skew_seconds: float = 240.0
+    boundary_tolerance_seconds: float = 240.0
+    checkpoint_interval_seconds: float = 300.0
+    initial_consumption_kwh: float = 0.0
+    diagnostics_enabled: bool = True
+
+
+@dataclass(frozen=True, repr=False)
 class Config(SafeRepr):
     runtime: Runtime
     mqtt: MQTT
@@ -179,6 +193,7 @@ class Config(SafeRepr):
     commands: Commands
     profiles: dict
     interval_overrides: frozenset
+    plant: Plant = Plant()
 
     @property
     def has_sources(self):
@@ -272,6 +287,8 @@ def section(defaults, data, env, prefix, recognized):
                 "keepalive_seconds",
             ):
                 minimum = 1
+            elif isinstance(defaults, Plant) and field.name == "initial_consumption_kwh":
+                minimum = 0
             elif field.name == "timestamp_diagnostics_max_bytes":
                 minimum, maximum = 4096, 16777216
             elif not (
@@ -383,6 +400,7 @@ def load_config(environ=None, bundled_dir=None):
         "echarger",
         "portal",
         "commands",
+        "plant",
     }:
         raise ConfigError("Unknown JSON configuration section")
     if "schemaVersion" in data and (
@@ -399,6 +417,7 @@ def load_config(environ=None, bundled_dir=None):
     ec = section(ECharger(), data.get("echarger", {}), env, "SMAB_ECHARGER_", recognized)
     portal = section(Portal(), data.get("portal", {}), env, "SMAB_PORTAL_", recognized)
     commands = section(Commands(), data.get("commands", {}), env, "SMAB_COMMAND_", recognized)
+    plant = section(Plant(), data.get("plant", {}), env, "SMAB_PLANT_", recognized)
     # Global enable flag has the established plural name.
     recognized.add("SMAB_COMMANDS_ENABLED")
     if "SMAB_COMMAND_ENABLED" in env:
@@ -451,6 +470,8 @@ def load_config(environ=None, bundled_dir=None):
             profiles[slot] = profile
             default = replace(default, **profile["protocol"]["defaults"])
         device = section(default, device_data, env, prefix, recognized)
+        if device.role not in ("none", "pv", "battery", "hybrid"):
+            raise ConfigError("Inverter role must be none, pv, battery or hybrid")
         if "pollIntervalSeconds" in device_data or prefix + "POLL_INTERVAL_SECONDS" in env:
             intervals.add(slot)
         inverters.append(device)
@@ -467,6 +488,10 @@ def load_config(environ=None, bundled_dir=None):
     except ValueError, ZoneInfoNotFoundError:
         raise ConfigError("Invalid SMAB_TIMEZONE") from None
     ids = [i.homie_id for i in inverters] + [hm.homie_id, ec.homie_id]
+    if not ID.fullmatch(plant.homie_id):
+        raise ConfigError("Invalid plant Homie ID")
+    if plant.enabled:
+        ids.append(plant.homie_id)
     if any(not ID.fullmatch(i) for i in ids) or len(ids) != len(set(ids)):
         raise ConfigError("Invalid or duplicate Homie device IDs")
     if not ID.fullmatch(mqtt.homie_prefix) or not mqtt.client_id:
@@ -474,7 +499,16 @@ def load_config(environ=None, bundled_dir=None):
     if bool(mqtt.tls_cert_file) != bool(mqtt.tls_key_file):
         raise ConfigError("MQTT client certificate and key must be configured together")
     config = Config(
-        runtime, mqtt, tuple(inverters), hm, ec, portal, commands, profiles, frozenset(intervals)
+        runtime,
+        mqtt,
+        tuple(inverters),
+        hm,
+        ec,
+        portal,
+        commands,
+        profiles,
+        frozenset(intervals),
+        plant,
     )
     mqtt_needed = config.has_sources or (Path(runtime.state_dir) / "mqtt-topics.json").exists()
     if mqtt_needed:
@@ -549,4 +583,9 @@ def load_config(environ=None, bundled_dir=None):
         raise ConfigError("Portal commands require the enabled portal adapter")
     if commands.enabled and not (ec.commands_enabled or portal.commands_enabled):
         raise ConfigError("Global commands require a supported per-device command gate")
-    return replace(config, mqtt=mqtt, echarger=ec, portal=portal)
+    config = replace(config, mqtt=mqtt, echarger=ec, portal=portal)
+    if plant.enabled:
+        from .plant import plant_plan
+
+        plant_plan(config)
+    return config

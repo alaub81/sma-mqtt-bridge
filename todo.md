@@ -348,3 +348,101 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
   ohne externes Containernetzwerk gestartet: jeweils exakt Version 0.3.11.
 - Release-Aufgabe erledigt. Andreas deployt und startet die neue Aufzeichnung;
   kein Zielhostzugriff oder Live-CPU-/HDD-Vergleich durch Codex durchgeführt.
+
+## 2026-10-14 – Laufender Vergleich und Berechnungsinventar
+
+- Andreas bestätigt den laufenden Ressourcenrecorder auf dem Zielhost. Letzte
+  gelieferte Stichprobe: 14.10. 19:45:04 Europe/Berlin, 21 h 59 min 5 s erfasst,
+  running/healthy, Neustartzähler 0, Segment 1. Abschluss voraussichtlich gegen
+  21:46 Uhr; vollständige Datei/Log und Gesamtauswertung noch offen. Recorder-
+  Dateiname bestätigt nicht die tatsächlich installierte Bridge-Version.
+- Wartezeit für Machbarkeitsprüfung der vier gewünschten Berechnungen genutzt:
+  vorhandene MainUI-/Migrationsbefunde, Profile und Runtime-Struktur abgeglichen,
+  offizielle openHAB-Persistence-Dokumentation konsultiert. Grundmesswerte liegen
+  vor; Hausleistung ist der kleinste mögliche zustandslose Schritt.
+- Tagesbezug und Haus-Tagesverbrauch integrieren bisher InfluxDB-Zeitreihen;
+  Home-Manager-Zählerdifferenzen wären ein Methodenwechsel. Tageseinspeisungs-
+  Formel und genaue Bedeutung von Hausgesamtverbrauch fehlen im Bestandsinventar.
+  Aktuelle vier Regeln/Abfragen sowie Itemnamen/Units bei Andreas angefragt.
+- Tagesgrenzen, Sommerzeit, Neustarts, fehlende Mitternachtsbasis, Ausfälle,
+  Zählerwechsel und Frische als Anforderungen festgehalten. Keine Formeln oder
+  Nullwerte geraten, keine bestehenden Regeln/Historien ersetzt. Laufender
+  Zielhosttest unberührt; keine Runtime-/Deploymentänderung.
+- Validierung: vollständiger Linter über 150 öffentliche Dateien und Diff-Prüfung
+  bestanden; alle 275 Offline-Tests erfolgreich. Erster Sandboxlauf scheiterte
+  ausschließlich an vier gesperrten localhost-Bind-Prüfungen, Wiederholung mit
+  erlaubten lokalen Testservern bestanden.
+- Präzisierung im Anschluss: Hausgesamtverbrauch ausdrücklich kWh, keine
+  momentane Leistung. Alte vier Regeln/Abfragen sind keine Voraussetzung für die
+  neue Zählerberechnung; diese Frage ist damit erledigt. Andreas möchte zunächst
+  die Rechnung besprechen. Entwurf: Home-Manager-Tagesdifferenzen und Hausbilanz
+  aus gemeinsamen PV-/Netz-/Batterie-Zählerdifferenzen. Ungeklärte AC/DC-Messgrenze
+  der Batterie und bisher ganzzahlige PV-kWh begrenzen die Hausbilanz; Gesamtwert
+  braucht gemeinsamen Startpunkt oder geprüften Anfangsstand. Noch kein Code.
+
+## 2026-10-14 – Aktuelles PV-Inventar und Anlagensummen entworfen
+
+- Andreas beauftragt lesendes Inventar der PV-Items/-Regeln als Grundlage für
+  Bridge-Summen und ein späteres Grafana-Alt-/Neu-Dashboard. Zusätzlich aktuelle
+  Hausleistung in W angefragt; vier Energieziele bleiben kWh. Zeitzonenfrage
+  geklärt: bestehendes SMAB_TIMEZONE wiederverwenden, lokale Kalendertage/DST.
+- Nach Zertifikatsblockade im In-App-Browser von Andreas ausdrücklich genannte
+  HTTP-Adresse verwendet. MainUI und öffentliche Item-Metadaten lesend erfasst;
+  geschützte Regeln/Links ausschließlich in der vorhandenen UI-Sitzung gelesen.
+  Keine Zertifikatsprüfung abgeschaltet, keine Regeln ausgeführt/gespeichert.
+- 129 bereinigte Inventareinträge: bisheriger PV-Baum mit 51 Einträgen inklusive
+  Gruppen, vier neue Geräte-Gruppen mit 70 Homie-Items und vier externe
+  Abhängigkeiten. Alle 109 aufgelisteten Regelcodeansichten gelesen, 29 relevante
+  Regeln inklusive Forecasts, Smart-Grid, Anwesenheit, Fenster-/Saisonabhängigkeiten
+  erfasst. Literalverweise sind kein vollständiger Beweis für dynamische Namen,
+  Imports oder externe Skripte; Steuerungs-/Timerabnahme bleibt getrennt.
+- Vier aktuelle InfluxDB-Abfragen inventarisiert. Tageseinspeisung ist nun
+  eindeutig zugeordnet: Integration der alten Einspeiseleistung, wie Tagesbezug
+  und Hausverbrauch 10-s-Mittelwerte ab Berlin-Mitternacht, Aktualisierung 300 s.
+  Sieben-Tage-Durchschnitt behält Wallbox-Abhängigkeit; Zeitzonenoption auskommentiert.
+- 70 aktuelle Homie-Kanalzuordnungen und 38 konkrete Alt-/Neu-Paare festgehalten;
+  acht weitere Vergleichsziele sind vorgeschlagene Anlagensummen, vier Altwerte
+  bleiben extern, 32 neue Items ohne eigenen alten Partner. Noch kein Grafana-
+  Dashboard, Datenquellen-/Messreihenschema muss vorher geprüft werden.
+- Rollen none/pv/battery/hybrid und separates Homie-Gerät sma-plant mit Nodes
+  pv/battery/grid/house vorgeschlagen. Fehlende Beiträge nicht als Null, Profile
+  mit Units/Messgrenzen prüfen, Hybrid-/Netz-Doppelzählung vermeiden. Alle neuen
+  Namen/Flags/Topics bleiben Entwurf, keine Runtime- oder Deploymentänderung.
+- Privattarife, Adressen, Zugangsdaten, Messzustände und Rohskripte nicht in
+  Inventardateien übernommen. Private Originale, Items, Regeln, Links, Historien
+  und laufende Ressourcenmessung unverändert. Validierung folgt.
+- Alle 38 alten Direktlinks aktuell geprüft: 34 Modbus und vier SMA-Energy-Meter-
+  Binding-Kanäle, weiterhin unabhängige Altquellen. Zuordnung ist kein bereits
+  bestandener Werte-/Zeitreihenvergleich.
+- Validierung: CSV-Struktur, 129 eindeutige Itemnamen, 70 Linkzuordnungen, 29 Regeln,
+  vier Abfragen, Referenzen und alle 38 Paar-Types/Topics konsistent. Zwei
+  deaktivierte Regeln getrennt erfasst; Berliner 23-/25-Stunden-Tage rechnerisch
+  geprüft. Alle 275 Offline-Tests, vollständiger Linter über 156 öffentliche
+  Dateien und abschließende Diff-Prüfung bestanden.
+
+## 2026-10-14 – Optionale Anlagenberechnung lokal umgesetzt
+
+- Andreas hat die Umsetzung freigegeben. Rollen none/pv/battery/hybrid,
+  Profilbeiträge und separates Homie-Gerät sma-plant umgesetzt, standardmäßig aus.
+  Die bisherigen Entwurfsfragen zu Topicnamen, Rollen und Speicher sind damit
+  entschieden; keine automatische Aktivierung durch Adressen oder Rollen.
+- PV-Summen totalactivepower/totaldayyield/totalyield und Batterielade-/Entladesummen
+  nur bei mindestens zwei konfigurierten aktiven Beiträgen. Ein Ausfall verkleinert
+  keine Summe. Beide bestehenden Hausleistungsrechnungen übernommen; negative,
+  fehlende, veraltete oder zeitlich unpassende Beiträge liefern keinen neuen Wert.
+- Tagesbezug/-einspeisung und Haus-kWh aus Gesamtzählerdifferenzen mit gemeinsamer
+  Basis umgesetzt. Bestehendes SMAB_TIMEZONE berücksichtigt lokale Mitternacht
+  und Sommerzeit. energy-balances.json liegt im bestehenden Zustandsvolume;
+  atomare Checkpoints, bestätigte Veröffentlichungen, Neustart-/Lücken-/Reset-
+  und Gerätewechselprüfungen schützen die Bilanz. Keine zusätzlichen Geräteabfragen.
+- Offene Messfrage ausdrücklich ungelöst: Batteriezähler sind nicht als AC bestätigt,
+  deshalb bleiben reale Haus-kWh unavailable/unsupported-battery-boundary.
+  Synthetische bestätigte AC-Fixtures testen die Software, keine Gerätefreigabe.
+  Feinere PV-Zähler bleiben offen; bestehende ganze kWh begrenzen die Genauigkeit.
+- 310 Offline-Tests auf dem Host und jeweils im ARM64-/AMD64-Container bestanden,
+  darunter 35 neue Anlagen-/Zustandstests. Vollständiger Linter über 162 öffentliche
+  Dateien, Compose-Parität mit Overrides, Image-Ausschlüsse, Versionsprüfung und
+  Diff-Hygiene erfolgreich. Testcontainer ohne Netzwerk; lokale Version
+  0.3.11-dev.1+plant. Keine Veröffentlichung, Aktivierung oder Änderung bestehender
+  openHAB-Regeln/Items/Links/Historien. Nächster Schritt: getrennten Build deployen
+  und Werte parallel vergleichen; Teil-Tage und Neustart live prüfen.

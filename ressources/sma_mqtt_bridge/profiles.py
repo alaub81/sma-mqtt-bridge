@@ -68,7 +68,7 @@ def validate_profile(raw):
             "properties",
             "commands",
         ),
-        ("identity",),
+        ("identity", "plant"),
     )
     if (
         type(raw["schemaVersion"]) is not int
@@ -141,6 +141,10 @@ def validate_profile(raw):
                 "Validated profiles need mappings, firmware compatibility and evidence"
             )
     _, properties = validate_mappings(raw["pollers"], raw["properties"])
+    if "plant" in raw:
+        from .plant_profiles import validate_contributions
+
+        validate_contributions(raw["plant"], properties)
     if validation["status"] == "validated":
         keys(raw.get("identity"), ("model", "firmware", "serial"))
         for ref in raw["identity"].values():

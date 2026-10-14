@@ -34,6 +34,13 @@ builds `Dockerfile-SMAB`; the example pulls the published GHCR image.
 UID/GID and image version as well as preserving the documented service ENV file.
 Keep the `data_smab_state` volume when replacing a container.
 
+Optional plant calculations use explicit per-inverter roles and existing local
+samples, with no additional device queries. PV/storage sums appear only for two
+or more configured enabled contributors; household power and grid day counters
+are separate calculated properties. See [plant setup and topics](docs/CONFIGURATION.md#plant-aggregates-and-energy-state)
+and [the inventory and accounting contract](docs/PV_AGGREGATION_DESIGN.md).
+The feature is disabled by default and not included in the published v0.3.11.
+
 ## Local development
 
 ```sh

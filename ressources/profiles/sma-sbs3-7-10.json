@@ -634,5 +634,15 @@
     "model": "model",
     "serial": "serial",
     "firmware": "firmware"
+  },
+  "plant": {
+    "evidence": "Existing verified read mappings; battery counter AC/DC boundary remains unverified. See docs/REGISTER_VALIDATION.md.",
+    "battery": {
+      "presbatcharge": "measurements/pres-bat-charge",
+      "presbattdischarge": "measurements/pres-batt-discharge",
+      "batterychargeenergy": "measurements/battery-charge-energy",
+      "batterydischargeenergy": "measurements/battery-discharge-energy",
+      "energyBoundary": "unverified"
+    }
   }
 }
