@@ -30,7 +30,7 @@ inputs rather than rewriting that historical baseline:
   definitions with source series, time boundaries, calculations and intervals.
   Database credentials, hostnames and bucket/organization identities are omitted.
 - [Comparison manifest](pv-comparison-2026-10-14.csv): 38 existing legacy/bridge
-  Item pairs, eight implemented aggregate destinations without new live Items, four legacy-only entries
+  Item pairs, ten implemented aggregate destinations without new live Items, four legacy-only entries
   and 32 new-only Items. These topics require a build containing this feature and are not in published v0.3.11.
 
 The rule scan records observed references, not a static-program-analysis proof:
@@ -167,6 +167,12 @@ enabled contributors in that group; unavailability never reduces membership:
 | `homie/sma-plant/house/consumptionwithcharging` | W | `PowerConsumptionBatIncl`; preserve distinct legacy meaning |
 | `homie/sma-plant/house/dailyconsumption` | kWh | `Strom_Tagesverbrauch_Number_Result`; household day balance |
 | `homie/sma-plant/house/totalconsumption` | kWh | New household energy counter from a common starting baseline |
+| `homie/sma-plant/wallbox/dailyconsumption` | kWh | Local API total-energy counter delta; independent of battery boundary |
+| `homie/sma-plant/house/dailyconsumptionwithoutwallbox` | kWh | Household counter balance minus Wallbox delta over one shared baseline |
+
+The two Wallbox-related topics require the independently enabled local eCharger API.
+They use the existing total-energy counter, never the session counter; household
+kWh without Wallbox retains the battery-boundary gate. No additional device I/O.
 
 All aggregates are read-only. Coverage/date/battery-boundary diagnostics remain
 available independently of optional source diagnostics. Retained values alone

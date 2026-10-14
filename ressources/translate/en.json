@@ -183,6 +183,10 @@
     "Energy snapshot time (UTC)": "Energy snapshot time (UTC)",
     "House energy start (UTC)": "House energy start (UTC)",
     "Available plant properties": "Available plant properties",
-    "Power input availability": "Power input availability"
+    "Power input availability": "Power input availability",
+    "Daily wallbox consumption": "Daily wallbox consumption",
+    "Daily house consumption without wallbox": "Daily house consumption without wallbox",
+    "Wallbox day coverage": "Wallbox day coverage",
+    "House without wallbox day coverage": "House without wallbox day coverage"
   }
 }

@@ -714,6 +714,44 @@ AC fixtures exercise the complete accounting path offline. Whole-kWh PV counters
 also limit balance precision; finer source registers remain a separate validation.
 The feature has not been deployed or live accepted by these tests.
 
+### Wallbox daily consumption
+
+With both `SMAB_PLANT_ENABLED=true` and the independently enabled local API
+`SMAB_ECHARGER_ENABLED=true`, two further read-only kWh properties are declared:
+
+| Topic under `homie/sma-plant/` | Meaning |
+| --- | --- |
+| `wallbox/dailyconsumption` | Change in the local API `measurements/totalenergy` counter over the covered local day. |
+| `house/dailyconsumptionwithoutwallbox` | The household counter balance minus that Wallbox counter change, using one shared baseline vector. |
+
+No additional ENV flag, InfluxDB connection, API call, command or polling interval
+is introduced. API-only and API+SEMP installations use the same local total-energy
+counter. SEMP-only/disabled API configurations do not declare these properties;
+a missing/stale/invalid enabled counter never becomes zero. Session-energy resets
+and session boundaries do not define a calendar day.
+
+Wallbox daily consumption is independent of the battery AC/DC gate. Household
+consumption without Wallbox has the same verified-AC requirement as household
+kWh. Both use SMAB_TIMEZONE, existing checkpoint cadence, initial partial-day,
+midnight coverage, DST, reset and clock guards. The subtraction uses aligned
+counter snapshots, not independently initialized daily results. A late enable
+starts new partial Wallbox accounts while preserving existing grid/house baselines.
+Negative or decreasing derived daily energy is unavailable/inconsistent, never
+clamped. No assumption about unmetered Wallbox standby consumption is added;
+this property has the scope of the existing Wallbox total-energy measurement.
+
+`diagnostics/wallboxdaystatus` and `housewithoutwallboxdaystatus` report coverage;
+`wallboxenergytime` and `housewithoutwallboxenergytime` report the oldest committed
+input UTC time. The observed API serial is validated before a hashed identity is
+passed to the ledger together with the selected primary/fallback counter channel;
+identity, endpoint or counter-channel changes block only affected Wallbox accounts.
+State uses additional `wallbox` and `housewithoutwallbox` accounts in the same
+energy-balances.json file, preserving existing accounts and the topic manifest.
+Earlier builds recognizing only the original account names reject this extended
+ledger on downgrade; retain a matching state-volume backup for rollback rather
+than deleting baselines or command journals. Existing openHAB rules, Shelly
+histories and the seven-day Wallbox-ON exclusion stay unchanged until comparison.
+
 ## Manual portal read refresh
 
 When `SMAB_PORTAL_ENABLED=true`, Homie `portal/refresh/set` accepts the exact

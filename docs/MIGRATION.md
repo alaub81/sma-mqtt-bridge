@@ -363,3 +363,15 @@ hyphens. Existing Items, yield counters, offsets and history are unchanged.
 For new Item links use the published units and preserve signed/invalid semantics
 of other properties. Device-GUI counter-growth/reset and live MQTT/openHAB
 acceptance remain separate steps; no deployed configuration was modified.
+
+## Wallbox daily energy extension, 2026-10-14
+
+The optional plant source now adds wallbox/dailyconsumption and
+house/dailyconsumptionwithoutwallbox in kWh when the local eCharger API is enabled.
+It uses the existing total-energy counter, not the session counter, and subtracts
+Wallbox energy in the household counter vector over a common covered day.
+The house result retains the battery AC-boundary gate; Wallbox daily energy is
+independent. Initial partial days and missing/reset/stale inputs remain explicit.
+No new live Item, persistence policy, Shelly history, seven-day exclusion rule or
+control ownership was changed. Existing power-integral day values need a measured
+comparison against this counter method. See the [configuration contract](CONFIGURATION.md#wallbox-daily-consumption).

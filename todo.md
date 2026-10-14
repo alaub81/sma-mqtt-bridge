@@ -496,3 +496,31 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
   Overrides und Diff-Hygiene erfolgreich. Lokale Testversion 0.3.11-dev.2+plant.
   Keine automatische Nacht-Null ergänzt; künftige Freigabe über eindeutig belegte
   Gerätezustände bleibt eine offene Mess-/Entscheidungsfrage.
+
+## 2026-10-14 – Tagesverbrauch Wallbox und Haus ohne Wallbox umgesetzt
+
+- Andreas beauftragt beide kWh-Tageswerte. Neue schreibgeschützte Topics unter
+  sma-plant: wallbox/dailyconsumption und house/dailyconsumptionwithoutwallbox.
+  Aktivierung automatisch innerhalb der eingeschalteten Anlagenberechnung bei
+  bereits separat aktivierter lokaler eCharger-API; kein neuer ENV-Schalter und
+  keine weiteren Geräteabfragen. SEMP allein hat keinen geeigneten Gesamtzähler.
+- Wallbox-Zählerdifferenz aus bestehendem measurements/totalenergy, nicht aus
+  Sitzungsenergie. Haus ohne Wallbox mit eigener gemeinsamer Zählerbasis inklusive
+  Wallbox-Abzug; keine Subtraktion unabhängig gestarteter Tageswerte. Umfang des
+  vorhandenen Wallbox-Zählers bleibt maßgeblich; unbekannten Standby-Verbrauch
+  nicht zusätzlich behauptet oder geschätzt.
+- Wallbox-Tagesenergie unabhängig von Batterie-Messgrenze; Haus ohne Wallbox bleibt
+  ebenso wie Haus-kWh bis zum AC-Nachweis gesperrt. Lokale Tagesgrenzen, DST,
+  Teil-Tage, Frische, Zeitversatz, negative Bilanzen, Reset und Neustart abgesichert.
+  Nur erfolgreich gespeicherte Checkpoints veröffentlichen; bestehende Netz-/Haus-
+  Basen bleiben bei späterer Wallbox-Aktivierung erhalten. Zusätzliche Accounts
+  benötigen beim Downgrade auf ältere Builds ein passendes Zustandsbackup.
+- Validierte Geräteidentität und tatsächlich ausgewählter primärer/Ersatz-Zähler
+  werden nur gehasht weitergegeben; Wechsel von Gerät, Endpunkt oder Zählerkanal
+  sperrt betroffene Wallbox-Accounts statt einen Zählersprung als Verbrauch zu zählen.
+- 15 neue Offline-Tests, insgesamt 328 erfolgreich auf Host sowie in ARM64-/AMD64-
+  Containern ohne Netzwerk. Zusätzlich API-Identitäts-/Kanalzuordnung in bestehenden
+  Protokollfixtures geprüft. Vollständiger Linter über 163 öffentliche Dateien,
+  Compose-Parität mit Overrides, Vergleichsmatrix (84 Zeilen, zehn neue Ziele) und
+  Diff-Hygiene bestanden. Testimages 0.3.11-dev.3+plant; keine Veröffentlichung,
+  Aktivierung, Live-Geräteabfrage, openHAB-Änderung oder Migration in diesem Schritt.

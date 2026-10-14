@@ -47,6 +47,9 @@ and comparison manifest provide current Item names and rule/query dependencies.
 PV/storage sums, current household power and durable counter balances are
 implemented locally and disabled by default. Deploy a separately tested build
 when requested, activate configured roles, and compare values in parallel.
+Wallbox daily energy and household day energy without Wallbox are also implemented
+from the existing local API total-energy counter; validate a covered midnight,
+restart and parallel Shelly comparison before replacing existing calculations.
 Finer PV counter units and verified AC battery measurement boundaries remain
 prerequisites for accepting household counter accounting.
 Inventory Grafana/InfluxDB datasource/schema before building the later old/new

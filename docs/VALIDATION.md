@@ -1458,3 +1458,32 @@ resumes only after valid power observations return. Full lint, Compose parity
 including overrides and diff hygiene passed. Local images are
 0.3.11-dev.2+plant. No publication/deployment or live acceptance of the added
 MQTT diagnostic occurred; the live observation confirms the blocker only.
+
+## Wallbox daily consumption and household exclusion, 2026-10-14
+
+Locally implemented optional wallbox/dailyconsumption and
+house/dailyconsumptionwithoutwallbox kWh properties use the existing local API
+total-energy measurement. The household exclusion is one shared counter vector,
+not subtraction of independently initialized day values. Wallbox-only daily
+accounting works with the bundled unverified battery boundary; the household
+exclusion retains that gate. No extra API calls, intervals, commands or source
+activation were introduced. Measurement scope follows the existing Wallbox counter.
+
+All 328 offline regressions passed on the host and independently in ARM64/AMD64
+containers with network isolation. Fifteen new cases cover read-only discovery,
+disabled local API, partial/covered days, session reset independence, common-vector
+subtraction, negative balances, missing/stale/negative inputs, sample skew,
+verified identity/endpoint changes, additive late enable with preserved grid/house
+baselines, restart, committed publication, reset/gap recovery, kWh units and Berlin
+23/25-hour days. Daily-only accounts avoid imposing an unrelated lifetime-balance
+monotonicity requirement. Existing API fixtures additionally verify the fingerprint
+binds validated serial and selected primary/fallback counter channel, including
+missing/invalid counters, so source changes cannot silently jump daily consumption.
+
+Full lint over 163 public files, Compose parity including overrides, comparison
+manifest structure/counts and diff hygiene passed. The manifest has 84 rows with
+38 existing pairs and ten implemented destinations awaiting live Items. Local
+images use 0.3.11-dev.3+plant. The existing state schema accepts two additive account
+names while preserving previous accounts; older-build rollback requires a matching
+state backup. No private data, live measurement acceptance, deployment, publication
+or openHAB/Influx/Shelly/history/control changes are included in this step.

@@ -149,7 +149,11 @@ volume preserve counter baselines; only durable snapshots are published.
 Missing inputs never become zero or partial sums. Single-member groups retain
 only their device topics. The bundled battery energy boundary is unverified,
 so household kWh remains unavailable until matching AC evidence exists.
-Implementation is offline tested; deployment and live acceptance remain pending.
+The optional local eCharger API contributes its existing total-energy counter to
+Wallbox daily kWh and a shared-vector household day balance without Wallbox.
+These accounts preserve previous baselines; Wallbox alone is independent of the
+battery boundary. Session counters and independently initialized daily subtraction
+are excluded. Implementation is offline tested; live acceptance remains pending.
 The current Item/rule/query inventory and old/new comparison manifest supplement
 the historical migration ledger without changing current openHAB ownership.
 

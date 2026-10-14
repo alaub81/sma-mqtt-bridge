@@ -62,7 +62,8 @@ def validate_ledger(data):
             or len(data["signature"]) != 64
             or any(c not in "0123456789abcdef" for c in data["signature"])
             or not isinstance(data["accounts"], dict)
-            or set(data["accounts"]) - {"import", "export", "house"}
+            or set(data["accounts"])
+            - {"import", "export", "house", "wallbox", "housewithoutwallbox"}
         ):
             raise ValueError
         for record in data["accounts"].values():
@@ -129,7 +130,18 @@ class EnergyBalances:
             self.dirty = self.force_save = False
             self.last_save = monotonic
 
-    def observe(self, name, values, signs, hardware, wall, oldest_wall, *, sample_wall=None):
+    def observe(
+        self,
+        name,
+        values,
+        signs,
+        hardware,
+        wall,
+        oldest_wall,
+        *,
+        sample_wall=None,
+        daily_only=False,
+    ):
         """Never extrapolate a counter across an unobserved local midnight."""
         if self.binding_changed:
             return None, None, "configuration-changed"
@@ -211,7 +223,7 @@ class EnergyBalances:
                 daily, inconsistent = None, True
         else:
             daily = None
-        if record["totalStatus"] == "ready":
+        if not daily_only and record["totalStatus"] == "ready":
             if self.accept(total, record["totalValue"]):
                 record["totalValue"] = str(total)
             else:

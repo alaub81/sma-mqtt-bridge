@@ -183,6 +183,10 @@
     "Energy snapshot time (UTC)": "Zeitpunkt Energiebilanz (UTC)",
     "House energy start (UTC)": "Beginn Hausenergiezählung (UTC)",
     "Available plant properties": "Aktuell verfügbare Anlageneigenschaften",
-    "Power input availability": "Verfügbarkeit der Leistungseingänge"
+    "Power input availability": "Verfügbarkeit der Leistungseingänge",
+    "Daily wallbox consumption": "Wallbox-Tagesverbrauch",
+    "Daily house consumption without wallbox": "Haus-Tagesverbrauch ohne Wallbox",
+    "Wallbox day coverage": "Abdeckung Wallbox-Tagesverbrauch",
+    "House without wallbox day coverage": "Abdeckung Haus-Tagesverbrauch ohne Wallbox"
   }
 }

@@ -1,6 +1,7 @@
 """Deterministic wire-format, auth, timestamp, identity and missing-value cases."""
 
 import asyncio
+import hashlib
 import struct
 import unittest
 from dataclasses import FrozenInstanceError
@@ -503,6 +504,19 @@ class AsyncProtocolTests(unittest.IsolatedAsyncioTestCase):
                     clock.fromisoformat.side_effect = datetime.fromisoformat
                     values = await adapter.read()
                 self.assertEqual(values["measurements/total-energy"], expected)
+                selected = (
+                    primary
+                    if expected is not None
+                    and entries[0][0] == primary
+                    and entries[0][1] not in ("NaN", None)
+                    else fallback
+                )
+                self.assertEqual(
+                    adapter.identity_fingerprint,
+                    hashlib.sha256(("123:" + selected).encode()).hexdigest()
+                    if expected is not None
+                    else "",
+                )
         await adapter.close()
 
     async def test_full_local_api_read_is_scoped_and_read_only(self):
