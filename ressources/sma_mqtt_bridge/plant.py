@@ -771,9 +771,9 @@ class PlantEngine:
         self.debug.report(self, now, wall)
 
     def update_averages(self, packet, wall):
-        """Only seven consecutive completed calendar days form a daily average."""
+        """Average available calendar days in today's seven-day window."""
         today = wall.astimezone(self.zone).date()
-        days = {(today - timedelta(days=i)).isoformat() for i in range(1, 8)}
+        days = {(today - timedelta(days=i)).isoformat() for i in range(1, 7)}
         accounts = [("house", "house/average-daily-consumption", "average-day-status")]
         if self.wallbox is not None:
             accounts.append(
@@ -789,13 +789,41 @@ class PlantEngine:
             valid = (
                 not self.ledger.binding_changed
                 and record.get("date") == today.isoformat()
-                and days <= history.keys()
                 and all(date.fromisoformat(day) < today for day in history)
             )
-            packet[key] = (
-                sum((Decimal(history[d]) for d in days), Decimal(0)) / 7 if valid else None
+            values = [Decimal(history[d]) for d in days if d in history] if valid else []
+            status_key = "diagnostics/" + (
+                "house-energy-status" if name == "house" else "house-without-wallbox-day-status"
             )
-            packet["diagnostics/" + diagnostic] = "complete" if valid else "insufficient-history"
+            status = packet.get(status_key, record.get("dailyStatus"))
+            current = None
+            if valid and status in ("complete", "partial"):
+                current = record.get("dailyValue")
+                if current is None and status == "partial":
+                    # Startup-day averages include measured consumption since the baseline,
+                    # independently of the daily channel's partial-day visibility setting.
+                    inputs = [(m["totalyield"], 1) for m in self.groups["pv"]]
+                    inputs += [(self.grid["energyimport"], 1), (self.grid["energyexport"], -1)]
+                    for member in self.groups["battery"]:
+                        inputs += [
+                            (member["batterydischargeenergy"], 1),
+                            (member["batterychargeenergy"], -1),
+                        ]
+                    if name == "housewithoutwallbox":
+                        inputs.append((self.wallbox, -1))
+                    signs = {ref.identity: Decimal(sign) for ref, sign in inputs}
+                    if signs.keys() == record.get("last", {}).keys():
+                        current = self.ledger.balance(
+                            {k: Decimal(v) for k, v in record["last"].items()},
+                            signs,
+                            record["dailyBase"],
+                        )
+                if current is not None and Decimal(current) >= 0:
+                    values.append(Decimal(current))
+            packet[key] = sum(values, Decimal(0)) / len(values) if values else None
+            packet["diagnostics/" + diagnostic] = (
+                "complete" if len(values) == 7 else "partial" if values else "insufficient-history"
+            )
 
     async def run(self, stop):
         try:

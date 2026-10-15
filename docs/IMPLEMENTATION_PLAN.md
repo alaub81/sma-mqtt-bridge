@@ -178,3 +178,10 @@ import/export against raw diagnostics and private historical offsets, with corre
 applied once to feed-in remuneration. Preserve all energy baselines/history. Relink
 existing Items using topic-renames-2026-10-15.csv, check old retained retirement and
 current values, and retain existing units/rules/persistence. No reset is planned.
+
+## Immediate average-window acceptance, 2026-10-15
+
+After the next installation, compare both house averages using today plus up to
+six available preceding dates. Confirm startup-day publication, midnight window
+rotation and measured Wallbox subtraction. The earlier wait for seven completed
+days is superseded; preserve state and existing Item links.

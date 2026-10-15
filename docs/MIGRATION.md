@@ -486,3 +486,12 @@ in place after deployment. Dated raw inventories and observed old Item labels
 remain evidence of their original state, not proof of a completed live relink.
 Prior PV-production remuneration history must not be silently treated as actual
 feed-in revenue or rewritten. No live openHAB/persistence change is included.
+
+## Immediate average window update, 2026-10-15
+
+The previous seven-completed-days requirement is superseded by Andreas' request:
+use today plus the six preceding dates and divide by available days. Today's
+consumption is its measured value so far, without extrapolation. Both plant
+average channel IDs and kWh/d units stay unchanged. Existing history and daily
+baselines are preserved; missing dates are omitted. See CONFIGURATION.md for
+startup-day visibility and coverage status. No live openHAB changes are included.

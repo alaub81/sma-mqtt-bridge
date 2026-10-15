@@ -968,21 +968,31 @@ not automatically repaired. Preserve existing Items/history until separately mig
 
 Only the plant exposes `house/averagedailyconsumption` and, with local Wallbox
 API enabled, `house/averagedailyconsumptionwithoutwallbox`, float `kWh/d`.
-They average the seven preceding completed local calendar days, excluding today.
-The latter subtracts measured Wallbox consumption; charging days remain included.
-All seven dates must be present; missing/partial/reset/gap days never count as zero.
-A 23/25-hour daylight-saving day counts as one calendar day. Existing boundary
-tolerance still applies; no interpolation or InfluxDB backfill is performed.
+They average available daily consumption values in a window containing today and
+its six preceding local calendar dates. Today's measured consumption so far counts
+as one day, without extrapolation to midnight. Divide the sum by the number of
+available days, from one to seven. This can lower the average early in the morning.
+The latter channel subtracts measured Wallbox consumption; charging days remain
+included. Missing/reset/gap days are omitted, never counted as zero. A measured
+zero is valid. A 23/25-hour daylight-saving day counts as one calendar day.
+Existing boundary tolerance still applies; no interpolation or InfluxDB backfill
+is performed.
 
 Seven bounded historical day values per house account are saved in the existing
-energy ledger, as optional `history` fields. Existing ledgers load without rebasing;
-collection begins with the next complete day. Seven full days are required after
-upgrade before the first average. New state remains schema 1, but older binaries
-reject the added field: restore a matching pre-upgrade backup for rollback. The
-existing energy-baseline reset archives this history with the ledger. Averages
-use committed history only; failed durable writes cannot publish new averages.
+energy ledger, as optional `history` fields; only the preceding six are used in
+the current window. Existing ledgers load without rebasing. The current measured
+startup day participates immediately, independently of
+`SMAB_PLANT_PUBLISH_PARTIAL_DAY`, which still controls daily-channel visibility.
+The startup day covers only measurements since its baseline. Invalid or stale
+current inputs omit today's value while usable history remains available.
+New state remains schema 1, but older binaries reject the added history field:
+restore a matching pre-upgrade backup for rollback. The existing energy-baseline
+reset archives this history with the ledger. Averages use committed snapshots
+only, with the same checkpoint cadence as daily values; failed durable writes
+cannot publish new snapshots.
 Coverage diagnostics are `diagnostics/averagedaystatus` and
-`diagnostics/averagewithoutwallboxdaystatus` (`complete`/`insufficient-history`).
+`diagnostics/averagewithoutwallboxdaystatus`: `complete` for seven available dates,
+`partial` for one to six, and `insufficient-history` when no value is available.
 Both coverage properties are Basic and remain published with Diagnostics disabled.
 All added properties are read-only; no device I/O or openHAB changes are introduced.
 

@@ -335,3 +335,13 @@ Existing manifest retirement removes old owned discovery/value topics. Preserve
 Item identities/history when relinking; no live relink or state reset is implied.
 The full map is topic-renames-2026-10-15.csv. Unverified battery-capacity semantics
 and lower-priority diagnostic reorganization remain outside this implementation.
+
+## Immediate seven-day house averages, 2026-10-15
+
+Andreas supersedes the earlier seven-completed-days requirement: average available
+consumption for today and the six preceding local calendar dates. Include today's
+measured value without extrapolation, counting it as one day. Divide by available
+days, not always seven. The startup partial day participates independently of
+daily-channel visibility. Omit invalid/missing days; measured zero remains valid.
+Keep both including/excluding-Wallbox channels under the plant. Preserve durable
+counter baselines, history schema and checkpoint cadence. No external backfill.

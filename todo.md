@@ -29,14 +29,13 @@ wie „noch offen“ beschreiben den damaligen Stand, nicht die aktuelle Aufgabe
   umgestellt; vorherige PV-Ertragsbewertung ausdrücklich ersetzt. Home Manager
   ist bevorzugte Quelle; doppelte Wechselrichter-Netzzähler werden nicht addiert.
   Zwei Sieben-Tage-Hausdurchschnitte unter sma-plant lokal umgesetzt.
-  Andreas bestätigt: sieben abgeschlossene Kalendertage, Wallbox abziehen statt
+  Später angepasst: heute plus sechs Vortage, verfügbare Tage mitteln; Wallbox abziehen statt
   ganze Ladetage ausschließen. Währung frei konfigurierbar, Standard €.
 - [ ] Neue Vergütungs-/Durchschnittskanäle nach separatem Deployment live prüfen;
-  sieben vollständige Tage sammeln. Bestehende openHAB-Berechnungen bis zur
+  das neue Fenster einschließlich heute vergleichen. Bestehende openHAB-Berechnungen bis zur
   getrennten Migration erhalten. Gemeinsamen Tarif und gegebenenfalls historischen
   Einspeise-Offset privat in smab.env eintragen.
-- [ ] Durchschnittsverbrauch prüfen, sobald die Werte für sieben vollständige
-  abgeschlossene Tage vorliegen: Berechnung mit und ohne Wallbox anhand der
+- [ ] Durchschnittsverbrauch mit verfügbaren Tagen einschließlich heute prüfen: Berechnung mit und ohne Wallbox anhand der
   zugrunde liegenden Tageswerte nachvollziehen und Ergebnisse auf Plausibilität
   prüfen.
 
@@ -1051,3 +1050,17 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
 - Alle 389 Offline-Tests, vollständiger Linter, Compose-Parität und Katalogprüfung
   bestanden. Katalog: 302 Zeilen; Alt-/Neu-Liste: 20 Zuordnungen; Migrationsinventar:
   weiterhin 100 Zeilen. Keine privaten Werte eingetragen, keine Live-Änderung.
+
+## 2026-10-15 – Sieben-Tage-Durchschnitt sofort einschließlich heute
+
+- Andreas ändert die frühere Vorgabe: laufenden heutigen Verbrauch zusammen mit
+  verfügbaren Werten der sechs Vortage mitteln. Durch die tatsächliche Anzahl
+  verfügbarer Tage teilen, nicht immer durch sieben; keine Hochrechnung.
+- Beide Kanäle bleiben ausschließlich unter sma-plant, mit und ohne Wallbox.
+  Der Starttag zählt seit Messbeginn, unabhängig vom Schalter für die Anzeige
+  partieller Tageskanäle. Ungültige/fehlende Tage nicht als null behandeln.
+- Tageswerte, Basen, gespeicherte Historien und Checkpoint-Rhythmus bleiben erhalten.
+  Abdeckung: complete bei sieben Tagen, partial bei einem bis sechs Tagen,
+  insufficient-history ohne Wert. Live-Abnahme nach Installation bleibt offen.
+- Alle 390 Offline-Tests, vollständiger Linter und Compose-Parität bestanden.
+  Auf Wunsch als lokales Release v0.6.1 vorbereitet; kein Push oder Deployment.

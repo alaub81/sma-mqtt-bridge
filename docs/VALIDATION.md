@@ -1903,3 +1903,20 @@ signed offsets, freshness and units, negative corrected totals even with a zero
 tariff, single application to remuneration, raw diagnostics, retained retirement,
 canonical metadata and preserved energy-ledger state. No private offset values,
 deployment, live MQTT publication or openHAB changes were performed.
+
+## Immediate averages including today, 2026-10-15
+
+The user supersedes the seven-completed-days requirement. Both plant house
+averages now use available dates from today through six days ago, dividing by
+the number available. Today contributes measured consumption without extrapolation,
+including startup-day consumption since the baseline even when partial daily
+channels are hidden. Historical gaps and invalid current values are omitted;
+measured zero counts. Coverage is complete for seven dates, partial for one to
+six, and insufficient-history for none. Existing channel IDs, units, energy
+baselines, persisted history and checkpoint policy are preserved.
+
+All 390 offline tests pass, including startup-day publication, live consumption,
+both Wallbox variants, six-date history cutoff, missing-day denominator, midnight,
+DST, restart, stale-current omission and committed-only publication. Complete lint
+and Compose parity pass. This is offline evidence; no deployment, live MQTT or
+openHAB change was performed.
