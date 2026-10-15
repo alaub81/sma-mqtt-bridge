@@ -42,7 +42,8 @@ def decode(registers, prop):
     else:
         value = int.from_bytes(raw, "big", signed=kind.startswith("int"))
     if value in prop["invalid"] or str(value) in prop["invalid"]:
-        return None
+        # Explicit profile compatibility for successfully read power sentinels only.
+        return Decimal(0) if prop.get("invalidAsZero", False) else None
     if prop.get("format") == "unix-time-iso":
         return datetime.fromtimestamp(value, timezone.utc).isoformat().replace("+00:00", "Z")
     if prop.get("format") == "sma-firmware":

@@ -12,6 +12,7 @@ from decimal import Decimal
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
+from sma_mqtt_bridge.adapters.modbus import decode
 from sma_mqtt_bridge.config import load_config
 from sma_mqtt_bridge.errors import ConfigError, StateError
 from sma_mqtt_bridge.homie import HomiePublisher, discovery
@@ -187,6 +188,33 @@ class PlantConfigurationTests(PlantFixture):
         prop["name"] += " revised"
         self.assertNotEqual(signature, plant_plan(replace(config, profiles=profiles))[3])
 
+    def test_power_sentinel_option_preserves_existing_energy_binding_and_baselines(self):
+        config = load_config(self.env)
+        old_profiles = copy.deepcopy(config.profiles)
+        for profile in old_profiles.values():
+            for prop in profile["properties"]:
+                prop.pop("invalidAsZero", None)
+        old_config = replace(config, profiles=old_profiles)
+        self.assertEqual(plant_plan(config)[3], plant_plan(old_config)[3])
+        for profile in old_profiles.values():
+            for prop in profile["properties"]:
+                if prop["id"] == "active-power":
+                    prop["invalidAsZero"] = False
+        self.assertEqual(plant_plan(config)[3], plant_plan(old_config)[3])
+        engine = self.engine(ac=True)
+        engine.refresh(100, self.wall)
+        old_profiles = copy.deepcopy(engine.config.profiles)
+        for profile in old_profiles.values():
+            for prop in profile["properties"]:
+                prop.pop("invalidAsZero", None)
+        previous = replace(engine.config, profiles=old_profiles)
+        engine.ledger.data["signature"] = plant_plan(previous)[3]
+        engine.ledger.dirty = True
+        engine.ledger.persist(100, force=True)
+        reloaded = PlantEngine(engine.config, list(engine.sources.values()))
+        self.assertFalse(reloaded.ledger.binding_changed)
+        self.assertEqual(reloaded.ledger.data["accounts"], engine.ledger.data["accounts"])
+
     def test_generic_repeated_profile_and_single_device_suppression(self):
         engine = self.engine(env={"SMAB_INVERTER3_ENABLED": "false"})
         self.assertFalse(any(p.node == "pv" for p in engine.state.properties))
@@ -350,6 +378,29 @@ class PlantMeasurementTests(PlantFixture):
         self.assertEqual(topics["homie/sma-plant/pv/totalactivepower/$unit"], "W")
         self.assertEqual(topics["homie/sma-plant/house/dailyconsumption/$unit"], "kWh")
         self.assertTrue(all(not p.settable for p in engine.state.properties))
+
+    def test_night_sentinel_keeps_house_ready_but_never_masks_stale_or_error(self):
+        engine = self.engine()
+        # Net import plus discharge minus charge: 600 + 500 - 700 = 400 W.
+        self.fill(engine, 100, {"home-manager": {"powerexport": 0}})
+        for source_id in ("inverter1", "inverter3"):
+            prop = next(
+                p
+                for p in engine.config.profiles[source_id]["properties"]
+                if p["id"] == "active-power"
+            )
+            zero = decode([0] * prop["offset"] + [32768, 0], prop)
+            engine.sources[source_id].update({"measurements/active-power": zero}, now=100)
+        engine.refresh(100, self.wall)
+        self.assertEqual(engine.state.fresh_values(100)["house/consumption"], "400")
+        self.assertEqual(engine.state.status(100), "ready")
+        source = engine.sources["inverter3"]
+        source.error = True
+        self.assertNotIn("house/consumption", engine.state.fresh_values(100))
+        self.assertEqual(engine.state.status(100), "stale")
+        source.error = False
+        source.values["measurements/active-power"] = ("0", -10000)
+        self.assertNotIn("house/consumption", engine.state.fresh_values(100))
 
     def test_missing_invalid_error_and_zero_never_publish_partial_sum(self):
         engine = self.engine()

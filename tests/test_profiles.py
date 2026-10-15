@@ -23,6 +23,29 @@ class ProfileTests(unittest.TestCase):
             self.assertEqual(profile["validation"]["status"], "validated")
             self.assertFalse(profile["commands"])
 
+    def test_power_sentinel_zero_is_explicit_and_profile_scoped(self):
+        for name in ("sma-stp8-0-3av-40", "sma-sb4-0-1av-41"):
+            profile = load_profile(name, self.tmp.name, require_validated=True)
+            prop = next(p for p in profile["properties"] if p["id"] == "active-power")
+            self.assertEqual(decode([0] * prop["offset"] + [32768, 0], prop), 0)
+            self.assertEqual(decode([0] * prop["offset"] + [0, 123], prop), 123)
+            self.assertEqual(decode([0] * prop["offset"] + [65535, 65535], prop), -1)
+            self.assertIsNone(
+                decode([0] * prop["offset"] + [32768, 0], prop | {"invalidAsZero": False})
+            )
+            for override in (
+                {"invalidAsZero": "true"},
+                {"unit": "kWh"},
+                {"invalid": [0]},
+                {"scale": 0.1},
+            ):
+                modified = copy.deepcopy(profile)
+                next(p for p in modified["properties"] if p["id"] == "active-power").update(
+                    override
+                )
+                with self.subTest(override=override), self.assertRaises(ConfigError):
+                    validate_profile(modified)
+
     def test_identity_only_descriptor_remains_blocked(self):
         profile = validated_profile()
         profile.pop("identity")

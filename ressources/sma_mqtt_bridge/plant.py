@@ -32,6 +32,18 @@ class Input:
         return self.source + "/" + self.key
 
 
+def energy_binding_profile(profile):
+    """Keep power-only sentinel compatibility out of cumulative-energy identity."""
+    if profile is None:
+        return None
+    return profile | {
+        "properties": [
+            {key: value for key, value in prop.items() if key != "invalidAsZero"}
+            for prop in profile["properties"]
+        ]
+    }
+
+
 def plant_plan(config):
     """Validate contribution inventories before network connections."""
     from .adapters.home_manager_modbus import HomeManagerModbusReader
@@ -93,7 +105,7 @@ def plant_plan(config):
                     "unit": device.unit_id,
                     "expectedSerial": device.expected_serial,
                     "role": device.role,
-                    "profile": profile,
+                    "profile": energy_binding_profile(profile),
                 }
             )
     if settings.grid_source == "home-manager" and config.home_manager.enabled:
@@ -127,7 +139,7 @@ def plant_plan(config):
                 "serial": config.home_manager.serial,
                 "host": config.home_manager.host,
                 "transport": config.home_manager.transport,
-                "profile": hm_profile,
+                "profile": energy_binding_profile(hm_profile),
             }
         )
     if grid is None:

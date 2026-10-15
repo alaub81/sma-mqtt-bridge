@@ -198,7 +198,15 @@ def validate_mappings(poller_list, property_list):
                 "invalid",
                 "datatype",
             ),
-            ("valueMap", "minimum", "maximum", "format", "channelGroup", "requiredForReady"),
+            (
+                "valueMap",
+                "minimum",
+                "maximum",
+                "format",
+                "channelGroup",
+                "requiredForReady",
+                "invalidAsZero",
+            ),
         )
         if "requiredForReady" in prop and type(prop["requiredForReady"]) is not bool:
             raise ConfigError("Profile requiredForReady must be boolean")
@@ -251,6 +259,19 @@ def validate_mappings(poller_list, property_list):
             type(v) not in (int, str) for v in prop["invalid"]
         ):
             raise ConfigError("Explicit raw sentinels required")
+        if "invalidAsZero" in prop and (
+            type(prop["invalidAsZero"]) is not bool
+            or prop["type"] != "int32"
+            or prop["datatype"] not in ("integer", "float")
+            or prop["unit"] != "W"
+            or prop["scale"] != 1
+            or prop["invalid"] != [-2147483648]
+            or "valueMap" in prop
+            or "format" in prop
+            or prop.get("minimum", 0) > 0
+            or prop.get("maximum", 0) < 0
+        ):
+            raise ConfigError("invalidAsZero requires unscaled int32 power with the SMA sentinel")
         if prop.get("channelGroup", "basic") not in ("basic", "advanced", "diagnostics"):
             raise ConfigError("Invalid property channelGroup")
         if "valueMap" in prop and (
