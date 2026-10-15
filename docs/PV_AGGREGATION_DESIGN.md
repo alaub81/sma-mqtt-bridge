@@ -185,6 +185,11 @@ The state file is energy-balances.json under the existing state volume.
 No extra device polling is added. Unverified battery energy boundaries block
 house daily/lifetime kWh with unsupported-battery-boundary; current power ports
 the existing openHAB device-power balance and still needs physical acceptance.
+For provisional comparison, SMAB_PLANT_ASSUME_AC_BATTERY_ENERGY=true explicitly
+allows the unverified boundary as assumed-ac. This also permits household daily
+energy without Wallbox, while preserving all counter/freshness/coverage guards.
+Documented DC boundaries remain blocked. Physical confirmation stays pending;
+the assumption does not change the bundled profile's evidence or existing baselines.
 
 ## Grafana comparison preparation
 
@@ -214,7 +219,8 @@ retained measurements. Preserve all existing histories during parallel operation
    observe power/yield sums, single-battery suppression and per-value diagnostics.
 2. Verify battery AC energy boundaries and finer PV counter precision. The complete
    household counter engine is offline tested with synthetic verified AC mappings;
-   the bundled unverified Storage boundary deliberately has no household kWh result.
+   the bundled unverified Storage boundary has no household kWh result by default.
+   Andreas requested the explicit provisional AC override for comparison on 2026-10-15.
 3. Compare covered full days after midnight; verify the first partial day, restart,
    controller/history continuity and the saved snapshot times before accepting data.
 4. Add separate comparison Items/persistence and a Grafana dashboard after datasource

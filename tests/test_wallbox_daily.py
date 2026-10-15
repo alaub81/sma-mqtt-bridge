@@ -1,6 +1,7 @@
 """Wallbox calendar energy and household exclusion share durable counter baselines."""
 
 import asyncio
+import copy
 import hashlib
 import json
 import unittest
@@ -105,6 +106,62 @@ class WallboxDailyTests(PlantFixture):
         engine.refresh(3820, self.wall + timedelta(minutes=62))
         self.assertEqual(
             Decimal(self.output_values(engine, 3820)["measurements/daily-consumption"]), 4
+        )
+
+    def test_explicit_ac_assumption_unlocks_house_balances_and_preserves_grid_baselines(self):
+        blocked = self.covered_day()
+        signature = blocked.ledger.data["signature"]
+        grid = json.loads(json.dumps(blocked.ledger.data["accounts"]["import"]))
+        engine = self.engine(env={"SMAB_PLANT_ASSUME_AC_BATTERY_ENERGY": "true"})
+        self.assertEqual(engine.ledger.data["signature"], signature)
+        self.assertEqual(engine.ledger.data["accounts"]["import"], grid)
+        self.fill(engine, 220)
+        engine.refresh(220, self.wall + timedelta(minutes=2))
+        self.assertEqual(
+            engine.state.fresh_values(220)["diagnostics/battery-energy-boundary"], "assumed-ac"
+        )
+        self.assertEqual(
+            engine.state.fresh_values(220)["diagnostics/house-energy-status"], "partial"
+        )
+        self.assertNotIn("house/daily-consumption", engine.state.fresh_values(220))
+        # Start a covered next day without inventing the previously blocked day's baseline.
+        next_day = self.wall + timedelta(days=1)
+        self.fill(engine, 86500)
+        engine.refresh(86500, next_day)
+        self.fill(engine, 86620)
+        engine.refresh(86620, next_day + timedelta(minutes=2))
+        self.fill(
+            engine,
+            86700,
+            {
+                "inverter1": {"totalyield": 112},
+                "inverter3": {"totalyield": 208},
+                "home-manager": {"energyimport": 56, "energyexport": 68},
+                "inverter2": {"batterychargeenergy": 47, "batterydischargeenergy": 35},
+            },
+            energy=1004,
+        )
+        engine.refresh(86700, next_day + timedelta(seconds=200))
+        values = self.output_values(engine, 86700)
+        self.assertEqual(Decimal(values["house/daily-consumption"]), 16)
+        self.assertEqual(Decimal(values["house/daily-consumption-without-wallbox"]), 12)
+
+    def test_ac_assumption_does_not_override_documented_dc_boundary(self):
+        engine = self.engine(env={"SMAB_PLANT_ASSUME_AC_BATTERY_ENERGY": "true"})
+        profiles = copy.deepcopy(engine.config.profiles)
+        profiles["inverter2"]["plant"]["battery"].update(
+            energyBoundary="dc", energyEvidence="Synthetic DC fixture only"
+        )
+        engine = PlantEngine(
+            replace(engine.config, profiles=profiles), list(engine.sources.values())
+        )
+        engine.refresh(100, self.wall)
+        self.assertEqual(
+            engine.state.fresh_values(100)["diagnostics/battery-energy-boundary"], "dc"
+        )
+        self.assertEqual(
+            engine.state.fresh_values(100)["diagnostics/house-energy-status"],
+            "unsupported-battery-boundary",
         )
 
     def test_charger_readiness_and_custom_identity_survive_partial_day(self):

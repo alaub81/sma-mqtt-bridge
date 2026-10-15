@@ -148,7 +148,10 @@ remains monotonic. Atomic energy-balances.json checkpoints in the existing state
 volume preserve counter baselines; only durable snapshots are published.
 Missing inputs never become zero or partial sums. Single-member groups retain
 only their device topics. The bundled battery energy boundary is unverified,
-so household kWh remains unavailable until matching AC evidence exists.
+so household kWh is blocked by default. An explicit
+SMAB_PLANT_ASSUME_AC_BATTERY_ENERGY override permits provisional AC accounting,
+labelled assumed-ac in MQTT diagnostics, without asserting verified evidence.
+Documented DC mappings remain blocked; physical validation remains pending.
 The optional local eCharger API contributes its existing total-energy counter to
 Wallbox daily kWh and a shared-vector household day balance without Wallbox.
 The Wallbox day measurement and its diagnostics belong to the existing eCharger

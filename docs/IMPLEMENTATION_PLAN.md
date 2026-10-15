@@ -53,6 +53,9 @@ on the eCharger identity and household exclusion on the plant; validate a covere
 restart and parallel Shelly comparison before replacing existing calculations.
 Finer PV counter units and verified AC battery measurement boundaries remain
 prerequisites for accepting household counter accounting.
+For provisional comparison, Andreas requested an explicit AC assumption for
+unverified battery counters on 2026-10-15. The optional override reports assumed-ac;
+it permits house kWh without completing physical acceptance or changing profile evidence.
 Inventory Grafana/InfluxDB datasource/schema before building the later old/new
 comparison dashboard; preserve existing histories and control ownership.
 

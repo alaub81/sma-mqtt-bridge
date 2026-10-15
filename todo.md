@@ -1,6 +1,6 @@
 # TODO
 
-Stand: **13.10.2026**. Diese Liste enthält nur verbleibende Aufgaben und offene
+Stand: **15.10.2026**. Diese Liste enthält nur verbleibende Aufgaben und offene
 Fragen. Abnahmen und Nachweise stehen in [docs/VALIDATION.md](docs/VALIDATION.md),
 die Reihenfolge im [Implementierungsplan](docs/IMPLEMENTATION_PLAN.md).
 
@@ -545,3 +545,23 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
   matrix und Diff-Hygiene erfolgreich. Lokale Version 0.3.11-dev.4+plant.
   Offizielle openHAB-Homie-Dokumentation konsultiert. Keine Veröffentlichung,
   Installation oder Live-Änderung an MQTT/openHAB/Historien vorgenommen.
+
+## 2026-10-15 – Vorläufige AC-Annahme für Haus-Energie auf Wunsch erlaubt
+
+- Andreas beauftragt, eine Messgrenze zunächst anzunehmen und die Bestätigung
+  offen zu lassen. Gewählt: AC. Neuer boolescher Schalter
+  SMAB_PLANT_ASSUME_AC_BATTERY_ENERGY, Standard false; lokale private smab.env
+  explizit auf true gesetzt. Zielsystem muss diesen Wert und den neuen Build laden.
+- Bei unbestätigter Batterie-Messgrenze werden Haus-Tages-/Gesamtverbrauch und
+  Tagesverbrauch ohne Wallbox vorläufig berechnet; MQTT kennzeichnet die Grenze
+  als assumed-ac. Profilnachweis bleibt unverified; belegte DC-Zähler werden nicht
+  übersteuert. Frische-, Reset-, Bilanz- und Tagesgrenzen-Prüfungen bleiben aktiv.
+- Vorhandene Netz-/Wallbox-Basen bleiben erhalten. Neue Haus-Accounts starten bei
+  Aktivierung; kein rekonstruierter Verbrauch für den vorherigen Teil-Tag.
+- [ ] Batterie-AC/DC-Messgrenze anhand AC-Leistung, U×I und Zählerdifferenzen
+  bestätigen; danach vorläufige Annahme ablösen und Auswirkungen auf die bis dahin
+  gespeicherte Haus-Historie bewerten. Wechselrichterverluste und grobe PV-Zähler
+  bleiben mögliche Abweichungsquellen. Watt-Werte benötigen weiter gültige PV-Leistung.
+- 333 Offline-Tests und vollständiger Linter bestanden. Neue Regressionen prüfen
+  Hausenergie mit/ohne Wallbox, erhaltene Netzbasis und Schutz belegter DC-Mappings.
+  Keine Zielsystem-Installation, Veröffentlichung oder Änderung vorhandener Historien.

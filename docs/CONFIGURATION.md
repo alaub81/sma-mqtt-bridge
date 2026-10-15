@@ -642,6 +642,7 @@ device polling or InfluxDB credentials are required.
 | `SMAB_PLANT_BOUNDARY_TOLERANCE_SECONDS` | `240` | Positive seconds, at most 900; bounded uncertainty for real counter snapshots around local midnight. No extrapolation. |
 | `SMAB_PLANT_CHECKPOINT_INTERVAL_SECONDS` | `300` | Positive seconds; regular durable energy snapshot/publication cadence. Initial baselines, boundary transitions and resets are saved immediately. |
 | `SMAB_PLANT_INITIAL_CONSUMPTION_KWH` | `0` | Finite nonnegative number; verified opening house energy for a new common-baseline ledger. Changing it requires reconciliation of existing state. |
+| `SMAB_PLANT_ASSUME_AC_BATTERY_ENERGY` | `false` | Boolean; explicitly treat an unverified battery counter boundary as AC for provisional household kWh. Diagnostic boundary becomes `assumed-ac`; documented DC mappings remain blocked. |
 | `SMAB_PLANT_DIAGNOSTICS_ENABLED` | `true` | Boolean; optional source receipt diagnostics. Per-value coverage/date/boundary diagnostics remain available. |
 
 JSON uses `plant.enabled`, `homieId`, `gridSource`, `updateIntervalSeconds`,
@@ -709,7 +710,16 @@ covered within configured sampling tolerance, not an exact midnight meter read.
 The bundled Storage counter mapping deliberately remains `energyBoundary=unverified`.
 Its original battery counters and requested power calculations remain available,
 but house daily/lifetime kWh has no value and reports `unsupported-battery-boundary`.
-Do not change that declaration to `ac` without matching evidence. Verified synthetic
+Do not change that declaration to `ac` without matching evidence. For a provisional
+comparison, explicitly set `SMAB_PLANT_ASSUME_AC_BATTERY_ENERGY=true`. Household
+daily/lifetime energy and household daily energy without Wallbox then use the AC
+balance, and `diagnostics/batteryenergyboundary` reports `assumed-ac`. This is an
+assumption, not physical validation; conversion losses can distort the results.
+It does not override a documented `dc` boundary or bypass freshness, reset,
+negative-balance or midnight guards. Existing grid/Wallbox baselines are preserved;
+new house accounts begin at activation, with the first partial day unavailable.
+Set the flag back to `false` to block these provisional house values again.
+Previously persisted provisional history is not repaired automatically. Verified synthetic
 AC fixtures exercise the complete accounting path offline. Whole-kWh PV counters
 also limit balance precision; finer source registers remain a separate validation.
 The feature has not been deployed or live accepted by these tests.
@@ -731,8 +741,8 @@ a missing/stale/invalid enabled counter never becomes zero. Session-energy reset
 and session boundaries do not define a calendar day.
 
 Wallbox daily consumption is independent of the battery AC/DC gate. Household
-consumption without Wallbox has the same verified-AC requirement as household
-kWh. Both use SMAB_TIMEZONE, existing checkpoint cadence, initial partial-day,
+consumption without Wallbox has the same AC boundary requirement or explicit
+provisional AC override as household kWh. Both use SMAB_TIMEZONE, existing checkpoint cadence, initial partial-day,
 midnight coverage, DST, reset and clock guards. The subtraction uses aligned
 counter snapshots, not independently initialized daily results. A late enable
 starts new partial Wallbox accounts while preserving existing grid/house baselines.

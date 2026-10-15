@@ -1513,3 +1513,19 @@ house/grid/command behavior remains covered by the complete suite. Full lint ove
 diff hygiene passed. Local images use 0.3.11-dev.4+plant. No deployment, live MQTT
 retirement, openHAB Item/link/history change or new physical measurement acceptance
 was performed in this correction.
+
+## Provisional battery AC assumption, 2026-10-15
+
+Andreas explicitly requested provisional household accounting before confirming
+the battery counter measurement boundary. The boolean
+SMAB_PLANT_ASSUME_AC_BATTERY_ENERGY defaults to false. When explicitly enabled,
+unverified battery counters permit house daily/lifetime kWh and house daily kWh
+without Wallbox; diagnostics report assumed-ac. Documented DC mappings remain
+blocked. Profile evidence, existing grid/Wallbox baselines and all freshness,
+counter/reset, consistency and midnight guards remain unchanged. New household
+accounts start at activation; no previous partial-day consumption is invented.
+
+All 333 offline tests and the complete linter passed. Added regression coverage
+checks the provisional house/day-exclusion equations, grid-baseline continuity
+and documented-DC rejection. Physical AC/DC confirmation and target-host deployment
+remain pending; provisional historical energy is not automatically repaired.

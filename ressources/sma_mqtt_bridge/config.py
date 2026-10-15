@@ -179,6 +179,7 @@ class Plant(SafeRepr):
     boundary_tolerance_seconds: float = 240.0
     checkpoint_interval_seconds: float = 300.0
     initial_consumption_kwh: float = 0.0
+    assume_ac_battery_energy: bool = False
     diagnostics_enabled: bool = True
 
 

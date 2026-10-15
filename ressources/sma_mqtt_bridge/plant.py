@@ -188,6 +188,8 @@ class PlantEngine:
         self.config = config
         self.sources = {s.id: s for s in states}
         self.groups, self.grid, self.boundary, signature = plant_plan(config)
+        if self.boundary == "unverified" and config.plant.assume_ac_battery_energy:
+            self.boundary = "assumed-ac"
         self.zone = ZoneInfo(config.runtime.timezone)
         self.ledger = EnergyBalances(config, signature, self.zone)
         self.changed = asyncio.Event()
@@ -538,7 +540,7 @@ class PlantEngine:
                 observed[key], deadlines[key] = age
             packet["diagnostics/" + name + "-day-status"] = status
             accounts[name] = {key: daily}
-        if self.boundary in ("ac", "none"):
+        if self.boundary in ("ac", "assumed-ac", "none"):
             inputs = [(m["totalyield"], 1) for m in self.groups["pv"]]
             inputs += [(self.grid["energyimport"], 1), (self.grid["energyexport"], -1)]
             for member in self.groups["battery"]:
@@ -563,7 +565,7 @@ class PlantEngine:
             if age:
                 observed[key], deadlines[key] = age
             packet["diagnostics/wallbox-day-status"] = wallbox_status
-            if self.boundary in ("ac", "none"):
+            if self.boundary in ("ac", "assumed-ac", "none"):
                 # One counter vector gives both terms the same baseline and coverage.
                 daily, _, without_status, age = self.account(
                     "housewithoutwallbox", [*inputs, (self.wallbox, -1)], now, wall
