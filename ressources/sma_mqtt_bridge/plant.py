@@ -149,13 +149,20 @@ def plant_plan(config):
 
 
 class PlantState(SourceState):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, publish_diagnostics=True, **kwargs):
+        self.publish_diagnostics = publish_diagnostics
         self.deadlines = {}
         self.sources = {}
         self.guards = {}
         self.max_skew = 0
         self.expected_units = {}
         super().__init__(*args, **kwargs)
+
+    @property
+    def published_properties(self):
+        if self.publish_diagnostics:
+            return self.properties
+        return tuple(p for p in self.properties if p.node != "diagnostics")
 
     def fresh_values(self, now=None):
         now = time.monotonic() if now is None else now
@@ -318,6 +325,7 @@ class PlantEngine:
             tuple(properties),
             ttl,
             diagnostics_enabled=config.plant.diagnostics_enabled,
+            publish_diagnostics=config.plant.diagnostics_enabled,
         )
         self.wallbox_state = None
         if self.wallbox is not None:
@@ -335,6 +343,7 @@ class PlantEngine:
                 ),
                 ttl,
                 diagnostics_enabled=False,
+                publish_diagnostics=config.echarger.diagnostics_enabled,
                 contributes_availability=False,
             )
             self.wallbox_state.max_payload_bytes = config.runtime.max_payload_bytes

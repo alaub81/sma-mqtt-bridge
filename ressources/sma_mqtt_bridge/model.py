@@ -121,6 +121,11 @@ class SourceState:
             raise ConfigError("Readiness references an unavailable property")
 
     @property
+    def published_properties(self):
+        """Default publication inventory; internal observations may remain broader."""
+        return self.properties
+
+    @property
     def required_keys(self):
         self.property_index()
         return self.ready_properties or self._default_required_keys
