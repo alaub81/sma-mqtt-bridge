@@ -51,8 +51,11 @@ Wallbox daily energy and household day energy without Wallbox are also implement
 from the existing local API total-energy counter, with Wallbox daily consumption
 on the eCharger identity and household exclusion on the plant; validate a covered midnight,
 restart and parallel Shelly comparison before replacing existing calculations.
-Finer PV counter units and verified AC battery measurement boundaries remain
-prerequisites for accepting household counter accounting.
+Finer PV counter units and whole-day comparisons remain prerequisites for accepting
+household counter accuracy. The [2026-10-15 history comparison](BATTERY_ENERGY_BOUNDARY_2026-10-15.md)
+strongly supports AC boundaries for both installed battery counters. Promote that
+evidence into the runtime declaration only with preserved ledger compatibility;
+editing the profile alone changes the current full-profile signature.
 For provisional comparison, Andreas requested an explicit AC assumption for
 unverified battery counters on 2026-10-15. The optional override reports assumed-ac;
 it permits house kWh without completing physical acceptance or changing profile evidence.

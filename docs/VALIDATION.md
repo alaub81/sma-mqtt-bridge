@@ -1397,6 +1397,21 @@ local test-server permission. No device/broker/portal action or target-host chan
 Private thresholds, tariffs, endpoints, credentials, states and raw scripts are
 excluded from saved inventories; original private references remain unchanged.
 
+## Post-update 24-hour resource recording, 2026-10-14
+
+The supplied schema-2 recording contains 1,438 samples across a full 24 hours,
+all running/healthy, zero restarts and one generation. Mean CPU is 4.300% of one
+core versus 4.355% in the accepted baseline; complete two-process RSS median is
+50.344 MiB versus 53.250 MiB. First/last-hour medians are 52.656/50.234 MiB.
+No sustained memory growth or material CPU regression is evident.
+
+The voluntary recording is complete; existing resource acceptance stays closed.
+[Detailed analysis](RESOURCE_SOAK_ANALYSIS_2026-10-14.md) records partial process
+I/O coverage, zero cgroup write accounting, missing cgroup memory and host-wide
+network limits. No measured HDD saving or independent installed-version check
+is claimed. Source/command/openHAB acceptance remains separate. Raw upload and
+installation unchanged; no runtime modifications for this analysis.
+
 ## Optional plant calculations, 2026-10-14
 
 The locally implemented feature adds explicit generic contributor roles,
@@ -1589,3 +1604,37 @@ gap/reset/identity/clock guards, negative/decreasing house balances, shared-vect
 house/Wallbox exclusion with missing-input rejection, and durable-write/AC gates.
 The private local ENV explicitly enables the test flag; target-host deployment,
 real midnight acceptance and physical AC/DC confirmation remain pending.
+
+## User-reported calculated power availability, 2026-10-15
+
+Andreas reports numeric values for house/consumption and
+house/consumptionwithcharging, and a correct zero for pv/totalactivepower.
+This establishes user-reported availability for these properties at that time,
+without an independent probe or complete physical balance comparison. Household/
+Wallbox daily values remain reported unavailable. Current calculation diagnostics
+are requested to distinguish the effective partial-day flag, input/account
+statuses and committed values; no current failure cause is established yet.
+
+Subsequent supplied calculation diagnostics show publishPartialDay=true, fresh
+inputs, calculated partial-day household balances and pending checkpoint changes.
+Committed household dailyValue fields were still null, with a 300-second
+checkpoint interval, while Wallbox daily energy was already internally available.
+Andreas then confirms that the values appeared. This is consistent with waiting
+for durable checkpoint publication; no additional calculation fix was required.
+This user-reported availability does not establish full-day accuracy, midnight
+acceptance or the physical battery AC/DC boundary.
+
+## Battery AC/DC history comparison, 2026-10-15
+
+Read-only InfluxDB history now contains all five required power/current/voltage/
+energy series. The [aligned analysis](BATTERY_ENERGY_BOUNDARY_2026-10-15.md)
+strongly supports **AC-side charge and discharge counters for this installation**.
+The discharge counter changes by 1.711 kWh versus 1.711919 kWh from original AC
+samples and approximately 1.929356 kWh from reconstructed U×I. The charge counter
+changes by 0.106 kWh versus 0.106640 kWh AC and approximately 0.092495 kWh DC.
+Counter endpoints were used to align the windows; the original AC integral is an
+independent cross-check of the resampled analysis. Sample gaps and DC reconstruction
+limits are documented. This establishes boundary evidence, not round-trip
+efficiency, calibration for all firmware, whole-day household accuracy or a new
+runtime-profile declaration. Existing AC assumption/baselines remain unchanged.
+No device/database/configuration writes or raw-series/credential capture occurred.

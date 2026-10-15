@@ -231,3 +231,14 @@ ratios require counter deltas and are not provided by this cumulative property.
 
 Host profile overrides missing the counter pair receive no derived topic.
 Existing counter IDs/units/history, polling and invalid-value behavior remain.
+
+## Installation AC-boundary evidence, 2026-10-15
+
+The [aligned history comparison](BATTERY_ENERGY_BOUNDARY_2026-10-15.md) strongly
+supports AC-side semantics for both 31397 and 31401 on the observed installation.
+A nearly seven-hour discharge gives 1.711 kWh at the counter versus 1.711919 kWh
+integrated AC and approximately 1.929356 kWh DC. An approximately 18-minute charge
+gives 0.106 kWh versus 0.106640 kWh AC and approximately 0.092495 kWh DC.
+These are aggregate empirical observations with documented sampling limits,
+not a model-wide calibration or round-trip-efficiency acceptance. The runtime
+profile/evidence promotion is separate and must preserve existing ledger binding.

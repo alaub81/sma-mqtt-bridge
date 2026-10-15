@@ -157,7 +157,11 @@ only their device topics. The bundled battery energy boundary is unverified,
 so household kWh is blocked by default. An explicit
 SMAB_PLANT_ASSUME_AC_BATTERY_ENERGY override permits provisional AC accounting,
 labelled assumed-ac in MQTT diagnostics, without asserting verified evidence.
-Documented DC mappings remain blocked; physical validation remains pending.
+Documented DC mappings remain blocked. The installation's
+[2026-10-15 aligned history comparison](BATTERY_ENERGY_BOUNDARY_2026-10-15.md)
+now strongly supports AC boundaries for both battery counters. The bundled
+declaration remains unverified until a state-preserving profile/evidence promotion;
+the current full-profile fingerprint must not invalidate existing daily baselines.
 Optional plant debug logging requires both an explicit plant flag and DEBUG log
 level. Rate-limited calculation reports contain numeric inputs/ages, signed recipes,
 coverage/baselines and durable snapshot evidence. Selected numeric inverter

@@ -12,10 +12,48 @@ wie „noch offen“ beschreiben den damaligen Stand, nicht die aktuelle Aufgabe
 
 ## Nächste Schritte
 
-- [ ] Veröffentlichtes **v0.3.11** durch Andreas deployen und den separat kopierten
-  Recorder nach kurzem Berechtigungstest für den freiwilligen Nachtvergleich starten.
-  Veröffentlichung/CI/Sicherheitsgates/ARM64/AMD64 sind abgeschlossen; daraus keine
-  Zielhost-Version oder bereits laufende Aufzeichnung ableiten.
+- [ ] Produktions-`smab.env` aufräumen: nur Werte behalten, die von den wirksamen
+  Standardwerten abweichen, einschließlich notwendiger installationsspezifischer
+  Angaben und Zugangsdaten. Defaults aus Loader und Compose abgleichen und prüfen,
+  dass die bereinigte Datei dieselbe wirksame Konfiguration ergibt. Private Werte
+  nicht protokollieren oder in öffentliche Beispiele übernehmen.
+
+- [ ] Neue optionale [Anlagenberechnung](docs/PV_AGGREGATION_DESIGN.md) mit einem
+  separat getesteten Build aktivieren und parallel vergleichen. Rollen/Topics,
+  Summen, aktuelle Hausleistung und persistente Zählerlogik sind lokal umgesetzt.
+  AC-Messgrenzen beider Batteriezähler sind für die Installation anhand der
+  [Historienauswertung](docs/BATTERY_ENERGY_BOUNDARY_2026-10-15.md) sehr gut belegt;
+  feinere PV-Zähler und Tagesvergleich bleiben offen. Laufzeit-Profildeklaration
+  mit erhaltenen Zählerbasen nachziehen; bisherige AC-Annahme bleibt aktiv. Teil-Tage, Mitternacht,
+  Neustart und Datenlücken auch live prüfen. Bestehende Regeln/Items erhalten.
+- [ ] Grafana-/InfluxDB-Datenquelle, Schema, effektive Persistence und Messreihennamen
+  lesend inventarisieren; anschließend Dashboard für die wichtigen Alt-/Neu-Paare
+  aus [Vergleichsmatrix](docs/pv-comparison-2026-10-14.csv) erstellen. 38 aktuelle
+  direkte Paare vorhanden, Anlagensummen lokal implementiert. Historien erhalten.
+- [ ] Home-Manager-Item `smahomemanager_Anlagenzeit_DateTime` prüfen: aktueller Link
+  zeigt noch auf numerisches planttime statt planttimeiso. Keine Änderung oder
+  konkrete Wertstörung aus dem Inventar ableiten; bestehende Abhängigkeiten sichern.
+
+- [ ] Prüfen, ob die bisher in openHAB berechneten Werte **Tagesbezug**,
+  **Tageseinspeisung**, **Tagesverbrauch**, **Strom Hausgesamtverbrauch**,
+  **Tagesverbrauch ohne Wallbox** und **Wallbox-Tagesverbrauch**
+  ohne größeren Aufwand in die Bridge übernommen werden können; wenn möglich,
+  implementieren und über Homie bereitstellen. Bestehende Formeln, Quellen,
+  Einheiten und Tagesgrenzen einschließlich Zeitzone/Sommerzeit abgleichen;
+  Neustarts und Zählerwechsel berücksichtigen. Vor einer Ablösung die Ergebnisse
+  im Parallelbetrieb vergleichen und bestehende Regeln sowie Historien erhalten.
+  Erste [Machbarkeitsprüfung](docs/MIGRATION.md#requested-bridge-calculations-feasibility-review-2026-10-14)
+  abgeschlossen. Andreas präzisiert: die vier ursprünglich genannten Werte sind Energie in kWh;
+  neue Berechnung aus vorhandenen Gesamtzählern statt Nachbau der InfluxDB-Abfragen.
+  Ergänzt: Tagesverbrauch ohne Wallbox und Wallbox-Tagesverbrauch ebenfalls in kWh;
+  passende Zählerquellen und Abgrenzung zum gesamten Tagesverbrauch prüfen.
+  Zunächst Rechnung diskutieren, noch nicht implementieren. Netz-Tagesdifferenzen
+  sind ableitbar; für Hausbilanz Batterie-Messgrenze und PV-Zählerauflösung klären.
+
+- [x] Freiwilliger Ressourcenvergleich nach dem Update abgeschlossen: vollständige
+  24-Stunden-Datei am 14.10.2026 ausgewertet. [Nachweis](docs/RESOURCE_SOAK_ANALYSIS_2026-10-14.md):
+  stabile CPU/Speichernutzung, alle Stichproben healthy, keine Neustarts. Installierte
+  Version ist im Recorder nicht enthalten; separate Versionsbestätigung bleibt offen.
 - [ ] Vor diesem Deployment verwendete Host-Profilkopien mit den gebündelten
   Änderungen abgleichen (M01–M04/M09 und neue Gruppierungen), Zustandsvolume und
   bestehende Links/Historien erhalten. Nur tatsächlich genutzte Overrides ändern.
@@ -420,6 +458,24 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
   geprüft. Alle 275 Offline-Tests, vollständiger Linter über 156 öffentliche
   Dateien und abschließende Diff-Prüfung bestanden.
 
+## 2026-10-14 – Ressourcenvergleich nach Update abgeschlossen
+
+- Gelieferte JSONL-Datei unverändert lesend ausgewertet: 1.438 gültige Stichproben,
+  13.10. 21:45:59 bis 14.10. 21:45:59 Europe/Berlin, volle 24 Stunden.
+  Durchgehend running/healthy, Neustartzähler 0, Segment 1, keine großen Lücken.
+- CPU-Mittel 4,300 % eines Kerns gegenüber 4,355 % zuvor: praktisch gleiches
+  Niveau, keine kausal nachgewiesene Einsparung. Zweiprozess-RSS-Median 50,344 MiB
+  statt 53,250 MiB; erste/letzte Stunde 52,656/50,234 MiB, kein Wachstumstrend.
+- Neue I/O-Basis: gültige Prozessraten decken 93,46 % ab, darin etwa 159,25 MiB
+  Storage-Schreibbuchhaltung. Cgroup meldet null Schreibbytes; keine tatsächliche
+  HDD-Schreibmenge/Ersparnis ableitbar. Alte Messung hatte keine I/O-Zähler.
+- Freiwilliger Vergleich erledigt, bestehende Ressourcenabnahme bleibt geschlossen.
+  Dateiname ersetzt keine installierte Versionsprüfung. Keine Runtimeänderungen,
+  Rohdatenübernahme, Zielhostzugriffe oder Änderung privater Originale.
+- Validierung: vollständiger Linter über 162 öffentliche Dateien, 303 Offline-Tests
+  und Diff-Prüfung erfolgreich. Vier lokale Testserver benötigen erlaubte
+  Loopback-Sockets; Wiederholung außerhalb dieser Sandbox-Beschränkung bestanden.
+
 ## 2026-10-14 – Optionale Anlagenberechnung lokal umgesetzt
 
 - Andreas hat die Umsetzung freigegeben. Rollen none/pv/battery/hybrid,
@@ -558,10 +614,12 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
   übersteuert. Frische-, Reset-, Bilanz- und Tagesgrenzen-Prüfungen bleiben aktiv.
 - Vorhandene Netz-/Wallbox-Basen bleiben erhalten. Neue Haus-Accounts starten bei
   Aktivierung; kein rekonstruierter Verbrauch für den vorherigen Teil-Tag.
-- [ ] Batterie-AC/DC-Messgrenze anhand AC-Leistung, U×I und Zählerdifferenzen
-  bestätigen; danach vorläufige Annahme ablösen und Auswirkungen auf die bis dahin
-  gespeicherte Haus-Historie bewerten. Wechselrichterverluste und grobe PV-Zähler
-  bleiben mögliche Abweichungsquellen. Watt-Werte benötigen weiter gültige PV-Leistung.
+- [x] Batterie-AC/DC-Messgrenze anhand AC-Leistung, U×I und Zählerdifferenzen
+  prüfen: am 15.10.2026 für beide Zähler dieser Installation AC empirisch sehr gut
+  belegt, siehe spätere Auswertung. Bisherige AC-Annahme passt zu den Daten.
+- [ ] Bestätigte Messgrenze in die Laufzeit-Profildeklaration übernehmen, ohne
+  bestehende Tagesbasen/Fingerprints zu verwerfen. Grobe PV-Zähler und ein
+  vollständiger Haus-Tagesvergleich bleiben separat offen.
 - 333 Offline-Tests und vollständiger Linter bestanden. Neue Regressionen prüfen
   Hausenergie mit/ohne Wallbox, erhaltene Netzbasis und Schutz belegter DC-Mappings.
   Keine Zielsystem-Installation, Veröffentlichung oder Änderung vorhandener Historien.
@@ -637,3 +695,50 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
   Delta/Neustart, spätere Aktivierung/Deaktivierung, Mitternachtswechsel, Fehler-
   Gates, negative/sinkende Hausbilanz, gemeinsame Wallbox-Abgrenzung sowie
   Speicherfehler/AC-Sperre ab. Zielhost- und echte Mitternachtsabnahme bleiben offen.
+
+## 2026-10-15 – Rückmeldung zu Leistungswerten, Tageswerte weiter offen
+
+- Andreas bestätigt Zahlenwerte für house/consumption und
+  house/consumptionwithcharging sowie korrekt angezeigte 0 W für
+  pv/totalactivepower. Dies ist eine Anwender-Rückmeldung; keine erneute lokale
+  Registerprüfung oder vollständige physikalische Bilanzabnahme daraus ableiten.
+- Haus-/Wallbox-Tagesverbrauch und Haus-Tagesverbrauch ohne Wallbox werden als
+  weiterhin leer gemeldet. Aktuelle Berechnungs-Debugzeile angefragt, um wirksamen
+  Teil-Tag-Schalter, Kontostatus, Eingänge und gespeicherte Tageswerte abzugleichen.
+  Keine aktuelle Ursache ohne Laufzeitnachweis behauptet; nicht erneut pauschal
+  auf Mitternacht verweisen, falls Teil-Tag-Testmodus tatsächlich aktiv ist.
+
+- Erledigt im Anschluss: Gelieferte Berechnungsdiagnose bestätigt
+  publishPartialDay=true, frische Eingänge und berechnete Teil-Tag-Hauswerte.
+  Die zuletzt bestätigten Haus-Snapshots hatten noch dailyValue=null;
+  checkpointDirty=true bei Checkpoint-Intervall 300 s. Wallbox-Tageswert war
+  bereits intern verfügbar. Andreas bestätigt danach, dass die Werte erscheinen.
+  Die beobachtete Verzögerung passt zum Warten auf den nächsten dauerhaften
+  Checkpoint, kein weiterer Rechenfix erforderlich. Vollständiger Tagesvergleich,
+  echte Mitternacht und physikalische Batterie-Messgrenze bleiben offen.
+
+## 2026-10-15 – Batterie-Zähler anhand Lade-/Entladehistorien geprüft
+
+- Nach erneuter Anmeldung durch Andreas InfluxDB ausschließlich lesend ausgewertet.
+  Alle fünf zuvor fehlenden Messreihen sind inzwischen vorhanden. Original-
+  Zähler-Endpunkte mit AC-Integral und DC-Gegenprobe U×I zeitlich abgeglichen;
+  keine Lade-/Entladebefehle oder Änderungen an Persistence/Items/Historien.
+- [Ergebnis und Methode](docs/BATTERY_ENERGY_BOUNDARY_2026-10-15.md): Über knapp
+  sieben Stunden Entladung 1,711 kWh Zähleränderung, 1,711919 kWh AC,
+  näherungsweise 1,929356 kWh DC. Über gut 18 Minuten Laden 0,106 kWh Zähler,
+  0,106640 kWh AC, näherungsweise 0,092495 kWh DC. AC-Abweichungen etwa 0,054 %
+  und 0,603 %, DC-Abweichungen jeweils rund 13 % in passender Gegenrichtung.
+- AC-Integral zusätzlich unabhängig aus Originalzeitstempeln berechnet. DC aus
+  5-s-Rekonstruktion mit vorherigen Werten; Spannungsreihe deutlich dünner als
+  Strom/AC, Messfenster an Original-Zählerzeiten ausgerichtet. Nicht den älteren
+  Zwischenwert eines resampleten Zählers für den Endpunktvergleich verwenden.
+- Messgrenzenfrage für diese Installation damit empirisch sehr gut als AC belegt;
+  bisherige AC-Annahme passt. Kein Nachweis einer Rundlauf-Effizienz, vollständiger
+  Haus-Tagesgenauigkeit oder Übertragbarkeit auf jede Firmware/Modellvariante.
+- Laufzeitprofil bleibt in diesem lesenden Schritt unverändert: Deklaration und
+  Diagnose weiterhin unverified/assumed-ac. Profiländerung würde aktuell den
+  kompletten Anlagen-Fingerprint verändern; spätere Übernahme muss Tagesbasen und
+  Zustandsvolume erhalten. Keine Zustandsdatei löschen oder Historie umskalieren.
+- Keine Rohzeitreihen, absoluten Zählerstände, privaten Identitäten oder Secrets
+  im öffentlichen Nachweis gespeichert. Nur Dokumentation geändert; vollständiger
+  Linter und Diff-Hygiene geprüft, kein erneuter Runtime-Testlauf erforderlich.

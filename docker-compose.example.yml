@@ -15,6 +15,9 @@ services:
       - type: volume
         source: data_smab_state
         target: /data/sma-mqtt-bridge/state
+    # networks:
+    #   - app-nw
+    #   - backend-nw
     # Linux host networking is needed for Home Manager multicast on the Pi.
     network_mode: host
     init: true
@@ -27,3 +30,15 @@ services:
 
 volumes:
   data_smab_state:
+
+# networks:
+#   app-nw:
+#     internal: false
+#     driver: bridge
+#     driver_opts:
+#       com.docker.network.bridge.name: app-${PROJECT_NAME}
+#   backend-nw:
+#     internal: true
+#     driver: bridge
+#     driver_opts:
+#       com.docker.network.bridge.name: be-${PROJECT_NAME}
