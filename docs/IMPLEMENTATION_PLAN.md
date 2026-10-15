@@ -13,6 +13,11 @@ backed-up ledger reset and installed-version verification complete on 2026-10-15
 The full-day grid/house/Wallbox comparison including midnight/restart/gaps is also
 accepted. The older deployment wording below is historical; do not schedule it again.
 New remuneration/average features need their own subsequent deployment and live check.
+The [topic-group refinement](TOPIC_GROUPS.md) is offline verified separately:
+after a requested deployment, confirm the seven Basic coverage statuses with
+Diagnostics disabled and the two Home Manager protocol diagnostics independently
+of Advanced. Reconcile used Home Manager host profiles; preserve topics, links,
+state and the existing accepted energy balances.
 
 Andreas requested the v0.3.11 release after the performance/hardening review and
 resource-recorder extension. Publication is complete: hosted CI/security and

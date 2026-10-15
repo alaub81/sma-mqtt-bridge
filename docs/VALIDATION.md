@@ -1770,3 +1770,31 @@ and diff hygiene pass. Local fake-server tests run outside the socket sandbox.
 No image build/deployment, device/broker access or openHAB change occurred; target
 MQTT Explorer acceptance remains pending. Preserve the existing state volume so
 the ownership manifest can retire the previous optional topics.
+
+## Explicit topic groups and Basic quality status, 2026-10-15
+
+This approved refinement supersedes the preceding coverage-visibility decision:
+six plant day/average coverage properties and Wallbox day coverage are Basic.
+They remain in metadata and values when optional Diagnostics is disabled.
+Detailed timestamps/date, input lists and battery boundary remain Diagnostics.
+Home Manager data-change counter and unlocked-device count follow Diagnostics
+independently of Advanced. All topic IDs, labels and units are preserved.
+
+All 372 offline tests pass. Four new tests enforce explicit maintained declarations,
+all four reader group combinations, independent Home Manager protocol diagnostics
+and reproducibility of the generated catalog. Updated plant tests cover Basic
+metadata/values, all plant/Wallbox flag combinations, debug independence, source
+error status and actual retirement of optional topics while preserving Basic
+topics and byte-identical energy state. All four bundled profiles were compared
+against the previous revision: only channel-group declarations changed.
+
+The generated [catalog](topic-catalog.csv) contains 299 property rows, including
+transport alternatives, conditional commands and multiple-contributor plant
+outputs. It reads public bundled metadata and synthetic offline configuration,
+never installation secrets or device responses. The CI container test command
+mounts the exporter/catalog read-only; they remain outside image inputs.
+Full repository lint, Compose parity including overrides and diff hygiene pass.
+Four existing loopback-server protocol tests required execution outside the socket
+sandbox; no real device/broker connections occurred. No image build, hosted CI,
+publication, deployment or live openHAB changes were performed. Reconcile used
+host profiles and verify target visibility separately; preserve state and links.

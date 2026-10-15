@@ -264,3 +264,22 @@ by the existing widget. Device profile channel groups remain authoritative:
 Basic derating stays Basic even beneath the diagnostics topic path. Existing
 Advanced/profile/SEMP filtering remains unchanged. Hidden owned topics retire
 through the persistent MQTT manifest on reconnect without resetting energy state.
+
+## Explicit topic groups and Basic data quality, 2026-10-15
+
+Andreas approved the refinement in [TOPIC_GROUPS.md](TOPIC_GROUPS.md): six plant
+day/average coverage statuses and Wallbox day status are Basic. This supersedes
+the preceding decision to hide those seven statuses with optional Diagnostics.
+Detailed inputs, accounting times/date and battery boundary remain Diagnostics.
+Coverage and operational availability answer separate questions; neither retained
+measurements nor retained coverage certify current connectivity.
+
+Home Manager data-change counter and Grid Guard unlocked-device count now follow
+Diagnostics independently of Advanced. Advanced still controls delegated discovery
+and metadata; identity verification remains mandatory. Every bundled mapping and
+runtime property explicitly declares its group. Legacy host-profile fallback is
+preserved; host overrides must adopt changed declarations explicitly.
+The [generated catalog](topic-catalog.csv) derives public property metadata from
+offline constructors and bundled profiles, including conditional outputs and
+transport alternatives. These classes do not change topic IDs, write allowlists,
+readiness, calculation/energy state or activation. No new configuration flags.

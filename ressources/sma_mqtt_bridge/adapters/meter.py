@@ -58,6 +58,7 @@ class MeterReader:
                 name.replace("-", " ").title(),
                 unit=unit,
                 required_for_ready=name in ("power-import", "power-export"),
+                channel_group="basic",
             )
             for name, unit, _ in OBIS.values()
         )

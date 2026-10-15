@@ -427,3 +427,21 @@ rules and histories stay in place until separately migrated. No live changes to
 openHAB are included. See CONFIGURATION.md for units, history collection and tariffs.
 Official openHAB Homie binding documentation was consulted for read-only discovery:
 <https://www.openhab.org/addons/bindings/homie/>.
+
+## Explicit topic grouping and quality status, 2026-10-15
+
+The [classification guide](TOPIC_GROUPS.md) and [generated catalog](topic-catalog.csv)
+record every bundled/runtime property group. Seven existing plant/Wallbox coverage
+statuses now remain Basic with optional Diagnostics disabled. Home Manager
+parameters/datachangecounter and parameters/gridguardunlockeddevices move from
+Advanced to Diagnostics; Advanced no longer controls those two core reads.
+Existing host profile files retain their precedence/defaults and need explicit
+channelGroup changes to adopt this selection.
+
+Published IDs, units, labels, Items and persistence links are preserved. Runtime
+state, daily baselines, command rights and observation lifetime are unchanged.
+The normal ownership manifest retires disabled optional topics; it preserves the
+seven Basic statuses. Source status/Homie state still conveys availability,
+separately from accounting coverage. No deployment or live Item changes occurred.
+The official [openHAB Homie documentation](https://www.openhab.org/addons/bindings/homie/)
+was consulted; property classification does not require node or Item renaming.

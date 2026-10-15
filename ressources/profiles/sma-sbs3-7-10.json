@@ -146,7 +146,8 @@
       "datatype": "string",
       "valueMap": {
         "9356": "SBS3.7-10"
-      }
+      },
+      "channelGroup": "advanced"
     },
     {
       "id": "serial",
@@ -163,7 +164,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "advanced"
     },
     {
       "id": "firmware",
@@ -181,7 +183,8 @@
         4294967295
       ],
       "datatype": "string",
-      "format": "sma-firmware"
+      "format": "sma-firmware",
+      "channelGroup": "advanced"
     },
     {
       "id": "status",
@@ -206,7 +209,8 @@
         "307": "Ok (Ok)",
         "455": "Warnung (Wrn)"
       },
-      "requiredForReady": true
+      "requiredForReady": true,
+      "channelGroup": "basic"
     },
     {
       "id": "grid-contactor",
@@ -228,7 +232,8 @@
       "valueMap": {
         "51": "Geschlossen (Cls)",
         "311": "Offen (Opn)"
-      }
+      },
+      "channelGroup": "basic"
     },
     {
       "id": "day-yield",
@@ -245,7 +250,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "basic"
     },
     {
       "id": "total-yield",
@@ -262,7 +268,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "basic"
     },
     {
       "id": "current-bat-stat-charge",
@@ -279,7 +286,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "basic"
     },
     {
       "id": "current-batcapacity",
@@ -296,7 +304,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "basic"
     },
     {
       "id": "current-bat-temp",
@@ -313,7 +322,8 @@
       "invalid": [
         -2147483648
       ],
-      "datatype": "float"
+      "datatype": "float",
+      "channelGroup": "basic"
     },
     {
       "id": "battery-status",
@@ -337,7 +347,8 @@
         "2291": "Standby (BatWait)",
         "2292": "laden (BatChaStt)",
         "2293": "entladen (BatDschStt)"
-      }
+      },
+      "channelGroup": "basic"
     },
     {
       "id": "pres-bat-charge",
@@ -354,7 +365,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "basic"
     },
     {
       "id": "pres-batt-discharge",
@@ -371,7 +383,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "basic"
     },
     {
       "id": "type",
@@ -443,7 +456,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "float"
+      "datatype": "float",
+      "channelGroup": "basic"
     },
     {
       "id": "current-l1",
@@ -460,7 +474,8 @@
       "invalid": [
         -2147483648
       ],
-      "datatype": "float"
+      "datatype": "float",
+      "channelGroup": "basic"
     },
     {
       "id": "active-power",
@@ -477,7 +492,8 @@
       "invalid": [
         -2147483648
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "basic"
     },
     {
       "id": "battery-current",
@@ -494,7 +510,8 @@
       "invalid": [
         -2147483648
       ],
-      "datatype": "float"
+      "datatype": "float",
+      "channelGroup": "basic"
     },
     {
       "id": "battery-voltage",
@@ -511,7 +528,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "float"
+      "datatype": "float",
+      "channelGroup": "basic"
     },
     {
       "id": "internal-temperature",

@@ -25,6 +25,26 @@ from .timestamp_diagnostics import TimestampDiagnostics
 
 LOG = logging.getLogger(__name__)
 
+PORTAL_REFRESH_PROPERTIES = (
+    Property("portal", "refresh", "Refresh portal", "string", settable=True, channel_group="basic"),
+)
+
+LOCAL_COMMAND_PROPERTIES = (
+    Property("commands", "local-result", "Local command result", "string", channel_group="basic"),
+    Property(
+        "commands",
+        "plan",
+        "Confirmed charging plan",
+        "string",
+        settable=True,
+        channel_group="basic",
+    ),
+)
+
+PORTAL_COMMAND_PROPERTIES = (
+    Property("commands", "portal-result", "Portal command result", "string", channel_group="basic"),
+)
+
 
 def sources(config):
     result = []
@@ -342,7 +362,7 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
         refresh_state = SourceState(
             "portal-refresh",
             config.echarger.homie_id,
-            (Property("portal", "refresh", "Refresh portal", "string", settable=True),),
+            PORTAL_REFRESH_PROPERTIES,
             config.portal.stale_seconds,
             diagnostics_enabled=False,
             contributes_availability=False,
@@ -358,10 +378,7 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
         result_state = SourceState(
             "commands",
             config.echarger.homie_id,
-            (
-                Property("commands", "local-result", "Local command result", "string"),
-                Property("commands", "plan", "Confirmed charging plan", "string", settable=True),
-            ),
+            LOCAL_COMMAND_PROPERTIES,
             config.echarger.stale_seconds,
             diagnostics_enabled=config.echarger.diagnostics_enabled,
             contributes_availability=False,
@@ -378,7 +395,7 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
         result_state = SourceState(
             "portal-commands",
             config.echarger.homie_id,
-            (Property("commands", "portal-result", "Portal command result", "string"),),
+            PORTAL_COMMAND_PROPERTIES,
             config.portal.stale_seconds,
             diagnostics_enabled=config.portal.diagnostics_enabled,
             contributes_availability=False,

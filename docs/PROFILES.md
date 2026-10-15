@@ -117,7 +117,8 @@ overrides replace this selection without changing register decoding or write rig
 [critical freshness](CONFIGURATION.md#critical-freshness-and-diagnostics).
 
 A property may specify `channelGroup`: `basic`, `advanced`, or `diagnostics`. Unknown groups fail
-validation. Without an explicit group, `identity` and `parameters` nodes are advanced, `diagnostics`
+validation. All bundled mappings declare it explicitly; the offline suite checks new declarations.
+Legacy host profiles remain compatible: without an explicit group, `identity` and `parameters` nodes are advanced, `diagnostics`
 nodes are diagnostics, and other nodes are basic. Device ENV flags select these groups before
 polling and decoding; mandatory identity checks always use the complete profile. Shared register
 blocks still serve enabled properties. Bundled inverter internal-temperature readings are explicitly tagged
@@ -135,7 +136,8 @@ remains under the usual retention rules. The source status property remains the
 readiness criterion; these new phase measurements are not required for ready.
 
 The packaged extension follows the existing phase-channel basic default. General
-channel-group review remains future work. Host profile overrides take precedence:
+channel-group review is recorded in [the classification guide](TOPIC_GROUPS.md).
+Host profile overrides take precedence:
 update a host copy explicitly if one is selected; a rebuilt image cannot replace
 that copy. No new environment setting is needed and existing explicit poll-interval
 overrides continue to apply to all profile blocks. Rebuild/recreate the bridge to

@@ -10,6 +10,17 @@ from test_runtime import FakeClient
 
 from sma_mqtt_bridge.homie import HomiePublisher, discovery
 
+BASE_PLANT_QUALITY = {
+    "diagnostics/average-day-status",
+    "diagnostics/import-day-status",
+    "diagnostics/export-day-status",
+    "diagnostics/house-energy-status",
+}
+PLANT_QUALITY = BASE_PLANT_QUALITY | {
+    "diagnostics/average-without-wallbox-day-status",
+    "diagnostics/house-without-wallbox-day-status",
+}
+
 
 class PlantDiagnosticTests(PlantFixture):
     def test_disabled_diagnostics_hide_metadata_and_values_without_affecting_accounting(self):
@@ -24,23 +35,30 @@ class PlantDiagnosticTests(PlantFixture):
         publisher = HomiePublisher(disabled.config, [disabled.state])
         props = publisher.properties([disabled.state])
         self.assertEqual(
-            [p.key for p in props if p.node == "diagnostics"], ["diagnostics/plant-status"]
+            {p.key for p in props if p.node == "diagnostics"},
+            BASE_PLANT_QUALITY | {"diagnostics/plant-status"},
         )
         values, status = publisher.snapshot([disabled.state], now=100)
         enabled_values, enabled_status = HomiePublisher(enabled.config, [enabled.state]).snapshot(
             [enabled.state], now=100
         )
         self.assertEqual(status, enabled_status)
+        for key in BASE_PLANT_QUALITY:
+            self.assertEqual(values[key], enabled_values[key])
         self.assertEqual(
             {k: v for k, v in values.items() if not k.startswith("diagnostics/")},
             {k: v for k, v in enabled_values.items() if not k.startswith("diagnostics/")},
         )
         self.assertEqual(
-            [k for k in values if k.startswith("diagnostics/")], ["diagnostics/plant-status"]
+            {k for k in values if k.startswith("diagnostics/")},
+            BASE_PLANT_QUALITY | {"diagnostics/plant-status"},
         )
         self.assertIn("diagnostics/power-input-status", disabled.state.fresh_values(100))
         metadata = discovery("homie", "sma-plant", props)
-        self.assertEqual(metadata["homie/sma-plant/diagnostics/$properties"], "plantstatus")
+        self.assertEqual(
+            set(metadata["homie/sma-plant/diagnostics/$properties"].split(",")),
+            {k.split("/")[1].replace("-", "") for k in values if k.startswith("diagnostics/")},
+        )
         disabled.state.error = True
         self.assertEqual(
             publisher.snapshot([disabled.state], now=100)[0]["diagnostics/plant-status"], "error"
@@ -53,8 +71,8 @@ class PlantDiagnosticTests(PlantFixture):
         engine.refresh(100, self.wall)
         publisher = HomiePublisher(engine.config, [engine.state])
         self.assertEqual(
-            [p.key for p in publisher.properties([engine.state]) if p.node == "diagnostics"],
-            ["diagnostics/plant-status"],
+            {p.key for p in publisher.properties([engine.state]) if p.node == "diagnostics"},
+            BASE_PLANT_QUALITY | {"diagnostics/plant-status"},
         )
 
     def test_wallbox_and_plant_flags_are_independent(self):
@@ -80,13 +98,14 @@ class PlantDiagnosticTests(PlantFixture):
                 plant_keys = {p.key for p in publisher.properties([engine.state])}
                 wallbox_keys = {p.key for p in publisher.properties([engine.wallbox_state])}
                 self.assertEqual("diagnostics/power-input-status" in plant_keys, plant_flag)
-                self.assertEqual("diagnostics/wallbox-day-status" in wallbox_keys, charger_flag)
+                self.assertIn("diagnostics/wallbox-day-status", wallbox_keys)
+                self.assertTrue(PLANT_QUALITY <= plant_keys)
                 self.assertEqual("diagnostics/wallbox-energy-time" in wallbox_keys, charger_flag)
                 self.assertIn("measurements/daily-consumption", wallbox_keys)
                 self.assertIn("diagnostics/plant-status", plant_keys)
                 self.assertNotIn("diagnostics/wallbox-day-status", plant_keys)
                 snapshot, _ = publisher.snapshot([engine.wallbox_state], now=100)
-                self.assertEqual("diagnostics/wallbox-day-status" in snapshot, charger_flag)
+                self.assertIn("diagnostics/wallbox-day-status", snapshot)
 
     def test_device_basic_diagnostic_path_remains_basic(self):
         engine = self.engine(
@@ -145,9 +164,10 @@ class PlantDiagnosticRetirementTests(unittest.IsolatedAsyncioTestCase):
             for topic in retired:
                 self.assertIn((topic, b""), messages)
                 self.assertNotIn(topic, publisher.owned[device])
-            self.assertFalse(
-                any(topic.endswith("/plantstatus") and value == b"" for topic, value in messages)
-            )
+            for prop in new_props:
+                if prop.channel_group == "basic":
+                    topic = "homie/" + device + "/" + prop.key.replace("-", "")
+                    self.assertNotIn((topic, b""), messages)
         self.assertEqual(disabled.ledger.path.read_bytes(), saved)
 
 

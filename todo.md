@@ -12,6 +12,11 @@ wie „noch offen“ beschreiben den damaligen Stand, nicht die aktuelle Aufgabe
 
 ## Nächste Schritte
 
+- [ ] Topic-Gruppierung nach separatem Deployment live prüfen: sieben Basic-
+  Abdeckungsstatus bei abgeschalteter Diagnose sichtbar; Home-Manager-Protokoll-
+  diagnosen unabhängig von Advanced. Verwendete Host-Profile gezielt abgleichen,
+  Zustand/Topics/Item-Links erhalten. [Zuordnung](docs/TOPIC_GROUPS.md).
+
 - [ ] Bei **bezogener Energie** und **eingespeister Energie** die bestehenden
   openHAB-Offsets wegen des Energy-Meter-Wechsels berücksichtigen. Rohzähler und
   korrigierte Gesamtstände eindeutig unterscheiden; Offsets bei Migration,
@@ -888,3 +893,27 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
   Tests bestanden; vollständiger Linter und Compose-Parität samt Overrides bestanden.
   Keine Geräte-/Brokerverbindung; lokale Fake-Server außerhalb der Socket-Sandbox.
   Live-Installation und Prüfung im MQTT Explorer bleiben offen.
+
+## 2026-10-15 – Topic-Gruppen präzisiert und Katalog erzeugt
+
+- Andreas bestätigt die vorgeschlagene Einteilung. Sechs Abdeckungsstatus der
+  Anlage und der Wallbox-Tagesstatus sind jetzt Basic; sie bleiben bei
+  abgeschalteter Diagnose sichtbar. Damit ist die vorangegangene Entscheidung
+  für diese sieben Statuswerte ausdrücklich verfeinert. Detaillierte Eingänge,
+  Zeitpunkte, Datum und Batterie-Messgrenze bleiben Diagnose.
+- Home-Manager-Änderungszähler und Anzahl per Grid Guard freigeschalteter Geräte
+  von Advanced nach Diagnose verschoben. Beide Kernabfragen folgen dem Diagnose-
+  Schalter unabhängig von Advanced; Identitätsprüfung bleibt verpflichtend.
+- Alle gebündelten Profilwerte und Laufzeit-Properties ausdrücklich gruppiert;
+  bisherige Host-Profile behalten ihre dokumentierten Standardregeln. Neue
+  Deklarationen und alle vier Schalterkombinationen werden automatisch geprüft.
+- [Generierter Topic-Katalog](docs/topic-catalog.csv) mit 299 Zeilen aus öffentlichen
+  Profilen/Laufzeitmetadaten, einschließlich bedingter Ausgaben und alternativer
+  Quellen. Keine privaten Konfigurationswerte, keine Geräteabfragen. CI bekommt
+  Katalog und Werkzeug nur für Tests eingebunden, nicht im Laufzeit-Image.
+- Validierung: alle 372 Offline-Tests, vollständiger Linter und Compose-Parität
+  samt Overrides bestanden. Basic-Metadaten/-Werte, unabhängige Schalter und
+  Retained-Bereinigung bei unverändertem Energie-Ledger geprüft. Bei den vier
+  Profilen ausschließlich Gruppierungsangaben verändert; Mapping/Units unverändert.
+- Keine Veröffentlichung, Installation oder Live-SMA-/MQTT-/openHAB-Änderung.
+  Die verbleibende Live-Prüfung steht oben; bestehende Energie-Abnahmen bleiben.

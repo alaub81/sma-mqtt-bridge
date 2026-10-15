@@ -176,8 +176,9 @@ local eCharger API and the plant calculation flag.
 They use the existing total-energy counter, never the session counter; household
 kWh without Wallbox retains the battery-boundary gate. No additional device I/O.
 
-All aggregates are read-only. Coverage/date/battery-boundary diagnostics remain
-available independently of optional source diagnostics. Retained values alone
+All aggregates are read-only. Concise day/average coverage status is Basic.
+Date/battery-boundary/input details follow the plant Diagnostics flag; Wallbox
+snapshot time follows the eCharger flag. Retained values alone
 do not establish a current/full-day result. Current power and direct counter sums
 use existing receipts; grid/house energy publishes durable snapshots at the
 configured checkpoint cadence (default 300 seconds), plus critical transitions.

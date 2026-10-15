@@ -70,6 +70,7 @@ class HomeManagerModbusReader(ModbusReader):
                     "Assigned SUSy ID",
                     "integer",
                     stale_seconds=self.inventory_expiry(),
+                    channel_group="advanced",
                 ),
                 Property(
                     node,
@@ -77,6 +78,7 @@ class HomeManagerModbusReader(ModbusReader):
                     "Assigned serial",
                     "integer",
                     stale_seconds=self.inventory_expiry(),
+                    channel_group="advanced",
                 ),
                 Property(
                     node,
@@ -84,6 +86,7 @@ class HomeManagerModbusReader(ModbusReader):
                     "Assigned Modbus unit",
                     "integer",
                     stale_seconds=self.inventory_expiry(),
+                    channel_group="advanced",
                 ),
             ]
             if 3 <= unit <= 247 and unit not in units:
@@ -102,7 +105,13 @@ class HomeManagerModbusReader(ModbusReader):
                     )
         if self.home_settings.diagnostics_enabled:
             props.append(
-                Property("diagnostics", "modbus-rejected-blocks", "Rejected read blocks", "integer")
+                Property(
+                    "diagnostics",
+                    "modbus-rejected-blocks",
+                    "Rejected read blocks",
+                    "integer",
+                    channel_group="diagnostics",
+                )
             )
         self.properties = tuple(props)
 
