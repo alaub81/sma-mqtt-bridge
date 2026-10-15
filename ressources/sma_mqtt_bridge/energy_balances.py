@@ -69,9 +69,16 @@ def validate_ledger(data):
         ):
             raise ValueError
         for record in data["accounts"].values():
-            if not isinstance(record, dict) or set(record) != ACCOUNT_FIELDS:
+            if not isinstance(record, dict) or set(record) - {"history"} != ACCOUNT_FIELDS:
                 raise ValueError
             date.fromisoformat(record["date"])
+            history = record.get("history", {})
+            if not isinstance(history, dict) or len(history) > 7:
+                raise ValueError
+            for day, value in history.items():
+                if date.fromisoformat(day) >= date.fromisoformat(record["date"]):
+                    raise ValueError
+                counter_vector({day: value})
             if utc_time(record["start"]) > utc_time(record["lastTime"]):
                 raise ValueError
             if utc_time(record["oldestTime"]) > utc_time(record["lastTime"]):
@@ -221,6 +228,20 @@ class EnergyBalances:
                 and oldest_wall >= boundary - tolerance
                 and not reset
             )
+            if name in ("house", "housewithoutwallbox"):
+                history = record.setdefault("history", {})
+                closed = self.balance(values, signs, record["dailyBase"])
+                if (
+                    complete
+                    and record["dailyStatus"] == "complete"
+                    and self.accept(closed, record["dailyValue"])
+                ):
+                    history[record["date"]] = str(closed)
+                record["history"] = {
+                    day: value
+                    for day, value in history.items()
+                    if local_day - timedelta(days=7) <= date.fromisoformat(day) < local_day
+                }
             record.update(
                 date=local_day.isoformat(),
                 dailyBase=dict(encoded),

@@ -12,21 +12,32 @@ wie „noch offen“ beschreiben den damaligen Stand, nicht die aktuelle Aufgabe
 
 ## Nächste Schritte
 
+- [ ] Bei **bezogener Energie** und **eingespeister Energie** die bestehenden
+  openHAB-Offsets wegen des Energy-Meter-Wechsels berücksichtigen. Rohzähler und
+  korrigierte Gesamtstände eindeutig unterscheiden; Offsets bei Migration,
+  Berechnungen und Alt-/Neu-Vergleichen genau einmal anwenden und die Kontinuität
+  bestehender Historien erhalten. Konkrete Offsetwerte bleiben privat.
+
+- [x] Vergütung aus gesamtem PV-Ertrag × individuellem Wechselrichtertarif und
+  zwei Sieben-Tage-Hausdurchschnitte unter sma-plant lokal umgesetzt.
+  Andreas bestätigt: sieben abgeschlossene Kalendertage, Wallbox abziehen statt
+  ganze Ladetage ausschließen. Währung frei konfigurierbar, Standard €.
+- [ ] Neue Vergütungs-/Durchschnittskanäle nach separatem Deployment live prüfen;
+  sieben vollständige Tage sammeln. Bestehende openHAB-Berechnungen bis zur
+  getrennten Migration erhalten. Private Tarife selbst in smab.env eintragen.
+
 - [ ] Produktions-`smab.env` aufräumen: nur Werte behalten, die von den wirksamen
   Standardwerten abweichen, einschließlich notwendiger installationsspezifischer
   Angaben und Zugangsdaten. Defaults aus Loader und Compose abgleichen und prüfen,
   dass die bereinigte Datei dieselbe wirksame Konfiguration ergibt. Private Werte
   nicht protokollieren oder in öffentliche Beispiele übernehmen.
 
-- [ ] Neue optionale [Anlagenberechnung](docs/PV_AGGREGATION_DESIGN.md) mit einem
-  separat getesteten Build aktivieren und parallel vergleichen. Rollen/Topics,
-  Summen, aktuelle Hausleistung und persistente Zählerlogik sind lokal umgesetzt.
-  AC-Messgrenzen beider Batteriezähler sind für die Installation anhand der
-  [Historienauswertung](docs/BATTERY_ENERGY_BOUNDARY_2026-10-15.md) sehr gut belegt;
-  feinere PV-Zähler und Tagesvergleich bleiben offen. Laufzeit-Profildeklaration
-  ist auf AC umgestellt; Andreas erlaubt neue Tagesbasen beim Upgrade. Neuen Build
-  laden und nur Energie-Ledger gesichert zurücksetzen. Teil-Tage, Mitternacht,
-  Neustart und Datenlücken auch live prüfen. Bestehende Regeln/Items erhalten.
+- [x] Neuer AC-Profil-Build auf dem Zielhost installiert, verwendete Profile
+  abgeglichen, Energie-Ledger gesichert zurückgesetzt und installierte Version
+  geprüft: von Andreas am 15.10.2026 als erledigt bestätigt.
+- [x] Energieberechnungen über einen vollständigen Tag einschließlich Mitternacht,
+  Neustart und Datenlücken live abgenommen: von Andreas am 15.10.2026 bestätigt.
+  Feinere PV-Zähler bleiben eine getrennte mögliche Verbesserung.
 - [ ] Grafana-/InfluxDB-Datenquelle, Schema, effektive Persistence und Messreihennamen
   lesend inventarisieren; anschließend Dashboard für die wichtigen Alt-/Neu-Paare
   aus [Vergleichsmatrix](docs/pv-comparison-2026-10-14.csv) erstellen. 38 aktuelle
@@ -35,29 +46,17 @@ wie „noch offen“ beschreiben den damaligen Stand, nicht die aktuelle Aufgabe
   zeigt noch auf numerisches planttime statt planttimeiso. Keine Änderung oder
   konkrete Wertstörung aus dem Inventar ableiten; bestehende Abhängigkeiten sichern.
 
-- [ ] Prüfen, ob die bisher in openHAB berechneten Werte **Tagesbezug**,
-  **Tageseinspeisung**, **Tagesverbrauch**, **Strom Hausgesamtverbrauch**,
-  **Tagesverbrauch ohne Wallbox** und **Wallbox-Tagesverbrauch**
-  ohne größeren Aufwand in die Bridge übernommen werden können; wenn möglich,
-  implementieren und über Homie bereitstellen. Bestehende Formeln, Quellen,
-  Einheiten und Tagesgrenzen einschließlich Zeitzone/Sommerzeit abgleichen;
-  Neustarts und Zählerwechsel berücksichtigen. Vor einer Ablösung die Ergebnisse
-  im Parallelbetrieb vergleichen und bestehende Regeln sowie Historien erhalten.
-  Erste [Machbarkeitsprüfung](docs/MIGRATION.md#requested-bridge-calculations-feasibility-review-2026-10-14)
-  abgeschlossen. Andreas präzisiert: die vier ursprünglich genannten Werte sind Energie in kWh;
-  neue Berechnung aus vorhandenen Gesamtzählern statt Nachbau der InfluxDB-Abfragen.
-  Ergänzt: Tagesverbrauch ohne Wallbox und Wallbox-Tagesverbrauch ebenfalls in kWh;
-  passende Zählerquellen und Abgrenzung zum gesamten Tagesverbrauch prüfen.
-  Zunächst Rechnung diskutieren, noch nicht implementieren. Netz-Tagesdifferenzen
-  sind ableitbar; für Hausbilanz Batterie-Messgrenze und PV-Zählerauflösung klären.
+- [x] Tagesbezug, Tageseinspeisung, Haus-Tagesverbrauch und Tagesverbrauch mit/
+  ohne Wallbox sind umgesetzt und von Andreas am 15.10.2026 live abgenommen.
+  Weitere openHAB-Migration und feinere PV-Zähler bleiben getrennte Aufgaben.
 
 - [x] Freiwilliger Ressourcenvergleich nach dem Update abgeschlossen: vollständige
   24-Stunden-Datei am 14.10.2026 ausgewertet. [Nachweis](docs/RESOURCE_SOAK_ANALYSIS_2026-10-14.md):
   stabile CPU/Speichernutzung, alle Stichproben healthy, keine Neustarts. Installierte
   Version ist im Recorder nicht enthalten; separate Versionsbestätigung bleibt offen.
-- [ ] Vor diesem Deployment verwendete Host-Profilkopien mit den gebündelten
+- [x] Vor diesem Deployment verwendete Host-Profilkopien mit den gebündelten
   Änderungen abgleichen (M01–M04/M09 und neue Gruppierungen), Zustandsvolume und
-  bestehende Links/Historien erhalten. Nur tatsächlich genutzte Overrides ändern.
+  bestehende Links/Historien erhalten. Von Andreas am 15.10.2026 bestätigt.
 - [ ] Nach Deployment neue Kennzahl `measurements/batteryefficiency`, Basic-
   Verfügbarkeit von `diagnostics/deratingreason` und Home-Manager-ISO-Topic
   `measurements/planttimeiso` live prüfen. Bestehendes DateTime-Item bei Bedarf auf
@@ -774,3 +773,83 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
   Keine Vertrauensprüfung umgangen. Konkrete Compose-Abfolge zum Prüfen, Sichern
   und Neustarten in docs/CONFIGURATION.md hinterlegt. Pi-Diagnose/Neustart und
   Erscheinen neuer Tageswerte bleiben bis zur dortigen Ausführung offen.
+
+## 2026-10-15 – Alt/Neu-Itemmapping für späteren Kurvenvergleich
+
+- Andreas schließt Wallbox-Items aus dem Vergleich aus; die SMA-Wallbox ist neu.
+  Grafana und dessen Voraussetzungen folgen ausdrücklich erst im zweiten Schritt.
+- [Lesbare Zuordnung](docs/OPENHAB_ITEM_MAPPING.md) und drei CSV-Ansichten mit
+  unveränderten Itemnamen/Labels aus der Inventur vom 14.10. erstellt: 38 Paare,
+  acht alte Items mit implementiertem Topic aber fehlendem neuen Itemnamen, zwei
+  alte Berechnungen ohne Bridge-Ersatz und 32 ausschließlich neue erfasste Items.
+  Zusätzlich ein neues Haus-ohne-Wallbox-Tagestopic ohne erfasste Itemnamen.
+- Einspeisevergütung und Sieben-Tage-Durchschnitt bleiben ausdrücklich als alte
+  Berechnungen ohne Bridge-Ersatz sichtbar; keine stillschweigende Funktionslücke
+  verdeckt. Namenslücke und fehlende Implementierung getrennt gekennzeichnet.
+- [x] Die acht tatsächlichen neuen Itemnamen/Labels der Anlagenberechnungen
+  am 15.10. live über Itemdetails und Channel-Links bestätigt und ergänzt.
+  Zusätzlich Haus-Tagesverbrauch ohne Wallbox erfasst: nun 46 Paare, 33 neue
+  Items und zwei alte Berechnungen ohne Bridge-Ersatz. Sonstige neu angelegte
+  Items außerhalb dieser gezielten Prüfung bleiben unbestätigt.
+- Mengenabgleich: sämtliche erfassten Nicht-Gruppen-Items des PV-/Bridge-Bestands
+  abgedeckt; externe Abhängigkeiten und Wallbox-Items bewusst ausgeschlossen.
+  Keine Items, Links, Regeln oder Historien verändert.
+- Validierung: CSV mit Tabellenwerkzeug eingelesen, Vollständigkeit gegen alle
+  erfassten Nicht-Gruppen-Items geprüft; Linter über 171 Dateien und 350 Tests
+  erfolgreich. Erster Testlauf durch Sandbox bei vier lokalen Testservern
+  blockiert; Wiederholung mit Loopback-Erlaubnis vollständig erfolgreich.
+
+- Ergänzung auf Andreas' Wunsch: [Neun Anlagen-Itemlinks](docs/plant-item-links-2026-10-15.csv)
+  ausschließlich lesend aus laufendem openHAB erfasst; keine Zustände oder
+  privaten Brokerkennungen gespeichert. Alle acht Namenslücken erledigt.
+
+## 2026-10-15 – Grafana-Vergleichsdashboard vorbereitet
+
+- Andreas beauftragt ein eigenes Dashboard im Ordner Test: ein Panel pro Alt/Neu-
+  Vergleich und ausschließlich gemeinsamer Grafana-Zeitbereich oben. 46 Paare
+  vorbereitet (39 numerische Zeitreihen, sieben Textzustandsverläufe). Wallbox
+  bleibt ausgeschlossen. Fehlende Historien nicht mit Null auffüllen.
+- Vorhandene Grafana-InfluxDB-Datenquelle und value-Feld lesend bestätigt.
+  Alte inverter1Status-Messreihe liefert keine Felddefinition; neue Zustand-Reihe
+  ist String. Keine Persistence-/Item-Änderung oder Historienkorrektur beauftragt.
+- Lokale Importdatei unter private/generated/sma-alt-neu-grafana.json; alle
+  46 Itempaare und 92 Abfragen gegen Mapping geprüft, keine Panel-Zeitoverrides.
+  Zeitfenster-Mittelung für längere Bereiche; kurze Spitzen durch Hineinzoomen
+  untersuchen. Aktueller Entwurf ist noch nicht als gespeichertes Dashboard bestätigt.
+- Safari-Text-/Dateiimport bleibt im Ladezustand, Editor zeitweise nicht reagierend.
+  Separaten Codex-Browser geöffnet; Benutzeranmeldung dort angefragt.
+- [x] Nach Anmeldung Dashboard **SMA · Alt und Neu im Vergleich** im bestehenden
+  Grafana-Ordner **TESTS** gespeichert (UID sma-alt-neu-vergleich). Gemeinsame
+  Auswahl letzte Stunde und letzte 30 Tage geprüft; Alt blau, Neu orange gestrichelt.
+  Ausgewählte reale Reihen aus Anlage, Home Manager, Dach, Batterie und Carport
+  laden; keine Konsolenfehler im beobachteten Prüflauf. Nicht alle 92 Reihen
+  einzeln auf Historienvollständigkeit oder Wertgleichheit abgenommen.
+- Safari-Importblockade über angemeldeten Codex-Browser umgangen. Fertiges
+  gespeichertes Dashboard anschließend in eigenem Safari-Tab geöffnet.
+- [ ] Fehlende alte Statushistorien separat prüfen, bei Bedarf zukünftige
+  Historisierung abstimmen. Kein rückwirkender Vergleich ohne gespeicherte Werte.
+  Beobachtete Zähler-Offsets und Teil-Tag-Unterschiede im Dashboard erläutert.
+
+- 15.10.2026: Auf Andreas' Wunsch alle 39 numerischen Vergleichspanels auf
+  durchgezogene Linien ohne Punktmarker umgestellt, auch Neu nicht mehr gestrichelt.
+  Vorhandene Messpunkte über leere Zeitfenster verbunden; Verbindungen sind
+  Darstellung, keine zusätzlichen Messungen. Gespeichert und visuell geprüft.
+
+## 2026-10-15 – Vergütung und Sieben-Tage-Durchschnitte
+
+- Andreas bestätigt AC-Build-Deployment samt Profilabgleich, gesichertem Ledger-Reset
+  und Versionsprüfung sowie vollständige Tagesabnahme inklusive Mitternacht,
+  Neustart und Datenlücken als erledigt. Keine unabhängige neue Liveprüfung.
+- Vergütung: gesamter PV-Gesamtertrag je aktivem PV-Wechselrichter × eigener
+  ENV-Tarif, Summe ausschließlich unter sma-plant; Währung konfigurierbar, Standard €.
+  Eigenverbrauch ist enthalten; eine Tarifänderung bewertet den ganzen Ertrag neu.
+- Hausdurchschnitt: sieben abgeschlossene lokale Kalendertage, einmal mit und
+  einmal abzüglich Wallbox; Ladetage bleiben enthalten. Fehlende/unvollständige
+  Tage sind keine Nulltage. Sieben vollständige Tage müssen zunächst gesammelt werden.
+- Kleine optionale Tageshistorie im bestehenden Energie-Ledger, ohne neue Basen
+  oder Fingerprints. Ältere Builds benötigen beim Rückrollen eine passende alte
+  Ledger-Sicherung, da sie das neue optionale Historienfeld nicht akzeptieren.
+- Validierung: 359 Offline-Tests einschließlich neun neuer Statistiktests, voller
+  Linter und Compose-Parität samt Overrides bestanden. Lokale Testserver außerhalb
+  der Socket-Sandbox; keine Geräte-/Brokerverbindung. Keine neue Installation,
+  Veröffentlichung, privaten Tarifwerte oder Änderung an openHAB/Historien.

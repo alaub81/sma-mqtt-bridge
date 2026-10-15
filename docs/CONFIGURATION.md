@@ -895,3 +895,38 @@ The retained `portal/refresh` string reports `queued`, `reading`, `completed`,
 It contributes no device readiness. `completed` confirms a validated read,
 not a preference write or physical charging action. See the
 [openHAB setup](../openHAB/openHAB.md#manual-portal-refresh).
+
+## Yield remuneration and seven-day household averages
+
+Each inverter supports `SMAB_INVERTER<n>_YIELD_TARIFF_PER_KWH` (finite
+nonnegative float, default `0`, slots 1–3). `SMAB_PLANT_CURRENCY` is a nonempty
+string of at most 16 characters, default `€`. JSON equivalents are
+`yieldTariffPerKwh` in each inverter and `currency` in `plant`; normal precedence
+applies. No private tariffs are supplied by the bridge.
+
+With plant enabled, `pv/totalearnings` sums each enabled PV contributor's
+**entire lifetime PV yield × its individual tariff**. It includes self-consumed
+production and is not a measurement of actual feed-in payments. Battery-only
+inverters are excluded. All PV counters must be fresh and valid, including zero-rate
+contributors. Currency is the Homie unit; tariffs are in that currency per kWh,
+not cents. Changing a tariff recalculates the entire historical yield at that rate;
+there is no tariff-period accounting or currency conversion.
+
+Only the plant exposes `house/averagedailyconsumption` and, with local Wallbox
+API enabled, `house/averagedailyconsumptionwithoutwallbox`, float `kWh/d`.
+They average the seven preceding completed local calendar days, excluding today.
+The latter subtracts measured Wallbox consumption; charging days remain included.
+All seven dates must be present; missing/partial/reset/gap days never count as zero.
+A 23/25-hour daylight-saving day counts as one calendar day. Existing boundary
+tolerance still applies; no interpolation or InfluxDB backfill is performed.
+
+Seven bounded historical day values per house account are saved in the existing
+energy ledger, as optional `history` fields. Existing ledgers load without rebasing;
+collection begins with the next complete day. Seven full days are required after
+upgrade before the first average. New state remains schema 1, but older binaries
+reject the added field: restore a matching pre-upgrade backup for rollback. The
+existing energy-baseline reset archives this history with the ledger. Averages
+use committed history only; failed durable writes cannot publish new averages.
+Coverage diagnostics are `diagnostics/averagedaystatus` and
+`diagnostics/averagewithoutwallboxdaystatus` (`complete`/`insufficient-history`).
+All added properties are read-only; no device I/O or openHAB changes are introduced.

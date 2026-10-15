@@ -1667,3 +1667,68 @@ no previously verified host key and native Terminal access is unavailable throug
 the tool. No host-key protection was bypassed. Existing Pi ledgers and service
 were not modified. Loading the new image, reconciling host overrides and executing
 the explicit backup/reset procedure remain the concrete deployment steps.
+
+## Item mapping documentation 2026-10-15
+
+The [Item mapping](OPENHAB_ITEM_MAPPING.md) covers all recorded non-group Items
+in the inverter/Home Manager PV scope: 46 pairs, two old calculations without
+bridge counterparts and 33 observed new-only Items. All eight missing plant
+Item names were resolved by live UI inspection on 2026-10-15, including labels,
+units and Channel Links; the additional household daily Item without Wallbox
+was also verified. [Sanitized evidence](plant-item-links-2026-10-15.csv) stores
+no state or private broker identifiers. Other inventory entries retain their
+2026-10-14 observation date; full live inventory/value acceptance is not implied.
+Wallbox Items are excluded; Grafana is deferred. Prior full lint across 171 files
+and all 350 offline tests passed for the mapping preparation. The name-only
+follow-up changes documentation and CSV metadata, with no runtime or live
+configuration changes; lint and scoped cross-file consistency are checked again.
+
+## Grafana comparison dashboard created 2026-10-15
+
+The separate **SMA · Alt und Neu im Vergleich** dashboard (UID
+`sma-alt-neu-vergleich`) was imported and saved in the existing **TESTS** folder.
+It contains all 46 mapped pairs: 39 numeric time-series panels and seven string
+state timelines, grouped by plant/household, Home Manager and the three inverters.
+Wallbox Items are excluded. The common top-level time picker was exercised for
+the last hour and last 30 days; no panel has a separate time override.
+
+Selected real old/new series loaded in each device group. Browser console
+inspection returned no errors during the check. Full 92-series history coverage
+and numerical equivalence were not accepted. An earlier schema check found no
+field definition for the old inverter1Status series; missing history is not zero.
+Numeric values use adaptive interval means with up to 10,000 points per panel;
+short spikes may be smoothed over long ranges, so zooming remains necessary.
+Old cumulative counter offsets and partial-day/reset boundaries remain visible
+and are explained in the dashboard. Source histories, persistence and openHAB
+configuration were not changed. Safari import stalled; the authenticated Codex
+browser completed the import, and the saved result was opened in Safari.
+
+## User-confirmed deployment and daily energy acceptance, 2026-10-15
+
+Andreas explicitly marks target-host installation of the AC-profile build, host
+profile reconciliation, backed-up energy-ledger reset and installed-version
+verification complete. He also marks the full-day grid/house/Wallbox energy
+comparison, including midnight, restart and data gaps, complete. This records
+user acceptance; no new independent host probe was performed. Finer PV counters
+remain a separate improvement.
+
+## Plant yield remuneration and seven-day averages, 2026-10-15
+
+Local implementation publishes plant-only lifetime PV yield remuneration using
+per-inverter nonnegative currency/kWh tariffs and a configurable currency label
+(default euro), plus house daily averages with and subtracting Wallbox energy.
+The averages require all seven preceding complete local dates; charging days
+remain included. Optional bounded history is stored in the existing energy ledger;
+old baselines/signatures remain valid, but older binaries require a pre-upgrade
+ledger backup for rollback once history fields are present.
+
+All 359 offline tests pass, including nine new statistics cases: weighted tariffs,
+battery exclusion, default zero/single PV, missing contributor, config rejection,
+restart, missing/partial/reset days, seven-date coverage, Berlin spring/autumn DST,
+corrupt history, signature mismatch, committed-only publication, failed state writes,
+Wallbox subtraction and plant ownership. The full suite uses deterministic fixtures
+and local fake servers only; localhost server checks require running outside the
+socket sandbox. Full lint and standalone Compose parity including overrides pass.
+No private tariffs were inserted, no image was built/published/deployed and no
+openHAB Item/rule/history was modified. New channel live acceptance remains pending;
+previous user-accepted deployment and day-energy checks remain closed.

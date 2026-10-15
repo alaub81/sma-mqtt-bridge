@@ -232,3 +232,13 @@ classification approval is separate from live MQTT and openHAB acceptance.
 ## Sunny Boy DC completeness refinement, 2026-10-12
 
 At Andreas’ request, expose both documented DC MPP inputs as basic measurements, even when an input is unused or temporarily has no valid sample. Input B had valid zeros in the production scan. Preserve zero versus invalid-sample semantics; the mapping does not imply that both inputs are wired. Existing input A identities and history remain unchanged.
+
+## Plant remuneration and averages, 2026-10-15
+
+Andreas selects total PV yield times independently configured inverter tariffs,
+summed only on the plant, with configurable currency (default euro). This is
+production remuneration, including self-consumption, rather than allocation of
+shared grid export. Seven-day house averages use seven completed local calendar
+days, once including and once subtracting Wallbox energy; charging days remain.
+Bounded optional history fields extend the existing durable energy ledger without
+rebasing or changing its configuration signature. No external history is inferred.

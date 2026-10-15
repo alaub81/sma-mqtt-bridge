@@ -1,0 +1,34 @@
+legacy_item,legacy_label,bridge_item,bridge_label,unit,status,homie_topic,notes
+,,smahomemanager_Anlagenstatus,Anlagenstatus,,new-only,homie/sma-home-manager/measurements/plantstatus,No distinct legacy counterpart in the recorded PV scope.
+,,smahomemanager_Anlagenzeit,Anlagenzeit,s,new-only,homie/sma-home-manager/measurements/planttime,No distinct legacy counterpart in the recorded PV scope.
+,,smahomemanager_Anlagenzeit_DateTime,Anlagenzeit (Datum/Uhrzeit),,new-only,homie/sma-home-manager/measurements/planttime,No distinct legacy counterpart in the recorded PV scope. Recorded link targets numeric planttime; review mapping to planttimeiso separately.
+,,smahomemanager_Verfugbarkeit_der_Datenquelle,Verfügbarkeit der Datenquelle,,new-only,homie/sma-home-manager/diagnostics/homemanagerstatus,No distinct legacy counterpart in the recorded PV scope.
+,,smainv1roof_Netzfrequenz,Netzfrequenz,Hz,new-only,homie/sma-inv1-roof/measurements/frequency,No distinct legacy counterpart in the recorded PV scope.
+,,smainv1roof_Netzstrom_Phase_L1,Netzstrom Phase L1,A,new-only,homie/sma-inv1-roof/measurements/currentl1,No distinct legacy counterpart in the recorded PV scope.
+,,smainv1roof_Netzstrom_Phase_L2,Netzstrom Phase L2,A,new-only,homie/sma-inv1-roof/measurements/currentl2,No distinct legacy counterpart in the recorded PV scope.
+,,smainv1roof_Netzstrom_Phase_L3,Netzstrom Phase L3,A,new-only,homie/sma-inv1-roof/measurements/currentl3,No distinct legacy counterpart in the recorded PV scope.
+,,smainv1roof_Verfugbarkeit_der_Datenquelle,Verfügbarkeit der Datenquelle,,new-only,homie/sma-inv1-roof/diagnostics/inverter1status,No distinct legacy counterpart in the recorded PV scope.
+,,smainv2battery_BatterieEntladeenergie,Batterie-Entladeenergie,kWh,new-only,homie/sma-inv2-battery/measurements/batterydischargeenergy,No distinct legacy counterpart in the recorded PV scope.
+,,smainv2battery_BatterieLadeenergie,Batterie-Ladeenergie,kWh,new-only,homie/sma-inv2-battery/measurements/batterychargeenergy,No distinct legacy counterpart in the recorded PV scope.
+,,smainv2battery_Batteriespannung,Batteriespannung,V,new-only,homie/sma-inv2-battery/measurements/batteryvoltage,No distinct legacy counterpart in the recorded PV scope.
+,,smainv2battery_Batteriestrom,Batteriestrom,A,new-only,homie/sma-inv2-battery/measurements/batterycurrent,No distinct legacy counterpart in the recorded PV scope.
+,,smainv2battery_Leistung,Leistung,W,new-only,homie/sma-inv2-battery/measurements/activepower,No distinct legacy counterpart in the recorded PV scope.
+,,smainv2battery_Netzfrequenz,Netzfrequenz,Hz,new-only,homie/sma-inv2-battery/measurements/frequency,No distinct legacy counterpart in the recorded PV scope.
+,,smainv2battery_Netzstrom_Phase_L1,Netzstrom Phase L1,A,new-only,homie/sma-inv2-battery/measurements/currentl1,No distinct legacy counterpart in the recorded PV scope.
+,,smainv2battery_Verfugbarkeit_der_Datenquelle,Verfügbarkeit der Datenquelle,,new-only,homie/sma-inv2-battery/diagnostics/inverter2status,No distinct legacy counterpart in the recorded PV scope.
+,,smainv3carport_Bezogene_Leistung,Bezogene Leistung,W,new-only,homie/sma-inv3-carport/measurements/powerdrawn,No distinct legacy counterpart in the recorded PV scope.
+,,smainv3carport_DCLeistung_Eingang_B,DC-Leistung Eingang B,W,new-only,homie/sma-inv3-carport/measurements/powerbinput,No distinct legacy counterpart in the recorded PV scope.
+,,smainv3carport_DCSpannung_Eingang_B,DC-Spannung Eingang B,V,new-only,homie/sma-inv3-carport/measurements/voltagebinput,No distinct legacy counterpart in the recorded PV scope.
+,,smainv3carport_DCStrom_Eingang_B,DC-Strom Eingang B,A,new-only,homie/sma-inv3-carport/measurements/currentbinput,No distinct legacy counterpart in the recorded PV scope.
+,,smainv3carport_Leistung_Phase_L1,Leistung Phase L1,W,new-only,homie/sma-inv3-carport/measurements/powerl1,No distinct legacy counterpart in the recorded PV scope.
+,,smainv3carport_Leistung_Phase_L2,Leistung Phase L2,W,new-only,homie/sma-inv3-carport/measurements/powerl2,No distinct legacy counterpart in the recorded PV scope.
+,,smainv3carport_Leistung_Phase_L3,Leistung Phase L3,W,new-only,homie/sma-inv3-carport/measurements/powerl3,No distinct legacy counterpart in the recorded PV scope.
+,,smainv3carport_Netzeinspeiseleistung,Netzeinspeiseleistung,W,new-only,homie/sma-inv3-carport/measurements/powergridfeedin,No distinct legacy counterpart in the recorded PV scope.
+,,smainv3carport_Netzfrequenz,Netzfrequenz,Hz,new-only,homie/sma-inv3-carport/measurements/frequency,No distinct legacy counterpart in the recorded PV scope.
+,,smainv3carport_Netzspannung_Phase_L1,Netzspannung Phase L1,V,new-only,homie/sma-inv3-carport/measurements/voltg1,No distinct legacy counterpart in the recorded PV scope.
+,,smainv3carport_Netzspannung_Phase_L2,Netzspannung Phase L2,V,new-only,homie/sma-inv3-carport/measurements/voltg2,No distinct legacy counterpart in the recorded PV scope.
+,,smainv3carport_Netzspannung_Phase_L3,Netzspannung Phase L3,V,new-only,homie/sma-inv3-carport/measurements/voltg3,No distinct legacy counterpart in the recorded PV scope.
+,,smainv3carport_Netzstrom_Phase_L2,Netzstrom Phase L2,A,new-only,homie/sma-inv3-carport/measurements/currentl2,No distinct legacy counterpart in the recorded PV scope.
+,,smainv3carport_Netzstrom_Phase_L3,Netzstrom Phase L3,A,new-only,homie/sma-inv3-carport/measurements/currentl3,No distinct legacy counterpart in the recorded PV scope.
+,,smainv3carport_Verfugbarkeit_der_Datenquelle,Verfügbarkeit der Datenquelle,,new-only,homie/sma-inv3-carport/diagnostics/inverter3status,No distinct legacy counterpart in the recorded PV scope.
+,,smaplant_HausTagesverbrauch_ohne_Wallbox,Haus-Tagesverbrauch ohne Wallbox,kWh,new-only,homie/sma-plant/house/dailyconsumptionwithoutwallbox,"Item name, label, unit and linked plant channel read in live openHAB UI 2026-10-15; mapping identity only. Compare equal time coverage; partial-day baselines and legacy integration method may differ."

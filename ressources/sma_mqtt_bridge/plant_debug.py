@@ -51,6 +51,7 @@ class PlantDebug:
         recipes = {
             key.replace("-", ""): [{"input": ref.identity, "sign": sign} for ref, sign in terms]
             for key, (_, _, terms) in engine.recipes.items()
+            if key != "pv/total-earnings"
         }
         # Copy only numeric baselines and accounting times, never hardware fingerprints.
         accounts = {

@@ -401,3 +401,29 @@ retained for compatibility, so daily baselines do not reset. The existing owners
 manifest retires the old retained topic/metadata when the new build runs. No live
 openHAB Item, link or history is deleted. Official Homie binding documentation was
 consulted; no target deployment is implied by the offline retirement test.
+
+## Item comparison mapping prepared 2026-10-15
+
+The [readable mapping](OPENHAB_ITEM_MAPPING.md) and
+[complete CSV](openhab-item-mapping.csv) join recorded Item names and labels.
+Separate views expose [new-only entries](openhab-new-only-items.csv) and
+[old Items without recorded new Item names](openhab-unmatched-old-items.csv).
+Coverage is 46 pairs, two retained openHAB calculations without bridge
+counterparts and 33 observed new-only Items. The original source inventory is
+2026-10-14; [nine plant Item links](plant-item-links-2026-10-15.csv) were verified
+in the live UI on 2026-10-15, resolving all eight missing new Item names.
+Andreas excludes Wallbox Items from comparison and defers Grafana and its
+prerequisites to step two.
+
+## Requested replacement calculation semantics, 2026-10-15
+
+Andreas now selects the entire lifetime PV yield of each configured PV inverter
+multiplied by its own tariff, summed as plant `pv/totalearnings`. This differs from
+the existing shared grid-export-based `TotalPowerEarnings` calculation. The new
+seven-day household averages include all seven completed calendar days, once
+with and once subtracting Wallbox consumption; the legacy exclusion of whole
+charging days is deliberately superseded for these new channels. Existing Items,
+rules and histories stay in place until separately migrated. No live changes to
+openHAB are included. See CONFIGURATION.md for units, history collection and tariffs.
+Official openHAB Homie binding documentation was consulted for read-only discovery:
+<https://www.openhab.org/addons/bindings/homie/>.

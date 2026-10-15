@@ -1,0 +1,10 @@
+item,label,type,unit,homie_topic,channel_suffix,observed_date,evidence
+smaplant_Hausverbrauchsleistung_inklusive_Batterieladung,Hausverbrauchsleistung inklusive Batterieladung,Number:Power,W,homie/sma-plant/house/consumptionwithcharging,house#consumptionwithcharging,2026-10-15,live openHAB UI Item details and Channel Links; no state retained
+smaplant_Tagesbezug,Tagesbezug,Number:Energy,kWh,homie/sma-plant/grid/dailyenergyimport,grid#dailyenergyimport,2026-10-15,live openHAB UI Item details and Channel Links; no state retained
+smaplant_Tageseinspeisung,Tageseinspeisung,Number:Energy,kWh,homie/sma-plant/grid/dailyenergyexport,grid#dailyenergyexport,2026-10-15,live openHAB UI Item details and Channel Links; no state retained
+smaplant_HausTagesverbrauch,Haus-Tagesverbrauch,Number:Energy,kWh,homie/sma-plant/house/dailyconsumption,house#dailyconsumption,2026-10-15,live openHAB UI Item details and Channel Links; no state retained
+smaplant_Berechnete_Hausverbrauchsleistung,Berechnete Hausverbrauchsleistung,Number:Power,W,homie/sma-plant/house/consumption,house#consumption,2026-10-15,live openHAB UI Item details and Channel Links; no state retained
+smaplant_PVGesamtwirkleistung,PV-Gesamtwirkleistung,Number:Power,W,homie/sma-plant/pv/totalactivepower,pv#totalactivepower,2026-10-15,live openHAB UI Item details and Channel Links; no state retained
+smaplant_PVGesamttagesertrag,PV-Gesamttagesertrag,Number:Energy,kWh,homie/sma-plant/pv/totaldayyield,pv#totaldayyield,2026-10-15,live openHAB UI Item details and Channel Links; no state retained
+smaplant_PVGesamtertrag,PV-Gesamtertrag,Number:Energy,kWh,homie/sma-plant/pv/totalyield,pv#totalyield,2026-10-15,live openHAB UI Item details and Channel Links; no state retained
+smaplant_HausTagesverbrauch_ohne_Wallbox,Haus-Tagesverbrauch ohne Wallbox,Number:Energy,kWh,homie/sma-plant/house/dailyconsumptionwithoutwallbox,house#dailyconsumptionwithoutwallbox,2026-10-15,live openHAB UI Item details and Channel Links; no state retained

@@ -1,12 +1,18 @@
 # Implementation and acceptance plan
 
-Updated: **2026-10-13**. This plan covers remaining work. Current acceptance and
+Updated: **2026-10-15**. This plan covers remaining work. Current acceptance and
 its evidence limits belong in [VALIDATION.md](VALIDATION.md); architecture decisions
 in [CONTEXT.md](CONTEXT.md); active tasks and question references in
 [the German diary](../todo.md). The
 [pre-cleanup snapshot](archive/2026-10-13/IMPLEMENTATION_PLAN.md) preserves older plans.
 
-## 1. Deploy v0.3.11 and preserve upgrade continuity
+## 1. Preserve accepted deployment and upgrade continuity
+
+Andreas confirms the newer AC-profile build deployment, host-profile reconciliation,
+backed-up ledger reset and installed-version verification complete on 2026-10-15.
+The full-day grid/house/Wallbox comparison including midnight/restart/gaps is also
+accepted. The older deployment wording below is historical; do not schedule it again.
+New remuneration/average features need their own subsequent deployment and live check.
 
 Andreas requested the v0.3.11 release after the performance/hardening review and
 resource-recorder extension. Publication is complete: hosted CI/security and
@@ -64,8 +70,8 @@ it permits house kWh without completing physical acceptance or changing profile 
 An optional initial-partial-day publication flag also permits immediate counter
 comparison from the first saved snapshot while retaining partial status; covered
 midnight/restart acceptance remains required for normal calendar-day accounting.
-Inventory Grafana/InfluxDB datasource/schema before building the later old/new
-comparison dashboard; preserve existing histories and control ownership.
+The Grafana comparison dashboard is already created with 46 pairs; full history
+coverage and numerical equivalence remain pending. Preserve histories and ownership.
 
 Complete the 100-row [migration ledger](migration-coverage.csv), remaining legacy
 Item associations, maps, offsets, rules, UI, persistence and midnight/DST behavior.
@@ -149,3 +155,11 @@ Publication requires an explicit request. Verify private-data exclusions,
 namespace/tags, hosted CI/security gates, amd64/arm64 images and target upgrade
 continuity. Recheck stable official Python tags when changing the base image.
 Local tests alone do not establish hosted success or deployment.
+
+## New plant statistics, 2026-10-15
+
+Local implementation adds lifetime PV yield remuneration with per-inverter tariffs
+and configurable currency, plus seven-completed-day house averages including and
+subtracting Wallbox consumption. Charging days remain included. Validate new
+channels after a separately requested deployment and seven days of collection;
+existing accepted daily balances do not need blanket reacceptance.
