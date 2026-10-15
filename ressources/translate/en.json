@@ -187,6 +187,11 @@
     "Daily wallbox consumption": "Daily wallbox consumption",
     "Daily house consumption without wallbox": "Daily house consumption without wallbox",
     "Wallbox day coverage": "Wallbox day coverage",
-    "House without wallbox day coverage": "House without wallbox day coverage"
+    "House without wallbox day coverage": "House without wallbox day coverage",
+    "Total PV yield remuneration": "Total PV yield remuneration",
+    "Seven-day average house consumption": "Seven-day average house consumption",
+    "Seven-day average house consumption without wallbox": "Seven-day average house consumption without wallbox",
+    "Seven-day coverage": "Seven-day coverage",
+    "Seven-day coverage without wallbox": "Seven-day coverage without wallbox"
   }
 }

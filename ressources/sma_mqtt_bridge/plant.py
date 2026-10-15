@@ -5,7 +5,7 @@ import hashlib
 import json
 import time
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
@@ -227,6 +227,15 @@ class PlantEngine:
         self.committed_times = {}
         self.add_sums()
         self.add_house_power()
+        tariffs = {d.id: Decimal(str(d.yield_tariff_per_kwh)) for d in config.inverters}
+        if self.groups["pv"]:
+            self.recipes["pv/total-earnings"] = (
+                "Total PV yield remuneration",
+                config.plant.currency,
+                tuple(
+                    (m["totalyield"], tariffs[m["totalyield"].source]) for m in self.groups["pv"]
+                ),
+            )
         properties = [
             Property(
                 *key.split("/"), label, unit=unit, required_for_ready=key == "house/consumption"
@@ -234,6 +243,13 @@ class PlantEngine:
             for key, (label, unit, _) in self.recipes.items()
         ]
         properties += [
+            Property(
+                "house",
+                "average-daily-consumption",
+                "Seven-day average house consumption",
+                unit="kWh/d",
+            ),
+            Property("diagnostics", "average-day-status", "Seven-day coverage", "string"),
             Property("grid", "daily-energy-import", "Daily grid import", unit="kWh"),
             Property("grid", "daily-energy-export", "Daily grid export", unit="kWh"),
             Property("house", "daily-consumption", "Daily house consumption", unit="kWh"),
@@ -246,6 +262,18 @@ class PlantEngine:
         ]
         if self.wallbox is not None:
             properties += [
+                Property(
+                    "house",
+                    "average-daily-consumption-without-wallbox",
+                    "Seven-day average house consumption without wallbox",
+                    unit="kWh/d",
+                ),
+                Property(
+                    "diagnostics",
+                    "average-without-wallbox-day-status",
+                    "Seven-day coverage without wallbox",
+                    "string",
+                ),
                 Property(
                     "house",
                     "daily-consumption-without-wallbox",
@@ -602,6 +630,7 @@ class PlantEngine:
                 text = record["dailyValue"]
                 packet[key] = Decimal(text) if candidate is not None and text is not None else None
                 observed[key] = received
+        self.update_averages(packet, wall)
         self.update_wallbox_output(packet, observed, deadlines, now, wall)
         packet["diagnostics/valid-properties"] = ",".join(
             sorted(
@@ -621,6 +650,33 @@ class PlantEngine:
             self.state.update(SampleValues(packet, observed), now=now, timestamp=wall.isoformat())
             self.last_packet = snapshot
         self.debug.report(self, now, wall)
+
+    def update_averages(self, packet, wall):
+        """Only seven consecutive completed calendar days form a daily average."""
+        today = wall.astimezone(self.zone).date()
+        days = {(today - timedelta(days=i)).isoformat() for i in range(1, 8)}
+        accounts = [("house", "house/average-daily-consumption", "average-day-status")]
+        if self.wallbox is not None:
+            accounts.append(
+                (
+                    "housewithoutwallbox",
+                    "house/average-daily-consumption-without-wallbox",
+                    "average-without-wallbox-day-status",
+                )
+            )
+        for name, key, diagnostic in accounts:
+            record = self.ledger.committed.get(name, {})
+            history = record.get("history", {})
+            valid = (
+                not self.ledger.binding_changed
+                and record.get("date") == today.isoformat()
+                and days <= history.keys()
+                and all(date.fromisoformat(day) < today for day in history)
+            )
+            packet[key] = (
+                sum((Decimal(history[d]) for d in days), Decimal(0)) / 7 if valid else None
+            )
+            packet["diagnostics/" + diagnostic] = "complete" if valid else "insufficient-history"
 
     async def run(self, stop):
         try:

@@ -67,6 +67,7 @@ class MQTT(SafeRepr):
 
 @dataclass(frozen=True, repr=False)
 class Inverter(SafeRepr):
+    yield_tariff_per_kwh: float = 0.0
     role: str = "none"
     ready_properties: str = ""
     advanced_channels_enabled: bool = True
@@ -171,6 +172,7 @@ class Commands(SafeRepr):
 
 @dataclass(frozen=True, repr=False)
 class Plant(SafeRepr):
+    currency: str = "€"
     enabled: bool = False
     homie_id: str = "sma-plant"
     grid_source: str = "home-manager"
@@ -274,6 +276,8 @@ def section(defaults, data, env, prefix, recognized):
             value = convert(data[name], field.type, key)
         if key in env:
             value = convert(env[key], field.type, key, env=True)
+        if field.name == "currency" and (not value.strip() or len(value) > 16):
+            raise ConfigError("Currency must contain 1 to 16 characters")
         # Numeric ranges also apply to disabled sections.
         if field.type in (float, int):
             minimum, maximum = 0, None
@@ -291,7 +295,9 @@ def section(defaults, data, env, prefix, recognized):
                 "keepalive_seconds",
             ):
                 minimum = 1
-            elif isinstance(defaults, Plant) and field.name == "initial_consumption_kwh":
+            elif field.name == "yield_tariff_per_kwh" or (
+                isinstance(defaults, Plant) and field.name == "initial_consumption_kwh"
+            ):
                 minimum = 0
             elif field.name == "timestamp_diagnostics_max_bytes":
                 minimum, maximum = 4096, 16777216
