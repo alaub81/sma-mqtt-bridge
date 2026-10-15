@@ -445,3 +445,44 @@ seven Basic statuses. Source status/Homie state still conveys availability,
 separately from accounting coverage. No deployment or live Item changes occurred.
 The official [openHAB Homie documentation](https://www.openhab.org/addons/bindings/homie/)
 was consulted; property classification does not require node or Item renaming.
+
+## Actual export-based remuneration supersedes production valuation, 2026-10-15
+
+Andreas explicitly replaces the earlier total-PV-yield valuation with actual
+exported grid energy and one common tariff. `pv/totalearnings` keeps its topic ID
+but changes meaning/label. It reads the selected grid source (default Home Manager),
+not the sum of duplicate inverter grid measurements and not PV totalyield.
+Legacy inverter tariffs are ignored; configure plant.feedInTariffPerKwh or its ENV
+override explicitly. Optional feedInEnergyOffsetKwh compensates a confirmed meter
+replacement exactly once for remuneration only. Raw counters/day baselines are
+unchanged. Preserve old Item/history; old production-based amounts must not be
+assumed equivalent or silently rewritten. Deployment and value acceptance are
+separate from the read-only source comparison.
+
+## Home Manager grid-power names, 2026-10-15
+
+The new target Home Manager channels are measurements#powerdrawn and
+measurements#powergridfeedin, replacing measurements#powerimport and
+measurements#powerexport. Existing Item identities and Number:Power W units remain
+valid. Relink in place after deploying the new build, preserving rules, dashboards
+and persistence. The old owned MQTT values/metadata retire automatically through
+the existing manifest. No profile change, energy reset or live Item operation is
+included. Internal protocol/readiness references retain the original keys.
+
+## Home Manager energy offsets and canonical names, 2026-10-15
+
+Configure private Home Manager import/export corrections in kWh using the two
+HOME_MANAGER_ENERGY_*_OFFSET_KWH ENV options with the SMAB_ prefix. Existing
+energyimport/energyexport channel identities now show corrected cumulative totals;
+optional diagnostics/rawenergyimport and rawenergyexport retain raw values.
+The existing openHAB offset must not be applied again to the corrected channel.
+Day counters still use raw vectors and need no reset. Remuneration uses corrected
+Home Manager export once, under grid/totalearnings. The former plant-only offset
+setting is retired and must stay zero; old inverter tariffs remain ignored.
+
+[The complete rename map](topic-renames-2026-10-15.csv) and maintained mapping CSVs
+carry new link targets. Preserve Item names, units, rules and histories, relinking
+in place after deployment. Dated raw inventories and observed old Item labels
+remain evidence of their original state, not proof of a completed live relink.
+Prior PV-production remuneration history must not be silently treated as actual
+feed-in revenue or rewritten. No live openHAB/persistence change is included.

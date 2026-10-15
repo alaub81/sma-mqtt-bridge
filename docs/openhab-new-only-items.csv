@@ -25,9 +25,9 @@ legacy_item,legacy_label,bridge_item,bridge_label,unit,status,homie_topic,notes
 ,,smainv3carport_Leistung_Phase_L3,Leistung Phase L3,W,new-only,homie/sma-inv3-carport/measurements/powerl3,No distinct legacy counterpart in the recorded PV scope.
 ,,smainv3carport_Netzeinspeiseleistung,Netzeinspeiseleistung,W,new-only,homie/sma-inv3-carport/measurements/powergridfeedin,No distinct legacy counterpart in the recorded PV scope.
 ,,smainv3carport_Netzfrequenz,Netzfrequenz,Hz,new-only,homie/sma-inv3-carport/measurements/frequency,No distinct legacy counterpart in the recorded PV scope.
-,,smainv3carport_Netzspannung_Phase_L1,Netzspannung Phase L1,V,new-only,homie/sma-inv3-carport/measurements/voltg1,No distinct legacy counterpart in the recorded PV scope.
-,,smainv3carport_Netzspannung_Phase_L2,Netzspannung Phase L2,V,new-only,homie/sma-inv3-carport/measurements/voltg2,No distinct legacy counterpart in the recorded PV scope.
-,,smainv3carport_Netzspannung_Phase_L3,Netzspannung Phase L3,V,new-only,homie/sma-inv3-carport/measurements/voltg3,No distinct legacy counterpart in the recorded PV scope.
+,,smainv3carport_Netzspannung_Phase_L1,Netzspannung Phase L1,V,new-only,homie/sma-inv3-carport/measurements/voltagel1,No distinct legacy counterpart in the recorded PV scope.; canonical naming target 2026-10-15; relink existing Item in place; no live relink performed
+,,smainv3carport_Netzspannung_Phase_L2,Netzspannung Phase L2,V,new-only,homie/sma-inv3-carport/measurements/voltagel2,No distinct legacy counterpart in the recorded PV scope.; canonical naming target 2026-10-15; relink existing Item in place; no live relink performed
+,,smainv3carport_Netzspannung_Phase_L3,Netzspannung Phase L3,V,new-only,homie/sma-inv3-carport/measurements/voltagel3,No distinct legacy counterpart in the recorded PV scope.; canonical naming target 2026-10-15; relink existing Item in place; no live relink performed
 ,,smainv3carport_Netzstrom_Phase_L2,Netzstrom Phase L2,A,new-only,homie/sma-inv3-carport/measurements/currentl2,No distinct legacy counterpart in the recorded PV scope.
 ,,smainv3carport_Netzstrom_Phase_L3,Netzstrom Phase L3,A,new-only,homie/sma-inv3-carport/measurements/currentl3,No distinct legacy counterpart in the recorded PV scope.
 ,,smainv3carport_Verfugbarkeit_der_Datenquelle,Verfügbarkeit der Datenquelle,,new-only,homie/sma-inv3-carport/diagnostics/inverter3status,No distinct legacy counterpart in the recorded PV scope.

@@ -20,90 +20,135 @@ from sma_mqtt_bridge.homie import HomiePublisher, discovery
 
 
 class RemunerationTests(PlantFixture):
-    def test_weighted_total_yields_currency_and_invalid_member(self):
+    def test_export_counter_currency_and_invalid_input(self):
         engine = self.engine(
             env={
-                "SMAB_INVERTER1_YIELD_TARIFF_PER_KWH": "0.12",
-                "SMAB_INVERTER3_YIELD_TARIFF_PER_KWH": "0.08",
-                "SMAB_INVERTER2_YIELD_TARIFF_PER_KWH": "99",
+                "SMAB_PLANT_FEED_IN_TARIFF_PER_KWH": "0.12",
+                "SMAB_INVERTER1_YIELD_TARIFF_PER_KWH": "99",
+                "SMAB_INVERTER3_YIELD_TARIFF_PER_KWH": "99",
                 "SMAB_PLANT_CURRENCY": "CHF",
             }
         )
         engine.refresh(100, self.wall)
-        self.assertEqual(Decimal(engine.state.fresh_values(100)["pv/total-earnings"]), Decimal(28))
-        metadata = discovery("homie", "sma-plant", engine.state.properties)
-        self.assertEqual(metadata["homie/sma-plant/pv/totalearnings/$unit"], "CHF")
-        self.assertEqual(metadata["homie/sma-plant/pv/totalearnings/$settable"], "false")
-        ref = engine.groups["pv"][1]["totalyield"]
-        engine.sources[ref.source].update({ref.key: None}, now=101)
+        # Grid export is 60 kWh, PV production totals 300 kWh; never double count it.
+        self.assertEqual(
+            Decimal(engine.state.fresh_values(100)["pv/total-earnings"]), Decimal("7.2")
+        )
+        metadata = HomiePublisher(engine.config, [engine.state]).metadata(
+            "sma-plant", HomiePublisher(engine.config, [engine.state]).properties([engine.state])
+        )
+        self.assertEqual(metadata["homie/sma-plant/grid/totalearnings/$unit"], "CHF")
+        self.assertEqual(metadata["homie/sma-plant/grid/totalearnings/$settable"], "false")
+        engine.sources["home-manager"].update({engine.grid["energyexport"].key: None}, now=101)
         engine.refresh(101, self.wall + timedelta(seconds=1))
         self.assertNotIn("pv/total-earnings", engine.state.fresh_values(101))
 
-    def test_default_zero_single_pv_and_tariffs_do_not_rebase(self):
-        engine = self.engine(
-            env={"SMAB_INVERTER3_ENABLED": "false", "SMAB_INVERTER1_YIELD_TARIFF_PER_KWH": "0"}
-        )
+    def test_zero_tariff_rate_and_offset_changes_preserve_baselines(self):
+        engine = self.engine(env={"SMAB_PLANT_FEED_IN_TARIFF_PER_KWH": "0"})
         engine.refresh(100, self.wall)
+        before = engine.ledger.path.read_bytes()
         self.assertEqual(Decimal(engine.state.fresh_values(100)["pv/total-earnings"]), 0)
         changed = self.engine(
             env={
-                "SMAB_INVERTER3_ENABLED": "false",
-                "SMAB_INVERTER1_YIELD_TARIFF_PER_KWH": "0.5",
+                "SMAB_PLANT_FEED_IN_TARIFF_PER_KWH": "0.5",
+                "SMAB_HOME_MANAGER_ENERGY_EXPORT_OFFSET_KWH": "1000",
             }
         )
         self.assertFalse(changed.ledger.binding_changed)
         changed.refresh(100, self.wall)
-        self.assertEqual(Decimal(changed.state.fresh_values(100)["pv/total-earnings"]), 50)
+        self.assertEqual(Decimal(changed.state.fresh_values(100)["pv/total-earnings"]), 530)
+        self.assertEqual(changed.ledger.path.read_bytes(), before)
+        self.assertEqual(
+            changed.ledger.data["accounts"]["export"]["dailyBase"],
+            {"home-manager/measurements/energy-export": "60"},
+        )
 
-    def test_no_explicit_pv_tariff_has_no_metadata_or_values(self):
+    def test_omitted_common_tariff_and_legacy_tariffs_do_not_activate(self):
         for env in (
             {},
-            {"SMAB_INVERTER2_YIELD_TARIFF_PER_KWH": "1"},
-            {
-                "SMAB_INVERTER3_ENABLED": "false",
-                "SMAB_INVERTER3_YIELD_TARIFF_PER_KWH": "1",
-            },
+            {"SMAB_INVERTER1_YIELD_TARIFF_PER_KWH": "1"},
+            {"SMAB_INVERTER3_YIELD_TARIFF_PER_KWH": "1"},
+            {"SMAB_HOME_MANAGER_ENERGY_EXPORT_OFFSET_KWH": "100"},
         ):
             with self.subTest(env=env):
                 engine = self.engine(env=env)
                 engine.refresh(100, self.wall)
                 self.assertNotIn("pv/total-earnings", engine.state.property_index())
                 self.assertNotIn("pv/total-earnings", engine.state.fresh_values(100))
-                self.assertFalse(
-                    any(
-                        "totalearnings" in key
-                        for key in discovery("homie", "sma-plant", engine.state.properties)
-                    )
-                )
 
-    def test_unconfigured_pv_counter_does_not_block_configured_contributor(self):
-        engine = self.engine(env={"SMAB_INVERTER1_YIELD_TARIFF_PER_KWH": "0.12"})
-        ref = engine.groups["pv"][1]["totalyield"]
-        engine.sources[ref.source].update({ref.key: None}, now=100)
+    def test_pv_measurements_do_not_gate_export_remuneration(self):
+        engine = self.engine(env={"SMAB_PLANT_FEED_IN_TARIFF_PER_KWH": "0.12"})
+        for members in engine.groups["pv"]:
+            ref = members["totalyield"]
+            engine.sources[ref.source].update({ref.key: None}, now=100)
+            engine.sources[ref.source].error = True
         engine.refresh(100, self.wall)
-        self.assertEqual(Decimal(engine.state.fresh_values(100)["pv/total-earnings"]), 12)
-        configured_ref = engine.groups["pv"][0]["totalyield"]
-        engine.sources[configured_ref.source].update({configured_ref.key: None}, now=101)
-        engine.refresh(101, self.wall + timedelta(seconds=1))
-        self.assertNotIn("pv/total-earnings", engine.state.fresh_values(101))
+        self.assertEqual(
+            Decimal(engine.state.fresh_values(100)["pv/total-earnings"]), Decimal("7.2")
+        )
+        engine.sources["home-manager"].error = True
+        engine.refresh(100, self.wall)
+        self.assertNotIn("pv/total-earnings", engine.state.fresh_values(100))
 
-    def test_json_tariff_and_environment_zero_override(self):
+    def test_json_tariff_offset_and_environment_zero_override(self):
         path = Path(self.directory.name) / "tariff-config.json"
-        path.write_text(json.dumps({"inverters": [{"id": "inverter1", "yieldTariffPerKwh": 0.25}]}))
+        path.write_text(
+            json.dumps(
+                {
+                    "plant": {"feedInTariffPerKwh": 0.25},
+                    "homeManager": {"energyExportOffsetKwh": 100},
+                }
+            )
+        )
         engine = self.engine(env={"SMAB_CONFIG_FILE": str(path)})
         engine.refresh(100, self.wall)
-        self.assertEqual(Decimal(engine.state.fresh_values(100)["pv/total-earnings"]), 25)
+        self.assertEqual(Decimal(engine.state.fresh_values(100)["pv/total-earnings"]), 40)
         overridden = self.engine(
-            env={"SMAB_CONFIG_FILE": str(path), "SMAB_INVERTER1_YIELD_TARIFF_PER_KWH": "0"}
+            env={
+                "SMAB_CONFIG_FILE": str(path),
+                "SMAB_PLANT_FEED_IN_TARIFF_PER_KWH": "0",
+                "SMAB_HOME_MANAGER_ENERGY_EXPORT_OFFSET_KWH": "0",
+            }
         )
         self.assertFalse(overridden.ledger.binding_changed)
         overridden.refresh(100, self.wall)
         self.assertEqual(Decimal(overridden.state.fresh_values(100)["pv/total-earnings"]), 0)
 
+    def test_negative_stale_and_zero_export(self):
+        engine = self.engine(env={"SMAB_PLANT_FEED_IN_TARIFF_PER_KWH": "0.1"})
+        key = engine.grid["energyexport"].key
+        for value, expected in ((0, "0"), (-1, None)):
+            engine.sources["home-manager"].update({key: value}, now=100)
+            engine.refresh(100, self.wall)
+            actual = engine.state.fresh_values(100).get("pv/total-earnings")
+            self.assertEqual(
+                Decimal(actual) if actual is not None else None,
+                Decimal(expected) if expected is not None else None,
+            )
+        self.fill(engine, 100)
+        engine.refresh(100, self.wall)
+        self.assertNotIn("pv/total-earnings", engine.state.fresh_values(1000))
+
+    def test_remuneration_with_only_grid_source(self):
+        engine = self.engine(
+            env={
+                "SMAB_INVERTER1_ENABLED": "false",
+                "SMAB_INVERTER2_ENABLED": "false",
+                "SMAB_INVERTER3_ENABLED": "false",
+                "SMAB_PLANT_FEED_IN_TARIFF_PER_KWH": "0.1",
+            }
+        )
+        engine.refresh(100, self.wall)
+        self.assertEqual(Decimal(engine.state.fresh_values(100)["pv/total-earnings"]), 6)
+
     def test_invalid_configuration(self):
-        for value in ("-1", "NaN", "Infinity"):
-            with self.subTest(value=value), self.assertRaises(ConfigError):
-                load_config({"SMAB_INVERTER1_YIELD_TARIFF_PER_KWH": value})
+        for key in (
+            "SMAB_PLANT_FEED_IN_TARIFF_PER_KWH",
+            "SMAB_INVERTER1_YIELD_TARIFF_PER_KWH",
+        ):
+            for value in ("-1", "NaN", "Infinity"):
+                with self.subTest(key=key, value=value), self.assertRaises(ConfigError):
+                    load_config({key: value})
         for value in ("", " ", "x" * 17, "€\n"):
             with self.subTest(value=value), self.assertRaises(ConfigError):
                 load_config({"SMAB_PLANT_CURRENCY": value})
@@ -262,7 +307,7 @@ class TariffRetirementTests(unittest.IsolatedAsyncioTestCase):
         fixture = RemunerationTests()
         fixture.setUp()
         self.addCleanup(fixture.doCleanups)
-        before = fixture.engine(env={"SMAB_INVERTER1_YIELD_TARIFF_PER_KWH": "0.1"})
+        before = fixture.engine(env={"SMAB_PLANT_FEED_IN_TARIFF_PER_KWH": "0.1"})
         before.refresh(100, fixture.wall)
         saved = before.ledger.path.read_bytes()
         engine = fixture.engine()
@@ -272,6 +317,7 @@ class TariffRetirementTests(unittest.IsolatedAsyncioTestCase):
             if "/totalearnings/" in key
         }
         old.add("homie/sma-plant/pv/totalearnings")
+        old.add("homie/sma-plant/grid/totalearnings")
         clients = []
 
         def factory(*args, **kwargs):

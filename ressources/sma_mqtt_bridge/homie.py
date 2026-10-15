@@ -6,6 +6,8 @@ import random
 import socket
 import time
 from contextlib import asynccontextmanager
+from dataclasses import replace
+from decimal import Decimal
 from pathlib import Path
 
 import aiomqtt
@@ -13,11 +15,115 @@ import aiomqtt
 from .availability import Availability, is_timeout
 from .config import ID, ssl_context
 from .errors import ConfigError, StateError
-from .model import Property
+from .model import Property, number
 from .storage import MISSING, read_state, write_state
 from .translation import load_translation
 
 LOG = logging.getLogger(__name__)
+
+# Presentation aliases do not change protocol keys or durable energy fingerprints.
+HOME_MANAGER_ALIASES = {
+    "measurements/power-import": ("measurements/power-drawn", "Power drawn"),
+    "measurements/power-export": ("measurements/power-grid-feed-in", "Power grid feed-in"),
+}
+INVERTER_ALIASES = {
+    **{
+        f"measurements/volt-g{i}": (f"measurements/voltage-l{i}", f"Voltage L{i}")
+        for i in (1, 2, 3)
+    },
+    "measurements/pres-bat-charge": ("measurements/battery-charge-power", "Battery charging power"),
+    "measurements/pres-batt-discharge": (
+        "measurements/battery-discharge-power",
+        "Battery discharging power",
+    ),
+    "measurements/current-bat-stat-charge": (
+        "measurements/battery-state-of-charge",
+        "Battery state of charge",
+    ),
+    "measurements/current-bat-temp": ("measurements/battery-temperature", "Battery temperature"),
+    "measurements/day-yield": ("measurements/daily-yield", "Daily yield"),
+    "measurements/battery-efficiency": (
+        "measurements/battery-energy-return-ratio",
+        "Battery energy return ratio",
+    ),
+    "measurements/max-power": ("measurements/rated-active-power", "Rated active power WMaxOutRtg"),
+    "measurements/set-max-power": (
+        "measurements/configured-active-power-limit",
+        "Set active power limit",
+    ),
+}
+PLANT_ALIASES = {
+    "pv/total-earnings": ("grid/total-earnings", "Total feed-in remuneration"),
+    "pv/totaldayyield": ("pv/totaldailyyield", "Total PV daily yield"),
+    "battery/totalpresbatcharge": ("battery/totalchargepower", "Total battery charging power"),
+    "battery/totalpresbattdischarge": (
+        "battery/totaldischargepower",
+        "Total battery discharging power",
+    ),
+    "house/consumption": ("house/consumption-power", "Calculated house consumption"),
+    "house/consumptionwithcharging": (
+        "house/consumption-power-with-battery-charging",
+        "House consumption including battery charging",
+    ),
+}
+CHARGER_ALIASES = {"parameters/nameplate-pkgrev": ("identity/firmware", "Firmware version")}
+ENERGY_OFFSETS = {
+    "measurements/energy-import": "energy_import_offset_kwh",
+    "measurements/energy-export": "energy_export_offset_kwh",
+}
+
+
+def publication_aliases(state):
+    if state.id == "home-manager":
+        return HOME_MANAGER_ALIASES
+    if state.id.startswith("inverter"):
+        return INVERTER_ALIASES
+    if state.id == "plant":
+        return PLANT_ALIASES
+    if state.id in ("api", "semp"):
+        return CHARGER_ALIASES
+    return {}
+
+
+def publication_key(state, key):
+    return publication_aliases(state).get(key, (key, ""))[0]
+
+
+def publication_property(state, prop):
+    alias = publication_aliases(state).get(prop.key)
+    if alias is not None:
+        key, name = alias
+        node, identifier = key.split("/")
+        return replace(prop, node=node, id=identifier, name=name)
+    if state.id == "home-manager" and prop.key in ENERGY_OFFSETS:
+        direction = "import" if prop.key.endswith("import") else "export"
+        return replace(prop, name=f"Corrected grid {direction} energy")
+    return prop
+
+
+def raw_energy(state, key, value):
+    prop = state.property_index().get(key)
+    raw = number(value)
+    if prop is None or prop.unit != "kWh" or prop.datatype not in ("integer", "float"):
+        return None
+    return raw if raw is not None and raw >= 0 else None
+
+
+def publication_energy(config, state, key, value):
+    """Correct only published Home Manager totals, leaving raw accounting intact."""
+    if state.id == "plant" and key == "diagnostics/valid-properties":
+        names = {wire_key(old): wire_key(new) for old, (new, _) in PLANT_ALIASES.items()}
+        return ",".join(sorted(names.get(name, name) for name in value.split(",") if name))
+    if state.id != "home-manager" or key not in ENERGY_OFFSETS:
+        return value
+    raw = raw_energy(state, key, value)
+    if raw is None:
+        return None
+    offset = Decimal(str(getattr(config.home_manager, ENERGY_OFFSETS[key])))
+    if offset == 0:
+        return value
+    result = raw + offset
+    return str(result) if result >= 0 else None
 
 
 def wire_key(key):
@@ -185,8 +291,27 @@ class HomiePublisher:
         )
 
     def properties(self, states):
-        props = [p for state in states for p in state.published_properties]
+        props = [
+            publication_property(state, p) for state in states for p in state.published_properties
+        ]
         for state in states:
+            if state.id == "home-manager" and state.diagnostics_enabled:
+                props += [
+                    Property(
+                        "diagnostics",
+                        "raw-energy-import",
+                        "Raw grid import energy",
+                        unit="kWh",
+                        channel_group="diagnostics",
+                    ),
+                    Property(
+                        "diagnostics",
+                        "raw-energy-export",
+                        "Raw grid export energy",
+                        unit="kWh",
+                        channel_group="diagnostics",
+                    ),
+                ]
             status_key, time_key = state.diagnostic_keys
             # Operational source availability stays usable when optional diagnostics are disabled.
             if state.contributes_availability or state.diagnostics_enabled:
@@ -240,9 +365,17 @@ class HomiePublisher:
         result = {}
         for state in states:
             published = {p.key for p in state.published_properties}
-            result.update(
-                (key, value) for key, value in state.fresh_values(now).items() if key in published
-            )
+            fresh = state.fresh_values(now)
+            for key, value in fresh.items():
+                if key in published:
+                    corrected = publication_energy(self.config, state, key, value)
+                    if corrected is not None:
+                        result[publication_key(state, key)] = corrected
+            if state.id == "home-manager" and state.diagnostics_enabled:
+                for key in ENERGY_OFFSETS:
+                    raw = raw_energy(state, key, fresh.get(key))
+                    if raw is not None:
+                        result["diagnostics/raw-" + key.split("/")[1]] = str(raw)
             if state.contributes_availability or state.diagnostics_enabled:
                 result[state.diagnostic_keys[0]] = state.status(now)
             if state.diagnostics_enabled:

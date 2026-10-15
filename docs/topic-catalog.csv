@@ -27,19 +27,21 @@ sma-home-manager-2-modbus,home-manager,diagnostics/homemanagerphase,Source phase
 sma-home-manager-2-modbus,home-manager,diagnostics/homemanagerstatus,Source availability,,basic
 sma-home-manager-2-modbus,home-manager,diagnostics/homemanagertimeouts,Source timeouts,,diagnostics
 sma-home-manager-2-modbus,home-manager,diagnostics/modbusrejectedblocks,Rejected read blocks,,diagnostics
+sma-home-manager-2-modbus,home-manager,diagnostics/rawenergyexport,Raw grid export energy,kWh,diagnostics
+sma-home-manager-2-modbus,home-manager,diagnostics/rawenergyimport,Raw grid import energy,kWh,diagnostics
 sma-home-manager-2-modbus,home-manager,identity/deviceclass,Device Class,,advanced
 sma-home-manager-2-modbus,home-manager,identity/manufacturer,Manufacturer,,advanced
 sma-home-manager-2-modbus,home-manager,identity/model,Model,,advanced
 sma-home-manager-2-modbus,home-manager,identity/serial,Serial,,advanced
 sma-home-manager-2-modbus,home-manager,identity/serialcopy,Serial Copy,,advanced
 sma-home-manager-2-modbus,home-manager,identity/susyid,Susy Id,,advanced
-sma-home-manager-2-modbus,home-manager,measurements/energyexport,Energy Export,kWh,basic
-sma-home-manager-2-modbus,home-manager,measurements/energyimport,Energy Import,kWh,basic
+sma-home-manager-2-modbus,home-manager,measurements/energyexport,Corrected grid export energy,kWh,basic
+sma-home-manager-2-modbus,home-manager,measurements/energyimport,Corrected grid import energy,kWh,basic
 sma-home-manager-2-modbus,home-manager,measurements/plantstatus,Plant Status,,basic
 sma-home-manager-2-modbus,home-manager,measurements/planttime,Plant Time,s,advanced
 sma-home-manager-2-modbus,home-manager,measurements/planttimeiso,Plant time (ISO 8601),,basic
-sma-home-manager-2-modbus,home-manager,measurements/powerexport,Power Export,W,basic
-sma-home-manager-2-modbus,home-manager,measurements/powerimport,Power Import,W,basic
+sma-home-manager-2-modbus,home-manager,measurements/powerdrawn,Power drawn,W,basic
+sma-home-manager-2-modbus,home-manager,measurements/powergridfeedin,Power grid feed-in,W,basic
 sma-home-manager-2-modbus,home-manager,parameters/datachangecounter,Data Change Counter,,diagnostics
 sma-home-manager-2-modbus,home-manager,parameters/gridguardunlockeddevices,Grid Guard Unlocked Devices,,diagnostics
 sma-home-manager-2-modbus,home-manager,parameters/profileversion,Profile Version,,advanced
@@ -57,16 +59,16 @@ sma-sb4-0-1av-41,inverter<N>,identity/firmware,Firmware version,,advanced
 sma-sb4-0-1av-41,inverter<N>,identity/model,Device type,,advanced
 sma-sb4-0-1av-41,inverter<N>,identity/serial,Serial number,,advanced
 sma-sb4-0-1av-41,inverter<N>,measurements/activepower,Power,W,basic
+sma-sb4-0-1av-41,inverter<N>,measurements/configuredactivepowerlimit,Set active power limit,W,advanced
 sma-sb4-0-1av-41,inverter<N>,measurements/currentainput,DC current input A,A,basic
 sma-sb4-0-1av-41,inverter<N>,measurements/currentbinput,DC current input B,A,basic
 sma-sb4-0-1av-41,inverter<N>,measurements/currentl2,Grid current phase L2,A,basic
 sma-sb4-0-1av-41,inverter<N>,measurements/currentl3,Grid current phase L3,A,basic
-sma-sb4-0-1av-41,inverter<N>,measurements/dayyield,Daily yield,kWh,basic
+sma-sb4-0-1av-41,inverter<N>,measurements/dailyyield,Daily yield,kWh,basic
 sma-sb4-0-1av-41,inverter<N>,measurements/feedintime,Feed-in time,s,advanced
 sma-sb4-0-1av-41,inverter<N>,measurements/frequency,Grid frequency,Hz,basic
 sma-sb4-0-1av-41,inverter<N>,measurements/gridcontactor,Grid relay/contactor,,basic
 sma-sb4-0-1av-41,inverter<N>,measurements/internaltemperature,Internal temperature,°C,basic
-sma-sb4-0-1av-41,inverter<N>,measurements/maxpower,Rated active power WMaxOutRtg,W,advanced
 sma-sb4-0-1av-41,inverter<N>,measurements/operatingtime,Operating time,s,advanced
 sma-sb4-0-1av-41,inverter<N>,measurements/powerainput,DC power input A,W,basic
 sma-sb4-0-1av-41,inverter<N>,measurements/powerbinput,DC power input B,W,basic
@@ -75,15 +77,15 @@ sma-sb4-0-1av-41,inverter<N>,measurements/powergridfeedin,Power grid feed-in,W,b
 sma-sb4-0-1av-41,inverter<N>,measurements/powerl1,Power L1,W,basic
 sma-sb4-0-1av-41,inverter<N>,measurements/powerl2,Power L2,W,basic
 sma-sb4-0-1av-41,inverter<N>,measurements/powerl3,Power L3,W,basic
-sma-sb4-0-1av-41,inverter<N>,measurements/setmaxpower,Set active power limit,W,advanced
+sma-sb4-0-1av-41,inverter<N>,measurements/ratedactivepower,Rated active power WMaxOutRtg,W,advanced
 sma-sb4-0-1av-41,inverter<N>,measurements/status,Condition,,basic
 sma-sb4-0-1av-41,inverter<N>,measurements/totalyield,Total yield,kWh,basic
 sma-sb4-0-1av-41,inverter<N>,measurements/type,Device type,,advanced
 sma-sb4-0-1av-41,inverter<N>,measurements/voltageainput,DC voltage input A,V,basic
 sma-sb4-0-1av-41,inverter<N>,measurements/voltagebinput,DC voltage input B,V,basic
-sma-sb4-0-1av-41,inverter<N>,measurements/voltg1,Grid voltage phase L1,V,basic
-sma-sb4-0-1av-41,inverter<N>,measurements/voltg2,Grid voltage phase L2,V,basic
-sma-sb4-0-1av-41,inverter<N>,measurements/voltg3,Grid voltage phase L3,V,basic
+sma-sb4-0-1av-41,inverter<N>,measurements/voltagel1,Voltage L1,V,basic
+sma-sb4-0-1av-41,inverter<N>,measurements/voltagel2,Voltage L2,V,basic
+sma-sb4-0-1av-41,inverter<N>,measurements/voltagel3,Voltage L3,V,basic
 sma-sbs3-7-10,inverter<N>,diagnostics/deratingreason,Reason for derating,,basic
 sma-sbs3-7-10,inverter<N>,diagnostics/inverter<N>consecutivefailures,Source consecutiveFailures,,diagnostics
 sma-sbs3-7-10,inverter<N>,diagnostics/inverter<N>failures,Source failures,,diagnostics
@@ -98,25 +100,25 @@ sma-sbs3-7-10,inverter<N>,identity/model,Model,,advanced
 sma-sbs3-7-10,inverter<N>,identity/serial,"SerNumSet, Serial Number, SerialNumber",,advanced
 sma-sbs3-7-10,inverter<N>,measurements/activepower,Power,W,basic
 sma-sbs3-7-10,inverter<N>,measurements/batterychargeenergy,Battery charge energy,kWh,basic
+sma-sbs3-7-10,inverter<N>,measurements/batterychargepower,Battery charging power,W,basic
 sma-sbs3-7-10,inverter<N>,measurements/batterycurrent,Battery current,A,basic
 sma-sbs3-7-10,inverter<N>,measurements/batterydischargeenergy,Battery discharge energy,kWh,basic
-sma-sbs3-7-10,inverter<N>,measurements/batteryefficiency,Battery energy return ratio,%,basic
+sma-sbs3-7-10,inverter<N>,measurements/batterydischargepower,Battery discharging power,W,basic
+sma-sbs3-7-10,inverter<N>,measurements/batteryenergyreturnratio,Battery energy return ratio,%,basic
+sma-sbs3-7-10,inverter<N>,measurements/batterystateofcharge,Battery state of charge,%,basic
 sma-sbs3-7-10,inverter<N>,measurements/batterystatus,Battery status,,basic
+sma-sbs3-7-10,inverter<N>,measurements/batterytemperature,Battery temperature,°C,basic
 sma-sbs3-7-10,inverter<N>,measurements/batteryvoltage,Battery voltage,V,basic
+sma-sbs3-7-10,inverter<N>,measurements/configuredactivepowerlimit,Set active power limit,W,advanced
 sma-sbs3-7-10,inverter<N>,measurements/currentbatcapacity,Battery capacity,%,basic
-sma-sbs3-7-10,inverter<N>,measurements/currentbatstatcharge,Battery state of charge,%,basic
-sma-sbs3-7-10,inverter<N>,measurements/currentbattemp,Battery temperature,°C,basic
 sma-sbs3-7-10,inverter<N>,measurements/currentl1,Grid current phase L1,A,basic
-sma-sbs3-7-10,inverter<N>,measurements/dayyield,Daily yield,kWh,basic
+sma-sbs3-7-10,inverter<N>,measurements/dailyyield,Daily yield,kWh,basic
 sma-sbs3-7-10,inverter<N>,measurements/feedintime,Feed-in time,s,advanced
 sma-sbs3-7-10,inverter<N>,measurements/frequency,Grid frequency,Hz,basic
 sma-sbs3-7-10,inverter<N>,measurements/gridcontactor,Op.GriSwStt,,basic
 sma-sbs3-7-10,inverter<N>,measurements/internaltemperature,Cab.TmpVal,°C,basic
-sma-sbs3-7-10,inverter<N>,measurements/maxpower,Rated active power WMaxOutRtg,W,advanced
 sma-sbs3-7-10,inverter<N>,measurements/operatingtime,Operating time,s,advanced
-sma-sbs3-7-10,inverter<N>,measurements/presbatcharge,Battery charging power,W,basic
-sma-sbs3-7-10,inverter<N>,measurements/presbattdischarge,Battery discharging power,W,basic
-sma-sbs3-7-10,inverter<N>,measurements/setmaxpower,Set active power limit,W,advanced
+sma-sbs3-7-10,inverter<N>,measurements/ratedactivepower,Rated active power WMaxOutRtg,W,advanced
 sma-sbs3-7-10,inverter<N>,measurements/status,Op.Health,,basic
 sma-sbs3-7-10,inverter<N>,measurements/totalyield,Total yield,kWh,basic
 sma-sbs3-7-10,inverter<N>,measurements/type,Device type,,advanced
@@ -133,23 +135,23 @@ sma-stp8-0-3av-40,inverter<N>,identity/firmware,Firmware version,,advanced
 sma-stp8-0-3av-40,inverter<N>,identity/model,Device type,,advanced
 sma-stp8-0-3av-40,inverter<N>,identity/serial,Serial number,,advanced
 sma-stp8-0-3av-40,inverter<N>,measurements/activepower,Power,W,basic
+sma-stp8-0-3av-40,inverter<N>,measurements/configuredactivepowerlimit,Set active power limit,W,advanced
 sma-stp8-0-3av-40,inverter<N>,measurements/currentainput,DC current input A,A,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/currentbinput,DC current input B,A,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/currentl1,Grid current phase L1,A,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/currentl2,Grid current phase L2,A,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/currentl3,Grid current phase L3,A,basic
-sma-stp8-0-3av-40,inverter<N>,measurements/dayyield,Daily yield,kWh,basic
+sma-stp8-0-3av-40,inverter<N>,measurements/dailyyield,Daily yield,kWh,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/feedintime,Feed-in time,s,advanced
 sma-stp8-0-3av-40,inverter<N>,measurements/frequency,Grid frequency,Hz,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/gridcontactor,Grid relay/contactor,,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/internaltemperature,Internal temperature,°C,basic
-sma-stp8-0-3av-40,inverter<N>,measurements/maxpower,Rated active power WMaxOutRtg,W,advanced
 sma-stp8-0-3av-40,inverter<N>,measurements/operatingtime,Operating time,s,advanced
 sma-stp8-0-3av-40,inverter<N>,measurements/powerainput,DC power input A,W,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/powerbinput,DC power input B,W,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/powerdrawn,Power drawn,W,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/powergridfeedin,Power grid feed-in,W,basic
-sma-stp8-0-3av-40,inverter<N>,measurements/setmaxpower,Set active power limit,W,advanced
+sma-stp8-0-3av-40,inverter<N>,measurements/ratedactivepower,Rated active power WMaxOutRtg,W,advanced
 sma-stp8-0-3av-40,inverter<N>,measurements/status,Condition,,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/totalyield,Total yield,kWh,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/type,Device type,,advanced
@@ -163,10 +165,12 @@ home-manager-udp,home-manager,diagnostics/homemanageroutageseconds,Source outage
 home-manager-udp,home-manager,diagnostics/homemanagerphase,Source phase,,diagnostics
 home-manager-udp,home-manager,diagnostics/homemanagerstatus,Source availability,,basic
 home-manager-udp,home-manager,diagnostics/homemanagertimeouts,Source timeouts,,diagnostics
-home-manager-udp,home-manager,measurements/energyexport,Energy Export,kWh,basic
-home-manager-udp,home-manager,measurements/energyimport,Energy Import,kWh,basic
-home-manager-udp,home-manager,measurements/powerexport,Power Export,W,basic
-home-manager-udp,home-manager,measurements/powerimport,Power Import,W,basic
+home-manager-udp,home-manager,diagnostics/rawenergyexport,Raw grid export energy,kWh,diagnostics
+home-manager-udp,home-manager,diagnostics/rawenergyimport,Raw grid import energy,kWh,diagnostics
+home-manager-udp,home-manager,measurements/energyexport,Corrected grid export energy,kWh,basic
+home-manager-udp,home-manager,measurements/energyimport,Corrected grid import energy,kWh,basic
+home-manager-udp,home-manager,measurements/powerdrawn,Power drawn,W,basic
+home-manager-udp,home-manager,measurements/powergridfeedin,Power grid feed-in,W,basic
 echarger-api,api,diagnostics/apiconsecutivefailures,Source consecutiveFailures,,diagnostics
 echarger-api,api,diagnostics/apifailures,Source failures,,diagnostics
 echarger-api,api,diagnostics/apilastsuccess,Last successful receipt (UTC),,diagnostics
@@ -175,6 +179,7 @@ echarger-api,api,diagnostics/apioutageseconds,Source outageSeconds,s,diagnostics
 echarger-api,api,diagnostics/apiphase,Source phase,,diagnostics
 echarger-api,api,diagnostics/apistatus,Source availability,,basic
 echarger-api,api,diagnostics/apitimeouts,Source timeouts,,diagnostics
+echarger-api,api,identity/firmware,Firmware version,,advanced
 echarger-api,api,measurements/currentl1,Current L1,A,basic
 echarger-api,api,measurements/currentl2,Current L2,A,basic
 echarger-api,api,measurements/currentl3,Current L3,A,basic
@@ -191,7 +196,6 @@ echarger-api,api,measurements/vehiclestatuscode,Vehicle status code,,basic
 echarger-api,api,measurements/voltagel1,Voltage L1,V,basic
 echarger-api,api,measurements/voltagel2,Voltage L2,V,basic
 echarger-api,api,measurements/voltagel3,Voltage L3,V,basic
-echarger-api,api,parameters/nameplatepkgrev,Firmware,,advanced
 echarger-api,api,settings/ambientbrightness,Ambient Brightness,,basic
 echarger-api,api,settings/ambientenabled,Ambient Enabled,,basic
 echarger-api,api,settings/approvalrequired,Approval Required,,basic
@@ -215,6 +219,7 @@ echarger-semp,semp,diagnostics/sempoutageseconds,Source outageSeconds,s,diagnost
 echarger-semp,semp,diagnostics/sempphase,Source phase,,diagnostics
 echarger-semp,semp,diagnostics/sempstatus,Source availability,,basic
 echarger-semp,semp,diagnostics/semptimeouts,Source timeouts,,diagnostics
+echarger-semp,semp,identity/firmware,Firmware version,,advanced
 echarger-semp,semp,measurements/authregistrationcode,Measurement.Acs.AuthRegistStt (raw code/value),,diagnostics
 echarger-semp,semp,measurements/eventcode,Measurement.Operation.Evt.Msg (raw code/value),,diagnostics
 echarger-semp,semp,measurements/health,Device health,,basic
@@ -229,7 +234,6 @@ echarger-semp,semp,measurements/vehiclestatuscode,Vehicle status code,,basic
 echarger-semp,semp,parameters/chrgplanenraw,Parameter.Chrg.Plan.En (raw code/value),,advanced
 echarger-semp,semp,parameters/chrgstpwhenfltmraw,Parameter.Chrg.StpWhenFlTm (raw code/value),,advanced
 echarger-semp,semp,parameters/inverteroutphs,Parameter.Inverter.OutPhs (raw code/value),,advanced
-echarger-semp,semp,parameters/nameplatepkgrev,Firmware,,advanced
 echarger-semp,semp,settings/ambientbrightness,Ambient Brightness,,basic
 echarger-semp,semp,settings/ambientenabled,Ambient Enabled,,basic
 echarger-semp,semp,settings/approvalrequired,Approval Required,,basic
@@ -263,8 +267,8 @@ echarger-portal-commands,portal-commands,diagnostics/portalcommandsstatus,Source
 echarger-portal-refresh,portal-refresh,portal/refresh,Refresh portal,,basic
 derived-plant,plant,battery/totalbatterychargeenergy,Total battery charge energy,kWh,basic
 derived-plant,plant,battery/totalbatterydischargeenergy,Total battery discharge energy,kWh,basic
-derived-plant,plant,battery/totalpresbatcharge,Total battery charging power,W,basic
-derived-plant,plant,battery/totalpresbattdischarge,Total battery discharging power,W,basic
+derived-plant,plant,battery/totalchargepower,Total battery charging power,W,basic
+derived-plant,plant,battery/totaldischargepower,Total battery discharging power,W,basic
 derived-plant,plant,diagnostics/averagedaystatus,Seven-day coverage,,basic
 derived-plant,plant,diagnostics/averagewithoutwallboxdaystatus,Seven-day coverage without wallbox,,basic
 derived-plant,plant,diagnostics/batteryenergyboundary,Battery energy boundary,,diagnostics
@@ -284,15 +288,15 @@ derived-plant,plant,diagnostics/powerinputstatus,Power input availability,,diagn
 derived-plant,plant,diagnostics/validproperties,Available plant properties,,diagnostics
 derived-plant,plant,grid/dailyenergyexport,Daily grid export,kWh,basic
 derived-plant,plant,grid/dailyenergyimport,Daily grid import,kWh,basic
+derived-plant,plant,grid/totalearnings,Total feed-in remuneration,€,basic
 derived-plant,plant,house/averagedailyconsumption,Seven-day average house consumption,kWh/d,basic
 derived-plant,plant,house/averagedailyconsumptionwithoutwallbox,Seven-day average house consumption without wallbox,kWh/d,basic
-derived-plant,plant,house/consumption,Calculated house consumption,W,basic
-derived-plant,plant,house/consumptionwithcharging,House consumption including battery charging,W,basic
+derived-plant,plant,house/consumptionpower,Calculated house consumption,W,basic
+derived-plant,plant,house/consumptionpowerwithbatterycharging,House consumption including battery charging,W,basic
 derived-plant,plant,house/dailyconsumption,Daily house consumption,kWh,basic
 derived-plant,plant,house/dailyconsumptionwithoutwallbox,Daily house consumption without wallbox,kWh,basic
 derived-plant,plant,pv/totalactivepower,Total PV active power,W,basic
-derived-plant,plant,pv/totaldayyield,Total PV daily yield,kWh,basic
-derived-plant,plant,pv/totalearnings,Total PV yield remuneration,€,basic
+derived-plant,plant,pv/totaldailyyield,Total PV daily yield,kWh,basic
 derived-plant,plant,pv/totalyield,Total PV lifetime yield,kWh,basic
 derived-wallbox-day,wallbox-day,diagnostics/wallboxdaystatus,Wallbox day coverage,,basic
 derived-wallbox-day,wallbox-day,diagnostics/wallboxenergytime,Energy snapshot time (UTC),,diagnostics

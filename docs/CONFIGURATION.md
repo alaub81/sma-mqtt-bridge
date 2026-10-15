@@ -432,7 +432,7 @@ readings cannot mask expired critical measurements. Property-specific expiry int
 | --- | --- |
 | Tripower / Sunny Boy profiles | `measurements/status` |
 | Sunny Boy Storage profile | `measurements/status` |
-| Home Manager UDP / Modbus | `measurements/power-import`, `measurements/power-export` |
+| Home Manager UDP / Modbus | Internal readiness keys `measurements/power-import`, `measurements/power-export`; MQTT names `measurements/powerdrawn`, `measurements/powergridfeedin` |
 | eCharger SEMP | `measurements/power` |
 | eCharger API | `measurements/current-l1`, `measurements/voltage-l1`; also `measurements/power` when API owns baseline measurements without SEMP |
 | Portal | `portal/pv-minimum` |
@@ -909,27 +909,62 @@ It contributes no device readiness. `completed` confirms a validated read,
 not a preference write or physical charging action. See the
 [openHAB setup](../openHAB/openHAB.md#manual-portal-refresh).
 
-## Yield remuneration and seven-day household averages
+## Feed-in remuneration and seven-day household averages
 
-Each inverter supports `SMAB_INVERTER<n>_YIELD_TARIFF_PER_KWH` (finite
-nonnegative float, default `0`, slots 1–3). `SMAB_PLANT_CURRENCY` is a nonempty
-string of at most 16 characters, default `€`. JSON equivalents are
-`yieldTariffPerKwh` in each inverter and `currency` in `plant`; normal precedence
-applies. No private tariffs are supplied by the bridge.
+`SMAB_PLANT_FEED_IN_TARIFF_PER_KWH` is a finite nonnegative float (default `0`),
+expressed in currency/kWh, not cents. An explicit ENV or JSON
+`plant.feedInTariffPerKwh` activates the channel, including explicit zero. Omission
+hides the channel; removing the tariff retires its retained value/metadata.
+`SMAB_PLANT_CURRENCY` is a nonempty string of at most 16 characters (default `€`),
+JSON `plant.currency`. Normal configuration precedence applies.
 
-With plant enabled, `pv/totalearnings` sums each enabled PV contributor's
-**entire lifetime PV yield × its individual tariff**. It includes self-consumed
-production and is not a measurement of actual feed-in payments. Battery-only
-inverters are excluded. Discovery and values exist only if at least one enabled
-PV contributor has an explicitly configured tariff in ENV or optional JSON.
-An explicit zero is valid and activates that contributor; an omitted tariff does
-not contribute and its counter does not gate remuneration availability. Removing
-all applicable tariffs retires the channel and its retained metadata through the
-existing topic manifest. All configured contributors' counters must be fresh and
-valid, including explicit zero-rate contributors. Preserve explicit zero tariffs
-when simplifying configuration: omission and explicit zero have different meaning. Currency is the Homie unit; tariffs are in that currency per kWh,
-not cents. Changing a tariff recalculates the entire historical yield at that rate;
-there is no tariff-period accounting or currency conversion.
+The plant topic `grid/totalearnings` calculates **actual cumulative grid
+export × one common tariff**, including the optional offset below. It uses only
+`energyexport` from the explicitly selected `SMAB_PLANT_GRID_SOURCE` (default
+`home-manager`). The source must already be independently enabled and have verified
+profile mappings. There is no automatic failover, no inverter sum and no fallback
+to PV production when export data is missing. Only the selected export counter
+must be valid/fresh; PV/battery production availability does not gate remuneration.
+The former `pv/totalearnings` topic retires; relink its existing Item to
+`grid/totalearnings`. Its label is Total feed-in remuneration. It no longer remunerates self-consumed production.
+
+Home Manager provides independent additive corrections:
+
+| ENV | JSON in homeManager | Default | Type / unit |
+| --- | --- | --- | --- |
+| `SMAB_HOME_MANAGER_ENERGY_EXPORT_OFFSET_KWH` | `energyExportOffsetKwh` | `0` | Finite signed float, kWh |
+| `SMAB_HOME_MANAGER_ENERGY_IMPORT_OFFSET_KWH` | `energyImportOffsetKwh` | `0` | Finite signed float, kWh |
+
+Published `measurements/energyexport` and `measurements/energyimport` equal the
+respective raw counter plus its offset, with labels explicitly identifying the
+corrected total. A negative corrected result is unavailable, never clamped to zero.
+With Home Manager Diagnostics enabled, `diagnostics/rawenergyexport` and
+`diagnostics/rawenergyimport` expose fresh uncorrected counters in kWh. Missing,
+invalid or expired raw inputs cannot become valid merely by adding an offset.
+Unit/type checks apply before publishing corrected or raw energy values.
+
+Internal energy observations and day-accounting baselines remain raw. Constant
+offsets cancel in interval differences, so changing offsets does not reset days,
+change day deltas, or modify seven-day history. The remuneration formula uses the
+raw Home Manager export counter plus its export offset exactly once, then the
+common tariff; import correction never enters remuneration. It requires the Home
+Manager as `SMAB_PLANT_GRID_SOURCE` and an independently enabled Home Manager.
+There is no alternate inverter source for this calculation.
+
+The briefly introduced `SMAB_PLANT_FEED_IN_ENERGY_OFFSET_KWH` / plant
+`feedInEnergyOffsetKwh` is retired: zero remains accepted for compatibility, but a
+nonzero value is rejected before device connections with instructions to use the
+Home Manager export correction. Never configure a second correction or reuse an
+already corrected source counter. No private offset is copied into examples.
+Changing rate/offset recalculates the full cumulative remuneration; tariff-period
+accounting and automatic history rewriting are not implemented.
+
+The former `SMAB_INVERTER<n>_YIELD_TARIFF_PER_KWH` / inverter `yieldTariffPerKwh`
+fields remain accepted as deprecated finite nonnegative floats (default `0`) for
+configuration compatibility. They are ignored and cannot activate or influence the
+new remuneration. Migrate to the common plant tariff explicitly; no rate is inferred.
+Old amounts computed from total PV production are not equivalent history and are
+not automatically repaired. Preserve existing Items/history until separately migrated.
 
 Only the plant exposes `house/averagedailyconsumption` and, with local Wallbox
 API enabled, `house/averagedailyconsumptionwithoutwallbox`, float `kWh/d`.
@@ -960,3 +995,45 @@ The existing persistent topic manifest retires its prior retained value and
 metadata after the updated build connects. Preserve the state volume; no manual
 broker deletion or energy-baseline reset is required. Inverter frequency channels
 are unchanged. No live openHAB Item/history is removed by this source change.
+
+## Consistent Home Manager grid-power names, 2026-10-15
+
+Both Home Manager transports now publish the same grid-power terminology as the
+PV inverters. These are Basic, read-only W measurements:
+
+| Previous MQTT suffix | Current MQTT suffix | Meaning |
+| --- | --- | --- |
+| `measurements/powerimport` | `measurements/powerdrawn` | Grid import power |
+| `measurements/powerexport` | `measurements/powergridfeedin` | Grid export power |
+
+Only MQTT presentation IDs/display labels change. Registers, UDP OBIS fields, units,
+internal observation/readiness keys, home-power formulas and stored energy state
+remain unchanged. Host profiles do not need edits for this rename; profile/ledger
+signatures are preserved, so do not reset energy baselines. Energy topics remain
+`energyimport`/`energyexport` in kWh; inverter `activepower` remains production in W.
+
+After deployment, existing owned old values and metadata retire through the MQTT
+manifest. Keep the state volume. Update the links of existing openHAB Items from
+`measurements#powerimport` to `measurements#powerdrawn`, and from
+`measurements#powerexport` to `measurements#powergridfeedin`. Preserve Item names,
+units, persistence and rules; do not delete/recreate their histories. No live
+openHAB link is changed by this source modification. Custom READY_PROPERTIES
+overrides continue to use their original internal keys listed above.
+
+## Canonical publication names, 2026-10-15
+
+The complete [old/new suffix map](topic-renames-2026-10-15.csv) covers Home Manager
+grid power, inverter phase voltage, charge/discharge power, battery state of charge,
+battery temperature, daily yield, energy return ratio and rated/configured power
+limits; charger firmware; and plant aggregate/day-yield/house-power/earnings names.
+Only publication names change: original profile mappings, unit/phase/sign semantics,
+channel groups, command permissions, readiness keys and durable energy signatures
+are preserved. New names containing limit do not authorize writes. Battery capacity
+percentage remains unchanged because its more specific meaning was not established.
+
+Old owned values/metadata retire through the normal manifest after installing the
+new build. New values require current valid inputs. Relink existing openHAB Items
+in place, including the earnings move from pv#totalearnings to grid#totalearnings.
+Preserve Item names, units, rules, dashboards and persistence; do not delete/recreate
+histories. Host profiles need no cosmetic edits, and no energy reset is required.
+The plant validproperties diagnostic lists the current published names.

@@ -698,3 +698,24 @@ Sources: [Homie binding](https://www.openhab.org/addons/bindings/homie/),
 [MainUI list item](https://www.openhab.org/docs/ui/components/oh-list-item.html),
 [label card](https://www.openhab.org/docs/ui/components/oh-label-card.html) and
 [button](https://www.openhab.org/docs/ui/components/oh-button.html).
+
+## Home Manager grid-power rename (2026-10-15)
+
+After installing the updated bridge, relink the existing grid-power Items in place:
+measurements#powerimport becomes measurements#powerdrawn, and
+measurements#powerexport becomes measurements#powergridfeedin. Both remain Basic
+Number:Power channels in W. Preserve Item names, rules, dashboards and persistence.
+Do not delete Items or historical data. Old MQTT topics retire automatically if
+the existing state volume is preserved; energy counters and baselines are unchanged.
+The official [Homie binding documentation](https://www.openhab.org/addons/bindings/homie/)
+describes the channel-group/property link structure.
+
+## Energy corrections and canonical channel migration
+
+Use [the full channel rename map](../docs/topic-renames-2026-10-15.csv) when relinking
+existing Items after the upgrade. Home Manager energyimport and energyexport now
+include their configured import/export offsets in kWh. Do not apply old offset
+transformations a second time. Optional rawenergyimport/rawenergyexport diagnostic
+channels remain uncorrected. Earnings now belong to grid#totalearnings and use the
+corrected export counter once. Keep Item identities, rules and persistence; do not
+delete history or reset bridge energy baselines for these publication changes.

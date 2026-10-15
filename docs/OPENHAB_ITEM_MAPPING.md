@@ -167,3 +167,20 @@ seven-day average, which excludes entire charging days and averages remaining da
 - [Migration decisions](MIGRATION.md) and [plant design](PV_AGGREGATION_DESIGN.md)
 - Official openHAB [Items](https://www.openhab.org/docs/configuration/items.html)
   and [Homie binding](https://www.openhab.org/addons/bindings/homie/) documentation
+
+## Home Manager power target rename, 2026-10-15
+
+The maintained CSV targets now use measurements/powerdrawn for the existing
+smahomemanager_Netzbezugsleistung Item and measurements/powergridfeedin for
+smahomemanager_Einspeiseleistung. The recorded old live links used powerimport
+and powerexport. This is a documented migration target, not a new observation
+or a performed live relink; preserve these Item identities and histories.
+
+## Canonical naming targets and energy corrections
+
+The maintained CSV targets incorporate the approved 2026-10-15 renames from
+[the full map](topic-renames-2026-10-15.csv), including battery/phase/day-yield and
+house-power names. This is a migration target, not performed live relinking.
+Home Manager energyimport/energyexport retain their IDs and now include configured
+private offsets; remove equivalent legacy link/rule corrections before switching
+to these corrected totals. Keep existing Item names, units, rules and history.

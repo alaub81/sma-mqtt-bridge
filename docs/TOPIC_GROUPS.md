@@ -69,7 +69,61 @@ to detect drift. The offline suite checks reproducibility and all four reader
 flag combinations. CI mounts the catalog/tool read-only for container tests;
 neither is added to the runtime image.
 
-Topic IDs, Items and persistence links remain stable. As documented by the official
+Topic-group classification alone preserves IDs and links. The separate Home Manager
+power rename on 2026-10-15 requires relinking existing Items from powerimport/powerexport
+to powerdrawn/powergridfeedin; keep Item identities and histories. As documented by the official
 [openHAB Homie binding](https://www.openhab.org/addons/bindings/homie/), Homie nodes
 map to Channel Groups; these publication classes are a separate bridge policy.
 Deployment and live MQTT/openHAB acceptance remain separate steps.
+
+## Naming review, 2026-10-15 — implementation selected
+
+The generated catalog currently contains 298 rows and 199 distinct published
+suffixes. Repeated rows include alternative transports, source ownership and model
+profiles; they do not imply duplicate live measurements. Catalog reproducibility
+was checked against runtime metadata. The following findings were cross-checked
+against bundled profile mappings and units. Andreas subsequently requested the concrete renames below, including the battery
+energy-return-ratio name. They are now applied at the MQTT publication boundary;
+see the complete [old/new map](topic-renames-2026-10-15.csv). Internal profile IDs remain stable.
+
+| Current suffix or property | Candidate | Reason and boundary |
+| --- | --- | --- |
+| Sunny Boy `measurements/voltg1`, `voltg2`, `voltg3` | `measurements/voltagel1`, `voltagel2`, `voltagel3` | Match Wallbox phase-voltage terminology. Keep registers 30783/30785/30787, V units and phase identity; a rename does not make invalid/missing samples valid. |
+| Storage `measurements/presbatcharge`, `presbattdischarge` | `measurements/batterychargepower`, `batterydischargepower` | Explicit W quantities; align wording with existing batterychargeenergy/batterydischargeenergy in kWh. Plant aggregate names should follow the same charge/discharge convention. |
+| Storage `measurements/currentbatstatcharge` | `measurements/batterystateofcharge` | Full name of the existing percentage, register 30845; no change of physical meaning. |
+| Storage `measurements/currentbattemp` | `measurements/batterytemperature` | Match batterycurrent/batteryvoltage; retain register 30849 and degrees Celsius. |
+| Inverter `measurements/dayyield` | `measurements/dailyyield` | Use daily consistently with dailyconsumption/dailyenergyimport. The corresponding plant day-yield name must be reviewed in the same migration. |
+| Wallbox `parameters/nameplatepkgrev` | `identity/firmware` | Match inverter firmware naming. Preserve API/SEMP ownership and Advanced grouping; no metadata/write-policy change. |
+| Storage `measurements/batteryefficiency` | `measurements/batteryenergyreturnratio` | Accurately name the cumulative energy-counter ratio. It is not independently verified physical round-trip efficiency. |
+| Plant `pv/totalearnings` | `grid/totalearnings` | Actual export-based remuneration belongs to the grid node after the approved calculation correction. This does not change the formula. |
+| Plant `house/consumption`, `consumptionwithcharging` | `house/consumptionpower`, `consumptionpowerwithbatterycharging` | Make W and battery charging explicit; avoid confusion with kWh or Wallbox charging. Longer names are a readability tradeoff. |
+| Inverter `measurements/maxpower`, `setmaxpower` | `measurements/ratedactivepower`, `configuredactivepowerlimit` | Distinguish rating from a read-only observed limit; the existing set prefix does not authorize a command. Wallbox maxchargepower is a different setting. |
+
+Lower-priority inconsistencies include duplicate battery wording under the plant
+battery node, mixed daystatus/energystatus coverage names, and different English
+metadata labels for identical IDs (firmware, model, serial, phase current, grid
+contactor, internal temperature and status). Many already share German labels
+through translations. Standardizing labels alone may avoid disruptive relinking.
+
+Storage currentbatcapacity (register 30847, percent) needs a precise semantic
+review before choosing a more specific name. It must not be renamed to an energy
+capacity in kWh or declared battery state of health solely from the existing label.
+Read-only settings must never gain /set merely because a name includes set.
+
+Do not unify PV totalyield, Wallbox totalenergy and Home Manager energyexport as
+though they were the same counter: production, charging consumption and grid
+export have different boundaries. Likewise inverter operating status, vehicle
+status, source availability and day-accounting coverage remain distinct states.
+Group classification, physical sign conventions, raw/converted codes, UTC versus
+numeric times and controller ownership are not naming shortcuts.
+
+For an agreed implementation, maintain a complete old/new map and preserve
+profile semantics, units, filters and energy baselines. Verify manifest retirement
+of previous retained values/metadata. Relink existing openHAB Items in place while
+preserving Item identity, rules, persistence and history. Do not edit the dated
+source inventories to pretend a live relink has already happened. Prioritize the
+clear phase-voltage and battery names plus the grid location of remuneration;
+the concrete rows above have now been selected by Andreas. Lower-priority
+coverage/duplicate-wording suggestions and unverified capacity semantics remain
+unimplemented. Existing Home Manager energy IDs remain stable with configurable
+corrected totals and separate optional raw-energy diagnostics.

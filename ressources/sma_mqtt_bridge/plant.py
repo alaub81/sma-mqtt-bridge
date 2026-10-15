@@ -39,6 +39,8 @@ def plant_plan(config):
     from .adapters.modbus import ModbusReader
 
     settings = config.plant
+    if config.feed_in_tariff_configured and settings.grid_source != "home-manager":
+        raise ConfigError("Feed-in remuneration requires the Home Manager grid source")
     if (
         not 0 < settings.boundary_tolerance_seconds <= 900
         or not 0 < settings.max_skew_seconds <= 3600
@@ -234,17 +236,11 @@ class PlantEngine:
         self.committed_times = {}
         self.add_sums()
         self.add_house_power()
-        tariffs = {d.id: Decimal(str(d.yield_tariff_per_kwh)) for d in config.inverters}
-        paid_members = [
-            member
-            for member in self.groups["pv"]
-            if member["totalyield"].source in config.configured_tariffs
-        ]
-        if paid_members:
+        if config.feed_in_tariff_configured:
             self.recipes["pv/total-earnings"] = (
-                "Total PV yield remuneration",
+                "Total feed-in remuneration",
                 config.plant.currency,
-                tuple((m["totalyield"], tariffs[m["totalyield"].source]) for m in paid_members),
+                ((self.grid["energyexport"], Decimal(str(config.plant.feed_in_tariff_per_kwh))),),
             )
         properties = [
             Property(
@@ -669,7 +665,16 @@ class PlantEngine:
             if frame is not None:
                 values, oldest, deadline, _, _ = frame
                 value = sum(values.values(), Decimal(0))
-                if not key.startswith("house/") or value >= 0:
+                if key == "pv/total-earnings":
+                    ref = self.grid["energyexport"]
+                    raw = number(self.sources[ref.source].values[ref.key][0])
+                    corrected = raw + Decimal(
+                        str(self.config.home_manager.energy_export_offset_kwh)
+                    )
+                    if corrected < 0:
+                        continue
+                    value = corrected * Decimal(str(self.config.plant.feed_in_tariff_per_kwh))
+                if value >= 0 or not (key.startswith("house/") or key == "pv/total-earnings"):
                     packet[key], observed[key], deadlines[key] = value, oldest, deadline
                 else:
                     power_problems[key] = "negative-balance"

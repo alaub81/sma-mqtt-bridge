@@ -1,0 +1,21 @@
+owner,previous_suffix,current_suffix,meaning
+home-manager,measurements/powerexport,measurements/powergridfeedin,Power grid feed-in
+home-manager,measurements/powerimport,measurements/powerdrawn,Power drawn
+inverter<N>,measurements/batteryefficiency,measurements/batteryenergyreturnratio,Battery energy return ratio
+inverter<N>,measurements/currentbatstatcharge,measurements/batterystateofcharge,Battery state of charge
+inverter<N>,measurements/currentbattemp,measurements/batterytemperature,Battery temperature
+inverter<N>,measurements/dayyield,measurements/dailyyield,Daily yield
+inverter<N>,measurements/maxpower,measurements/ratedactivepower,Rated active power WMaxOutRtg
+inverter<N>,measurements/presbatcharge,measurements/batterychargepower,Battery charging power
+inverter<N>,measurements/presbattdischarge,measurements/batterydischargepower,Battery discharging power
+inverter<N>,measurements/setmaxpower,measurements/configuredactivepowerlimit,Set active power limit
+inverter<N>,measurements/voltg1,measurements/voltagel1,Voltage L1
+inverter<N>,measurements/voltg2,measurements/voltagel2,Voltage L2
+inverter<N>,measurements/voltg3,measurements/voltagel3,Voltage L3
+plant,battery/totalpresbatcharge,battery/totalchargepower,Total battery charging power
+plant,battery/totalpresbattdischarge,battery/totaldischargepower,Total battery discharging power
+plant,house/consumption,house/consumptionpower,Calculated house consumption
+plant,house/consumptionwithcharging,house/consumptionpowerwithbatterycharging,House consumption including battery charging
+plant,pv/totalearnings,grid/totalearnings,Total feed-in remuneration
+plant,pv/totaldayyield,pv/totaldailyyield,Total PV daily yield
+api/semp,parameters/nameplatepkgrev,identity/firmware,Firmware version

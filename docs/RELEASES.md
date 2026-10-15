@@ -12,6 +12,24 @@ hosted validation and release results. A tag existing alone does not establish
 successful image publication. Current installation acceptance belongs in
 [VALIDATION.md](VALIDATION.md).
 
+## v0.6.0 — 2026-10-15
+
+- Calculate feed-in remuneration from Home Manager grid export and one explicitly
+  configured plant tariff. Legacy inverter production tariffs no longer contribute.
+- Add signed Home Manager cumulative import/export offsets in kWh, default zero.
+  Publish corrected totals and optional raw diagnostic totals; daily baselines and
+  seven-day histories remain unchanged. Apply export correction to earnings once.
+- Unify channel names, including batteryenergyreturnratio and grid/totalearnings.
+  See the [complete rename map](topic-renames-2026-10-15.csv). Relink existing
+  openHAB Items in place and remove previous openHAB energy offsets to avoid
+  double correction. Preserve Item names and persisted histories.
+- Remove the unsupported Wallbox frequency property.
+
+Local validation: 389 offline tests, complete lint, generated catalog and Compose
+parity passed. Publication and target-host deployment are not confirmed by these
+local checks. Configure private tariffs/offsets separately and preserve the state
+volume; no energy-baseline reset is required.
+
 ## v0.3.11 — 2026-10-13
 
 - Heartbeats retain atomic replacement and existing liveness checks without forcing

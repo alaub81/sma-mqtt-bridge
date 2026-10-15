@@ -163,8 +163,18 @@ Local tests alone do not establish hosted success or deployment.
 
 ## New plant statistics, 2026-10-15
 
-Local implementation adds lifetime PV yield remuneration with per-inverter tariffs
-and configurable currency, plus seven-completed-day house averages including and
+Local implementation now values actual cumulative grid export with one common
+plant tariff and independent Home Manager cumulative import/export corrections, replacing the earlier
+PV-yield valuation. Home Manager is the default selected source; duplicate inverter
+grid views are never summed. Configurable currency and seven-completed-day house averages including and
 subtracting Wallbox consumption. Charging days remain included. Validate new
 channels after a separately requested deployment and seven days of collection;
 existing accepted daily balances do not need blanket reacceptance.
+
+## Offset and naming migration acceptance
+
+After separately deploying the new build, verify corrected Home Manager cumulative
+import/export against raw diagnostics and private historical offsets, with correction
+applied once to feed-in remuneration. Preserve all energy baselines/history. Relink
+existing Items using topic-renames-2026-10-15.csv, check old retained retirement and
+current values, and retain existing units/rules/persistence. No reset is planned.

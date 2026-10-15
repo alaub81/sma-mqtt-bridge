@@ -42,8 +42,8 @@ Base topics are `homie/<HOME_MANAGER_HOMIE_ID>/`. All Home Manager properties ha
 | 2 | 30201 | `measurements/plant-status` | U32 enum: ok/warning/error | 30 s |
 | 2 | 30581 | `measurements/energy-import` | U32 Wh → kWh | 60 s |
 | 2 | 30583 | `measurements/energy-export` | U32 Wh → kWh | 60 s |
-| 2 | 30865 | `measurements/power-import` | S32 W | 3 s |
-| 2 | 30867 | `measurements/power-export` | S32 W | 3 s |
+| 2 | 30865 | `measurements/powerdrawn` | S32 W | 3 s |
+| 2 | 30867 | `measurements/powergridfeedin` | S32 W | 3 s |
 
 Unit 1 assignment records span 42109–43088: all 245 slots are read in nine blocks of at most 120 registers, every 180 seconds. Occupied slots expose `device-<slot>/susy-id`, `/serial`, and `/unit-id`. Empty/invalid slots are omitted. Unit 255 remains visible as an unassigned record but is never queried. Duplicate units use only the first slot, as documented by SMA. This assignment table is identity evidence for delegated reads, not a discovery of undocumented measurement registers.
 
@@ -119,3 +119,11 @@ published. Keep Advanced enabled if existing numeric Items/history or epoch-link
 profiles still depend on it. Host overrides need the new mapping and raw group
 change explicitly; UDP meter transport does not provide this device clock.
 See the [openHAB migration instructions](../openHAB/openHAB.md#home-manager-plant-time-display-and-rules).
+
+## MQTT grid-power terminology, 2026-10-15
+
+The two power properties publish as powerdrawn and powergridfeedin for consistency
+with inverters, for Modbus and UDP alike. The profile still keeps its original
+internal power-import/power-export IDs and poller names so existing state/profile
+fingerprints remain compatible. No register, unit or polling change is included.
+See CONFIGURATION.md for retained retirement and existing Item relinking.

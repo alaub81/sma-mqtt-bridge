@@ -291,3 +291,47 @@ Drop its local API mapping rather than retaining empty discovery. Normal topic
 manifest retirement removes previously published metadata/value; inverter frequency
 mappings remain unchanged. This is an explicit scope choice, not a claim of
 permanent firmware-wide protocol absence.
+
+## Actual grid-export remuneration replaces PV-yield valuation, 2026-10-15
+
+Andreas corrects the requirement: only electricity exported to the grid is valued,
+using one common tariff. The Home Manager is the preferred explicitly selected
+grid source. Bounded identity-checked reads found the same grid-export counter
+at both PV inverters and Home Manager; these are duplicate plant views, not
+separately summable export allocations. Inverter grid power is W, not billable kWh.
+The unchanged plant earnings topic now uses only the selected grid-energy counter,
+with optional historical export offset applied once before multiplying the common
+rate. No automatic source failover or production-based substitute is permitted.
+Legacy inverter tariffs remain accepted but ignored. Ledger signatures/baselines,
+raw counters and averages are unchanged; past production-based monetary history
+is not automatically rewritten. See the configuration contract for new ENV fields.
+
+## Shared grid-power publication terminology, 2026-10-15
+
+Andreas requests Home Manager powerdrawn/powergridfeedin naming to match the
+inverters. Apply aliases only at the Homie publication boundary for the two core
+Home Manager properties, for both Modbus and UDP. Keep protocol/profile/internal
+keys, readiness, formulas and energy signatures unchanged. This avoids a cosmetic
+rename invalidating durable baselines or requiring edits of host overrides.
+Use the same aliases for metadata, values and ownership retirement. Other sources
+and delegated properties are untouched; grid energy and PV production stay distinct.
+Existing openHAB Items need new links, with names/units/history preserved.
+
+## Meter offsets and canonical channel names, 2026-10-15
+
+Andreas selects Home Manager energyexport as the remuneration basis and requests
+independent ENV corrections for cumulative import/export energy, plus the proposed
+naming cleanup including batteryenergyreturnratio. Correct published Home Manager
+totals only; retain raw observations, fingerprints, daily vectors and seven-day
+history. Use the corrected export once for money; expose optional raw counters
+under Diagnostics. Signed finite corrections are allowed; negative corrected totals
+are suppressed. The old plant-specific correction must stay zero to avoid double
+correction. Remuneration requires the Home Manager grid source, with no failover.
+
+Apply concrete naming candidates as source-scoped publication aliases, including
+the corresponding plant aggregate names, explicit house-power/rated-limit names
+and the earnings move to grid/totalearnings. Keep profiles and protocol keys stable.
+Existing manifest retirement removes old owned discovery/value topics. Preserve
+Item identities/history when relinking; no live relink or state reset is implied.
+The full map is topic-renames-2026-10-15.csv. Unverified battery-capacity semantics
+and lower-priority diagnostic reorganization remain outside this implementation.

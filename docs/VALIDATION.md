@@ -1828,3 +1828,78 @@ diff hygiene pass; the generated catalog now contains 298 property rows.
 No deployment, device request, MQTT publication or openHAB/history deletion was
 performed for this change. On upgrade the existing manifest performs retirement;
 keep the state volume and energy baselines.
+
+## Grid-export comparison and remuneration correction, 2026-10-15
+
+Andreas replaces total PV production remuneration with actual grid export and
+explicitly confirms a common tariff. The [bounded source comparison](GRID_EXPORT_COMPARISON_2026-10-15.md)
+found identical inverter1/inverter3 grid-export counters including a common one-unit
+increment; the final raw/1000 values matched Home Manager kWh. The W readings were
+small, time-skewed grid measurements, distinct from roughly 1.4/1.3 kW production.
+This supports using one plant export counter, not summing inverter grid duplicates.
+No inverter candidate was added to runtime profiles. Initial Home Manager single-
+poller results and the final targeted identity-checked counter read are distinguished.
+
+The unchanged plant earnings topic now uses only selected grid energy export
+(default Home Manager), optional historical energy offset once, and one explicit
+common tariff. Legacy inverter tariff settings are accepted but ignored. Missing
+common tariff hides the channel; zero remains valid. Invalid/stale/errored export
+blocks remuneration; PV availability does not. No automatic source failover occurs.
+
+All 376 offline tests, full lint, generated catalog reproducibility, Compose parity
+including overrides and diff hygiene pass. Revised regressions distinguish 60 kWh
+grid export from 300 kWh PV production, ensure old rates cannot contribute/activate,
+check JSON/ENV zero overrides, offset application, fresh zero versus invalid/stale
+export, source errors, grid-only operation, retained retirement and byte-preserved
+ledger continuity. Only documentation/configuration/source metadata and arithmetic
+changed; day calculations and stored averages are unchanged. The live probes were
+read-only; no MQTT publication, configuration/offset/rate migration, deployment,
+openHAB change or old monetary-history rewrite was performed.
+
+## Consistent Home Manager grid-power MQTT names, 2026-10-15
+
+Home Manager Modbus and UDP now publish measurements/powerdrawn and
+measurements/powergridfeedin, with the same labels, read-only Basic class and W
+units as the inverters. The rename is scoped to publication of the two core
+Home Manager properties. Original internal observations/readiness keys, profile
+files, pollers, register/OBIS decoding and energy signatures remain unchanged.
+No energy-baseline reset or host-profile rewrite is required for this rename.
+
+All 380 offline tests pass. Four new cases cover both transports' metadata/values,
+labels/units/readiness/error state, unchanged unrelated/delegated sources, actual
+manifest retirement of old values/metadata, publication of the new values, correct
+house power/export remuneration and byte-preserved ledger state across restart.
+Full lint over 181 public files, generated catalog reproducibility, Compose parity
+including overrides and diff hygiene pass. Both maintained migration CSV files
+preserve row counts and all fields except the two target-topic/annotation pairs.
+Recorded dated inventories remain unchanged; updated targets are not live relinks.
+Existing openHAB Items need their links changed in place after deployment, preserving
+Item names, units, rules and histories. The official Homie binding documentation
+was consulted. No deployment, device/MQTT request or live openHAB change occurred.
+
+## Home Manager energy offsets and canonical channel names, 2026-10-15
+
+This supersedes the earlier intermediate plant-offset and unchanged-earnings-topic
+wording above. Home Manager is the required remuneration source. Its signed,
+finite import/export offsets default to zero and correct published cumulative
+energy totals. Optional diagnostic properties retain the raw totals. Earnings
+use corrected export once, multiplied by the explicitly configured common tariff,
+and publish under grid/totalearnings. Nonzero legacy plant offsets are rejected
+before device connection. Missing, stale, invalid-unit or negative corrected totals
+do not manufacture a value. Raw observations, ledger signatures, daily deltas and
+seven-day histories remain unchanged.
+
+The [rename map](topic-renames-2026-10-15.csv) records 20 source-scoped mappings,
+including batteryenergyreturnratio. Publication metadata, snapshots and plant
+valid-properties diagnostics use the canonical names. Existing manifest cleanup
+retires old properties. Profile mappings remain unchanged. The regenerated catalog
+contains 302 rows; the migration inventory preserves its 100 rows and Item identities.
+Existing openHAB Items require relinking after installation, and earlier openHAB
+energy corrections must be removed to avoid applying the offsets twice.
+
+All 389 offline tests, full lint, Compose parity, generated-catalog verification
+and diff hygiene pass. Regression coverage includes both Home Manager transports,
+signed offsets, freshness and units, negative corrected totals even with a zero
+tariff, single application to remuneration, raw diagnostics, retained retirement,
+canonical metadata and preserved energy-ledger state. No private offset values,
+deployment, live MQTT publication or openHAB changes were performed.

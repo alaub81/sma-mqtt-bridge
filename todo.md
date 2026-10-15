@@ -21,15 +21,20 @@ wie „noch offen“ beschreiben den damaligen Stand, nicht die aktuelle Aufgabe
   openHAB-Offsets wegen des Energy-Meter-Wechsels berücksichtigen. Rohzähler und
   korrigierte Gesamtstände eindeutig unterscheiden; Offsets bei Migration,
   Berechnungen und Alt-/Neu-Vergleichen genau einmal anwenden und die Kontinuität
-  bestehender Historien erhalten. Konkrete Offsetwerte bleiben privat.
+  bestehender Historien erhalten. ENV-Offsets und Rohzähler-Diagnosen sind lokal
+  implementiert und offline geprüft; private Werte, Deployment und Entfernung
+  der bisherigen openHAB-Korrekturen bleiben offen. Konkrete Offsetwerte bleiben privat.
 
-- [x] Vergütung aus gesamtem PV-Ertrag × individuellem Wechselrichtertarif und
-  zwei Sieben-Tage-Hausdurchschnitte unter sma-plant lokal umgesetzt.
+- [x] Vergütung auf tatsächliche Netzeinspeisung × gemeinsamen Anlagentarif
+  umgestellt; vorherige PV-Ertragsbewertung ausdrücklich ersetzt. Home Manager
+  ist bevorzugte Quelle; doppelte Wechselrichter-Netzzähler werden nicht addiert.
+  Zwei Sieben-Tage-Hausdurchschnitte unter sma-plant lokal umgesetzt.
   Andreas bestätigt: sieben abgeschlossene Kalendertage, Wallbox abziehen statt
   ganze Ladetage ausschließen. Währung frei konfigurierbar, Standard €.
 - [ ] Neue Vergütungs-/Durchschnittskanäle nach separatem Deployment live prüfen;
   sieben vollständige Tage sammeln. Bestehende openHAB-Berechnungen bis zur
-  getrennten Migration erhalten. Private Tarife selbst in smab.env eintragen.
+  getrennten Migration erhalten. Gemeinsamen Tarif und gegebenenfalls historischen
+  Einspeise-Offset privat in smab.env eintragen.
 - [ ] Durchschnittsverbrauch prüfen, sobald die Werte für sieben vollständige
   abgeschlossene Tage vorliegen: Berechnung mit und ohne Wallbox anhand der
   zugrunde liegenden Tageswerte nachvollziehen und Ergebnisse auf Plausibilität
@@ -954,3 +959,95 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
   voller Linter und Diff-Prüfung bestanden; Katalog auf 298 Einträge aktualisiert.
   Migrationszeile als ausdrücklich entfernt markiert, historische Referenz erhalten.
 - Keine Live-Änderung an Geräten, MQTT oder openHAB; Installation bleibt offen.
+
+## 2026-10-15 – Einspeisung vergleichen und Vergütung korrigieren
+
+- Andreas stellt klar: Nur tatsächlich eingespeister Strom soll vergütet werden,
+  Home Manager bevorzugt. Anschließend einheitlichen Tarif für die gesamte
+  Einspeisung ausdrücklich bestätigt; keine Aufteilung nach Wechselrichtern nötig.
+- Lesender Vergleich bestätigt identischen Einspeise-Rohzähler bei inv1/inv3,
+  gemeinsamen Fortschritt um 1 Wh und denselben kWh-Stand am Home Manager. Eigene
+  Wechselrichter-Erträge/-Leistungen sind verschieden. Netzeinspeiseleistung ist W,
+  kein Energiezähler; die Netzmessungen dürfen nicht addiert werden.
+- Bestehendes Anlagen-Topic pv/totalearnings nutzt jetzt nur den Energieexport
+  der gewählten Netzquelle, Standard Home Manager, mal gemeinsamen Tarif. Kein
+  automatischer Fallback, keine PV-Ertragsvergütung und keine doppelte Einspeisung.
+- Neue ENV-Felder: PLANT_FEED_IN_TARIFF_PER_KWH und
+  PLANT_FEED_IN_ENERGY_OFFSET_KWH, jeweils mit SMAB_-Präfix. Expliziter Tarif
+  einschließlich Null aktiviert den Kanal, fehlender Tarif blendet ihn aus.
+  Optionaler historischer Offset wird einmal vor Multiplikation angewendet;
+  Rohzähler, Tagesbasen und Durchschnittshistorie bleiben unverändert.
+- Alte Wechselrichtertarife werden zur Konfigurationskompatibilität akzeptiert,
+  sind aber wirkungslos. Keine private Tarifübernahme oder Historienkorrektur.
+- Validierung: alle 376 Offline-Tests, voller Linter, reproduzierbarer Katalog
+  und Compose-Parität samt Overrides bestanden. Geprüft sind gemeinsame Tarif-
+  und Offsetrechnung, explizite Null, JSON-/ENV-Vorrang, alte wirkungslose Tarife,
+  ungültiger/alter Netzexport, Unabhängigkeit von PV-Verfügbarkeit, fehlende PV-
+  Geräte, Retained-Bereinigung und bytegleich erhaltene Energie-Basen.
+- [Lesender Quellvergleich](docs/GRID_EXPORT_COMPARISON_2026-10-15.md): keine
+  Schreibbefehle, MQTT-Veröffentlichungen, privaten Konfigurationsänderungen oder
+  Installation. Neuen Tarif/Offset konfigurieren und Rechnung nach Deployment
+  prüfen; bisherige produktionsbasierte Geldhistorie nicht automatisch korrigieren.
+
+## 2026-10-15 – Home-Manager-Leistungsnamen vereinheitlicht
+
+- Andreas wünscht dieselben Begriffe wie bei den Wechselrichtern: powerdrawn
+  für Netzbezug und powergridfeedin für Netzeinspeisung, beide W/Basic/read-only.
+  Home Manager veröffentlicht die Namen bei UDP und Modbus identisch.
+- Nur MQTT-Präsentation geändert; interne Schlüssel, Profile, Register,
+  Readiness, Anlagenrechnung, Tarifrechnung und Energie-Basen bleiben unverändert.
+  Kein erneuter Basen-Reset und kein Profilabgleich wegen dieser Umbenennung nötig.
+- Bisherige Topics powerimport/powerexport werden über das Manifest bereinigt.
+  Bestehende openHAB-Items nach Deployment auf die neuen Kanäle umlinken,
+  Namen/Units/Regeln/Historien erhalten. Mappings führen neue Zielkanäle mit
+  ausdrücklichem Hinweis auf noch nicht erfolgte Live-Änderung.
+- Vier neue Regressionen prüfen beide Transporte, IDs/Labels/Units/Readiness,
+  Unabhängigkeit anderer Quellen, unveränderte Energie-Basen und echte
+  Retained-Bereinigung samt Veröffentlichung der neuen Werte. Alle 380 Offline-
+  Tests, voller Linter und Compose-Parität bestanden. Generierter Katalog aktuell;
+  beide Migrationsdateien behalten Zeilenzahlen und alle anderen Felder unverändert.
+- Keine Profile oder privaten ENV-Werte geändert; kein Deployment und keine
+  Live-Änderung an MQTT/openHAB. Umlinken und Live-Prüfung bleiben nach Installation offen.
+
+## 2026-10-15 – Weitere Kanalnamen geprüft
+
+- Auf Andreas' Wunsch den gesamten generierten Katalog geprüft: 298 Zeilen,
+  199 unterschiedliche Suffixe; Mehrfacheinträge berücksichtigen alternative
+  Transporte/Modelle und sind keine pauschalen Live-Dubletten. Katalog reproduzierbar.
+- Klare Kandidaten: voltg1/2/3 → voltagel1/2/3; presbatcharge/presbattdischarge →
+  batterychargepower/batterydischargepower; currentbatstatcharge → batterystateofcharge;
+  currentbattemp → batterytemperature. Register, Einheiten und Bedeutungen geprüft.
+- Weitere Kandidaten: dayyield → dailyyield; Wallbox-Firmware nach identity/firmware;
+  batteryefficiency fachlich als Energie-Rückgabegrad benennen; Einspeisevergütung
+  künftig unter grid/totalearnings statt pv/totalearnings. Haus-Leistungswerte und
+  Nenn-/Grenzleistung eindeutiger benennen; Details und Folgen im Namensaudit.
+- currentbatcapacity (%) nicht ungeprüft als kWh-Kapazität oder SOH auslegen.
+  PV-Erzeugung, Wallbox-Verbrauch und Netzeinspeisung trotz gleicher kWh-Einheit
+  nicht zusammenwerfen. Gerätestatus, Quellenstatus und Tagesabdeckung unterscheiden.
+- [Namensaudit und Vorschläge](docs/TOPIC_GROUPS.md#naming-review-2026-10-15--implementation-selected).
+  Prüfung zunächst ohne weitere Runtime-Änderungen. Andreas hat die konkreten
+  Vorschläge anschließend beauftragt; Umsetzung siehe nachfolgenden Eintrag.
+
+## 2026-10-15 – Energie-Offsets und neue Kanalnamen umgesetzt
+
+- Andreas bestätigt Home Manager energyexport als Vergütungsgrundlage und bestellt
+  getrennte Offsets für energyexport/energyimport. Neue ENV-Variablen:
+  SMAB_HOME_MANAGER_ENERGY_EXPORT_OFFSET_KWH und
+  SMAB_HOME_MANAGER_ENERGY_IMPORT_OFFSET_KWH, Standard 0, endliche signierte kWh.
+- Hauptkanäle zeigen Rohzähler plus Offset, eindeutig als korrigiert beschriftet.
+  Optionale Diagnosekanäle rawenergyexport/rawenergyimport zeigen Rohstände.
+  Fehlende/alte/ungültige Rohwerte bleiben unverfügbar; negative korrigierte
+  Gesamtstände werden nicht als Null ausgegeben.
+- Vergütung nimmt nur korrigierten Home-Manager-Export, genau einmal mal Tarif.
+  Alter Plant-Offset muss 0 bleiben; andernfalls klare Validierungsfehlermeldung
+  vor Geräteverbindung. Alte Wechselrichtertarife bleiben wirkungslos.
+- Rohbeobachtungen und Tagesdifferenzen bleiben unverändert: kein Fingerprint-
+  Wechsel, keine neuen Basen und kein Verlust der Sieben-Tage-Historie.
+- Konkrete Namensvorschläge einschließlich Batterie-Rückgabegrad, Firmware,
+  Spannungen, Batterie-Werte, Tagesertrag, Nenn-/Grenzleistung, Hausleistung und
+  grid/totalearnings als reine MQTT-Zuordnung umgesetzt. Profile unverändert.
+  [Vollständige Alt-/Neu-Liste](docs/topic-renames-2026-10-15.csv). Bestehende Items
+  nach Deployment umlinken und alte openHAB-Offsets nicht doppelt anwenden.
+- Alle 389 Offline-Tests, vollständiger Linter, Compose-Parität und Katalogprüfung
+  bestanden. Katalog: 302 Zeilen; Alt-/Neu-Liste: 20 Zuordnungen; Migrationsinventar:
+  weiterhin 100 Zeilen. Keine privaten Werte eingetragen, keine Live-Änderung.
