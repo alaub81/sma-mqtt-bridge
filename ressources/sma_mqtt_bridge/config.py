@@ -180,6 +180,9 @@ class Plant(SafeRepr):
     checkpoint_interval_seconds: float = 300.0
     initial_consumption_kwh: float = 0.0
     assume_ac_battery_energy: bool = False
+    publish_partial_day: bool = False
+    debug_enabled: bool = False
+    debug_interval_seconds: float = 60.0
     diagnostics_enabled: bool = True
 
 

@@ -216,7 +216,9 @@ class EnergyBalances:
         if name == "house":
             total += Decimal(str(self.settings.initial_consumption_kwh))
         inconsistent = False
-        if record["dailyStatus"] == "complete":
+        if record["dailyStatus"] == "complete" or (
+            self.settings.publish_partial_day and record["dailyStatus"] == "partial"
+        ):
             if self.accept(daily, record["dailyValue"]):
                 record["dailyValue"] = str(daily)
             else:

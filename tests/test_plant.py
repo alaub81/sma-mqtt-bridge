@@ -345,7 +345,7 @@ class PlantMeasurementTests(PlantFixture):
         )
         topics = discovery("homie", "sma-plant", engine.state.properties)
         self.assertEqual(topics["homie/sma-plant/pv/totalactivepower/$unit"], "W")
-        self.assertEqual(topics["homie/sma-plant/house/totalconsumption/$unit"], "kWh")
+        self.assertEqual(topics["homie/sma-plant/house/dailyconsumption/$unit"], "kWh")
         self.assertTrue(all(not p.settable for p in engine.state.properties))
 
     def test_missing_invalid_error_and_zero_never_publish_partial_sum(self):
@@ -392,10 +392,14 @@ class PlantMeasurementTests(PlantFixture):
         self.assertIn("pv/totalactivepower", published)
         self.assertEqual(status, "alert")
 
-    def test_supported_energy_equation_from_common_baseline_and_opening_value(self):
+    def test_legacy_house_ledger_remains_compatible_without_total_topic(self):
         engine = self.engine(ac=True, env={"SMAB_PLANT_INITIAL_CONSUMPTION_KWH": "1000"})
         engine.refresh(100, self.wall)
-        self.assertEqual(Decimal(engine.state.fresh_values(100)["house/total-consumption"]), 1000)
+        self.assertEqual(Decimal(engine.ledger.committed["house"]["totalValue"]), 1000)
+        self.assertNotIn("house/total-consumption", engine.state.property_index())
+        topics = discovery("homie", "sma-plant", engine.state.properties)
+        self.assertNotIn("homie/sma-plant/house/totalconsumption", topics)
+        self.assertNotIn("homie/sma-plant/house/totalconsumption/$unit", topics)
         self.fill(
             engine,
             101,
@@ -407,7 +411,8 @@ class PlantMeasurementTests(PlantFixture):
             },
         )
         engine.refresh(101, self.wall + timedelta(seconds=1))
-        self.assertEqual(Decimal(engine.state.fresh_values(101)["house/total-consumption"]), 1016)
+        self.assertEqual(Decimal(engine.ledger.committed["house"]["totalValue"]), 1016)
+        self.assertNotIn("house/total-consumption", engine.state.fresh_values(101))
 
     def test_actual_identity_change_blocks_energy_without_rebasing(self):
         engine = self.engine(ac=True)
@@ -448,18 +453,21 @@ class PlantMeasurementTests(PlantFixture):
         )
 
     def test_energy_publication_waits_for_checkpoint_and_keeps_snapshot_age(self):
+        self.wall = datetime(2026, 10, 14, 21, 59, tzinfo=timezone.utc)
         engine = self.engine(ac=True, env={"SMAB_PLANT_CHECKPOINT_INTERVAL_SECONDS": "300"})
         engine.refresh(100, self.wall)
-        self.fill(engine, 101, {"home-manager": {"energyimport": 52}})
-        engine.refresh(101, self.wall + timedelta(seconds=1))
-        self.assertEqual(Decimal(engine.state.fresh_values(101)["house/total-consumption"]), 0)
-        self.assertEqual(engine.state.values["house/total-consumption"][1], 100)
-        self.fill(engine, 400, {"home-manager": {"energyimport": 52}})
-        engine.refresh(400, self.wall + timedelta(seconds=300))
-        self.assertEqual(Decimal(engine.state.fresh_values(400)["house/total-consumption"]), 2)
+        self.fill(engine, 220)
+        engine.refresh(220, self.wall + timedelta(seconds=120))
+        self.fill(engine, 221, {"home-manager": {"energyimport": 52}})
+        engine.refresh(221, self.wall + timedelta(seconds=121))
+        self.assertEqual(Decimal(engine.state.fresh_values(221)["house/daily-consumption"]), 0)
+        self.assertEqual(engine.state.values["house/daily-consumption"][1], 220)
+        self.fill(engine, 520, {"home-manager": {"energyimport": 52}})
+        engine.refresh(520, self.wall + timedelta(seconds=420))
+        self.assertEqual(Decimal(engine.state.fresh_values(520)["house/daily-consumption"]), 2)
         restarted = PlantEngine(engine.config, list(engine.sources.values()))
-        restarted.refresh(400, self.wall + timedelta(seconds=300))
-        self.assertEqual(Decimal(restarted.state.fresh_values(400)["house/total-consumption"]), 2)
+        restarted.refresh(520, self.wall + timedelta(seconds=420))
+        self.assertEqual(Decimal(restarted.state.fresh_values(520)["house/daily-consumption"]), 2)
 
     def test_same_samples_do_not_advance_ledger_receipt_or_write_periodically(self):
         engine = self.engine(ac=True)
@@ -480,7 +488,8 @@ class PlantMeasurementTests(PlantFixture):
         engine.ledger.persist(101, force=True)
         restarted = PlantEngine(engine.config, list(engine.sources.values()))
         restarted.refresh(101, self.wall + timedelta(seconds=1))
-        self.assertEqual(restarted.state.fresh_values(101)["house/total-consumption"], "2.0")
+        self.assertEqual(Decimal(restarted.ledger.committed["house"]["totalValue"]), 2)
+        self.assertNotIn("house/total-consumption", restarted.state.fresh_values(101))
         before = engine.ledger.path.read_bytes()
         changed = replace(
             engine.config,

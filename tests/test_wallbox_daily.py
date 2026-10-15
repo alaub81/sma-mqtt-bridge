@@ -108,6 +108,57 @@ class WallboxDailyTests(PlantFixture):
             Decimal(self.output_values(engine, 3820)["measurements/daily-consumption"]), 4
         )
 
+    def test_partial_day_opt_in_publishes_common_vector_from_first_valid_snapshot(self):
+        self.wall = datetime(2026, 10, 14, 10, tzinfo=timezone.utc)
+        engine = self.engine(
+            env={
+                "SMAB_PLANT_PUBLISH_PARTIAL_DAY": "true",
+                "SMAB_PLANT_ASSUME_AC_BATTERY_ENERGY": "true",
+            }
+        )
+        engine.refresh(100, self.wall)
+        values = self.output_values(engine, 100)
+        for key in (
+            "house/daily-consumption",
+            "house/daily-consumption-without-wallbox",
+            "measurements/daily-consumption",
+            "grid/daily-energy-import",
+            "grid/daily-energy-export",
+        ):
+            self.assertEqual(Decimal(values[key]), 0)
+        self.advance_balances(engine)
+        values = self.output_values(engine, 3820)
+        self.assertEqual(Decimal(values["house/daily-consumption"]), 16)
+        self.assertEqual(Decimal(values["house/daily-consumption-without-wallbox"]), 12)
+        self.assertEqual(Decimal(values["measurements/daily-consumption"]), 4)
+        for key in (
+            "diagnostics/house-energy-status",
+            "diagnostics/house-without-wallbox-day-status",
+            "diagnostics/wallbox-day-status",
+        ):
+            self.assertEqual(values[key], "partial")
+        restarted = PlantEngine(engine.config, list(engine.sources.values()))
+        restarted.refresh(3820, self.wall + timedelta(minutes=62))
+        self.assertEqual(self.output_values(restarted, 3820)["house/daily-consumption"], "16")
+        # The test mode must not turn invalid source samples into usable deltas.
+        engine.sources["api"].update({"measurements/total-energy": None}, now=3821)
+        engine.refresh(3821, self.wall + timedelta(minutes=62, seconds=1))
+        values = self.output_values(engine, 3821)
+        self.assertNotIn("measurements/daily-consumption", values)
+        self.assertNotIn("house/daily-consumption-without-wallbox", values)
+
+    def test_partial_day_opt_in_still_requires_battery_boundary_and_durable_write(self):
+        engine = self.engine(env={"SMAB_PLANT_PUBLISH_PARTIAL_DAY": "true"})
+        with patch("sma_mqtt_bridge.energy_balances.write_state", side_effect=OSError("fixture")):
+            with self.assertRaises(OSError):
+                engine.refresh(100, self.wall)
+        self.assertNotIn("measurements/daily-consumption", self.output_values(engine, 100))
+        engine.refresh(100, self.wall)
+        values = self.output_values(engine, 100)
+        self.assertEqual(values["measurements/daily-consumption"], "0")
+        self.assertNotIn("house/daily-consumption", values)
+        self.assertEqual(values["diagnostics/house-energy-status"], "unsupported-battery-boundary")
+
     def test_explicit_ac_assumption_unlocks_house_balances_and_preserves_grid_baselines(self):
         blocked = self.covered_day()
         signature = blocked.ledger.data["signature"]
@@ -453,6 +504,11 @@ class WallboxPlacementRuntimeTests(unittest.IsolatedAsyncioTestCase):
             "homie/sma-plant/wallbox/dailyconsumption",
             "homie/sma-plant/wallbox/dailyconsumption/$unit",
             "homie/sma-plant/diagnostics/wallboxdaystatus",
+            "homie/sma-plant/house/totalconsumption",
+            "homie/sma-plant/house/totalconsumption/$unit",
+            "homie/sma-plant/house/totalconsumption/$name",
+            "homie/sma-plant/house/totalconsumption/$datatype",
+            "homie/sma-plant/house/totalconsumption/$settable",
         }
         publisher.owned = {"sma-plant": old}
         publisher.publish_values = AsyncMock()
