@@ -1203,3 +1203,11 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
   an den Links. Dortige Prüfung abgeschlossen. sma_undef.js und Netzoffsetskripte
   sind weder im aktuellen Things-Export noch an diesen Links eingebunden; bloße
   Dateipräsenz belegt keine aktive Nutzung. Regelverwendung weiterhin nicht belegt.
+
+## 2026-10-15 – CI-Testcontainer: Migrationsinventar bereitstellen
+
+- CI-Fehler nach c1f6062 geklärt: Inventartest benötigt die Migrations-CSV, aber
+  der Testcontainer mountete bislang nur den Topic-Katalog aus docs.
+- Fehlende CSV im CI-Testlauf explizit read-only eingebunden. Runtime-Image und
+  Docker-Build-Kontext bleiben auf Laufzeitdateien beschränkt. Test nicht übersprungen.
+- Plattformübergreifender Docker-CI-Lauf muss nach Veröffentlichung erneut bestehen.
