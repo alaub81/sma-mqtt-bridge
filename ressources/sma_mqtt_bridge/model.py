@@ -20,10 +20,20 @@ class Property:
     stale_seconds: float | None = None
     settable: bool = False
     required_for_ready: bool = False
+    channel_group: str = field(default="basic", kw_only=True)
+
+    def __post_init__(self):
+        if self.channel_group not in ("basic", "advanced", "diagnostics"):
+            raise ConfigError("Invalid property channel group")
 
     @property
     def key(self):
         return self.node + "/" + self.id
+
+
+def channel_group_enabled(group, *, advanced=True, diagnostics=True):
+    """Select publication groups independently of topic paths or command rights."""
+    return (group != "advanced" or advanced) and (group != "diagnostics" or diagnostics)
 
 
 def bounded_payload(text, max_bytes):

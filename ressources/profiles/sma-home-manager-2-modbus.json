@@ -156,7 +156,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "advanced"
     },
     {
       "id": "susy-id",
@@ -173,7 +174,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "advanced"
     },
     {
       "id": "serial",
@@ -190,7 +192,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "advanced"
     },
     {
       "id": "data-change-counter",
@@ -207,7 +210,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "diagnostics"
     },
     {
       "id": "device-class",
@@ -224,7 +228,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "advanced"
     },
     {
       "id": "model",
@@ -241,7 +246,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "advanced"
     },
     {
       "id": "manufacturer",
@@ -258,7 +264,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "advanced"
     },
     {
       "id": "serial-copy",
@@ -275,7 +282,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "advanced"
     },
     {
       "id": "system-time",
@@ -292,7 +300,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "advanced"
     },
     {
       "id": "grid-guard-unlocked-devices",
@@ -309,7 +318,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "diagnostics"
     },
     {
       "id": "plant-time",
@@ -369,7 +379,8 @@
         "307": "ok",
         "455": "warning",
         "35": "error"
-      }
+      },
+      "channelGroup": "basic"
     },
     {
       "id": "energy-import",
@@ -386,7 +397,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "float"
+      "datatype": "float",
+      "channelGroup": "basic"
     },
     {
       "id": "energy-export",
@@ -403,7 +415,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "float"
+      "datatype": "float",
+      "channelGroup": "basic"
     },
     {
       "id": "power-import",
@@ -421,7 +434,8 @@
         -2147483648
       ],
       "datatype": "integer",
-      "requiredForReady": true
+      "requiredForReady": true,
+      "channelGroup": "basic"
     },
     {
       "id": "power-export",
@@ -439,7 +453,8 @@
         -2147483648
       ],
       "datatype": "integer",
-      "requiredForReady": true
+      "requiredForReady": true,
+      "channelGroup": "basic"
     }
   ],
   "inventory": {
@@ -578,7 +593,8 @@
         "invalid": [
           4294967295
         ],
-        "datatype": "integer"
+        "datatype": "integer",
+        "channelGroup": "advanced"
       },
       {
         "id": "reactive-control-mode",
@@ -610,7 +626,8 @@
           "1387": "1387",
           "1388": "1388",
           "1389": "1389"
-        }
+        },
+        "channelGroup": "advanced"
       },
       {
         "id": "cos-phi-setpoint",
@@ -627,7 +644,8 @@
         "invalid": [
           -2147483648
         ],
-        "datatype": "float"
+        "datatype": "float",
+        "channelGroup": "advanced"
       },
       {
         "id": "excitation-setpoint",
@@ -649,7 +667,8 @@
         "valueMap": {
           "1041": "overexcited",
           "1042": "underexcited"
-        }
+        },
+        "channelGroup": "advanced"
       },
       {
         "id": "configured-reactive-control-mode",
@@ -683,7 +702,8 @@
           "1389": "1389",
           "2269": "2269",
           "2270": "2270"
-        }
+        },
+        "channelGroup": "advanced"
       },
       {
         "id": "configured-cos-phi-setpoint",
@@ -700,7 +720,8 @@
         "invalid": [
           -2147483648
         ],
-        "datatype": "float"
+        "datatype": "float",
+        "channelGroup": "advanced"
       },
       {
         "id": "configured-excitation-setpoint",
@@ -722,7 +743,8 @@
         "valueMap": {
           "1041": "overexcited",
           "1042": "underexcited"
-        }
+        },
+        "channelGroup": "advanced"
       },
       {
         "id": "overfrequency-power-mode",
@@ -744,7 +766,8 @@
         "valueMap": {
           "303": "off",
           "1132": "linear-gradient"
-        }
+        },
+        "channelGroup": "advanced"
       },
       {
         "id": "gradient-start-frequency-offset",
@@ -761,7 +784,8 @@
         "invalid": [
           4294967295
         ],
-        "datatype": "float"
+        "datatype": "float",
+        "channelGroup": "advanced"
       },
       {
         "id": "gradient-reset-frequency-offset",
@@ -778,7 +802,8 @@
         "invalid": [
           4294967295
         ],
-        "datatype": "float"
+        "datatype": "float",
+        "channelGroup": "advanced"
       },
       {
         "id": "cos-phi-curve-start",
@@ -795,7 +820,8 @@
         "invalid": [
           4294967295
         ],
-        "datatype": "float"
+        "datatype": "float",
+        "channelGroup": "advanced"
       },
       {
         "id": "cos-phi-curve-start-excitation",
@@ -817,7 +843,8 @@
         "valueMap": {
           "1041": "overexcited",
           "1042": "underexcited"
-        }
+        },
+        "channelGroup": "advanced"
       },
       {
         "id": "cos-phi-curve-end",
@@ -834,7 +861,8 @@
         "invalid": [
           4294967295
         ],
-        "datatype": "float"
+        "datatype": "float",
+        "channelGroup": "advanced"
       },
       {
         "id": "cos-phi-curve-end-excitation",
@@ -856,7 +884,8 @@
         "valueMap": {
           "1041": "overexcited",
           "1042": "underexcited"
-        }
+        },
+        "channelGroup": "advanced"
       },
       {
         "id": "cos-phi-curve-start-power",
@@ -873,7 +902,8 @@
         "invalid": [
           4294967295
         ],
-        "datatype": "integer"
+        "datatype": "integer",
+        "channelGroup": "advanced"
       },
       {
         "id": "cos-phi-curve-end-power",
@@ -890,7 +920,8 @@
         "invalid": [
           4294967295
         ],
-        "datatype": "integer"
+        "datatype": "integer",
+        "channelGroup": "advanced"
       }
     ]
   },

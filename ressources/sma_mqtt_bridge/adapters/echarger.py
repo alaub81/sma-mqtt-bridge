@@ -11,7 +11,7 @@ from types import MappingProxyType
 
 from ..config import echarger_ssl_context
 from ..errors import AuthenticationError, ProtocolError
-from ..model import Property, SampleValues, number
+from ..model import Property, SampleValues, channel_group_enabled, number
 from .http import HTTP
 
 NS = "http://www.sma.de/communication/schema/SEMP/v1"
@@ -133,39 +133,58 @@ for i, phase in enumerate("ABC", 1):
     ]
 EXTRA.append(("frequency", ("Measurement.GridMs.Hz",), "Hz"))
 BASE = (
-    Property("measurements", "power", "Charging power", unit="W", required_for_ready=True),
-    Property("measurements", "session-energy", "Session energy", unit="kWh"),
-    Property("measurements", "vehicle-status", "Vehicle status", "string"),
-    Property("measurements", "vehicle-status-code", "Vehicle status code", "integer"),
-    Property("measurements", "health", "Device health", "string"),
-    Property("parameters", "nameplate-pkgrev", "Firmware", "string"),
-    Property("settings", "charge-mode", "Charging mode", "enum", format="4718,4719,4720,4721"),
-    Property("measurements", "manual-approval", "Manual approval", "string"),
+    Property(
+        "measurements",
+        "power",
+        "Charging power",
+        unit="W",
+        required_for_ready=True,
+        channel_group="basic",
+    ),
+    Property("measurements", "session-energy", "Session energy", unit="kWh", channel_group="basic"),
+    Property("measurements", "vehicle-status", "Vehicle status", "string", channel_group="basic"),
+    Property(
+        "measurements",
+        "vehicle-status-code",
+        "Vehicle status code",
+        "integer",
+        channel_group="basic",
+    ),
+    Property("measurements", "health", "Device health", "string", channel_group="basic"),
+    Property("parameters", "nameplate-pkgrev", "Firmware", "string", channel_group="advanced"),
+    Property(
+        "settings",
+        "charge-mode",
+        "Charging mode",
+        "enum",
+        format="4718,4719,4720,4721",
+        channel_group="basic",
+    ),
+    Property("measurements", "manual-approval", "Manual approval", "string", channel_group="basic"),
 )
 SEMP_EXTRA = (
-    ("measurements", "health-code", "Measurement.Operation.Health"),
-    ("measurements", "vehicle-health", "Measurement.Operation.EVeh.Health"),
-    ("measurements", "event-code", "Measurement.Operation.Evt.Msg"),
-    ("measurements", "mode-switch-code", "Measurement.Chrg.ModSw"),
-    ("measurements", "auth-registration-code", "Measurement.Acs.AuthRegistStt"),
-    ("parameters", "inverter-outphs", "Parameter.Inverter.OutPhs"),
-    ("control", "active-charging-count", "Setpoint.PlantControl.PCC.ChrgActCnt"),
+    ("measurements", "health-code", "Measurement.Operation.Health", "diagnostics"),
+    ("measurements", "vehicle-health", "Measurement.Operation.EVeh.Health", "diagnostics"),
+    ("measurements", "event-code", "Measurement.Operation.Evt.Msg", "diagnostics"),
+    ("measurements", "mode-switch-code", "Measurement.Chrg.ModSw", "diagnostics"),
+    ("measurements", "auth-registration-code", "Measurement.Acs.AuthRegistStt", "diagnostics"),
+    ("parameters", "inverter-outphs", "Parameter.Inverter.OutPhs", "advanced"),
+    ("control", "active-charging-count", "Setpoint.PlantControl.PCC.ChrgActCnt", "advanced"),
     (
         "control",
         "power-setpoint-max-percent",
         "Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMaxNom",
+        "advanced",
     ),
     (
         "control",
         "power-setpoint-min-percent",
         "Setpoint.PlantControl.Inverter.WModCfg.WCtlComCfg.WSptMinNom",
+        "advanced",
     ),
-    ("parameters", "chrg-plan-en-raw", "Parameter.Chrg.Plan.En"),
-    ("parameters", "chrg-stpwhenfltm-raw", "Parameter.Chrg.StpWhenFlTm"),
+    ("parameters", "chrg-plan-en-raw", "Parameter.Chrg.Plan.En", "advanced"),
+    ("parameters", "chrg-stpwhenfltm-raw", "Parameter.Chrg.StpWhenFlTm", "advanced"),
 )
-
-
-ADVANCED_BASE_KEYS = {"parameters/nameplate-pkgrev"}
 
 
 # Only channels observed refreshing timestamps with unchanged numeric values.
@@ -210,11 +229,15 @@ def timed_values(values, channel_times, channels):
 
 
 def base_properties(advanced):
-    return tuple(p for p in BASE if advanced or p.key not in ADVANCED_BASE_KEYS)
+    return tuple(p for p in BASE if channel_group_enabled(p.channel_group, advanced=advanced))
 
 
 def extra_channels(advanced, diagnostics):
-    return tuple(p for p in SEMP_EXTRA if (diagnostics if p[0] == "measurements" else advanced))
+    return tuple(
+        p
+        for p in SEMP_EXTRA
+        if channel_group_enabled(p[3], advanced=advanced, diagnostics=diagnostics)
+    )
 
 
 def base_values(catalog, advanced=True):
@@ -377,11 +400,12 @@ def semp_values(
     result.update(
         {
             node + "/" + id: number(catalog.get(channel))
-            for node, id, channel in extra_channels(advanced, diagnostics)
+            for node, id, channel, group in extra_channels(advanced, diagnostics)
         }
     )
     channels = BASE_TIMED_CHANNELS | {
-        node + "/" + id: channel for node, id, channel in extra_channels(advanced, diagnostics)
+        node + "/" + id: channel
+        for node, id, channel, group in extra_channels(advanced, diagnostics)
     }
     return timed_values(result, channel_times, channels)
 
@@ -403,12 +427,13 @@ class SempReader:
                     setting.datatype,
                     setting.unit,
                     setting.format,
+                    channel_group="basic",
                 )
                 for setting in SETTINGS
             ]
         props += [
-            Property(node, id, channel + " (raw code/value)", "float")
-            for node, id, channel in extra_channels(
+            Property(node, id, channel + " (raw code/value)", "float", channel_group=group)
+            for node, id, channel, group in extra_channels(
                 settings.advanced_channels_enabled, settings.diagnostics_enabled
             )
         ]
@@ -463,6 +488,7 @@ class EChargerReader:
                 setting.datatype,
                 setting.unit,
                 setting.format,
+                channel_group="basic",
             )
             for setting in API_SETTINGS
         ]
@@ -473,6 +499,7 @@ class EChargerReader:
                 id.replace("-", " ").title(),
                 unit=unit,
                 required_for_ready=id in ("current-l1", "voltage-l1"),
+                channel_group="basic",
             )
             for id, _, unit in EXTRA
         ]

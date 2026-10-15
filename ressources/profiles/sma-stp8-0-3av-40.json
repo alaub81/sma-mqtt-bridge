@@ -111,7 +111,8 @@
       "datatype": "string",
       "valueMap": {
         "9347": "STP8.0-3AV-40"
-      }
+      },
+      "channelGroup": "advanced"
     },
     {
       "id": "serial",
@@ -128,7 +129,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "advanced"
     },
     {
       "id": "firmware",
@@ -146,7 +148,8 @@
         4294967295
       ],
       "datatype": "string",
-      "format": "sma-firmware"
+      "format": "sma-firmware",
+      "channelGroup": "advanced"
     },
     {
       "id": "status",
@@ -171,7 +174,8 @@
         "307": "Ok (Ok)",
         "455": "Warnung (Wrn)"
       },
-      "requiredForReady": true
+      "requiredForReady": true,
+      "channelGroup": "basic"
     },
     {
       "id": "grid-contactor",
@@ -193,7 +197,8 @@
       "valueMap": {
         "51": "Geschlossen (Cls)",
         "311": "Offen (Opn)"
-      }
+      },
+      "channelGroup": "basic"
     },
     {
       "id": "power-drawn",
@@ -210,7 +215,8 @@
       "invalid": [
         -2147483648
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "basic"
     },
     {
       "id": "power-grid-feed-in",
@@ -227,7 +233,8 @@
       "invalid": [
         -2147483648
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "basic"
     },
     {
       "id": "day-yield",
@@ -244,7 +251,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "basic"
     },
     {
       "id": "total-yield",
@@ -261,7 +269,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "basic"
     },
     {
       "id": "current-a-input",
@@ -278,7 +287,8 @@
       "invalid": [
         -2147483648
       ],
-      "datatype": "float"
+      "datatype": "float",
+      "channelGroup": "basic"
     },
     {
       "id": "voltage-a-input",
@@ -295,7 +305,8 @@
       "invalid": [
         -2147483648
       ],
-      "datatype": "float"
+      "datatype": "float",
+      "channelGroup": "basic"
     },
     {
       "id": "power-a-input",
@@ -312,7 +323,8 @@
       "invalid": [
         -2147483648
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "basic"
     },
     {
       "id": "active-power",
@@ -329,7 +341,8 @@
       "invalid": [
         -2147483648
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "basic"
     },
     {
       "id": "current-b-input",
@@ -346,7 +359,8 @@
       "invalid": [
         -2147483648
       ],
-      "datatype": "float"
+      "datatype": "float",
+      "channelGroup": "basic"
     },
     {
       "id": "voltage-b-input",
@@ -363,7 +377,8 @@
       "invalid": [
         -2147483648
       ],
-      "datatype": "float"
+      "datatype": "float",
+      "channelGroup": "basic"
     },
     {
       "id": "power-b-input",
@@ -380,7 +395,8 @@
       "invalid": [
         -2147483648
       ],
-      "datatype": "integer"
+      "datatype": "integer",
+      "channelGroup": "basic"
     },
     {
       "id": "type",
@@ -452,7 +468,8 @@
       "invalid": [
         4294967295
       ],
-      "datatype": "float"
+      "datatype": "float",
+      "channelGroup": "basic"
     },
     {
       "id": "current-l1",
@@ -469,7 +486,8 @@
       "invalid": [
         -2147483648
       ],
-      "datatype": "float"
+      "datatype": "float",
+      "channelGroup": "basic"
     },
     {
       "id": "current-l2",
@@ -486,7 +504,8 @@
       "invalid": [
         -2147483648
       ],
-      "datatype": "float"
+      "datatype": "float",
+      "channelGroup": "basic"
     },
     {
       "id": "current-l3",
@@ -503,7 +522,8 @@
       "invalid": [
         -2147483648
       ],
-      "datatype": "float"
+      "datatype": "float",
+      "channelGroup": "basic"
     },
     {
       "id": "internal-temperature",

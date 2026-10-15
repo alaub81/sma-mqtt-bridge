@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 
 from ..errors import ProtocolError
-from ..model import Property
+from ..model import Property, channel_group_enabled
 from ..plant_debug import PlantDebug
 from ..profiles import verify_identity
 
@@ -67,6 +67,18 @@ def decode(registers, prop):
     return scaled
 
 
+def profile_channel_group(definition):
+    """Keep legacy host-profile defaults; bundled mappings declare their groups."""
+    return definition.get(
+        "channelGroup",
+        "advanced"
+        if definition["node"] in ("identity", "parameters")
+        else "diagnostics"
+        if definition["node"] == "diagnostics"
+        else "basic",
+    )
+
+
 def profile_property(definition, *, node, stale_seconds, include_format, required_for_ready=False):
     """Build read metadata while callers retain format and readiness policies."""
     return Property(
@@ -80,6 +92,7 @@ def profile_property(definition, *, node, stale_seconds, include_format, require
         else "",
         stale_seconds=stale_seconds,
         required_for_ready=required_for_ready,
+        channel_group=profile_channel_group(definition),
     )
 
 
@@ -128,20 +141,15 @@ class ModbusReader:
                     "float",
                     "%",
                     stale_seconds=lifetime,
+                    channel_group="basic",
                 ),
             )
 
     def channel_enabled(self, prop):
-        group = prop.get(
-            "channelGroup",
-            "advanced"
-            if prop["node"] in ("identity", "parameters")
-            else "diagnostics"
-            if prop["node"] == "diagnostics"
-            else "basic",
-        )
-        return (group != "advanced" or self.settings.advanced_channels_enabled) and (
-            group != "diagnostics" or self.settings.diagnostics_enabled
+        return channel_group_enabled(
+            profile_channel_group(prop),
+            advanced=self.settings.advanced_channels_enabled,
+            diagnostics=self.settings.diagnostics_enabled,
         )
 
     def interval(self, poller):

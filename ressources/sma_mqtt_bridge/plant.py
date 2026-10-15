@@ -162,7 +162,7 @@ class PlantState(SourceState):
     def published_properties(self):
         if self.publish_diagnostics:
             return self.properties
-        return tuple(p for p in self.properties if p.node != "diagnostics")
+        return tuple(p for p in self.properties if p.channel_group != "diagnostics")
 
     def fresh_values(self, now=None):
         now = time.monotonic() if now is None else now
@@ -248,7 +248,11 @@ class PlantEngine:
             )
         properties = [
             Property(
-                *key.split("/"), label, unit=unit, required_for_ready=key == "house/consumption"
+                *key.split("/"),
+                label,
+                unit=unit,
+                required_for_ready=key == "house/consumption",
+                channel_group="basic",
             )
             for key, (label, unit, _) in self.recipes.items()
         ]
@@ -258,17 +262,78 @@ class PlantEngine:
                 "average-daily-consumption",
                 "Seven-day average house consumption",
                 unit="kWh/d",
+                channel_group="basic",
             ),
-            Property("diagnostics", "average-day-status", "Seven-day coverage", "string"),
-            Property("grid", "daily-energy-import", "Daily grid import", unit="kWh"),
-            Property("grid", "daily-energy-export", "Daily grid export", unit="kWh"),
-            Property("house", "daily-consumption", "Daily house consumption", unit="kWh"),
-            Property("diagnostics", "import-day-status", "Import day coverage", "string"),
-            Property("diagnostics", "export-day-status", "Export day coverage", "string"),
-            Property("diagnostics", "house-energy-status", "House energy coverage", "string"),
-            Property("diagnostics", "local-date", "Local accounting date", "string"),
-            Property("diagnostics", "battery-energy-boundary", "Battery energy boundary", "string"),
-            Property("diagnostics", "power-input-status", "Power input availability", "string"),
+            Property(
+                "diagnostics",
+                "average-day-status",
+                "Seven-day coverage",
+                "string",
+                channel_group="basic",
+            ),
+            Property(
+                "grid",
+                "daily-energy-import",
+                "Daily grid import",
+                unit="kWh",
+                channel_group="basic",
+            ),
+            Property(
+                "grid",
+                "daily-energy-export",
+                "Daily grid export",
+                unit="kWh",
+                channel_group="basic",
+            ),
+            Property(
+                "house",
+                "daily-consumption",
+                "Daily house consumption",
+                unit="kWh",
+                channel_group="basic",
+            ),
+            Property(
+                "diagnostics",
+                "import-day-status",
+                "Import day coverage",
+                "string",
+                channel_group="basic",
+            ),
+            Property(
+                "diagnostics",
+                "export-day-status",
+                "Export day coverage",
+                "string",
+                channel_group="basic",
+            ),
+            Property(
+                "diagnostics",
+                "house-energy-status",
+                "House energy coverage",
+                "string",
+                channel_group="basic",
+            ),
+            Property(
+                "diagnostics",
+                "local-date",
+                "Local accounting date",
+                "string",
+                channel_group="diagnostics",
+            ),
+            Property(
+                "diagnostics",
+                "battery-energy-boundary",
+                "Battery energy boundary",
+                "string",
+                channel_group="diagnostics",
+            ),
+            Property(
+                "diagnostics",
+                "power-input-status",
+                "Power input availability",
+                "string",
+                channel_group="diagnostics",
+            ),
         ]
         if self.wallbox is not None:
             properties += [
@@ -277,41 +342,64 @@ class PlantEngine:
                     "average-daily-consumption-without-wallbox",
                     "Seven-day average house consumption without wallbox",
                     unit="kWh/d",
+                    channel_group="basic",
                 ),
                 Property(
                     "diagnostics",
                     "average-without-wallbox-day-status",
                     "Seven-day coverage without wallbox",
                     "string",
+                    channel_group="basic",
                 ),
                 Property(
                     "house",
                     "daily-consumption-without-wallbox",
                     "Daily house consumption without wallbox",
                     unit="kWh",
+                    channel_group="basic",
                 ),
                 Property(
                     "diagnostics",
                     "house-without-wallbox-day-status",
                     "House without wallbox day coverage",
                     "string",
+                    channel_group="basic",
                 ),
                 Property(
                     "diagnostics",
                     "housewithoutwallbox-energy-time",
                     "Energy snapshot time (UTC)",
                     "string",
+                    channel_group="diagnostics",
                 ),
             ]
         properties += [
-            Property("diagnostics", name + "-energy-time", "Energy snapshot time (UTC)", "string")
+            Property(
+                "diagnostics",
+                name + "-energy-time",
+                "Energy snapshot time (UTC)",
+                "string",
+                channel_group="diagnostics",
+            )
             for name in ("import", "export", "house")
         ]
         properties.append(
-            Property("diagnostics", "house-energy-start", "House energy start (UTC)", "string")
+            Property(
+                "diagnostics",
+                "house-energy-start",
+                "House energy start (UTC)",
+                "string",
+                channel_group="diagnostics",
+            )
         )
         properties.append(
-            Property("diagnostics", "valid-properties", "Available plant properties", "string")
+            Property(
+                "diagnostics",
+                "valid-properties",
+                "Available plant properties",
+                "string",
+                channel_group="diagnostics",
+            )
         )
         # Exact input deadlines below also cover slow pollers without renewing their ages.
         ttl = 2 * config.plant.checkpoint_interval_seconds + max(
@@ -334,11 +422,25 @@ class PlantEngine:
                 config.echarger.homie_id,
                 (
                     Property(
-                        "measurements", "daily-consumption", "Daily wallbox consumption", unit="kWh"
+                        "measurements",
+                        "daily-consumption",
+                        "Daily wallbox consumption",
+                        unit="kWh",
+                        channel_group="basic",
                     ),
-                    Property("diagnostics", "wallbox-day-status", "Wallbox day coverage", "string"),
                     Property(
-                        "diagnostics", "wallbox-energy-time", "Energy snapshot time (UTC)", "string"
+                        "diagnostics",
+                        "wallbox-day-status",
+                        "Wallbox day coverage",
+                        "string",
+                        channel_group="basic",
+                    ),
+                    Property(
+                        "diagnostics",
+                        "wallbox-energy-time",
+                        "Energy snapshot time (UTC)",
+                        "string",
+                        channel_group="diagnostics",
                     ),
                 ),
                 ttl,

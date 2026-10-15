@@ -196,14 +196,28 @@ class HomiePublisher:
                         "Source availability",
                         "enum",
                         format="init,ready,stale,error",
+                        channel_group="basic" if state.contributes_availability else "diagnostics",
                     )
                 )
             if not state.diagnostics_enabled:
                 continue
-            props.append(Property(*time_key.split("/"), "Last successful receipt (UTC)", "string"))
+            props.append(
+                Property(
+                    *time_key.split("/"),
+                    "Last successful receipt (UTC)",
+                    "string",
+                    channel_group="diagnostics",
+                )
+            )
             if state.monitor is not None:
                 props += [
-                    Property(*key.split("/"), "Source " + name, datatype, unit)
+                    Property(
+                        *key.split("/"),
+                        "Source " + name,
+                        datatype,
+                        unit,
+                        channel_group="diagnostics",
+                    )
                     for name, key, datatype, unit in self.metric_properties(state)
                 ]
         if len({p.key for p in props}) != len(props):
