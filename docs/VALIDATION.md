@@ -2032,3 +2032,72 @@ identity; existing signatures and persisted accounts survive this option change.
 All 397 tests and the full linter pass, including existing freshness, missing-input
 and reset cases.
 Live deployment and pre-existing configuration-changed diagnosis remain pending.
+
+## Evening closure and private production ENV, 2026-10-15
+
+Andreas accepts the release/CI step. Supplied logs show PV sentinel normalization
+on both PV devices and a subsequent plant-ready startup. Following the explicitly
+requested backed-up ledger reset, live MQTT at approximately 21:25 local time
+shows plant ready, fresh house power, partial day/average coverage and numeric
+averages matching the available startup-day deltas. This closes the observed
+configuration-changed blockage after reset, not a signature-preserving repair.
+The next midnight/following day and the earlier saved house-without-Wallbox
+discrepancy remain separate acceptance items.
+
+The private production ENV was reduced from 136 to 64 assignments using typed
+loader/profile/Compose defaults; copied descriptions are from smab.example.env.
+Andreas confirms no optional JSON or host profile overrides. Retained assignment
+text/quoting is unchanged. Offline resolved Config, Compose values, explicit
+interval selection and tariff-presence semantics match. Trust-file loading was
+stubbed only for this offline comparison; no runtime TLS policy was changed or
+validated. Production files were not replaced. Both private ENV files use mode
+600 and are excluded from Git/Docker; no private constants enter this report.
+The user must apply and validate the candidate on the target host separately.
+
+[Wallbox idle samples](ECHARGER_LIVE_CHECK_2026-10-15.md#plugged-in-idle-follow-up-evening)
+confirm fresh zero power/constant total energy and frozen stale session energy.
+Reset boundaries and old state-channel semantics remain unaccepted.
+
+### Session reset observed
+
+Andreas unplugged the vehicle. MQTT and a direct API/SEMP sample confirm fresh
+session energy zero with the unplug-time timestamp, vehicle not connected, zero
+power and unchanged cumulative energy. This closes the observed unplug-reset
+question only; replug/new charging and old state/event timestamps remain separate.
+No Bridge command was sent.
+
+### Replugged idle session observation
+
+After Andreas confirmed reconnecting the vehicle, API/SEMP both reported fresh
+locked vehicle status (5169), zero power and raw session zero. Total energy stayed
+fresh and constant. The session timestamp remained at the unplug event and was
+older than 180 seconds, so both readers correctly omitted fresh session output.
+No charging permission was changed. Next charging-start behavior remains open.
+
+## Additional legacy invalid-value channels, 2026-10-15
+
+Read-only identity-verified Modbus sampling at 21:39 CEST covered all 15 remaining
+legacy negative-to-zero channels: four grid powers returned valid 0/1 W values,
+nine DC measurements returned S32 NaN, and Carport L1 power/voltage returned
+S32/U32 NaN respectively. Earlier phase inventory identifies Carport L3 as active.
+The [per-channel assessment](INVALID_VALUE_AUDIT.md) retains unavailable handling
+for all 15. No runtime/profile change or MQTT write was made. This does not verify
+the next daytime recovery or make retained optional measurements fresh.
+
+## Conditional DC zero compatibility, 2026-10-15
+
+Andreas subsequently approved zero compatibility for six DC current/power
+channels. At 21:58 CEST, the updated local reader verified both PV identities and
+read all 15 channels again: six selected DC sentinels became zero with fresh
+AC-zero/OK guards; three DC voltages and both inactive Carport L1 channels remained
+unavailable. No production deployment or MQTT publication was performed. The
+official 40029 operating-status probe returned enum NaN on both devices; the
+implemented guard is explicitly inferred no-production, not confirmed standby.
+Deterministic tests cover positive production, fault/warning/invalid guards,
+guard-read failure, signed values, policy validation, independent input-B polling
+and preserved energy-ledger binding.
+
+Validation after this change: `./tests/test-check.sh` passed all 401 tests;
+`./tests/linter-check.sh` passed all checks. Loopback fixture tests required local
+socket permission outside the restricted shell sandbox; no device network access
+was used by the automated test suite.

@@ -1,9 +1,9 @@
 # Invalid-value compatibility audit, 2026-10-15
 
-Scope: static comparison of the supplied openHAB Things and private transforms,
+Scope: comparison of the supplied openHAB Things and private transforms,
 bundled inverter profiles, plant dependency/freshness guards, energy ledger,
-averages, Home Manager and eCharger measurement handling. This is not live device
-acceptance. Private originals were read only; no device configuration was changed.
+averages, Home Manager and eCharger measurement handling. The final section adds
+a bounded live nighttime sample; it is not full day/night acceptance. Private originals were read only; no device configuration was changed.
 
 | Area | Finding | Consequence / decision |
 | --- | --- | --- |
@@ -33,12 +33,12 @@ have other causes and is not automatically cleared by this correction.
 
 ## Remaining acceptance
 
-- Reconcile host profile overrides and deploy the nighttime fix separately.
-- Verify fresh PV zero, house power and plant readiness at night.
-- Decide whether other legacy zeroing channels need explicit compatibility; no
-  blanket conversion is applied to unverified channels.
-- Investigate the observed configuration-changed day coverage using the actual
-  installed configuration and ledger without deleting or resetting state.
+- Nighttime PV zero, house power and plant readiness have subsequently been
+  observed; Andreas reports no host profile overrides.
+- The 15 additional channel decisions are recorded below; verify DC daytime recovery
+  and consumer handling of individual unavailable observations.
+- Andreas explicitly chose a backed-up ledger reset to resolve the existing binding
+  mismatch. Verify the next midnight, daily balances and averages after that reset.
 - Check dependent openHAB rules for availability handling before retiring old Items.
 
 The official [Modbus binding documentation](https://www.openhab.org/addons/bindings/modbus/)
@@ -79,7 +79,7 @@ This count describes legacy transformations, not 15 proven faults. In particular
 Carport voltage register 30783 is decoded unsigned in the original Things: its
 unsigned invalid sentinel is positive and is not caught by the negative test.
 The battery charge/discharge powers have no readTransform. No explicit PV operating
-status register 30203 is declared; the shared MAP catalogue alone cannot provide
+status register 40029 is declared; the shared MAP catalogue alone cannot provide
 a fresh standby predicate.
 
 ## Item-link clarification
@@ -90,3 +90,74 @@ current Things export nor these links attaches sma_undef.js or the legacy grid
 offset scripts. Their presence in the transform directory alone does not prove
 active use. No rule usage has been established; no runtime change is required
 solely because these files exist.
+
+## Per-channel assessment and nighttime sample, 2026-10-15
+
+A bounded read-only Modbus sample at 21:39 CEST verified device identity before
+reading these 15 channels. No device settings, profiles or MQTT values were
+written. The ignored private record contains only the selected registers and
+numeric results. This sample establishes nighttime behavior, not every possible
+failure state or an independent physical zero measurement.
+
+| Inverter | Register / channel | Night sample | Decision |
+| --- | --- | --- | --- |
+| Roof | 30865 / power-drawn | 0 W, valid | Preserve measured zero; no sentinel-to-zero fallback |
+| Roof | 30867 / power-grid-feed-in | 1 W, valid | Preserve measured value; no fallback |
+| Roof | 30769 / current-a-input | S32 NaN | Keep unavailable; no independently confirmed current measurement |
+| Roof | 30771 / voltage-a-input | S32 NaN | Keep unavailable; darkness does not establish zero DC voltage |
+| Roof | 30773 / power-a-input | S32 NaN | Keep unavailable; not required by plant house-power calculation |
+| Roof | 30957 / current-b-input | S32 NaN | Keep unavailable; no independently confirmed current measurement |
+| Roof | 30959 / voltage-b-input | S32 NaN | Keep unavailable; darkness does not establish zero DC voltage |
+| Roof | 30961 / power-b-input | S32 NaN | Keep unavailable; not required by plant house-power calculation |
+| Carport | 30865 / power-drawn | 0 W, valid | Preserve measured zero; no fallback |
+| Carport | 30867 / power-grid-feed-in | 1 W, valid | Preserve measured value; no fallback |
+| Carport | 30769 / current-a-input | S32 NaN | Keep unavailable; no independently confirmed current measurement |
+| Carport | 30771 / voltage-a-input | S32 NaN | Keep unavailable; darkness does not establish zero DC voltage |
+| Carport | 30773 / power-a-input | S32 NaN | Keep unavailable; not required by plant house-power calculation |
+| Carport | 30777 / power-l1 | S32 NaN | Keep unavailable: inactive phase; earlier daytime evidence also showed NaN |
+| Carport | 30783 / volt-g1 | U32 NaN | Keep unavailable: inactive phase; legacy negative filter did not catch this unsigned sentinel |
+
+The [official SMA Modbus specification](https://files.sma.de/downloads/SMA-Modbus-TI-en-10.pdf)
+identifies S32 NaN as 0x80000000 and U32 NaN as 0xFFFFFFFF. It also documents NaN
+for undefined registers within a readable block. These sentinels alone do not
+establish a measured zero or a unique standby condition. Status 307 is not such a
+condition either.
+
+Assessment complete: retain the current unavailable handling for all 15 channels.
+No additional profile compatibility option is justified by this evidence. The
+existing active-AC-power exception remains limited to register 30775. The four
+inverter grid channels do not affect the installation's Home Manager based house
+balance; DC and inactive-phase channels are not its inputs. An installation that
+selects an inverter grid source must still treat unavailable grid power as an
+incomplete balance.
+
+For the nine DC channels, legacy transforms previously displayed synthetic zero
+at night. The current bridge instead withholds unavailable samples; an older
+retained number can therefore remain visible. It must not be presented as a fresh
+nighttime observation. Per-property unavailable publication/expiry in MQTT and
+openHAB remains a separate consumer-availability task; this assessment does not
+change retained messages or historical data. Carport L1 must not be renamed to L3
+or copied into L3 history. Daytime recovery of the nine DC channels remains to be
+checked across a complete night/day transition.
+
+## Approved DC compatibility revision
+
+After the assessment, Andreas requested legacy-compatible zeroes for the three DC
+currents and three DC powers, retaining unavailable voltage handling. The bundled
+profiles now apply this only to successfully read S32 sentinels when fresh decoded
+AC power is zero and fresh device condition is OK. This includes existing AC
+sentinel normalization; it is an inferred no-production rule, not a measured DC
+zero or confirmed standby status. The earlier recommendation to leave all 15
+unchanged is superseded for these six channels only.
+
+The official model catalogues identify operating status at **40029**, not 30203
+(which is nominal power in OK mode). A read-only probe of 40029 returned enum NaN
+on both devices, so no operating-status gate or new public channel was added.
+Status 307 alone remains insufficient; it is combined with fresh AC power.
+
+A second read-only sample at 21:58 CEST with the local updated reader produced
+0 A / 0 W for all six selected DC sentinels, while the three DC voltages and two
+Carport L1 channels remained unavailable. Guard reads use the same verified
+connection as the DC observation, including an additional fresh input-A read when
+input B is due separately. Production MQTT was not changed. Daytime transition and
+host deployment remain pending. Valid negative measurements are preserved.

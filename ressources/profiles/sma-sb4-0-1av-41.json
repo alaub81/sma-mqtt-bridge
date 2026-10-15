@@ -350,7 +350,15 @@
         -2147483648
       ],
       "datatype": "float",
-      "channelGroup": "basic"
+      "channelGroup": "basic",
+      "invalidAsZeroWhen": {
+        "active-power": [
+          0
+        ],
+        "status": [
+          "Ok (Ok)"
+        ]
+      }
     },
     {
       "id": "voltage-a-input",
@@ -386,7 +394,15 @@
         -2147483648
       ],
       "datatype": "integer",
-      "channelGroup": "basic"
+      "channelGroup": "basic",
+      "invalidAsZeroWhen": {
+        "active-power": [
+          0
+        ],
+        "status": [
+          "Ok (Ok)"
+        ]
+      }
     },
     {
       "id": "active-power",
@@ -580,7 +596,7 @@
       "byteOrder": "big",
       "wordOrder": "big",
       "scale": 0.1,
-      "unit": "°C",
+      "unit": "\u00b0C",
       "invalid": [
         -2147483648
       ],
@@ -696,7 +712,7 @@
       "datatype": "enum",
       "channelGroup": "basic",
       "valueMap": {
-        "557": "Übertemperatur (TmpDrt)",
+        "557": "\u00dcbertemperatur (TmpDrt)",
         "884": "Keine Abregelung (NoneDrt)",
         "1705": "Frequenzabweichung (HzDrt)",
         "3520": "Spannungsabweichung (VDrt)"

@@ -206,6 +206,7 @@ def validate_mappings(poller_list, property_list):
                 "channelGroup",
                 "requiredForReady",
                 "invalidAsZero",
+                "invalidAsZeroWhen",
             ),
         )
         if "requiredForReady" in prop and type(prop["requiredForReady"]) is not bool:
@@ -299,6 +300,32 @@ def validate_mappings(poller_list, property_list):
         if any(ord(c) < 32 for c in prop["name"] + prop["unit"]):
             raise ConfigError("Property metadata contains control characters")
         properties[prop["id"]] = prop
+    for prop in properties.values():
+        if "invalidAsZeroWhen" not in prop:
+            continue
+        guards = prop["invalidAsZeroWhen"]
+        if (
+            prop["type"] != "int32"
+            or prop["datatype"] not in ("integer", "float")
+            or (prop["unit"], prop["scale"]) not in (("W", 1), ("A", 0.001))
+            or prop["invalid"] != [-2147483648]
+            or any(key in prop for key in ("invalidAsZero", "valueMap", "format"))
+            or prop.get("minimum", 0) > 0
+            or prop.get("maximum", 0) < 0
+            or not isinstance(guards, dict)
+            or not guards
+        ):
+            raise ConfigError("Invalid conditional current/power sentinel policy")
+        for ref, values in guards.items():
+            if (
+                ref not in properties
+                or ref == prop["id"]
+                or "invalidAsZeroWhen" in properties[ref]
+                or not isinstance(values, list)
+                or not values
+                or any(type(v) not in (str, int, float) for v in values)
+            ):
+                raise ConfigError("Invalid conditional sentinel reference/values")
     return pollers, properties
 
 

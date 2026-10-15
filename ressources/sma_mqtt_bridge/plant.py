@@ -38,7 +38,11 @@ def energy_binding_profile(profile):
         return None
     return profile | {
         "properties": [
-            {key: value for key, value in prop.items() if key != "invalidAsZero"}
+            {
+                key: value
+                for key, value in prop.items()
+                if key not in ("invalidAsZero", "invalidAsZeroWhen")
+            }
             for prop in profile["properties"]
         ]
     }

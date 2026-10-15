@@ -66,3 +66,73 @@ protocol semantics before changing freshness policy. There is no basis here for
 removing filters, disabling the timestamp recorder, claiming full charging-target
 acceptance or changing maximum-power/phase controls. Existing Home Manager control
 ownership remains unchanged. The investigation is narrowed, not globally closed.
+
+## Plugged-in idle follow-up, evening
+
+Andreas reports charging approximately 13:00–16:00 and confirms the vehicle remains
+plugged in. Two read-only API/SEMP samples at approximately 21:28 and 21:29 local
+time, about 60 seconds apart, used the existing readers and configured TLS policy.
+Only allowlisted numeric channel observations were retained privately; no settings,
+commands or recorder activation were performed. MQTT Explorer was inspected too.
+
+Both transports reported 0 W and vehicle status 200112 (connected/waiting). API
+total energy remained 1499.938875 kWh; its source timestamp advanced with ages
+about 0.11–0.22 seconds. Power and vehicle status also remained fresh. Small signed
+phase readings around zero were preserved; no clamping was applied.
+
+Both transports returned session energy 13.515 kWh with the same fixed device
+timestamp, 16:28:02.494 local time. Its age increased from approximately 17,997 to
+18,058 seconds, beyond the configured 180-second freshness limit. Both readers
+therefore omitted the current session-energy output. MQTT still displayed the
+previous retained 13.515 kWh observation. This confirms idle timestamp freezing,
+not current-session authority or a successful reset. The user's charging window
+is approximate and is not an exact source-time boundary.
+
+Device/vehicle health and event timestamps remained on September 11; mode and
+authorization remained on July 21. No value transitions were observed, so their
+classification and existing filters remain unchanged. Missing frequency was already
+removed and is not an open acceptance item.
+
+Idle behavior is sampled and consistent. A natural unplug/replug or new session
+is still required to settle the reset boundary. Do not clear retained session
+energy, force zero or weaken freshness checks from these two stationary samples.
+
+## User-operated unplug transition, evening
+
+Andreas unplugged the vehicle and explicitly confirmed this. MQTT changed from
+200112 (connected/waiting) to 200111 (not connected), and session energy changed
+from the old retained 13.515 kWh to zero. A direct API/SEMP sample at about 21:31:57
+confirmed both session values as zero with the same new device timestamp,
+21:31:28.467 local time, approximately 29 seconds old and fresh. A second sample about 60 seconds later retained the same zero and session
+timestamp in both transports, still within the freshness window. API total energy
+remained 1499.938875 kWh and power stayed zero. The Bridge sent no charging command.
+
+This establishes the session-energy reset on this unplug event, independently
+of the cumulative counter and the Bridge energy-ledger reset earlier that evening.
+It does not establish all reset triggers, a complete subsequent charging session
+or old health/event timestamp semantics. Keep the existing session freshness
+filter and last-known retained behavior; never use session energy as cumulative
+energy for daily house/Wallbox accounting.
+
+## User-operated replug transition, evening
+
+Andreas confirmed reconnecting the vehicle. At approximately 21:34:51 local time,
+API and SEMP both reported vehicle status 5169 (locked), zero power and raw session
+energy zero. The API cumulative counter remained 1499.938875 kWh with a fresh
+source timestamp. Vehicle status was also fresh in both transports. A second sample about one
+minute later confirmed the same locked/zero-power state, unchanged cumulative
+energy and the same stale zero-session timestamp.
+
+The session timestamp remained 21:31:28.467, from the preceding unplug event;
+it was now approximately 203 seconds old, beyond the 180-second freshness limit.
+Both readers therefore omitted session-energy publication despite a successful
+read and raw zero. This establishes that replug alone did not refresh/reset this
+channel in the observed locked state. The new plugged-in state did not restore
+the prior 13.515 kWh session amount.
+
+Do not interpret locked as a new Bridge command or a demonstrated fault. Charging
+permission was not changed and the cause of the lock was not investigated. A new
+charging interval is still needed for charging-start/reset behavior. The observed
+idle/unplug/replug cycle is sufficient to reject a universal acquisition-time
+interpretation for session energy; retain the existing filter until an explicit
+last-session-versus-current-session publication policy is chosen.

@@ -194,6 +194,7 @@ class PlantConfigurationTests(PlantFixture):
         for profile in old_profiles.values():
             for prop in profile["properties"]:
                 prop.pop("invalidAsZero", None)
+                prop.pop("invalidAsZeroWhen", None)
         old_config = replace(config, profiles=old_profiles)
         self.assertEqual(plant_plan(config)[3], plant_plan(old_config)[3])
         for profile in old_profiles.values():
@@ -207,6 +208,7 @@ class PlantConfigurationTests(PlantFixture):
         for profile in old_profiles.values():
             for prop in profile["properties"]:
                 prop.pop("invalidAsZero", None)
+                prop.pop("invalidAsZeroWhen", None)
         previous = replace(engine.config, profiles=old_profiles)
         engine.ledger.data["signature"] = plant_plan(previous)[3]
         engine.ledger.dirty = True

@@ -192,3 +192,28 @@ int32 power in W with the sole invalid sentinel `-2147483648` and no value map o
 format. Energy counters, battery measurements and other invalid values retain
 their existing behavior. Host profile overrides must carry this property explicitly;
 updating only the container does not change an overriding profile file.
+
+### Conditional DC current and power compatibility
+
+The PV profiles additionally use `invalidAsZeroWhen` for DC input A current/power
+and, on STP8 only, input B current/power. This optional map names other property
+IDs and lists their accepted decoded values. All guards must match fresh reads
+on the same identity-verified connection. Guard blocks are read even when their
+normal publication interval is not due; cached MQTT/source values are never used.
+
+The bundled guards require active AC power 0 W and condition `Ok (Ok)`. The AC
+value includes the existing explicit 30775 sentinel compatibility. This is an
+inferred no-production compatibility rule, not an independently measured DC zero
+or a confirmed operating-status code. The official operating-status register
+40029 returned unavailable on both installed PV devices; it is not used as a gate.
+Only a successfully read DC S32 sentinel is replaced. Other signed values remain
+unchanged, and positive AC production, invalid guards, warning/fault status or
+failed reads do not generate DC zeroes. DC voltages and inactive AC phases retain
+unavailable handling.
+
+Conditional zero is restricted to numeric int32 W at scale 1 or A at scale 0.001,
+the sole sentinel -2147483648, bounds including zero, and no map/format or
+unconditional zero option. References must exist, cannot refer to the same
+property or another conditional rule, and must contain nonempty value lists.
+Both power/current compatibility options are excluded from cumulative-energy
+binding identity; counter definitions and other profile metadata remain protected.

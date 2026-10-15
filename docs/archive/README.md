@@ -6,6 +6,15 @@ statements. Use the current documents for configuration, status and next actions
 Relative Markdown links were adjusted for the archive location; the earlier content
 and diary entries are retained. Archived `todo.md` remains in German.
 
+## 2026-10-15 evening cleanup
+
+- [German task diary](2026-10-15/todo.md): complete pre-cleanup snapshot.
+- [Implementation plan](2026-10-15/IMPLEMENTATION_PLAN.md): superseded detailed milestones.
+
+The current task list and plan reconcile the user-confirmed release, backed-up
+ledger reset, live nighttime readiness, persisted replacement Items and saved
+Grafana follow-up. Historical pending statements are not current instructions.
+
 ## 2026-10-13 task-list cleanup
 
 | Snapshot | Current document and purpose |
