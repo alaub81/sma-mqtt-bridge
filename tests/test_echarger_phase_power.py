@@ -1,5 +1,6 @@
 """Local phase-power unit scope, read-only ownership and unchanged numerical values."""
 
+import asyncio
 import tempfile
 import unittest
 from datetime import datetime, timezone
@@ -11,6 +12,7 @@ from sma_mqtt_bridge.config import ECharger, load_config
 from sma_mqtt_bridge.homie import HomiePublisher, discovery
 from sma_mqtt_bridge.model import SourceState
 from sma_mqtt_bridge.translation import load_translation
+from tests.test_runtime import FakeClient
 
 
 class EChargerPhasePowerTests(unittest.IsolatedAsyncioTestCase):
@@ -93,6 +95,45 @@ class EChargerPhasePowerTests(unittest.IsolatedAsyncioTestCase):
         semp = SempReader(ECharger(), 10000)
         self.assertFalse(any(p.id.startswith("power-l") for p in semp.properties))
         await semp.close()
+
+    async def test_frequency_is_not_declared_or_returned_even_if_source_offers_it(self):
+        live = [
+            self.measurement("A", 100),
+            {
+                "channelId": "Measurement.GridMs.Hz",
+                "values": [{"value": 50, "time": "2026-10-12T10:00:00Z"}],
+            },
+        ]
+        adapter, values = await self.read(live)
+        self.assertNotIn("measurements/frequency", values)
+        self.assertNotIn("measurements/frequency", {p.key for p in adapter.properties})
+        metadata = discovery("homie", "fixture", adapter.properties)
+        self.assertFalse(any("/frequency" in key for key in metadata))
+        self.assertEqual(values["measurements/power-l1"], 100)
+
+    async def test_previous_frequency_value_and_metadata_are_retired(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            config = load_config({"SMAB_STATE_DIR": tmp})
+            reader = EChargerReader(ECharger(), 10000)
+            self.addAsyncCleanup(reader.close)
+            state = SourceState("api", "fixture", reader.properties, 60)
+            client = FakeClient()
+            publisher = HomiePublisher(config, [state], lambda *a, **k: client)
+            root = "homie/fixture/measurements/frequency"
+            old = {root} | {
+                root + "/" + suffix
+                for suffix in ("$name", "$datatype", "$unit", "$settable", "$retained")
+            }
+            publisher.owned = {"fixture": old}
+            publisher.publish_values = AsyncMock()
+            await publisher.serve_device("fixture", [state], asyncio.Event())
+            messages = {(topic, value) for topic, value, _ in client.messages}
+            for topic in old:
+                self.assertIn((topic, b""), messages)
+                self.assertNotIn(topic, publisher.owned["fixture"])
+            self.assertFalse(
+                any(topic.startswith(root) and value != b"" for topic, value in messages)
+            )
 
     async def test_missing_nan_and_timestamp_rejection_stay_unavailable(self):
         for value in (None, "NaN", "Infinity", True):
