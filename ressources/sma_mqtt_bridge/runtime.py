@@ -327,7 +327,7 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
         from .plant import PlantEngine
 
         plant = PlantEngine(config, states)
-        states.append(plant.state)
+        states.extend(plant.output_states)
     controller = None
     local_controller, portal_controller = None, None
     portal_refresh = None
