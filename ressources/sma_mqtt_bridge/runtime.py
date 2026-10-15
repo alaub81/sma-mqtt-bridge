@@ -32,7 +32,14 @@ def sources(config):
     for device in config.inverters:
         if device.enabled:
             reader = ModbusReader(
-                device, config.profiles[device.id], device.id in config.interval_overrides
+                device,
+                config.profiles[device.id],
+                device.id in config.interval_overrides,
+                debug_interval_seconds=config.plant.debug_interval_seconds
+                if config.plant.enabled
+                and config.plant.debug_enabled
+                and (device.role != "none" or config.plant.grid_source == device.id)
+                else 0,
             )
             interval = min(
                 (reader.interval(p) for p in reader.pollers), default=device.poll_interval_seconds

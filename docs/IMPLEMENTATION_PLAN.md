@@ -56,6 +56,9 @@ prerequisites for accepting household counter accounting.
 For provisional comparison, Andreas requested an explicit AC assumption for
 unverified battery counters on 2026-10-15. The optional override reports assumed-ac;
 it permits house kWh without completing physical acceptance or changing profile evidence.
+An optional initial-partial-day publication flag also permits immediate counter
+comparison from the first saved snapshot while retaining partial status; covered
+midnight/restart acceptance remains required for normal calendar-day accounting.
 Inventory Grafana/InfluxDB datasource/schema before building the later old/new
 comparison dashboard; preserve existing histories and control ownership.
 

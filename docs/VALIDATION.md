@@ -1529,3 +1529,63 @@ All 333 offline tests and the complete linter passed. Added regression coverage
 checks the provisional house/day-exclusion equations, grid-baseline continuity
 and documented-DC rejection. Physical AC/DC confirmation and target-host deployment
 remain pending; provisional historical energy is not automatically repaired.
+
+## Plant calculation debug and PV raw-register evidence, 2026-10-15
+
+An explicit plant debug flag plus DEBUG log level now enables periodic numeric
+calculation evidence and selected numeric inverter register evidence from existing
+verified reads. Default interval is 60 seconds; default activation is false.
+Inputs include age/freshness and source-error flags; reports show signed recipes,
+coverage, baselines, available derived values and separate committed checkpoints.
+Identity/string registers, endpoints, serials, fingerprints and authenticated
+payloads are excluded. No polling, publication or validity behavior is changed.
+
+All 338 offline tests and full lint passed. Five new regression cases cover
+missing versus zero, partial days, durable values, disabled/INFO/interval gates,
+numeric register scope, invalid sentinel evidence and existing identity-gated
+read calls without duplicate reads. Target-host debug deployment remains pending.
+
+A one-shot read-only probe of the locally configured enabled inverters verified
+identity before the selected measurement reads. Both PV sources returned
+register 30775 words [32768, 0], int32 -2147483648 (0x80000000), which their profiles
+declare invalid. Register 30201 returned valid status 307/OK; register 30217
+returned invalid 16777213 for both PV sources. Storage reported valid charge 0 W
+and discharge 240 W. This establishes actual invalid PV input at the probe time,
+not measured zero, a transport failure or proof of permanent register absence.
+No automatic nighttime-zero fallback follows from these observations. No MQTT
+messages, device writes, openHAB changes or state-volume changes were performed
+by the probe. Physical house-power acceptance and AC/DC confirmation remain open.
+
+## Household lifetime topic removal, 2026-10-15
+
+At Andreas' request, house/totalconsumption and its discovery are removed. The
+inventory has no concrete existing legacy Item mapping for this added counter.
+Daily household accounting, Wallbox exclusion, ledger format, configuration
+fingerprint and existing internal legacy fields remain compatible. The existing
+opening-value setting stays accepted for ledger compatibility, without publishing
+a household lifetime property.
+
+All 338 offline tests and full lint passed. Updated coverage verifies absence
+from discovery/measurements, daily checkpoint publication with preserved snapshot
+age and restart behavior, and manifest retirement of the old value/metadata while
+preserving the ledger bytes. No target-host MQTT retirement or openHAB changes
+have been performed; they must not be inferred from the offline fixture.
+
+## Initial partial-day publication for tests, 2026-10-15
+
+At Andreas' request, SMAB_PLANT_PUBLISH_PARTIAL_DAY (boolean, default false)
+permits publication of initial partial-day deltas from the first valid saved
+counter vector. It applies to grid import/export, house, Wallbox and house without
+Wallbox day accounts. Status stays partial; the first valid vector gives zero
+delta, with subsequent values measured since that vector. Existing partial
+baselines and ledger fingerprints/schema remain unchanged. Restart and late
+activation reuse them. A covered local midnight switches to normal complete-day
+accounting; gaps/resets and invalid/negative/decreasing balances remain blocked.
+Source PV day-yield sums retain their original device-day meaning.
+
+All 345 offline tests and full lint passed. Seven new cases cover initial deltas,
+restart, late activation/deactivation without rebasing, midnight transition,
+gap/reset/identity/clock guards, negative/decreasing house balances, shared-vector
+house/Wallbox exclusion with missing-input rejection, and durable-write/AC gates.
+The private local ENV explicitly enables the test flag; target-host deployment,
+real midnight acceptance and physical AC/DC confirmation remain pending.

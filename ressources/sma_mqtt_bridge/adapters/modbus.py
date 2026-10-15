@@ -10,6 +10,7 @@ from decimal import Decimal
 
 from ..errors import ProtocolError
 from ..model import Property
+from ..plant_debug import PlantDebug
 from ..profiles import verify_identity
 
 
@@ -83,10 +84,11 @@ def profile_property(definition, *, node, stale_seconds, include_format, require
 
 
 class ModbusReader:
-    def __init__(self, settings, profile, interval_override=False):
+    def __init__(self, settings, profile, interval_override=False, *, debug_interval_seconds=0):
         self.settings, self.profile = settings, profile
         self.interval_override = interval_override
         self.next_due = {}
+        self.debug = PlantDebug(debug_interval_seconds)
         self.transaction = 0
         self.definitions = [p for p in profile["properties"] if self.channel_enabled(p)]
         active = {p["poller"] for p in self.definitions}
@@ -225,6 +227,7 @@ class ModbusReader:
                 for poller in self.pollers:
                     if poller["id"] in selected:
                         self.next_due[poller["id"]] = now + self.interval(poller)
+                self.debug.modbus(self, blocks, selected, now, result)
                 return result
             finally:
                 writer.close()

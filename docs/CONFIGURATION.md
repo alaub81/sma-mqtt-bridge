@@ -641,13 +641,17 @@ device polling or InfluxDB credentials are required.
 | `SMAB_PLANT_MAX_SKEW_SECONDS` | `240` | Positive seconds, at most 3600; maximum spread of contributing observation times, in addition to individual freshness. |
 | `SMAB_PLANT_BOUNDARY_TOLERANCE_SECONDS` | `240` | Positive seconds, at most 900; bounded uncertainty for real counter snapshots around local midnight. No extrapolation. |
 | `SMAB_PLANT_CHECKPOINT_INTERVAL_SECONDS` | `300` | Positive seconds; regular durable energy snapshot/publication cadence. Initial baselines, boundary transitions and resets are saved immediately. |
-| `SMAB_PLANT_INITIAL_CONSUMPTION_KWH` | `0` | Finite nonnegative number; verified opening house energy for a new common-baseline ledger. Changing it requires reconciliation of existing state. |
+| `SMAB_PLANT_INITIAL_CONSUMPTION_KWH` | `0` | Deprecated compatibility setting, finite nonnegative number. Retained for existing ledger fingerprints/internal fields; no household lifetime topic is published. Leave existing values unchanged to preserve ledger compatibility. |
 | `SMAB_PLANT_ASSUME_AC_BATTERY_ENERGY` | `false` | Boolean; explicitly treat an unverified battery counter boundary as AC for provisional household kWh. Diagnostic boundary becomes `assumed-ac`; documented DC mappings remain blocked. |
+| `SMAB_PLANT_PUBLISH_PARTIAL_DAY` | `false` | Boolean; test mode publishing initial partial-day counter deltas from the first valid saved snapshot. Status remains `partial`. Does not override gaps, resets, battery-boundary or input-validity guards. |
+| `SMAB_PLANT_DEBUG_ENABLED` | `false` | Boolean; opt into calculation and selected register evidence. Requires enabled plant and `SMAB_LOG_LEVEL=DEBUG` to emit logs. No extra device reads. |
+| `SMAB_PLANT_DEBUG_INTERVAL_SECONDS` | `60` | Positive number of seconds; minimum interval between calculation reports and between reports per selected register. No immediate log on every change. |
 | `SMAB_PLANT_DIAGNOSTICS_ENABLED` | `true` | Boolean; optional source receipt diagnostics. Per-value coverage/date/boundary diagnostics remain available. |
 
 JSON uses `plant.enabled`, `homieId`, `gridSource`, `updateIntervalSeconds`,
 `maxSkewSeconds`, `boundaryToleranceSeconds`, `checkpointIntervalSeconds`,
-`initialConsumptionKwh`, `diagnosticsEnabled`; each inverter gains `role`.
+`initialConsumptionKwh`, `assumeAcBatteryEnergy`, `publishPartialDay`, `debugEnabled`,
+`debugIntervalSeconds`, `diagnosticsEnabled`; each inverter gains `role`.
 The normal defaults < optional JSON < explicit ENV precedence applies.
 Calendar accounting reuses `SMAB_TIMEZONE`, default `Europe/Berlin`.
 
@@ -674,7 +678,7 @@ credentials, tokens, addresses or raw serials. Saves use atomic replacement with
 file/directory sync; checkpoint publication follows successful persistence. The
 topic manifest and command journals retain their existing independent files.
 
-The first partial day is unavailable, not zero. Subsequent full days require
+By default the first partial day is unavailable, not zero. Subsequent full days require
 bounded observations around local midnight, including 23/25-hour DST days. A
 midnight-spanning outage gives `gap`; do not interpret retained yesterday values as
 today's measurement. `reset` blocks affected lifetime accounting until manual
@@ -709,10 +713,10 @@ covered within configured sampling tolerance, not an exact midnight meter read.
 
 The bundled Storage counter mapping deliberately remains `energyBoundary=unverified`.
 Its original battery counters and requested power calculations remain available,
-but house daily/lifetime kWh has no value and reports `unsupported-battery-boundary`.
+but house daily kWh has no value and reports `unsupported-battery-boundary`.
 Do not change that declaration to `ac` without matching evidence. For a provisional
 comparison, explicitly set `SMAB_PLANT_ASSUME_AC_BATTERY_ENERGY=true`. Household
-daily/lifetime energy and household daily energy without Wallbox then use the AC
+daily energy and household daily energy without Wallbox then use the AC
 balance, and `diagnostics/batteryenergyboundary` reports `assumed-ac`. This is an
 assumption, not physical validation; conversion losses can distort the results.
 It does not override a documented `dc` boundary or bypass freshness, reset,
@@ -723,6 +727,74 @@ Previously persisted provisional history is not repaired automatically. Verified
 AC fixtures exercise the complete accounting path offline. Whole-kWh PV counters
 also limit balance precision; finer source registers remain a separate validation.
 The feature has not been deployed or live accepted by these tests.
+
+The additional `house/totalconsumption` topic was removed at Andreas' request.
+It had no identified legacy Item counterpart and counted only from a bridge
+baseline. Existing ledger fields and the legacy opening-value setting remain
+compatible so this topic removal does not reset daily accounts. The owned retained
+value and metadata retire through the topic manifest after loading the new build;
+preserve the state volume. No existing openHAB Item or history is changed.
+
+### Initial partial-day test values
+
+Set `SMAB_PLANT_PUBLISH_PARTIAL_DAY=true` to test counter-based day values without
+waiting for midnight. New accounts save the first valid common counter vector as
+their baseline and publish a real zero delta, then consumption since that snapshot.
+This applies to grid daily import/export, house daily consumption, Wallbox daily
+consumption and house daily consumption without Wallbox. The direct PV day-yield
+sum retains its device-provided calendar-day meaning and is not rebased.
+
+Coverage diagnostics remain `partial`: these are measured partial-day differences,
+not full calendar-day totals or reconstructed midnight values. Existing partial
+accounts reuse their already saved first snapshot; enabling the flag never resets
+them or changes the ledger signature. Restarts reuse the same baseline. With a
+covered midnight the normal daily baseline takes over automatically and reports
+`complete`; missed midnights remain `gap` and do not publish test values. Accounts
+already marked complete continue normal daily accounting.
+
+All input freshness/skew, units, identity, AC-boundary, reset, clock and negative/
+decreasing-balance guards still apply. Only committed snapshots are published at
+the normal checkpoint cadence. Disable the flag to stop publishing partial-day
+results; this does not erase baselines or last-known retained MQTT observations.
+Current eligibility remains visible in coverage diagnostics and validproperties.
+The flag defaults to false and requires no state-file/schema migration.
+
+### Calculation debug logs
+
+To investigate unavailable plant values, temporarily configure:
+
+```dotenv
+SMAB_LOG_LEVEL=DEBUG
+SMAB_PLANT_DEBUG_ENABLED=true
+SMAB_PLANT_DEBUG_INTERVAL_SECONDS=60
+```
+
+Recreate the service with the updated build/configuration. Search its container
+logs for `Plant calculation debug` and `Plant register debug`. Calculation reports
+contain logical input keys, numeric values/units, observation age, freshness,
+source-error flags, signed power/energy recipes, available derived values, coverage
+statuses and the effective battery boundary. Account evidence includes local dates,
+UTC observation/start times, numeric day/total baselines and current counters,
+plus separately committed values/times and pending checkpoint state. Available
+values describe current internal eligibility, not broker acknowledgement.
+
+Register reports use only already-read, identity-verified inverter responses:
+numeric plant contributions plus existing measurements/status and grid-contactor,
+when those properties are enabled and due. They include register address, register
+words, numeric decoded value, validity, scale and byte/word order. Enum status
+values have raw words and validity but no numeric decoded value. Identity registers,
+strings, addresses, serial guards, credentials, fingerprints and authenticated
+HTTP payloads are excluded. Polling frequency and measurement validity do not change.
+No reads or raw register logs are added for the Home Manager or eCharger; their
+existing decoded plant inputs appear in the calculation report.
+
+Reports are periodic: one calculation report per configured interval, and at most
+one report per selected register per interval, only when its existing poller runs.
+An intervening transition may therefore not appear. Transport/identity failures
+remain in normal source diagnostics; they cannot produce a successful raw-register
+report. Logs stay on standard output under existing container log retention;
+no additional debug file or energy-state mutation is introduced. Disable the plant
+debug flag and return the log level to INFO after collecting the evidence.
 
 ### Wallbox daily consumption
 

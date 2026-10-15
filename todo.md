@@ -565,3 +565,75 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
 - 333 Offline-Tests und vollständiger Linter bestanden. Neue Regressionen prüfen
   Hausenergie mit/ohne Wallbox, erhaltene Netzbasis und Schutz belegter DC-Mappings.
   Keine Zielsystem-Installation, Veröffentlichung oder Änderung vorhandener Historien.
+
+## 2026-10-15 – Berechnungs-Debugmodus und fehlende PV-Leistung untersucht
+
+- Andreas bestätigt den 11-Topic-Abgleich: Werte vorhanden bei PV-Tages-/Gesamtertrag,
+  Netz-Tagesbezug/-einspeisung, Haus-Gesamtverbrauch und Wallbox-Tagesverbrauch.
+  Kein Zahlenwert bei PV-Gesamtleistung, beiden Haus-Wattwerten und beiden
+  Haus-Tagesverbräuchen. Metadaten/Watt-Einheit vorhanden, soweit rückgemeldet.
+- Gemeldete Diagnose: beide PV-active-power-Eingänge missing-or-invalid,
+  Batterie assumed-ac, beide Haus-Tageskonten partial. Die Haus-Tageswerte warten
+  auf ausreichend beobachtete Tagesgrenze; keine rückwirkende Tagesbasis erfinden.
+- Neuer expliziter Debugmodus: SMAB_PLANT_DEBUG_ENABLED=false als Standard,
+  SMAB_PLANT_DEBUG_INTERVAL_SECONDS=60, zusätzlich SMAB_LOG_LEVEL=DEBUG nötig.
+  Periodischer Bericht mit Eingangswerten, Alter/Frische/Quellfehlern, Vorzeichen,
+  Ergebnissen/Sperrgründen, Zählerbasen und getrenntem bestätigtem Speicherstand.
+  Rohregister nur für vorhandene numerische Anlagenbeiträge und Status/Netzschütz
+  beteiligter Wechselrichter, nach Identitätsprüfung und ohne zusätzliche Abfragen.
+  Keine Identitäts-/Stringregister, Zugangsdaten, Hosts oder Hardware-Fingerprints.
+- Einmaliger lesender Nachweis mit lokal konfigurierten Wechselrichtern:
+  PV1/PV3 liefern für 30775 jeweils Wörter [32768, 0], also 0x80000000
+  (int32 -2147483648, laut Profil ungültig). Status 30201 jeweils 307/OK;
+  Netzschütz 30217 jeweils 16777213/ungültig. Storage-Ladeleistung 0 W,
+  Entladeleistung 240 W. Keine MQTT-Veröffentlichung, kein Schreibbefehl.
+- [ ] Dokumentierte brauchbare Zustands-/Leistungsquelle für PV-Nachtbetrieb
+  untersuchen. OK-Status mit ungültigem Netzschütz-/Leistungswert rechtfertigt
+  keine angenommene 0-W-Messung. Bei Produktion Eingänge und Haus-Wattwerte prüfen.
+- [ ] Neuen Build/Debug-ENV auf Zielsystem laden, begrenzte Logsequenz sammeln und
+  anschließend Debugmodus abschalten. Beide Haus-Tageskonten nach nächster erfasster
+  Mitternacht prüfen. Batterie-AC/DC-Prüfung bleibt separat offen.
+- 338 Offline-Tests und kompletter Linter bestanden. Fünf neue Tests prüfen
+  fehlend versus null, Teil-Tag/Speicherstand, Aus-/INFO-/Intervall-Gates,
+  Registerauswahl/Sentinel und unveränderte identitätsgeprüfte Leseabfragen.
+
+## 2026-10-15 – Haus-Gesamtverbrauch als zusätzliches Topic entfernt
+
+- Andreas benötigt house/totalconsumption nicht weiter. Im vorhandenen Inventar
+  ist diesem neuen Bridge-Zähler kein konkretes bestehendes openHAB-Item zugeordnet;
+  TotalPowerConsumption ist die bestehende Hausleistung in W. Keine erneute
+  Live-Inventur behauptet. Frühere Frage nach diesem zusätzlichen kWh-Gesamtwert
+  damit durch Scope-Entscheidung erledigt; zehn neue Messwert-Topics verbleiben
+  in der aktuellen Einzelbatterie-Anlage.
+- Topic/Discovery entfernt. Vorhandener Wert samt Metadaten wird über das
+  Topic-Manifest beim neuen Build bereinigt. Haus-Tagesverbrauch und Tagesverbrauch
+  ohne Wallbox bleiben bestehen; keine Items oder Historien in openHAB gelöscht.
+- Zustandsformat und interne Legacy-Felder bleiben kompatibel. Bisheriger
+  Anfangswert-ENV bleibt als veralteter Kompatibilitätswert erhalten; vorhandene
+  Einstellung nicht ändern, damit die Fingerprints/Tagesbasen unverändert bleiben.
+- 338 Offline-Tests und vollständiger Linter bestanden. Tests prüfen fehlende
+  Discovery, Tages-Checkpoint/Alter/Neustart sowie Bereinigung alter MQTT-Topics
+  mit unveränderter Zustandsdatei. Offizielle openHAB-Homie-Dokumentation konsultiert.
+  Zielsystem-Installation und tatsächliche MQTT-Bereinigung weiterhin ausstehend.
+
+## 2026-10-15 – Teil-Tag-Werte für sofortigen Berechnungstest
+
+- Andreas möchte den ersten Test ohne Warten auf Mitternacht. Neuer boolescher
+  Schalter SMAB_PLANT_PUBLISH_PARTIAL_DAY, Standard false. Lokal in der privaten
+  smab.env explizit true gesetzt; Zielsystem benötigt neuen Build und denselben ENV.
+- Neue Tageskonten halten den ersten gültigen gemeinsamen Zählervektor dauerhaft
+  fest und liefern zunächst 0 kWh, danach Differenzen seit dieser Aufnahme.
+  Vorhandene partial-Basen bleiben erhalten, auch beim späteren Einschalten und
+  nach Neustart. Keine Zustandsdatei löschen, kein Fingerprint-/Schemawechsel.
+- Gilt für berechnete Netz-/Haus-/Wallbox-Tageskonten einschließlich Haus ohne
+  Wallbox. Direkte PV-Tagesertragssummen behalten ihre Geräte-Tageswerte.
+  Status bleibt partial; Testwerte sind keine vollständigen Kalender-Tageswerte.
+  Nach ausreichend erfasster Mitternacht automatisch normale Tagesbasis/complete.
+- Fehlende Eingänge, Frische/Skew, AC-Messgrenze, Datenlücken, Reset, Zeitfehler,
+  negative oder sinkende Bilanzen und dauerhafte Speicherung bleiben abgesichert.
+  Abschalten sperrt Teil-Tag-Ergebnisse wieder, ohne Basen oder letzte Retained-
+  Beobachtungen zu löschen. DEBUG-Bericht zeigt den aktiven Testschalter.
+- 345 Offline-Tests und kompletter Linter bestanden. Sieben neue Fälle decken
+  Delta/Neustart, spätere Aktivierung/Deaktivierung, Mitternachtswechsel, Fehler-
+  Gates, negative/sinkende Hausbilanz, gemeinsame Wallbox-Abgrenzung sowie
+  Speicherfehler/AC-Sperre ab. Zielhost- und echte Mitternachtsabnahme bleiben offen.

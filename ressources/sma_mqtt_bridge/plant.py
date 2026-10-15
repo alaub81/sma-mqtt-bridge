@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo
 from .energy_balances import EnergyBalances
 from .errors import ConfigError
 from .model import Property, SampleValues, SourceState, number, payload
+from .plant_debug import PlantDebug
 from .plant_profiles import FIELDS
 
 WALLBOX_OUTPUTS = {
@@ -186,6 +187,9 @@ class PlantState(SourceState):
 class PlantEngine:
     def __init__(self, config, states):
         self.config = config
+        self.debug = PlantDebug(
+            config.plant.debug_interval_seconds if config.plant.debug_enabled else 0
+        )
         self.sources = {s.id: s for s in states}
         self.groups, self.grid, self.boundary, signature = plant_plan(config)
         if self.boundary == "unverified" and config.plant.assume_ac_battery_energy:
@@ -233,7 +237,6 @@ class PlantEngine:
             Property("grid", "daily-energy-import", "Daily grid import", unit="kWh"),
             Property("grid", "daily-energy-export", "Daily grid export", unit="kWh"),
             Property("house", "daily-consumption", "Daily house consumption", unit="kWh"),
-            Property("house", "total-consumption", "Total house consumption", unit="kWh"),
             Property("diagnostics", "import-day-status", "Import day coverage", "string"),
             Property("diagnostics", "export-day-status", "Export day coverage", "string"),
             Property("diagnostics", "house-energy-status", "House energy coverage", "string"),
@@ -323,8 +326,7 @@ class PlantEngine:
             for m in self.groups["battery"]
             for k in ("batterychargeenergy", "batterydischargeenergy")
         ]
-        for key in ("house/daily-consumption", "house/total-consumption"):
-            self.state.guards[key] = tuple(energy_inputs)
+        self.state.guards["house/daily-consumption"] = tuple(energy_inputs)
         if self.wallbox is not None:
             prop = self.sources["api"].property_index().get(self.wallbox.key)
             if prop is None or prop.unit != "kWh" or prop.datatype not in ("integer", "float"):
@@ -548,12 +550,11 @@ class PlantEngine:
                     (member["batterydischargeenergy"], 1),
                     (member["batterychargeenergy"], -1),
                 ]
-            daily, total, status, age = self.account("house", inputs, now, wall)
-            packet["house/daily-consumption"], packet["house/total-consumption"] = daily, total
-            accounts["house"] = {"house/daily-consumption": daily, "house/total-consumption": total}
+            daily, _, status, age = self.account("house", inputs, now, wall)
+            packet["house/daily-consumption"] = daily
+            accounts["house"] = {"house/daily-consumption": daily}
             if age:
-                for key in ("house/daily-consumption", "house/total-consumption"):
-                    observed[key], deadlines[key] = age
+                observed["house/daily-consumption"], deadlines["house/daily-consumption"] = age
         else:
             status = "unsupported-battery-boundary"
         packet["diagnostics/house-energy-status"] = status
@@ -598,8 +599,7 @@ class PlantEngine:
             if name == "house":
                 packet["diagnostics/house-energy-start"] = record["start"]
             for key, candidate in candidates.items():
-                field = "totalValue" if key == "house/total-consumption" else "dailyValue"
-                text = record[field]
+                text = record["dailyValue"]
                 packet[key] = Decimal(text) if candidate is not None and text is not None else None
                 observed[key] = received
         self.update_wallbox_output(packet, observed, deadlines, now, wall)
@@ -620,6 +620,7 @@ class PlantEngine:
             self.state.deadlines = deadlines
             self.state.update(SampleValues(packet, observed), now=now, timestamp=wall.isoformat())
             self.last_packet = snapshot
+        self.debug.report(self, now, wall)
 
     async def run(self, stop):
         try:

@@ -4,6 +4,7 @@ import hashlib
 import json
 import tempfile
 import unittest
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
@@ -44,6 +45,103 @@ class EnergyBalanceTests(unittest.TestCase):
             self.observe(after + timedelta(hours=1), "103.25"),
             (Decimal("2.25"), Decimal("3.25"), "complete"),
         )
+
+    def enable_partial(self):
+        self.config = replace(
+            self.config, plant=replace(self.config.plant, publish_partial_day=True)
+        )
+        self.ledger = EnergyBalances(self.config, self.signature, self.zone)
+
+    def test_opt_in_partial_day_uses_first_sample_and_survives_restart(self):
+        self.enable_partial()
+        wall = datetime(2026, 10, 14, 12, tzinfo=self.zone)
+        self.assertEqual(self.observe(wall, "100"), (Decimal(0), Decimal(0), "partial"))
+        self.assertEqual(
+            self.observe(wall + timedelta(minutes=1), "102.25"),
+            (Decimal("2.25"), Decimal("2.25"), "partial"),
+        )
+        self.ledger.persist(60, force=True)
+        restarted = EnergyBalances(self.config, self.signature, self.zone)
+        self.assertEqual(
+            self.observe(wall + timedelta(minutes=2), "103", ledger=restarted),
+            (Decimal(3), Decimal(3), "partial"),
+        )
+        self.assertEqual(restarted.data["accounts"]["import"]["dailyBase"], {"grid/counter": "100"})
+        self.assertEqual(
+            restarted.data["accounts"]["import"]["start"], wall.astimezone(timezone.utc).isoformat()
+        )
+
+    def test_late_partial_opt_in_preserves_existing_first_snapshot_and_can_be_disabled(self):
+        wall = datetime(2026, 10, 14, 12, tzinfo=self.zone)
+        self.observe(wall, "100")
+        self.observe(wall + timedelta(minutes=1), "101")
+        self.ledger.persist(60, force=True)
+        self.enable_partial()
+        self.assertFalse(self.ledger.binding_changed)
+        self.assertEqual(
+            self.observe(wall + timedelta(minutes=2), "103"),
+            (Decimal(3), Decimal(3), "partial"),
+        )
+        self.ledger.persist(120, force=True)
+        disabled = replace(self.config, plant=replace(self.config.plant, publish_partial_day=False))
+        restarted = EnergyBalances(disabled, self.signature, self.zone)
+        self.assertEqual(
+            self.observe(wall + timedelta(minutes=3), "104", ledger=restarted),
+            (None, Decimal(4), "partial"),
+        )
+        self.assertEqual(restarted.data["accounts"]["import"]["dailyBase"], {"grid/counter": "100"})
+
+    def test_partial_opt_in_changes_to_normal_complete_day_at_midnight(self):
+        self.enable_partial()
+        before = datetime(2026, 10, 14, 23, 58, tzinfo=self.zone)
+        self.observe(before, "100")
+        self.assertEqual(
+            self.observe(before + timedelta(minutes=1), "101")[::2], (Decimal(1), "partial")
+        )
+        self.assertEqual(
+            self.observe(before + timedelta(minutes=3), "102")[::2], (Decimal(0), "complete")
+        )
+        self.assertEqual(
+            self.observe(before + timedelta(minutes=4), "103")[::2], (Decimal(1), "complete")
+        )
+
+    def test_partial_opt_in_does_not_bypass_gap_reset_identity_or_clock_guards(self):
+        self.enable_partial()
+        wall = datetime(2026, 10, 14, 12, tzinfo=self.zone)
+        self.observe(wall, "100")
+        self.assertEqual(self.observe(wall + timedelta(seconds=1), "99"), (None, None, "reset"))
+        self.assertEqual(self.observe(wall + timedelta(seconds=2), "101"), (None, None, "reset"))
+        daily, _, status = self.observe(wall + timedelta(days=1), "110")
+        self.assertEqual((daily, status), (None, "gap"))
+        self.assertEqual(
+            self.observe(wall + timedelta(days=1, seconds=1), "111")[::2], (None, "gap")
+        )
+        self.assertEqual(self.observe(wall, "111"), (None, None, "clock-error"))
+        self.assertEqual(
+            self.observe(wall + timedelta(days=1, seconds=2), "112", hardware="a" * 64),
+            (None, None, "configuration-changed"),
+        )
+
+    def test_partial_house_balance_rejects_negative_and_decreasing_values(self):
+        self.enable_partial()
+        wall = datetime(2026, 10, 14, 12, tzinfo=self.zone)
+
+        def step(pv, exported, seconds):
+            return self.ledger.observe(
+                "house",
+                {"pv": Decimal(pv), "export": Decimal(exported)},
+                {"pv": Decimal(1), "export": Decimal(-1)},
+                self.hardware,
+                wall + timedelta(seconds=seconds),
+                wall + timedelta(seconds=seconds),
+                daily_only=True,
+            )
+
+        self.assertEqual(step(100, 40, 0), (Decimal(0), None, "partial"))
+        self.assertEqual(step(100, 41, 1), (None, None, "inconsistent"))
+        self.assertEqual(step(102, 41, 2), (Decimal(1), None, "partial"))
+        self.assertEqual(step(102, 42, 3), (None, None, "inconsistent"))
+        self.assertEqual(self.ledger.data["accounts"]["house"]["dailyValue"], "1")
 
     def test_local_day_is_23_or_25_hours_and_restart_keeps_baseline(self):
         for month, day, expected in ((3, 29, 23), (10, 25, 25)):

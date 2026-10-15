@@ -55,8 +55,9 @@ retain that action when replacing the measurement sum.
 15-second active formula adds PV1, PV3, battery discharge and inverter1 grid import,
 then subtracts inverter1 grid export and battery charge. `PowerConsumptionBatIncl` adds battery
 charge back. Both skip negative results and leave the previous Item value in place.
-The requested new household lifetime energy is a distinct kWh property; preserve
-the existing power Items and their consumers. The battery AC/DC boundary remains
+The initially requested household lifetime energy was a distinct new kWh property,
+removed at Andreas' request on 2026-10-15. Preserve the existing power Items and
+their consumers. The battery AC/DC boundary remains
 unverified for independent physical household accounting.
 
 Current daily import/export/household queries integrate old power series in
@@ -85,8 +86,8 @@ daily baselines explicitly. A first sample after midnight is not an exact
 midnight reading: define its bounded sampling uncertainty. Initial partial days,
 outages spanning midnight and missing/stale counters cannot yield an invented
 complete-day result. Same-day restart can reuse persisted valid baselines;
-resets/replacements require reconciliation. Cumulative household energy needs
-aligned starting baselines and optionally a verified opening value. Persist state
+resets/replacements require reconciliation. Legacy cumulative-household fields
+and their opening-value fingerprint remain only for state compatibility. Persist state
 under the existing state volume without changing topic manifests or journals.
 
 ## Explicit roles and generic profiles
@@ -123,7 +124,7 @@ Sum additive observations only, with common units and compatible boundaries:
 - Household power candidate: PV AC power plus grid import and compatible battery
   discharge power, minus grid export and compatible battery charge power.
 - Household energy candidate: the same balance using counter deltas over one
-  shared interval. Daily uses local-day baselines; lifetime uses a common start.
+  shared interval using local-day baselines. No household lifetime topic remains.
 
 Do not sum temperature, voltage, frequency, percentages, device states or
 overlapping total/phase/input measurements. A fleet SOC needs verified energy
@@ -166,7 +167,6 @@ enabled contributors in that group; unavailability never reduces membership:
 | `homie/sma-plant/house/consumption` | W | `TotalPowerConsumption`; current household power |
 | `homie/sma-plant/house/consumptionwithcharging` | W | `PowerConsumptionBatIncl`; preserve distinct legacy meaning |
 | `homie/sma-plant/house/dailyconsumption` | kWh | `Strom_Tagesverbrauch_Number_Result`; household day balance |
-| `homie/sma-plant/house/totalconsumption` | kWh | New household energy counter from a common starting baseline |
 | `homie/sma-echarger/measurements/dailyconsumption` | kWh | Local API total-energy counter delta; independent of battery boundary |
 | `homie/sma-plant/house/dailyconsumptionwithoutwallbox` | kWh | Household counter balance minus Wallbox delta over one shared baseline |
 
@@ -182,8 +182,13 @@ do not establish a current/full-day result. Current power and direct counter sum
 use existing receipts; grid/house energy publishes durable snapshots at the
 configured checkpoint cadence (default 300 seconds), plus critical transitions.
 The state file is energy-balances.json under the existing state volume.
+For an initial comparison before midnight, SMAB_PLANT_PUBLISH_PARTIAL_DAY=true
+publishes counter-based day deltas from the first valid saved snapshot. Coverage
+stays partial. Existing baselines survive activation/restart; a covered midnight
+switches to normal complete-day accounting. Gap/reset and input/boundary guards
+remain enforced. Direct PV day-yield sums keep their source-day meaning.
 No extra device polling is added. Unverified battery energy boundaries block
-house daily/lifetime kWh with unsupported-battery-boundary; current power ports
+house daily kWh with unsupported-battery-boundary; current power ports
 the existing openHAB device-power balance and still needs physical acceptance.
 For provisional comparison, SMAB_PLANT_ASSUME_AC_BATTERY_ENERGY=true explicitly
 allows the unverified boundary as assumed-ac. This also permits household daily
@@ -192,6 +197,12 @@ Documented DC boundaries remain blocked. Physical confirmation stays pending;
 the assumption does not change the bundled profile's evidence or existing baselines.
 
 ## Grafana comparison preparation
+
+At Andreas' request on 2026-10-15, the new house/totalconsumption topic is removed.
+No specific existing openHAB counterpart was identified in the inventory; it was
+an additional counter since bridge accounting started. Daily household values
+remain available. Existing ledger fields/configuration fingerprints are retained
+for upgrade compatibility; topic retirement uses the normal ownership manifest.
 
 Use the comparison manifest to build a later dashboard with one graph per
 measurement showing old/new series, plus an aligned absolute difference where

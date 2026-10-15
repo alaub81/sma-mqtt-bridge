@@ -389,3 +389,15 @@ suffix is measurements#dailyconsumption under the existing eCharger Thing.
 Homie discovery/channel structure was checked against the official
 [openHAB Homie binding documentation](https://www.openhab.org/addons/bindings/homie/).
 No live Item/link/persistence change or deployment is included in this correction.
+
+## Household lifetime topic removed, 2026-10-15
+
+Andreas no longer requires house/totalconsumption. The inventory identifies it as
+a new bridge-baseline counter with no concrete existing openHAB Item counterpart;
+the old TotalPowerConsumption Item is a power value in W. The lifetime topic and
+its discovery are removed; household daily energy and daily energy without
+Wallbox remain. Existing state fields and legacy opening-value configuration are
+retained for compatibility, so daily baselines do not reset. The existing ownership
+manifest retires the old retained topic/metadata when the new build runs. No live
+openHAB Item, link or history is deleted. Official Homie binding documentation was
+consulted; no target deployment is implied by the offline retirement test.

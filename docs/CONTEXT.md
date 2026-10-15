@@ -141,17 +141,29 @@ independent availability. Commands are never replayed during recovery.
 
 The [2026-10-14 plant aggregation design](PV_AGGREGATION_DESIGN.md) implements an optional
 separate logical Homie plant device for PV/storage sums, current household power
-and daily/lifetime energy. Explicit configured roles and file-based contribution
+and daily energy. The additional house/totalconsumption topic was removed at
+Andreas' request; existing ledger fields/fingerprints remain compatible and owned
+retained topics retire through the manifest. Explicit configured roles and file-based contribution
 mappings must prevent grid duplicates and hybrid PV/storage double-counting.
 The existing validated SMAB_TIMEZONE controls local calendar boundaries; freshness
 remains monotonic. Atomic energy-balances.json checkpoints in the existing state
 volume preserve counter baselines; only durable snapshots are published.
-Missing inputs never become zero or partial sums. Single-member groups retain
+Missing inputs never become zero or partial sums. Initial partial-day counter publication can be explicitly
+enabled for tests using SMAB_PLANT_PUBLISH_PARTIAL_DAY. It reuses the first valid
+saved baseline, retains partial status, preserves all other guards and changes
+to normal calendar accounting at a covered midnight. It never resets existing
+accounts or relaxes gaps/resets. Single-member groups retain
 only their device topics. The bundled battery energy boundary is unverified,
 so household kWh is blocked by default. An explicit
 SMAB_PLANT_ASSUME_AC_BATTERY_ENERGY override permits provisional AC accounting,
 labelled assumed-ac in MQTT diagnostics, without asserting verified evidence.
 Documented DC mappings remain blocked; physical validation remains pending.
+Optional plant debug logging requires both an explicit plant flag and DEBUG log
+level. Rate-limited calculation reports contain numeric inputs/ages, signed recipes,
+coverage/baselines and durable snapshot evidence. Selected numeric inverter
+register words are logged only from existing identity-verified polling responses;
+identity/string registers and authenticated payloads remain excluded. The mode
+does not add reads or change invalid-value, freshness or counter semantics.
 The optional local eCharger API contributes its existing total-energy counter to
 Wallbox daily kWh and a shared-vector household day balance without Wallbox.
 The Wallbox day measurement and its diagnostics belong to the existing eCharger
