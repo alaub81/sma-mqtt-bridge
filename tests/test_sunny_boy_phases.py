@@ -91,7 +91,7 @@ class SunnyBoyPhaseTests(unittest.TestCase):
         values, status = HomiePublisher(config, [state]).snapshot([state], now=10)
         self.assertEqual(status, "ready")
         self.assertEqual(values["measurements/power-l3"], "456")
-        self.assertEqual(values["measurements/volt-g3"], "231.34")
+        self.assertEqual(values["measurements/voltage-l3"], "231.34")
         self.assertEqual(values["measurements/current-l3"], "2.345")
         for key in ("power-l1", "volt-g1", "power-l2", "volt-g2", "current-l2"):
             self.assertNotIn("measurements/" + key, values)

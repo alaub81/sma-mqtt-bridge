@@ -126,7 +126,7 @@ class TopicGroupTests(unittest.TestCase):
         self.assertEqual(OUTPUT.read_text(), expected)
         self.assertIn("diagnostics/wallboxdaystatus,Wallbox day coverage,,basic", expected)
         self.assertIn("parameters/datachangecounter,Data Change Counter,,diagnostics", expected)
-        self.assertIn("battery/totalpresbatcharge,Total battery charging power,W,basic", expected)
+        self.assertIn("battery/totalchargepower,Total battery charging power,W,basic", expected)
         self.assertNotIn("diagnostics/portalrefresh", expected)
 
 

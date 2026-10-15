@@ -88,6 +88,8 @@ class Inverter(SafeRepr):
 
 @dataclass(frozen=True, repr=False)
 class HomeManager(SafeRepr):
+    energy_import_offset_kwh: float = 0.0
+    energy_export_offset_kwh: float = 0.0
     ready_properties: str = ""
     advanced_channels_enabled: bool = True
     diagnostics_enabled: bool = True
@@ -172,6 +174,8 @@ class Commands(SafeRepr):
 
 @dataclass(frozen=True, repr=False)
 class Plant(SafeRepr):
+    feed_in_tariff_per_kwh: float = 0.0
+    feed_in_energy_offset_kwh: float = 0.0
     currency: str = "€"
     enabled: bool = False
     homie_id: str = "sma-plant"
@@ -200,7 +204,7 @@ class Config(SafeRepr):
     profiles: dict
     interval_overrides: frozenset
     plant: Plant = Plant()
-    configured_tariffs: frozenset = frozenset()
+    feed_in_tariff_configured: bool = False
 
     @property
     def has_sources(self):
@@ -296,8 +300,19 @@ def section(defaults, data, env, prefix, recognized):
                 "keepalive_seconds",
             ):
                 minimum = 1
+            elif isinstance(defaults, HomeManager) and field.name in (
+                "energy_import_offset_kwh",
+                "energy_export_offset_kwh",
+            ):
+                minimum = -float("inf")
             elif field.name == "yield_tariff_per_kwh" or (
-                isinstance(defaults, Plant) and field.name == "initial_consumption_kwh"
+                isinstance(defaults, Plant)
+                and field.name
+                in (
+                    "initial_consumption_kwh",
+                    "feed_in_tariff_per_kwh",
+                    "feed_in_energy_offset_kwh",
+                )
             ):
                 minimum = 0
             elif field.name == "timestamp_diagnostics_max_bytes":
@@ -429,6 +444,10 @@ def load_config(environ=None, bundled_dir=None):
     portal = section(Portal(), data.get("portal", {}), env, "SMAB_PORTAL_", recognized)
     commands = section(Commands(), data.get("commands", {}), env, "SMAB_COMMAND_", recognized)
     plant = section(Plant(), data.get("plant", {}), env, "SMAB_PLANT_", recognized)
+    if plant.feed_in_energy_offset_kwh:
+        raise ConfigError(
+            "Use SMAB_HOME_MANAGER_ENERGY_EXPORT_OFFSET_KWH instead of the retired plant energy offset"
+        )
     # Global enable flag has the established plural name.
     recognized.add("SMAB_COMMANDS_ENABLED")
     if "SMAB_COMMAND_ENABLED" in env:
@@ -520,12 +539,7 @@ def load_config(environ=None, bundled_dir=None):
         profiles,
         frozenset(intervals),
         plant,
-        frozenset(
-            device.id
-            for device in inverters
-            if "yieldTariffPerKwh" in indexed.get(device.id, {})
-            or f"SMAB_{device.id.upper()}_YIELD_TARIFF_PER_KWH" in env
-        ),
+        "feedInTariffPerKwh" in data.get("plant", {}) or "SMAB_PLANT_FEED_IN_TARIFF_PER_KWH" in env,
     )
     mqtt_needed = config.has_sources or (Path(runtime.state_dir) / "mqtt-topics.json").exists()
     if mqtt_needed:

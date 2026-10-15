@@ -188,10 +188,14 @@
     "Daily house consumption without wallbox": "Daily house consumption without wallbox",
     "Wallbox day coverage": "Wallbox day coverage",
     "House without wallbox day coverage": "House without wallbox day coverage",
-    "Total PV yield remuneration": "Total PV yield remuneration",
     "Seven-day average house consumption": "Seven-day average house consumption",
     "Seven-day average house consumption without wallbox": "Seven-day average house consumption without wallbox",
     "Seven-day coverage": "Seven-day coverage",
-    "Seven-day coverage without wallbox": "Seven-day coverage without wallbox"
+    "Seven-day coverage without wallbox": "Seven-day coverage without wallbox",
+    "Total feed-in remuneration": "Total feed-in remuneration",
+    "Raw grid import energy": "Raw grid import energy",
+    "Raw grid export energy": "Raw grid export energy",
+    "Corrected grid import energy": "Corrected grid import energy",
+    "Corrected grid export energy": "Corrected grid export energy"
   }
 }

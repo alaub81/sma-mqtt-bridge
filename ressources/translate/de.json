@@ -188,10 +188,14 @@
     "Daily house consumption without wallbox": "Haus-Tagesverbrauch ohne Wallbox",
     "Wallbox day coverage": "Abdeckung Wallbox-Tagesverbrauch",
     "House without wallbox day coverage": "Abdeckung Haus-Tagesverbrauch ohne Wallbox",
-    "Total PV yield remuneration": "Vergütung des gesamten PV-Ertrags",
     "Seven-day average house consumption": "Hausverbrauch im Sieben-Tage-Durchschnitt",
     "Seven-day average house consumption without wallbox": "Hausverbrauch ohne Wallbox im Sieben-Tage-Durchschnitt",
     "Seven-day coverage": "Abdeckung des Sieben-Tage-Durchschnitts",
-    "Seven-day coverage without wallbox": "Abdeckung des Sieben-Tage-Durchschnitts ohne Wallbox"
+    "Seven-day coverage without wallbox": "Abdeckung des Sieben-Tage-Durchschnitts ohne Wallbox",
+    "Total feed-in remuneration": "Einspeisevergütung gesamt",
+    "Raw grid import energy": "Netzbezugsenergie (Rohzähler)",
+    "Raw grid export energy": "Netzeinspeiseenergie (Rohzähler)",
+    "Corrected grid import energy": "Netzbezugsenergie (korrigiert)",
+    "Corrected grid export energy": "Netzeinspeiseenergie (korrigiert)"
   }
 }
