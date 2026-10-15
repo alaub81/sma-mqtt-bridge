@@ -47,13 +47,16 @@ class PlantFixture(unittest.TestCase):
 
     def engine(self, *, ac=False, env=None):
         config = load_config(self.env | (env or {}))
-        if ac:
-            profiles = copy.deepcopy(config.profiles)
-            for device in config.inverters:
-                if device.enabled and device.role == "battery":
-                    mapping = profiles[device.id]["plant"]["battery"]
+        profiles = copy.deepcopy(config.profiles)
+        for device in config.inverters:
+            if device.enabled and device.role == "battery":
+                mapping = profiles[device.id]["plant"]["battery"]
+                if ac:
                     mapping.update(energyBoundary="ac", energyEvidence="Synthetic AC fixture only")
-            config = replace(config, profiles=profiles)
+                else:
+                    mapping["energyBoundary"] = "unverified"
+                    mapping.pop("energyEvidence", None)
+        config = replace(config, profiles=profiles)
         states = [state for state, _, _ in sources(config)]
         for state in states:
             state.identity_fingerprint = hashlib.sha256(

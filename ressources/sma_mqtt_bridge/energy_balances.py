@@ -1,13 +1,15 @@
 """Durable counter baselines with local calendar, reset and partial-day guards."""
 
 import copy
+import os
 from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal
 from pathlib import Path
+from uuid import uuid4
 
 from .errors import StateError
 from .model import number
-from .storage import MISSING, read_state, write_state
+from .storage import MISSING, read_state, state_lock, write_state
 
 ACCOUNT_FIELDS = {
     "date",
@@ -96,6 +98,25 @@ def validate_ledger(data):
             "Energy state is corrupt; restore or reconcile it before startup"
         ) from None
     return data
+
+
+def reset_energy_baselines(config):
+    """Archive only the validated energy ledger under the normal exclusive state lock."""
+    with state_lock(config.runtime.state_dir):
+        path = Path(config.runtime.state_dir) / "energy-balances.json"
+        data = read_state(path, config.runtime.max_state_bytes)
+        if data is MISSING:
+            return None
+        validate_ledger(data)
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%S.%fZ")
+        backup = path.with_name(f"energy-balances.backup-{stamp}-{uuid4().hex}.json")
+        path.rename(backup)
+        directory = os.open(path.parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(directory)
+        finally:
+            os.close(directory)
+        return backup.name
 
 
 class EnergyBalances:

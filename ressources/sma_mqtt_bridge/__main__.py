@@ -39,6 +39,11 @@ def main(argv=None):
     group.add_argument("--check-profile", metavar="PROFILE")
     group.add_argument("--check-home-manager-profile", metavar="PROFILE")
     group.add_argument("--healthcheck", action="store_true")
+    group.add_argument(
+        "--reset-energy-baselines",
+        action="store_true",
+        help="Archive only the energy ledger offline; stop the running bridge first",
+    )
     parser.add_argument(
         "--refresh-portal",
         action="store_true",
@@ -97,6 +102,12 @@ def main(argv=None):
             )
             return 0
         config = load_config()
+        if args.reset_energy_baselines:
+            from .energy_balances import reset_energy_baselines
+
+            backup = reset_energy_baselines(config)
+            print(json.dumps({"reset": backup is not None, "backup": backup}))
+            return 0
         if args.check_config:
             print(
                 json.dumps(

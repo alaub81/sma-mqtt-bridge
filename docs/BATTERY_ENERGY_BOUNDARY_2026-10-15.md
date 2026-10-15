@@ -84,13 +84,12 @@ whole-day household comparisons and midnight behavior remain separate questions.
 
 ## Configuration follow-up
 
-The running AC assumption need not be changed to DC. The bundled profile still
-declares `energyBoundary=unverified`, so the existing explicit AC override and
-`assumed-ac` diagnostic remain configuration facts. Historic-data analysis does
-not automatically alter them.
-
-Promoting the verified boundary/evidence into a runtime profile requires a
-separate, state-preserving change: the current plant signature includes the full
-profile. Simply editing that file would mark existing ledgers as configuration
-changed. Preserve counter baselines, fingerprints, topic manifest and histories;
-do not reset the state volume merely to change the evidence label.
+The bundled profile now declares `energyBoundary=ac` with this comparison as its
+energy evidence. The original investigation did not change the running system.
+In the subsequent implementation Andreas explicitly accepts new energy baselines.
+The full-profile signature changes, so archive only the old energy ledger with
+the [offline reset procedure](CONFIGURATION.md#explicit-energy-baseline-restart-after-profile-changes).
+Remove the unnecessary AC-assumption override and reconcile host profile copies.
+Preserve the backup, topic manifest, journals, entire state volume and histories.
+Loading the new build then reports ac and starts new day accounts; no metadata-only
+compatibility migration or automatic reset of a mismatched ledger is performed.

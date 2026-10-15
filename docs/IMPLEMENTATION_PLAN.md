@@ -53,9 +53,11 @@ on the eCharger identity and household exclusion on the plant; validate a covere
 restart and parallel Shelly comparison before replacing existing calculations.
 Finer PV counter units and whole-day comparisons remain prerequisites for accepting
 household counter accuracy. The [2026-10-15 history comparison](BATTERY_ENERGY_BOUNDARY_2026-10-15.md)
-strongly supports AC boundaries for both installed battery counters. Promote that
-evidence into the runtime declaration only with preserved ledger compatibility;
-editing the profile alone changes the current full-profile signature.
+strongly supports AC boundaries for both installed battery counters; the bundled
+profile now declares ac. Andreas approves fresh energy baselines for this upgrade.
+Deploy the new build, reconcile host overrides and archive only the energy ledger
+with the offline reset command before restarting. Preserve the state volume,
+topic manifest and journals; verify all five new day accounts and ac diagnostics.
 For provisional comparison, Andreas requested an explicit AC assumption for
 unverified battery counters on 2026-10-15. The optional override reports assumed-ac;
 it permits house kWh without completing physical acceptance or changing profile evidence.

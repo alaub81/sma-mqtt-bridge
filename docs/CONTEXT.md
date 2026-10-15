@@ -153,15 +153,14 @@ enabled for tests using SMAB_PLANT_PUBLISH_PARTIAL_DAY. It reuses the first vali
 saved baseline, retains partial status, preserves all other guards and changes
 to normal calendar accounting at a covered midnight. It never resets existing
 accounts or relaxes gaps/resets. Single-member groups retain
-only their device topics. The bundled battery energy boundary is unverified,
-so household kWh is blocked by default. An explicit
-SMAB_PLANT_ASSUME_AC_BATTERY_ENERGY override permits provisional AC accounting,
-labelled assumed-ac in MQTT diagnostics, without asserting verified evidence.
-Documented DC mappings remain blocked. The installation's
+only their device topics. The bundled Storage energy boundary is now ac. The installation's
 [2026-10-15 aligned history comparison](BATTERY_ENERGY_BOUNDARY_2026-10-15.md)
-now strongly supports AC boundaries for both battery counters. The bundled
-declaration remains unverified until a state-preserving profile/evidence promotion;
-the current full-profile fingerprint must not invalidate existing daily baselines.
+strongly supports AC boundaries for both battery counters and is linked as profile
+evidence. Other unverified mappings still require the explicit provisional AC
+override; documented DC mappings remain blocked. Andreas accepts fresh daily
+baselines for this upgrade. The offline --reset-energy-baselines command archives
+only the validated ledger under the normal exclusive state lock, preserving the
+topic manifest and command journals. Never silently rebase a mismatched ledger.
 Optional plant debug logging requires both an explicit plant flag and DEBUG log
 level. Rate-limited calculation reports contain numeric inputs/ages, signed recipes,
 coverage/baselines and durable snapshot evidence. Selected numeric inverter

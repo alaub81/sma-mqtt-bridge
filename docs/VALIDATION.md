@@ -1638,3 +1638,32 @@ limits are documented. This establishes boundary evidence, not round-trip
 efficiency, calibration for all firmware, whole-day household accuracy or a new
 runtime-profile declaration. Existing AC assumption/baselines remain unchanged.
 No device/database/configuration writes or raw-series/credential capture occurred.
+
+## Confirmed Storage AC profile and explicit baseline reset, 2026-10-15
+
+The bundled Storage profile now declares ac with the aligned-history evidence.
+Other unverified/DC mappings retain their existing guards. Andreas approves fresh
+energy bases for this upgrade; the previous full-profile fingerprint deliberately
+remains incompatible until an explicit reset. No automatic rebasing is introduced.
+
+The offline --reset-energy-baselines action uses the normal exclusive state lock,
+validates and uniquely archives only energy-balances.json, syncs its directory
+and reports a non-secret backup basename. Missing state is a no-op; active locks,
+invalid state and symlinks are rejected. Other state files are untouched. The
+documented Compose sequence checks config, reset-command availability and the
+effective AC profile before stopping the service and retiring the ledger.
+
+All 350 tests pass on the host and in local ARM64/AMD64 containers with no network.
+Five new tests cover the actual bundled profile upgrade, all five fresh day
+accounts, archive-byte/unrelated-state preservation, exclusive locking, offline
+CLI/no-op, invalid-state refusal and rename failure. Existing synthetic boundary
+fixtures explicitly select unverified/ac instead of depending on the bundled
+default. Full lint and diff hygiene pass. Public test/config/reference fixtures
+are mounted read-only for container validation; private ENV/references are excluded.
+Local images report build version 0.3.11-dev.5+ac; no image publication occurred.
+
+Target-host reset/deployment is not performed or accepted: the SSH connection has
+no previously verified host key and native Terminal access is unavailable through
+the tool. No host-key protection was bypassed. Existing Pi ledgers and service
+were not modified. Loading the new image, reconciling host overrides and executing
+the explicit backup/reset procedure remain the concrete deployment steps.

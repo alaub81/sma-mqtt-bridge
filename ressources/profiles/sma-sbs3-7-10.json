@@ -636,13 +636,14 @@
     "firmware": "firmware"
   },
   "plant": {
-    "evidence": "Existing verified read mappings; battery counter AC/DC boundary remains unverified. See docs/REGISTER_VALIDATION.md.",
+    "evidence": "Verified read mappings and observed Storage AC counter comparison. See docs/REGISTER_VALIDATION.md and docs/BATTERY_ENERGY_BOUNDARY_2026-10-15.md for installation scope and sampling limits.",
     "battery": {
       "presbatcharge": "measurements/pres-bat-charge",
       "presbattdischarge": "measurements/pres-batt-discharge",
       "batterychargeenergy": "measurements/battery-charge-energy",
       "batterydischargeenergy": "measurements/battery-discharge-energy",
-      "energyBoundary": "unverified"
+      "energyBoundary": "ac",
+      "energyEvidence": "Read-only 2026-10-15 Storage history comparison: counters 31397/31401 match integrated AC power 30775 in discharge and charge, while battery U*I differs by about 13%. Observed installation evidence and limits: docs/BATTERY_ENERGY_BOUNDARY_2026-10-15.md."
     }
   }
 }

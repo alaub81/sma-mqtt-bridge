@@ -24,7 +24,8 @@ wie „noch offen“ beschreiben den damaligen Stand, nicht die aktuelle Aufgabe
   AC-Messgrenzen beider Batteriezähler sind für die Installation anhand der
   [Historienauswertung](docs/BATTERY_ENERGY_BOUNDARY_2026-10-15.md) sehr gut belegt;
   feinere PV-Zähler und Tagesvergleich bleiben offen. Laufzeit-Profildeklaration
-  mit erhaltenen Zählerbasen nachziehen; bisherige AC-Annahme bleibt aktiv. Teil-Tage, Mitternacht,
+  ist auf AC umgestellt; Andreas erlaubt neue Tagesbasen beim Upgrade. Neuen Build
+  laden und nur Energie-Ledger gesichert zurücksetzen. Teil-Tage, Mitternacht,
   Neustart und Datenlücken auch live prüfen. Bestehende Regeln/Items erhalten.
 - [ ] Grafana-/InfluxDB-Datenquelle, Schema, effektive Persistence und Messreihennamen
   lesend inventarisieren; anschließend Dashboard für die wichtigen Alt-/Neu-Paare
@@ -617,9 +618,10 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
 - [x] Batterie-AC/DC-Messgrenze anhand AC-Leistung, U×I und Zählerdifferenzen
   prüfen: am 15.10.2026 für beide Zähler dieser Installation AC empirisch sehr gut
   belegt, siehe spätere Auswertung. Bisherige AC-Annahme passt zu den Daten.
-- [ ] Bestätigte Messgrenze in die Laufzeit-Profildeklaration übernehmen, ohne
-  bestehende Tagesbasen/Fingerprints zu verwerfen. Grobe PV-Zähler und ein
-  vollständiger Haus-Tagesvergleich bleiben separat offen.
+- [x] Bestätigte Messgrenze in die Laufzeit-Profildeklaration übernommen. Andreas
+  erlaubt anschließend ausdrücklich neue Tagesbasen statt Erhalt der alten Basen.
+- [ ] AC-Build auf dem Zielhost laden und die fünf Energie-Basen mit Backup neu
+  starten. Grobe PV-Zähler und vollständiger Haus-Tagesvergleich bleiben offen.
 - 333 Offline-Tests und vollständiger Linter bestanden. Neue Regressionen prüfen
   Hausenergie mit/ohne Wallbox, erhaltene Netzbasis und Schutz belegter DC-Mappings.
   Keine Zielsystem-Installation, Veröffentlichung oder Änderung vorhandener Historien.
@@ -742,3 +744,33 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
 - Keine Rohzeitreihen, absoluten Zählerstände, privaten Identitäten oder Secrets
   im öffentlichen Nachweis gespeichert. Nur Dokumentation geändert; vollständiger
   Linter und Diff-Hygiene geprüft, kein erneuter Runtime-Testlauf erforderlich.
+
+## 2026-10-15 – AC-Profil und gesicherter Neustart der Energie-Basen vorbereitet
+
+- Auf Andreas' Wunsch zuerst sämtliche offenen öffentlichen Änderungen als
+  085e118 committed, einschließlich Ressourcenanalyse und Compose-/ENV-Beispielen.
+  Danach war der Arbeitsbaum sauber. Private smab.env/Referenzen ausgeschlossen.
+- Andreas erlaubt neue Zählerbasen. Gebündeltes Storage-Profil auf energyBoundary=ac
+  mit Messnachweis gesetzt. Diagnose nach Laden des neuen Profils ac, Rechnung
+  unverändert zur bisherigen Annahme. Lokalen überflüssigen Annahme-ENV entfernt;
+  Teil-Tag-Testschalter und Debug-Konfiguration erhalten. Host-Overrides abgleichen.
+- Neuer expliziter Offline-Befehl --reset-energy-baselines: normalen exklusiven
+  Prozess-Lock verwenden, gültige energy-balances.json in eindeutiges Backup
+  umbenennen und Verzeichnis synchronisieren. Keine Netzwerk-/Gerätezugriffe,
+  kein Entfernen des Zustandsvolumes, Topic-Manifests oder Befehlsjournale.
+  Fehlende Datei ist ein No-op; gesperrte/ungültige/Symlink-Datei wird abgelehnt.
+- Nach diesem Reset starten alle fünf Tageskonten mit aktuellen Erstwerten neu;
+  im Teil-Tag-Modus zunächst 0 kWh Differenz und partial. Gerätezähler/PV-Erträge,
+  Watt-Werte und vorhandene InfluxDB-Historien bleiben erhalten; heutige neue
+  Tageswerte können dadurch einen Sprung nach unten zeigen.
+- 350 Offline-Tests auf Host und in ARM64-/AMD64-Testcontainern ohne Netzwerk
+  bestanden, außerdem vollständiger Linter und Diff-Hygiene. Fünf neue Fälle
+  prüfen Profilwechsel/alle fünf Konten, erhaltene Fremd-/Backup-Dateien, Lock,
+  Offline-CLI/No-op, ungültige Zustände und fehlgeschlagenes Umbenennen.
+  Öffentliche Testfixtures separat read-only eingebunden, keine privaten Daten.
+  Lokale Testimages 0.3.11-dev.5+ac; keine Veröffentlichung.
+- Direkte Zielhost-Ausführung nicht erfolgt: SSH-Hostschlüssel für diese Verbindung
+  nicht verifiziert; Terminal-App über das verfügbare UI-Werkzeug gesperrt.
+  Keine Vertrauensprüfung umgangen. Konkrete Compose-Abfolge zum Prüfen, Sichern
+  und Neustarten in docs/CONFIGURATION.md hinterlegt. Pi-Diagnose/Neustart und
+  Erscheinen neuer Tageswerte bleiben bis zur dortigen Ausführung offen.

@@ -711,22 +711,56 @@ calendar darkness alone never converts an invalid register into a measured zero.
 `unavailable`, `invalid`, `init` and `unsupported-battery-boundary`. `complete` means
 covered within configured sampling tolerance, not an exact midnight meter read.
 
-The bundled Storage counter mapping deliberately remains `energyBoundary=unverified`.
-Its original battery counters and requested power calculations remain available,
-but house daily kWh has no value and reports `unsupported-battery-boundary`.
-Do not change that declaration to `ac` without matching evidence. For a provisional
-comparison, explicitly set `SMAB_PLANT_ASSUME_AC_BATTERY_ENERGY=true`. Household
-daily energy and household daily energy without Wallbox then use the AC
-balance, and `diagnostics/batteryenergyboundary` reports `assumed-ac`. This is an
-assumption, not physical validation; conversion losses can distort the results.
-It does not override a documented `dc` boundary or bypass freshness, reset,
-negative-balance or midnight guards. Existing grid/Wallbox baselines are preserved;
-new house accounts begin at activation, with the first partial day unavailable.
-Set the flag back to `false` to block these provisional house values again.
-Previously persisted provisional history is not repaired automatically. Verified synthetic
-AC fixtures exercise the complete accounting path offline. Whole-kWh PV counters
-also limit balance precision; finer source registers remain a separate validation.
-The feature has not been deployed or live accepted by these tests.
+The bundled Storage mapping declares `energyBoundary=ac` based on the
+[observed charge/discharge comparison](BATTERY_ENERGY_BOUNDARY_2026-10-15.md).
+Its diagnostic reports `ac`; remove the now-unnecessary assumption override for
+this profile. Reconcile host profile copies too: an old override still declaring
+unverified takes precedence over the new bundled file. Counter IDs/scales and
+the calculation itself are unchanged from the prior AC assumption.
+
+Other unverified mappings still block household kWh by default. For provisional
+comparison, SMAB_PLANT_ASSUME_AC_BATTERY_ENERGY=true explicitly treats them as AC
+and reports assumed-ac; turning it off blocks those provisional values again.
+Documented DC mappings, freshness, reset, negative-balance and midnight guards
+remain enforced. Whole-kWh PV precision and full-day comparisons remain separate
+acceptance questions. Previously recorded data is not automatically rewritten.
+
+### Explicit energy-baseline restart after profile changes
+
+The plant fingerprint includes complete profile contents. Therefore loading the
+new AC profile against an old ledger deliberately reports configuration-changed.
+Andreas approved starting new energy bases for this upgrade. After installing the
+new build and reconciling any profile override, use the same Compose file/project
+and state volume as the existing deployment:
+
+```bash
+(
+set -e
+docker compose run --rm --no-deps sma-mqtt-bridge --check-config
+docker compose run --rm --no-deps sma-mqtt-bridge --help | grep -q -- '--reset-energy-baselines'
+docker compose run --rm --no-deps --entrypoint python sma-mqtt-bridge -c 'from sma_mqtt_bridge.config import load_config; from sma_mqtt_bridge.plant import plant_plan; boundary = plant_plan(load_config())[2]; print(boundary); assert boundary == "ac", "Selected battery profile is not AC"'
+docker compose stop sma-mqtt-bridge
+docker compose run --rm --no-deps sma-mqtt-bridge --reset-energy-baselines
+docker compose up -d sma-mqtt-bridge
+)
+```
+
+The offline profile check must print ac before retiring bases. The explicit reset
+command makes no device/MQTT/portal connections. It validates and atomically renames
+only energy-balances.json to a unique timestamped backup in the same directory,
+syncs the directory and prints reset plus the backup basename as JSON. The normal
+exclusive bridge lock rejects concurrent service operation. Missing state returns
+reset=false/backup=null without creating a ledger; invalid/symlink state is rejected.
+Keep the backup, topic manifest, command journals and entire state volume.
+
+All five energy accounts restart: grid import/export, house, Wallbox and house
+without Wallbox. With SMAB_PLANT_PUBLISH_PARTIAL_DAY=true, first valid counter
+snapshots become the new bases and publish zero deltas with partial status.
+Otherwise partial-day values remain unavailable until a covered midnight.
+Actual device lifetime counters, PV yield sums and current powers are unchanged.
+Existing InfluxDB samples are preserved, but new daily values can create a midday
+drop in the same series; compare only periods sharing the new start. These
+commands require the new image; an older published image lacks the reset option.
 
 The additional `house/totalconsumption` topic was removed at Andreas' request.
 It had no identified legacy Item counterpart and counted only from a bridge

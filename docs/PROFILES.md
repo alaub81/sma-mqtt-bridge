@@ -88,8 +88,11 @@ requires `presbatcharge`, `presbattdischarge`, `batterychargeenergy`,
 `batterydischargeenergy` references in W/W/kWh/kWh, plus `energyBoundary` of
 `unverified`, `ac` or `dc`. A confirmed `ac`/`dc` boundary requires nonempty
 `energyEvidence`. The bundled SBS references the existing four battery properties
-and keeps the boundary unverified; a property name/unit alone does not prove AC.
-House energy uses only confirmed compatible AC storage counters, or no storage.
+and declares the boundary `ac`, with the observed installation's
+[charge/discharge comparison](BATTERY_ENERGY_BOUNDARY_2026-10-15.md) as energy evidence.
+A property name/unit alone does not prove AC. House energy uses confirmed compatible
+AC storage counters, no storage, or the explicit provisional override for other
+unverified mappings. Host overrides must carry their own matching declaration/evidence.
 
 Optional `grid` requires distinct `powerimport`, `powerexport`, `energyimport`,
 `energyexport` references in W/W/kWh/kWh. Select that inverter explicitly as the
