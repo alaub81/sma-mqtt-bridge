@@ -283,3 +283,11 @@ The [generated catalog](topic-catalog.csv) derives public property metadata from
 offline constructors and bundled profiles, including conditional outputs and
 transport alternatives. These classes do not change topic IDs, write allowlists,
 readiness, calculation/energy state or activation. No new configuration flags.
+
+## Wallbox frequency removal, 2026-10-15
+
+Andreas removes the Wallbox frequency channel after repeated absent source readings.
+Drop its local API mapping rather than retaining empty discovery. Normal topic
+manifest retirement removes previously published metadata/value; inverter frequency
+mappings remain unchanged. This is an explicit scope choice, not a claim of
+permanent firmware-wide protocol absence.

@@ -80,6 +80,9 @@ wie „noch offen“ beschreiben den damaligen Stand, nicht die aktuelle Aufgabe
   Energiekanäle. Je API/SEMP unterscheiden, ob Zeitstempel Erfassung oder Änderung
   bedeuten. Eindeutig periodische Kanäle sind bereits korrigiert; ungeklärte
   Filter nicht pauschal aufheben. [Erste Auswertung](docs/ECHARGER_TIMESTAMP_ANALYSIS_2026-10-12.md).
+  [Liveprüfung am 15.10.2026](docs/ECHARGER_LIVE_CHECK_2026-10-15.md): aktuelle
+  Leistung/Phasen/Gesamtenergie und Sitzungszuwachs während einphasiger Ladung
+  plausibel; Ruhe/Reset und alte Health-/Event-/Modus-Zeitstempel weiter offen.
 - [ ] Daraus verbleibenden Nutzen/Risiko der Frischeprüfungen entscheiden und
   gezielte Tests/UI-Abnahme abschließen. Anschließend separat entscheiden, ob
   Zeitstempeldiagnose deaktiviert und Aufzeichnungen archiviert/entfernt werden.
@@ -112,7 +115,10 @@ wie „noch offen“ beschreiben den damaligen Stand, nicht die aktuelle Aufgabe
   bestätigt; MainUI-Abnahme bleibt offen. Vorher installierte Widget-YAML sichern
   und bei Abweichungen zurückspielen; denselben Installationsweg verwenden.
 - [ ] Wallbox-L1/L2/L3-Wirkleistung und Gesamtleistung beim Laden vergleichen
-  (E01). Passende Number:Power-Items mit W; bestehenden Gesamtzähler erhalten.
+  (E01). Einphasige L3-Stichprobe am 15.10.2026 im MQTT Explorer und per lokaler
+  API bestätigt; alle Phasenwerte und Gesamtleistung konsistent. Weitere natürliche
+  Betriebspunkte und openHAB-Itemvergleich bleiben getrennt. Passende Number:Power-
+  Items mit W; bestehenden Gesamtzähler erhalten.
 - [ ] Physische Ladezielerreichung, Sitzungsenergie und Rückwechsel aus Zielmodus
   prüfen (Q12/Q14). Bestätigte Planübertragung ersetzt nicht die Zielerreichung.
 - [ ] Maximale Ladeleistung physisch abnehmen und einphasiges Winterladen
@@ -917,3 +923,34 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
   Profilen ausschließlich Gruppierungsangaben verändert; Mapping/Units unverändert.
 - Keine Veröffentlichung, Installation oder Live-SMA-/MQTT-/openHAB-Änderung.
   Die verbleibende Live-Prüfung steht oben; bestehende Energie-Abnahmen bleiben.
+
+## 2026-10-15 – Wallbox-Liveprüfung während des Ladens
+
+- Auf Andreas' Auftrag MQTT Explorer lesend geprüft, ergänzt um zwei lokale
+  API-/SEMP-Lesezyklen im Abstand von rund 60 Sekunden. Keine Befehle,
+  MQTT-Veröffentlichungen, Konfigurationsänderung oder Aufzeichnungsaktivierung.
+- Ladezustand und beide Quellen ready; einphasig L3 mit rund 3,0–3,3 kW.
+  Phasensumme passt in beiden direkten Stichproben auf unter 0,01 W zur API-
+  Gesamtleistung. Aktuelle Leistungs-/Phasen-/Gesamtenergie-Zeitstempel bestätigt.
+- Sitzungsenergie steigt; ihr Zuwachs passt im dreiminütigen MQTT-Vergleich auf
+  0,025 Wh zum Gesamtzähler. Zeitfenster um rund zwei Sekunden versetzt, daher
+  Plausibilitätsprüfung und keine Kalibrierungsabnahme.
+- Health/Event weiterhin rund 34 Tage, Modus/Autorisierung rund 86 Tage alte
+  Zeitstempel. Frischefilter beibehalten. Frequenz ohne Messwert; in den API-
+  Stichproben nicht enthalten. Kein Fehlerzustand daraus abgeleitet.
+- Sitzungsreset, Ruheübergang und physische Zielerreichung nicht beobachtet;
+  entsprechende Aufgaben bleiben offen. Frühere MQTT-Historienlücken nicht
+  ungeprüft der Wallbox zuschreiben.
+- [Befunde und Grenzen](docs/ECHARGER_LIVE_CHECK_2026-10-15.md).
+
+## 2026-10-15 – Wallbox-Frequenz entfernt
+
+- Auf Andreas' Auftrag den mangels Messwert nicht genutzten Wallbox-Frequenzkanal
+  aus API-Mapping, Discovery und generiertem Katalog entfernt. Frequenzwerte der
+  Wechselrichter unverändert; alter Wallbox-Wert und Metadaten werden nach neuem
+  Deployment über das erhaltene Topic-Manifest bereinigt. Kein Energie-Reset nötig.
+- Zwei neue Regressionen prüfen die Unterdrückung selbst bei vorhandener
+  Quellfrequenz sowie Retained-Bereinigung samt Metadaten. Alle 374 Offline-Tests,
+  voller Linter und Diff-Prüfung bestanden; Katalog auf 298 Einträge aktualisiert.
+  Migrationszeile als ausdrücklich entfernt markiert, historische Referenz erhalten.
+- Keine Live-Änderung an Geräten, MQTT oder openHAB; Installation bleibt offen.

@@ -178,7 +178,6 @@ echarger-api,api,diagnostics/apitimeouts,Source timeouts,,diagnostics
 echarger-api,api,measurements/currentl1,Current L1,A,basic
 echarger-api,api,measurements/currentl2,Current L2,A,basic
 echarger-api,api,measurements/currentl3,Current L3,A,basic
-echarger-api,api,measurements/frequency,Frequency,Hz,basic
 echarger-api,api,measurements/health,Device health,,basic
 echarger-api,api,measurements/manualapproval,Manual approval,,basic
 echarger-api,api,measurements/power,Charging power,W,basic

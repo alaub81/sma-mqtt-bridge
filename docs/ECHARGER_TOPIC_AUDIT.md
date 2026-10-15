@@ -108,8 +108,11 @@ acquisition. This audit does not alter that behavior or infer a live charging mi
 
 ## Configured but absent, and mapped but timestamp-filtered
 
-- Measurement.GridMs.Hz has an existing frequency mapping but was not offered by
-  this API live response. Discovery alone does not make it a usable measurement.
+- Measurement.GridMs.Hz was not offered by this API live response or the
+  charging snapshots on 2026-10-15. Andreas requested removal on 2026-10-15;
+  the Wallbox frequency mapping/discovery is now removed. Previously owned
+  value/metadata topics retire through the normal manifest. Inverter frequency
+  channels are unchanged; no permanent firmware-wide absence is inferred.
 - Measurement.Metering.GridMs.TotWhIn is an absent configured alternative. The
   primary TotWhIn.ChaSta counter was present, so total-energy mapping is covered.
 - Session energy, device health and several SEMP health/event/mode/authentication

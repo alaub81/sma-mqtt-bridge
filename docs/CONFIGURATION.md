@@ -950,3 +950,13 @@ Coverage diagnostics are `diagnostics/averagedaystatus` and
 `diagnostics/averagewithoutwallboxdaystatus` (`complete`/`insufficient-history`).
 Both coverage properties are Basic and remain published with Diagnostics disabled.
 All added properties are read-only; no device I/O or openHAB changes are introduced.
+
+## Wallbox frequency removed, 2026-10-15
+
+The local Wallbox `measurements/frequency` channel is removed at Andreas' request
+after repeated absence from live API snapshots. It is no longer advertised or
+published, even if a future response happens to contain Measurement.GridMs.Hz.
+The existing persistent topic manifest retires its prior retained value and
+metadata after the updated build connects. Preserve the state volume; no manual
+broker deletion or energy-baseline reset is required. Inverter frequency channels
+are unchanged. No live openHAB Item/history is removed by this source change.

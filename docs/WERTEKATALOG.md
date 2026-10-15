@@ -634,7 +634,7 @@ Ein Zielplan benötigt Energie und Endzeit gemeinsam sowie einen expliziten Übe
 | `Measurement.GridMs.PhV.phsB` | V | Spannung L2 | R/P04; Liveantwort offen | `homie/sma-echarger/measurements/voltage-l2` |
 | `Measurement.GridMs.A.phsC` | A | Ladestrom L3 | R/P04; Liveantwort offen | `homie/sma-echarger/measurements/current-l3` |
 | `Measurement.GridMs.PhV.phsC` | V | Spannung L3 | R/P04; Liveantwort offen | `homie/sma-echarger/measurements/voltage-l3` |
-| `Measurement.GridMs.Hz` | Hz | Netzfrequenz | R/P04; Liveantwort offen | `homie/sma-echarger/measurements/frequency` |
+| `Measurement.GridMs.Hz` | Hz | Netzfrequenz | Removed at user request, 2026-10-15; absent in live snapshots | No published channel |
 
 ## eCharger: vollständiger Parameterbestand
 
@@ -1446,7 +1446,7 @@ Eingabe-Items für Zielenergie, Endzeit und Netzanteil bleiben zunächst lokale 
 | `SMA_ECharger_VoltageL1` | Number:ElectricPotential | V | RO | Spannung der Phase. | `homie/sma-echarger/measurements/voltage-l1` |
 | `SMA_ECharger_VoltageL2` | Number:ElectricPotential | V | RO | Spannung der Phase. | `homie/sma-echarger/measurements/voltage-l2` |
 | `SMA_ECharger_VoltageL3` | Number:ElectricPotential | V | RO | Spannung der Phase. | `homie/sma-echarger/measurements/voltage-l3` |
-| `SMA_ECharger_Frequency` | Number:Frequency | Hz | RO | Netzfrequenz. | `homie/sma-echarger/measurements/frequency` |
+| `SMA_ECharger_Frequency` | Number:Frequency | Hz | RO | Historical reference; removed at user request, 2026-10-15. | No published channel |
 | `SMA_ECharger_RuleStatus` | String | — | RO/A | Übernommene Skript-/Adapterdiagnose; keine aktiven alten Doppelregler. | `homie/sma-echarger/diagnostics/adapter-status` |
 | `SMA_ECharger_ApiStatus` | String | — | RO/A | Status der lokalen API-Sitzung und Abfragen. | `homie/sma-echarger/diagnostics/api-status` |
 | `SMA_ECharger_ApiLastSuccess` | DateTime | —; ISO 8601 | RO/A | Letzte erfolgreiche lokale Parameterabfrage. | `homie/sma-echarger/diagnostics/api-last-success` |

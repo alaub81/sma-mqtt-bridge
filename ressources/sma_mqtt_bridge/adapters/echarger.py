@@ -131,7 +131,6 @@ for i, phase in enumerate("ABC", 1):
         (f"voltage-l{i}", (f"Measurement.GridMs.PhV.phs{phase}",), "V"),
         (f"power-l{i}", (f"Measurement.GridMs.W.phs{phase}",), "W"),
     ]
-EXTRA.append(("frequency", ("Measurement.GridMs.Hz",), "Hz"))
 BASE = (
     Property(
         "measurements",

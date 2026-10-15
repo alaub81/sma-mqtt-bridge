@@ -1798,3 +1798,33 @@ Four existing loopback-server protocol tests required execution outside the sock
 sandbox; no real device/broker connections occurred. No image build, hosted CI,
 publication, deployment or live openHAB changes were performed. Reconcile used
 host profiles and verify target visibility separately; preserve state and links.
+
+## eCharger active charging observation, 2026-10-15
+
+Read-only MQTT Explorer and two local API/SEMP reads confirm current charging
+status, both source statuses ready, single-phase L3 active power around 3.0–3.3 kW
+and phase/total agreement within 0.01 W in the direct samples. Recent MQTT session
+and total-energy increments differ by only 0.025 Wh over approximately three
+minutes with about two seconds of endpoint offset. This is sampled consistency,
+not calibrated/full-cycle acceptance. Current power/phase/total-energy source
+timestamps advanced; unresolved health/event/mode/authorization timestamps stayed
+weeks old and remain filtered. Frequency was absent from the API snapshots.
+
+[Detailed evidence and limits](ECHARGER_LIVE_CHECK_2026-10-15.md) distinguish source
+and receipt timestamps, earlier unexplained MQTT history gaps and remaining
+session-reset/idle/target-completion questions. No commands, MQTT publication,
+configuration/openHAB/history changes or recorder activation were performed.
+Existing configured certificate trust and device identity checks were preserved.
+
+## Wallbox frequency removal, 2026-10-15
+
+At Andreas' request the unused Wallbox frequency mapping is removed. Discovery,
+values and the regenerated public catalog no longer expose it; inverter frequency
+channels remain unchanged. The 100-row migration ledger retains the historical
+reference with explicit removed-by-user status, rather than silently dropping it.
+All 374 offline tests pass, including two new cases for ignoring even a valid
+source frequency and actual retained value/metadata retirement. Full lint and
+diff hygiene pass; the generated catalog now contains 298 property rows.
+No deployment, device request, MQTT publication or openHAB/history deletion was
+performed for this change. On upgrade the existing manifest performs retirement;
+keep the state volume and energy baselines.
