@@ -1,18 +1,22 @@
 """Tariff aggregation and durable seven-calendar-day averages without live I/O."""
 
+import asyncio
 import copy
+import json
 import unittest
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
-from unittest.mock import patch
+from pathlib import Path
+from unittest.mock import AsyncMock, patch
 
 import test_wallbox_daily
 from test_plant import PlantFixture
+from test_runtime import FakeClient
 
 from sma_mqtt_bridge.config import load_config
 from sma_mqtt_bridge.energy_balances import EnergyBalances, validate_ledger
 from sma_mqtt_bridge.errors import ConfigError, StateError
-from sma_mqtt_bridge.homie import discovery
+from sma_mqtt_bridge.homie import HomiePublisher, discovery
 
 
 class RemunerationTests(PlantFixture):
@@ -36,7 +40,9 @@ class RemunerationTests(PlantFixture):
         self.assertNotIn("pv/total-earnings", engine.state.fresh_values(101))
 
     def test_default_zero_single_pv_and_tariffs_do_not_rebase(self):
-        engine = self.engine(env={"SMAB_INVERTER3_ENABLED": "false"})
+        engine = self.engine(
+            env={"SMAB_INVERTER3_ENABLED": "false", "SMAB_INVERTER1_YIELD_TARIFF_PER_KWH": "0"}
+        )
         engine.refresh(100, self.wall)
         self.assertEqual(Decimal(engine.state.fresh_values(100)["pv/total-earnings"]), 0)
         changed = self.engine(
@@ -48,6 +54,51 @@ class RemunerationTests(PlantFixture):
         self.assertFalse(changed.ledger.binding_changed)
         changed.refresh(100, self.wall)
         self.assertEqual(Decimal(changed.state.fresh_values(100)["pv/total-earnings"]), 50)
+
+    def test_no_explicit_pv_tariff_has_no_metadata_or_values(self):
+        for env in (
+            {},
+            {"SMAB_INVERTER2_YIELD_TARIFF_PER_KWH": "1"},
+            {
+                "SMAB_INVERTER3_ENABLED": "false",
+                "SMAB_INVERTER3_YIELD_TARIFF_PER_KWH": "1",
+            },
+        ):
+            with self.subTest(env=env):
+                engine = self.engine(env=env)
+                engine.refresh(100, self.wall)
+                self.assertNotIn("pv/total-earnings", engine.state.property_index())
+                self.assertNotIn("pv/total-earnings", engine.state.fresh_values(100))
+                self.assertFalse(
+                    any(
+                        "totalearnings" in key
+                        for key in discovery("homie", "sma-plant", engine.state.properties)
+                    )
+                )
+
+    def test_unconfigured_pv_counter_does_not_block_configured_contributor(self):
+        engine = self.engine(env={"SMAB_INVERTER1_YIELD_TARIFF_PER_KWH": "0.12"})
+        ref = engine.groups["pv"][1]["totalyield"]
+        engine.sources[ref.source].update({ref.key: None}, now=100)
+        engine.refresh(100, self.wall)
+        self.assertEqual(Decimal(engine.state.fresh_values(100)["pv/total-earnings"]), 12)
+        configured_ref = engine.groups["pv"][0]["totalyield"]
+        engine.sources[configured_ref.source].update({configured_ref.key: None}, now=101)
+        engine.refresh(101, self.wall + timedelta(seconds=1))
+        self.assertNotIn("pv/total-earnings", engine.state.fresh_values(101))
+
+    def test_json_tariff_and_environment_zero_override(self):
+        path = Path(self.directory.name) / "tariff-config.json"
+        path.write_text(json.dumps({"inverters": [{"id": "inverter1", "yieldTariffPerKwh": 0.25}]}))
+        engine = self.engine(env={"SMAB_CONFIG_FILE": str(path)})
+        engine.refresh(100, self.wall)
+        self.assertEqual(Decimal(engine.state.fresh_values(100)["pv/total-earnings"]), 25)
+        overridden = self.engine(
+            env={"SMAB_CONFIG_FILE": str(path), "SMAB_INVERTER1_YIELD_TARIFF_PER_KWH": "0"}
+        )
+        self.assertFalse(overridden.ledger.binding_changed)
+        overridden.refresh(100, self.wall)
+        self.assertEqual(Decimal(overridden.state.fresh_values(100)["pv/total-earnings"]), 0)
 
     def test_invalid_configuration(self):
         for value in ("-1", "NaN", "Infinity"):
@@ -204,6 +255,41 @@ class WallboxStatisticsTests(PlantFixture):
         self.assertEqual(
             engine.state.property_index()["house/average-daily-consumption"].unit, "kWh/d"
         )
+
+
+class TariffRetirementTests(unittest.IsolatedAsyncioTestCase):
+    async def test_removing_tariff_retires_old_retained_channel(self):
+        fixture = RemunerationTests()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        before = fixture.engine(env={"SMAB_INVERTER1_YIELD_TARIFF_PER_KWH": "0.1"})
+        before.refresh(100, fixture.wall)
+        saved = before.ledger.path.read_bytes()
+        engine = fixture.engine()
+        old = {
+            key
+            for key in discovery("homie", "sma-plant", before.state.properties)
+            if "/totalearnings/" in key
+        }
+        old.add("homie/sma-plant/pv/totalearnings")
+        clients = []
+
+        def factory(*args, **kwargs):
+            client = FakeClient(*args, **kwargs)
+            clients.append(client)
+            return client
+
+        publisher = HomiePublisher(
+            engine.config, [*engine.sources.values(), *engine.output_states], factory
+        )
+        publisher.owned = {"sma-plant": old}
+        publisher.publish_values = AsyncMock()
+        await publisher.serve_device("sma-plant", [engine.state], asyncio.Event())
+        messages = {(topic, value) for topic, value, _ in clients[0].messages}
+        for topic in old:
+            self.assertIn((topic, b""), messages)
+            self.assertNotIn(topic, publisher.owned["sma-plant"])
+        self.assertEqual(engine.ledger.path.read_bytes(), saved)
 
 
 if __name__ == "__main__":

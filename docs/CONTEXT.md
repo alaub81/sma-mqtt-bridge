@@ -242,3 +242,12 @@ shared grid export. Seven-day house averages use seven completed local calendar
 days, once including and once subtracting Wallbox energy; charging days remain.
 Bounded optional history fields extend the existing durable energy ledger without
 rebasing or changing its configuration signature. No external history is inferred.
+
+## Explicit tariff activation, 2026-10-15
+
+The plant remuneration channel now requires an explicitly configured tariff on
+at least one enabled PV contributor. Loader metadata tracks ENV/JSON presence
+independently of the numeric zero default. Explicit zero activates contribution;
+omission excludes it. Battery/disabled/unassigned sources never activate the
+channel. Only configured PV counters gate remuneration freshness. Removing all
+applicable tariffs uses normal manifest retirement; energy baselines are unchanged.

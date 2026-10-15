@@ -907,8 +907,14 @@ applies. No private tariffs are supplied by the bridge.
 With plant enabled, `pv/totalearnings` sums each enabled PV contributor's
 **entire lifetime PV yield × its individual tariff**. It includes self-consumed
 production and is not a measurement of actual feed-in payments. Battery-only
-inverters are excluded. All PV counters must be fresh and valid, including zero-rate
-contributors. Currency is the Homie unit; tariffs are in that currency per kWh,
+inverters are excluded. Discovery and values exist only if at least one enabled
+PV contributor has an explicitly configured tariff in ENV or optional JSON.
+An explicit zero is valid and activates that contributor; an omitted tariff does
+not contribute and its counter does not gate remuneration availability. Removing
+all applicable tariffs retires the channel and its retained metadata through the
+existing topic manifest. All configured contributors' counters must be fresh and
+valid, including explicit zero-rate contributors. Preserve explicit zero tariffs
+when simplifying configuration: omission and explicit zero have different meaning. Currency is the Homie unit; tariffs are in that currency per kWh,
 not cents. Changing a tariff recalculates the entire historical yield at that rate;
 there is no tariff-period accounting or currency conversion.
 

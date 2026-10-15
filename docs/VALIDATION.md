@@ -1732,3 +1732,19 @@ socket sandbox. Full lint and standalone Compose parity including overrides pass
 No private tariffs were inserted, no image was built/published/deployed and no
 openHAB Item/rule/history was modified. New channel live acceptance remains pending;
 previous user-accepted deployment and day-energy checks remain closed.
+
+## Explicit tariff activation, 2026-10-15
+
+The plant remuneration channel is absent from discovery and values until at least
+one enabled PV contribution has an explicit ENV/JSON tariff. Explicit zero remains
+valid; omitted tariffs exclude their counters from both the sum and its freshness
+guards. Disabled and battery-only sources cannot activate remuneration. Removing
+all applicable tariffs retires retained value/metadata through the existing manifest
+without modifying energy baselines or their configuration signature.
+
+All 363 offline tests pass, including four additional regression cases covering
+absence/disabled/battery tariffs, exclusion of an unavailable unconfigured counter,
+JSON tariffs and explicit ENV-zero precedence, and retained retirement with
+byte-preserved energy state. Existing zero-tariff/single-PV and weighted-sum tests
+remain covered. Full lint, Compose parity including overrides and diff hygiene pass.
+No build, deployment, publication, device I/O or private tariff changes occurred.

@@ -853,3 +853,17 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
   Linter und Compose-Parität samt Overrides bestanden. Lokale Testserver außerhalb
   der Socket-Sandbox; keine Geräte-/Brokerverbindung. Keine neue Installation,
   Veröffentlichung, privaten Tarifwerte oder Änderung an openHAB/Historien.
+
+## 2026-10-15 – Vergütung nur bei ausdrücklichem Tarif
+
+- Auf Andreas' Auftrag Vergütungskanal nur bei mindestens einem expliziten Tarif
+  eines aktivierten PV-Beitrags anbieten. ENV und optionales JSON zählen; gesetzte
+  Null ist gültig. Nicht konfigurierte Wechselrichter gehen nicht in die Summe ein
+  und ihre Messwerte blockieren sie nicht. Batterie-/deaktivierte Quellen aktivieren
+  den Kanal nicht. Beim Entfernen aller Tarife bereinigt das vorhandene Manifest
+  den alten Retained-Kanal samt Metadaten. Energie-Basen bleiben unverändert.
+- Validierung: alle 363 Offline-Tests, vollständiger Linter und Compose-Parität
+  einschließlich Overrides bestanden. Vier neue Regressionen prüfen fehlende,
+  deaktivierte/Batterie-Tarife, unkonfigurierte Messquellen, JSON-/ENV-Priorität
+  mit expliziter Null sowie Retained-Bereinigung ohne Änderung der Energie-Basen.
+  Keine Installation, Veröffentlichung oder Änderung privater Tarifwerte.

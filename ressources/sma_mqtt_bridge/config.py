@@ -200,6 +200,7 @@ class Config(SafeRepr):
     profiles: dict
     interval_overrides: frozenset
     plant: Plant = Plant()
+    configured_tariffs: frozenset = frozenset()
 
     @property
     def has_sources(self):
@@ -519,6 +520,12 @@ def load_config(environ=None, bundled_dir=None):
         profiles,
         frozenset(intervals),
         plant,
+        frozenset(
+            device.id
+            for device in inverters
+            if "yieldTariffPerKwh" in indexed.get(device.id, {})
+            or f"SMAB_{device.id.upper()}_YIELD_TARIFF_PER_KWH" in env
+        ),
     )
     mqtt_needed = config.has_sources or (Path(runtime.state_dir) / "mqtt-topics.json").exists()
     if mqtt_needed:
