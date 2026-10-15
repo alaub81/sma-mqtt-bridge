@@ -1487,3 +1487,29 @@ images use 0.3.11-dev.3+plant. The existing state schema accepts two additive ac
 names while preserving previous accounts; older-build rollback requires a matching
 state backup. No private data, live measurement acceptance, deployment, publication
 or openHAB/Influx/Shelly/history/control changes are included in this step.
+
+## Wallbox day measurement on the charger identity, 2026-10-15
+
+Andreas requested device ownership for daily Wallbox energy. The existing local
+calculation now publishes measurements/dailyconsumption and the two Wallbox day
+coverage/snapshot diagnostics through the configured eCharger Homie identity.
+Household daily energy without Wallbox remains on the plant. Activation, units,
+counter arithmetic, checkpoint cadence, AC gating and ledger schema/signatures
+are unchanged. The same wallbox account/baseline is reused.
+
+The runtime registers one derived output on the existing charger device and
+keeps its partial-day availability independent of physical charger readiness.
+No additional client/device identity, adapter I/O, polling, command or ENV setting
+is introduced. Prior owned plant Wallbox topics/diagnostics retire through the
+existing durable MQTT manifest; existing Item history requires relinking in place.
+Official openHAB Homie discovery/channel documentation was consulted.
+
+All 331 offline tests passed on the host and in isolated ARM64/AMD64 containers.
+The 18 Wallbox tests retain prior arithmetic/freshness/reset/DST coverage and add
+custom charger identity with partial-day readiness, actual runtime registration,
+old-topic retained retirement and byte-preserved committed account reuse. Existing
+house/grid/command behavior remains covered by the complete suite. Full lint over
+163 public files, Compose parity with overrides, comparison-manifest ownership and
+diff hygiene passed. Local images use 0.3.11-dev.4+plant. No deployment, live MQTT
+retirement, openHAB Item/link/history change or new physical measurement acceptance
+was performed in this correction.

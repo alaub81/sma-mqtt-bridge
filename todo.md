@@ -524,3 +524,24 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
   Compose-Parität mit Overrides, Vergleichsmatrix (84 Zeilen, zehn neue Ziele) und
   Diff-Hygiene bestanden. Testimages 0.3.11-dev.3+plant; keine Veröffentlichung,
   Aktivierung, Live-Geräteabfrage, openHAB-Änderung oder Migration in diesem Schritt.
+
+## 2026-10-15 – Wallbox-Tageswert direkt am eCharger eingeordnet
+
+- Andreas ordnet den Tagesverbrauch der Wallbox dem eCharger zu. Umsetzung:
+  measurements/dailyconsumption sowie Wallbox-Tagesstatus/-Zeitpunkt unter der
+  konfigurierten eCharger-Homie-ID; Haus ohne Wallbox bleibt auf der Anlage.
+  Vorhandene Aktivierung über Plant und lokale API bleibt bestehen, kein neuer ENV.
+- Gemeinsame Zustandsdatei und bisheriger wallbox-Account unverändert weitergenutzt;
+  keine neue Tagesbasis oder Energieverschiebung durch den Topicwechsel. Alte
+  eigene Anlagen-Wallbox-Topics werden über das vorhandene MQTT-Manifest bereinigt.
+  Bei schon angelegten openHAB-Items nur Link ändern, Item/History erhalten.
+- Abgeleiteter Tagesstatus verändert die Gerätebereitschaft des eChargers nicht:
+  erster Teil-Tag bedeutet keine gestörte Wallbox. Veröffentlichung über vorhandene
+  Gerätekennung/MQTT-Verbindung; keine zusätzlichen Geräteabfragen oder Schreibaktionen.
+- 331 Offline-Tests auf Host und in ARM64-/AMD64-Containern ohne Netzwerk bestanden;
+  18 Wallbox-Tests einschließlich drei neuer Fälle für Gerätezuordnung, Laufzeit-
+  Registrierung, Bereitschaft, Topicbereinigung und erhaltene Zählerbasis.
+  Vollständiger Linter über 163 Dateien, Compose-Parität mit Overrides, Vergleichs-
+  matrix und Diff-Hygiene erfolgreich. Lokale Version 0.3.11-dev.4+plant.
+  Offizielle openHAB-Homie-Dokumentation konsultiert. Keine Veröffentlichung,
+  Installation oder Live-Änderung an MQTT/openHAB/Historien vorgenommen.

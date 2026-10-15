@@ -1,17 +1,22 @@
 """Wallbox calendar energy and household exclusion share durable counter baselines."""
 
+import asyncio
 import hashlib
 import json
+import unittest
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
+from unittest.mock import AsyncMock, patch
 
 from test_plant import PlantFixture
+from test_runtime import FakeClient
 
 from sma_mqtt_bridge.energy_balances import EnergyBalances
 from sma_mqtt_bridge.errors import ConfigError
-from sma_mqtt_bridge.homie import discovery
+from sma_mqtt_bridge.homie import HomiePublisher, discovery
 from sma_mqtt_bridge.plant import PlantEngine
+from sma_mqtt_bridge.runtime import run_locked
 
 
 class WallboxDailyTests(PlantFixture):
@@ -31,6 +36,13 @@ class WallboxDailyTests(PlantFixture):
         super().fill(engine, now, overrides)
         if engine.wallbox is not None:
             engine.sources["api"].update({"measurements/total-energy": energy}, now=now)
+
+    def output_values(self, engine, now):
+        """Merge derived outputs only for arithmetic assertions; ownership is checked separately."""
+        values = engine.state.fresh_values(now)
+        if engine.wallbox_state is not None:
+            values.update(engine.wallbox_state.fresh_values(now))
+        return values
 
     def covered_day(self, *, ac=False):
         engine = self.engine(ac=ac)
@@ -56,20 +68,33 @@ class WallboxDailyTests(PlantFixture):
     def test_topics_are_read_only_and_absent_without_local_api(self):
         engine = self.engine()
         topics = discovery("homie", "sma-plant", engine.state.properties)
-        for key in ("wallbox/dailyconsumption", "house/dailyconsumptionwithoutwallbox"):
-            self.assertEqual(topics["homie/sma-plant/" + key + "/$unit"], "kWh")
-            self.assertEqual(topics["homie/sma-plant/" + key + "/$settable"], "false")
+        charger = discovery(
+            "homie", engine.config.echarger.homie_id, engine.wallbox_state.properties
+        )
+        self.assertEqual(
+            topics["homie/sma-plant/house/dailyconsumptionwithoutwallbox/$unit"], "kWh"
+        )
+        self.assertEqual(
+            topics["homie/sma-plant/house/dailyconsumptionwithoutwallbox/$settable"], "false"
+        )
+        prefix = "homie/" + engine.config.echarger.homie_id + "/measurements/dailyconsumption"
+        self.assertEqual(charger[prefix + "/$unit"], "kWh")
+        self.assertEqual(charger[prefix + "/$settable"], "false")
+        self.assertFalse(any("/wallbox/" in topic for topic in topics))
+        self.assertNotIn("measurements/daily-consumption", engine.state.property_index())
+        self.assertNotIn("diagnostics/wallbox-day-status", engine.state.property_index())
         disabled = self.engine(env={"SMAB_ECHARGER_ENABLED": "false"})
         self.assertIsNone(disabled.wallbox)
-        self.assertNotIn("wallbox/daily-consumption", disabled.state.property_index())
+        self.assertIsNone(disabled.wallbox_state)
+        self.assertNotIn("measurements/daily-consumption", disabled.state.property_index())
         self.assertNotIn("house/daily-consumption-without-wallbox", disabled.state.property_index())
 
     def test_wallbox_day_is_independent_of_unverified_battery_and_session_energy(self):
         engine = self.covered_day()
-        self.assertEqual(engine.state.fresh_values(220)["wallbox/daily-consumption"], "0")
+        self.assertEqual(self.output_values(engine, 220)["measurements/daily-consumption"], "0")
         self.advance_balances(engine)
-        values = engine.state.fresh_values(3820)
-        self.assertEqual(Decimal(values["wallbox/daily-consumption"]), 4)
+        values = self.output_values(engine, 3820)
+        self.assertEqual(Decimal(values["measurements/daily-consumption"]), 4)
         self.assertEqual(values["diagnostics/wallbox-day-status"], "complete")
         self.assertNotIn("house/daily-consumption-without-wallbox", values)
         self.assertEqual(
@@ -78,14 +103,38 @@ class WallboxDailyTests(PlantFixture):
         )
         engine.sources["api"].update({"measurements/session-energy": 0}, now=3820)
         engine.refresh(3820, self.wall + timedelta(minutes=62))
-        self.assertEqual(Decimal(engine.state.fresh_values(3820)["wallbox/daily-consumption"]), 4)
+        self.assertEqual(
+            Decimal(self.output_values(engine, 3820)["measurements/daily-consumption"]), 4
+        )
+
+    def test_charger_readiness_and_custom_identity_survive_partial_day(self):
+        engine = self.engine(env={"SMAB_ECHARGER_HOMIE_ID": "garage-charger"})
+        api = engine.sources["api"]
+        api.update(
+            {"measurements/power": 0, "measurements/current-l1": 0, "measurements/voltage-l1": 230},
+            now=100,
+        )
+        engine.refresh(100, self.wall)
+        self.assertEqual(engine.wallbox_state.device, "garage-charger")
+        self.assertFalse(engine.wallbox_state.contributes_availability)
+        self.assertEqual(
+            engine.wallbox_state.fresh_values(100)["diagnostics/wallbox-day-status"], "partial"
+        )
+        publisher = HomiePublisher(engine.config, [api, *engine.output_states])
+        states = [s for s in publisher.states if s.device == "garage-charger"]
+        self.assertEqual(len(states), 2)
+        metadata = publisher.metadata("garage-charger", publisher.properties(states))
+        self.assertIn("homie/garage-charger/measurements/dailyconsumption/$unit", metadata)
+        values, status = publisher.snapshot(states, 100)
+        self.assertEqual(status, "ready")
+        self.assertNotIn("measurements/daily-consumption", values)
 
     def test_common_counter_vector_subtracts_wallbox_once(self):
         engine = self.covered_day(ac=True)
         self.advance_balances(engine)
-        values = engine.state.fresh_values(3820)
+        values = self.output_values(engine, 3820)
         self.assertEqual(Decimal(values["house/daily-consumption"]), 16)
-        self.assertEqual(Decimal(values["wallbox/daily-consumption"]), 4)
+        self.assertEqual(Decimal(values["measurements/daily-consumption"]), 4)
         self.assertEqual(Decimal(values["house/daily-consumption-without-wallbox"]), 12)
         self.assertEqual(values["diagnostics/house-without-wallbox-day-status"], "complete")
         data = json.loads(engine.ledger.path.read_text())
@@ -101,8 +150,8 @@ class WallboxDailyTests(PlantFixture):
             with self.subTest(energy=energy):
                 engine.sources["api"].update({"measurements/total-energy": energy}, now=3820)
                 engine.refresh(3820, self.wall + timedelta(minutes=62))
-                values = engine.state.fresh_values(3820)
-                self.assertNotIn("wallbox/daily-consumption", values)
+                values = self.output_values(engine, 3820)
+                self.assertNotIn("measurements/daily-consumption", values)
                 self.assertNotIn("house/daily-consumption-without-wallbox", values)
                 self.assertEqual(Decimal(values["house/daily-consumption"]), 16)
         engine.sources["api"].update({"measurements/total-energy": 1004}, now=3820)
@@ -110,18 +159,18 @@ class WallboxDailyTests(PlantFixture):
         source.properties = tuple(
             replace(p, stale_seconds=1) if p.id == "total-energy" else p for p in source.properties
         )
-        self.assertNotIn("wallbox/daily-consumption", engine.state.fresh_values(3822))
-        self.assertIn("house/daily-consumption", engine.state.fresh_values(3822))
+        self.assertNotIn("measurements/daily-consumption", self.output_values(engine, 3822))
+        self.assertIn("house/daily-consumption", self.output_values(engine, 3822))
         source.error = True
-        self.assertNotIn("wallbox/daily-consumption", engine.state.fresh_values(3820))
+        self.assertNotIn("measurements/daily-consumption", self.output_values(engine, 3820))
 
     def test_negative_excluded_balance_is_unavailable_not_zero(self):
         engine = self.covered_day(ac=True)
         self.fill(engine, 3820, {"inverter1": {"totalyield": 102}}, energy=1003)
         engine.refresh(3820, self.wall + timedelta(minutes=62))
-        values = engine.state.fresh_values(3820)
+        values = self.output_values(engine, 3820)
         self.assertEqual(Decimal(values["house/daily-consumption"]), 2)
-        self.assertEqual(Decimal(values["wallbox/daily-consumption"]), 3)
+        self.assertEqual(Decimal(values["measurements/daily-consumption"]), 3)
         self.assertNotIn("house/daily-consumption-without-wallbox", values)
         self.assertEqual(values["diagnostics/house-without-wallbox-day-status"], "inconsistent")
 
@@ -130,7 +179,7 @@ class WallboxDailyTests(PlantFixture):
         engine.sources["api"].identity_fingerprint = hashlib.sha256(b"replacement").hexdigest()
         self.fill(engine, 221)
         engine.refresh(221, self.wall + timedelta(minutes=2, seconds=1))
-        values = engine.state.fresh_values(221)
+        values = self.output_values(engine, 221)
         self.assertEqual(values["diagnostics/wallbox-day-status"], "configuration-changed")
         self.assertEqual(
             values["diagnostics/house-without-wallbox-day-status"], "configuration-changed"
@@ -140,11 +189,11 @@ class WallboxDailyTests(PlantFixture):
         self.fill(replacement, 222)
         replacement.refresh(222, self.wall + timedelta(minutes=2, seconds=2))
         self.assertEqual(
-            replacement.state.fresh_values(222)["diagnostics/wallbox-day-status"],
+            self.output_values(replacement, 222)["diagnostics/wallbox-day-status"],
             "configuration-changed",
         )
         self.assertEqual(
-            replacement.state.fresh_values(222)["diagnostics/house-energy-status"], "complete"
+            self.output_values(replacement, 222)["diagnostics/house-energy-status"], "complete"
         )
 
     def test_existing_ledger_survives_late_wallbox_enable_with_partial_new_accounts(self):
@@ -155,7 +204,7 @@ class WallboxDailyTests(PlantFixture):
         enabled = self.engine(ac=True)
         self.fill(enabled, 230)
         enabled.refresh(230, self.wall + timedelta(minutes=2, seconds=10))
-        values = enabled.state.fresh_values(230)
+        values = self.output_values(enabled, 230)
         self.assertEqual(values["diagnostics/house-energy-status"], "complete")
         self.assertEqual(values["diagnostics/wallbox-day-status"], "partial")
         self.assertEqual(values["diagnostics/house-without-wallbox-day-status"], "partial")
@@ -166,8 +215,8 @@ class WallboxDailyTests(PlantFixture):
         self.advance_balances(engine)
         restarted = self.engine(ac=True)
         self.advance_balances(restarted, energy=1005, pv1=114)
-        values = restarted.state.fresh_values(3820)
-        self.assertEqual(Decimal(values["wallbox/daily-consumption"]), 5)
+        values = self.output_values(restarted, 3820)
+        self.assertEqual(Decimal(values["measurements/daily-consumption"]), 5)
         self.assertEqual(Decimal(values["house/daily-consumption-without-wallbox"]), 13)
 
     def test_both_daily_values_wait_for_durable_checkpoint(self):
@@ -177,13 +226,13 @@ class WallboxDailyTests(PlantFixture):
         engine.refresh(220, self.wall + timedelta(minutes=2))
         self.fill(engine, 221, {"inverter1": {"totalyield": 102}}, energy=1001)
         engine.refresh(221, self.wall + timedelta(minutes=2, seconds=1))
-        values = engine.state.fresh_values(221)
-        self.assertEqual(values["wallbox/daily-consumption"], "0")
+        values = self.output_values(engine, 221)
+        self.assertEqual(values["measurements/daily-consumption"], "0")
         self.assertEqual(values["house/daily-consumption-without-wallbox"], "0")
         self.fill(engine, 520, {"inverter1": {"totalyield": 102}}, energy=1001)
         engine.refresh(520, self.wall + timedelta(minutes=7))
-        values = engine.state.fresh_values(520)
-        self.assertEqual(values["wallbox/daily-consumption"], "1")
+        values = self.output_values(engine, 520)
+        self.assertEqual(values["measurements/daily-consumption"], "1")
         self.assertEqual(values["house/daily-consumption-without-wallbox"], "1")
 
     def test_wallbox_age_skew_blocks_only_the_combined_day(self):
@@ -194,8 +243,8 @@ class WallboxDailyTests(PlantFixture):
         self.fill(engine, 230)
         engine.sources["api"].values["measurements/total-energy"] = ("1000", 220)
         engine.refresh(230, self.wall + timedelta(minutes=2, seconds=10))
-        values = engine.state.fresh_values(230)
-        self.assertIn("wallbox/daily-consumption", values)
+        values = self.output_values(engine, 230)
+        self.assertIn("measurements/daily-consumption", values)
         self.assertIn("house/daily-consumption", values)
         self.assertNotIn("house/daily-consumption-without-wallbox", values)
         self.assertEqual(values["diagnostics/house-without-wallbox-day-status"], "unavailable")
@@ -213,22 +262,22 @@ class WallboxDailyTests(PlantFixture):
         engine = self.covered_day(ac=True)
         self.fill(engine, 280, energy=1)
         engine.refresh(280, self.wall + timedelta(minutes=3))
-        values = engine.state.fresh_values(280)
+        values = self.output_values(engine, 280)
         self.assertEqual(values["diagnostics/wallbox-day-status"], "reset")
-        self.assertNotIn("wallbox/daily-consumption", values)
+        self.assertNotIn("measurements/daily-consumption", values)
         self.assertEqual(values["diagnostics/house-energy-status"], "complete")
         self.fill(engine, 86620, energy=2)
         engine.refresh(86620, self.wall + timedelta(days=1, minutes=2))
-        values = engine.state.fresh_values(86620)
+        values = self.output_values(engine, 86620)
         self.assertEqual(values["diagnostics/wallbox-day-status"], "gap")
-        self.assertNotIn("wallbox/daily-consumption", values)
+        self.assertNotIn("measurements/daily-consumption", values)
         self.fill(engine, 172900, energy=3)
         engine.refresh(172900, self.wall + timedelta(days=2))
         self.fill(engine, 173020, energy=4)
         engine.refresh(173020, self.wall + timedelta(days=2, minutes=2))
-        values = engine.state.fresh_values(173020)
+        values = self.output_values(engine, 173020)
         self.assertEqual(values["diagnostics/wallbox-day-status"], "complete")
-        self.assertEqual(values["wallbox/daily-consumption"], "0")
+        self.assertEqual(values["measurements/daily-consumption"], "0")
 
     def assert_dst_wallbox_day(self, before, hours):
         self.wall = before
@@ -236,12 +285,14 @@ class WallboxDailyTests(PlantFixture):
         now = 100 + hours * 3600
         self.fill(engine, now, energy=1004)
         engine.refresh(now, self.wall + timedelta(hours=hours))
-        self.assertEqual(engine.state.fresh_values(now)["wallbox/daily-consumption"], "4")
+        self.assertEqual(self.output_values(engine, now)["measurements/daily-consumption"], "4")
         self.fill(engine, now + 120, energy=1005)
         engine.refresh(now + 120, self.wall + timedelta(hours=hours, minutes=2))
-        self.assertEqual(engine.state.fresh_values(now + 120)["wallbox/daily-consumption"], "0")
         self.assertEqual(
-            engine.state.fresh_values(now + 120)["diagnostics/wallbox-day-status"], "complete"
+            self.output_values(engine, now + 120)["measurements/daily-consumption"], "0"
+        )
+        self.assertEqual(
+            self.output_values(engine, now + 120)["diagnostics/wallbox-day-status"], "complete"
         )
 
     def test_wallbox_23_hour_day(self):
@@ -279,3 +330,79 @@ class WallboxDailyTests(PlantFixture):
         ledger.persist(300)
         restored = EnergyBalances(engine.config, ledger.data["signature"], engine.zone)
         self.assertIn("housewithoutwallbox", restored.data["accounts"])
+
+
+class WallboxPlacementRuntimeTests(unittest.IsolatedAsyncioTestCase):
+    def setUp(self):
+        self.fixture = WallboxDailyTests()
+        self.fixture.setUp()
+        self.addCleanup(self.fixture.doCleanups)
+
+    async def test_runtime_registers_derived_output_on_existing_charger(self):
+        engine = self.fixture.engine()
+        stop, captured = asyncio.Event(), []
+        publisher = AsyncMock()
+        publisher.status, publisher.monitors = {}, {}
+
+        def factory(_config, states):
+            captured.extend(states)
+            return publisher
+
+        async def source_fixture(state, *_args):
+            state.update({k: v for k, (v, _) in engine.sources[state.id].values.items()})
+            state.identity_fingerprint = engine.sources[state.id].identity_fingerprint
+            await stop.wait()
+
+        async def publish(_stop):
+            for _ in range(100):
+                daily = next(s for s in captured if s.id == "wallbox-day")
+                if daily.values:
+                    stop.set()
+                    return
+                await asyncio.sleep(0.001)
+            self.fail("Derived charger output did not run")
+
+        publisher.run.side_effect = publish
+        with patch("sma_mqtt_bridge.runtime.supervise", side_effect=source_fixture):
+            await run_locked(engine.config, stop=stop, publisher_factory=factory)
+        daily = next(s for s in captured if s.id == "wallbox-day")
+        api = next(s for s in captured if s.id == "api")
+        self.assertEqual(daily.device, api.device)
+        self.assertEqual(daily.fresh_values()["diagnostics/wallbox-day-status"], "partial")
+        self.assertFalse(daily.contributes_availability)
+        self.assertEqual(sum(s.id == "wallbox-day" for s in captured), 1)
+
+    async def test_manifest_retires_old_plant_topics_and_preserves_energy_account(self):
+        engine = self.fixture.covered_day(ac=True)
+        self.fixture.advance_balances(engine)
+        before = engine.ledger.path.read_bytes()
+        restored = self.fixture.engine(ac=True)
+        self.assertEqual(restored.ledger.path.read_bytes(), before)
+        self.fixture.advance_balances(restored)
+        self.assertEqual(
+            restored.wallbox_state.fresh_values(3820)["measurements/daily-consumption"], "4"
+        )
+        clients = []
+
+        def factory(*args, **kwargs):
+            client = FakeClient(*args, **kwargs)
+            clients.append(client)
+            return client
+
+        publisher = HomiePublisher(
+            restored.config, [*restored.sources.values(), *restored.output_states], factory
+        )
+        old = {
+            "homie/sma-plant/wallbox/dailyconsumption",
+            "homie/sma-plant/wallbox/dailyconsumption/$unit",
+            "homie/sma-plant/diagnostics/wallboxdaystatus",
+        }
+        publisher.owned = {"sma-plant": old}
+        publisher.publish_values = AsyncMock()
+        await publisher.serve_device("sma-plant", [restored.state], asyncio.Event())
+        messages = {(topic, value) for topic, value, _ in clients[0].messages}
+        for topic in old:
+            self.assertIn((topic, b""), messages)
+            self.assertNotIn(topic, publisher.owned["sma-plant"])
+        self.assertEqual(restored.ledger.path.read_bytes(), before)
+        self.assertNotIn("wallbox/daily-consumption", restored.state.property_index())

@@ -14,6 +14,12 @@ from .errors import ConfigError
 from .model import Property, SampleValues, SourceState, number, payload
 from .plant_profiles import FIELDS
 
+WALLBOX_OUTPUTS = {
+    "wallbox/daily-consumption": "measurements/daily-consumption",
+    "diagnostics/wallbox-day-status": "diagnostics/wallbox-day-status",
+    "diagnostics/wallbox-energy-time": "diagnostics/wallbox-energy-time",
+}
+
 
 @dataclass(frozen=True)
 class Input:
@@ -210,6 +216,7 @@ class PlantEngine:
             self.nonnegative.add(self.wallbox)
         self.recipes = {}
         self.last_packet = None
+        self.last_wallbox_packet = None
         self.account_frames = {}
         self.committed_times = {}
         self.add_sums()
@@ -234,22 +241,17 @@ class PlantEngine:
         ]
         if self.wallbox is not None:
             properties += [
-                Property("wallbox", "daily-consumption", "Daily wallbox consumption", unit="kWh"),
                 Property(
                     "house",
                     "daily-consumption-without-wallbox",
                     "Daily house consumption without wallbox",
                     unit="kWh",
                 ),
-                Property("diagnostics", "wallbox-day-status", "Wallbox day coverage", "string"),
                 Property(
                     "diagnostics",
                     "house-without-wallbox-day-status",
                     "House without wallbox day coverage",
                     "string",
-                ),
-                Property(
-                    "diagnostics", "wallbox-energy-time", "Energy snapshot time (UTC)", "string"
                 ),
                 Property(
                     "diagnostics",
@@ -281,6 +283,29 @@ class PlantEngine:
             ttl,
             diagnostics_enabled=config.plant.diagnostics_enabled,
         )
+        self.wallbox_state = None
+        if self.wallbox is not None:
+            self.wallbox_state = PlantState(
+                "wallbox-day",
+                config.echarger.homie_id,
+                (
+                    Property(
+                        "measurements", "daily-consumption", "Daily wallbox consumption", unit="kWh"
+                    ),
+                    Property("diagnostics", "wallbox-day-status", "Wallbox day coverage", "string"),
+                    Property(
+                        "diagnostics", "wallbox-energy-time", "Energy snapshot time (UTC)", "string"
+                    ),
+                ),
+                ttl,
+                diagnostics_enabled=False,
+                contributes_availability=False,
+            )
+            self.wallbox_state.max_payload_bytes = config.runtime.max_payload_bytes
+            self.wallbox_state.max_skew = config.plant.max_skew_seconds
+            self.wallbox_state.expected_units = self.expected_units
+            self.wallbox_state.sources = {"api": self.sources["api"]}
+            self.wallbox_state.guards["measurements/daily-consumption"] = (self.wallbox,)
         self.state.max_payload_bytes = config.runtime.max_payload_bytes
         self.state.max_skew = config.plant.max_skew_seconds
         self.state.expected_units = self.expected_units
@@ -304,13 +329,33 @@ class PlantEngine:
                 raise ConfigError(
                     "Plant wallbox requires the local API total energy counter in kWh"
                 )
-            self.state.guards["wallbox/daily-consumption"] = (self.wallbox,)
             self.state.guards["house/daily-consumption-without-wallbox"] = (
                 *energy_inputs,
                 self.wallbox,
             )
         selected_sources = {ref.source for refs in self.state.guards.values() for ref in refs}
         self.state.sources = {source: self.sources[source] for source in selected_sources}
+
+    @property
+    def output_states(self):
+        return (self.state,) + ((self.wallbox_state,) if self.wallbox_state is not None else ())
+
+    def update_wallbox_output(self, packet, observed, deadlines, now, wall):
+        """Publish the same committed account through the existing charger device."""
+        if self.wallbox_state is None:
+            return
+        values = {new: packet.pop(old, None) for old, new in WALLBOX_OUTPUTS.items()}
+        ages = {new: observed.pop(old) for old, new in WALLBOX_OUTPUTS.items() if old in observed}
+        expires = {
+            new: deadlines.pop(old) for old, new in WALLBOX_OUTPUTS.items() if old in deadlines
+        }
+        snapshot = (values, ages, expires)
+        if snapshot != self.last_wallbox_packet:
+            self.wallbox_state.deadlines = expires
+            self.wallbox_state.update(
+                SampleValues(values, ages), now=now, timestamp=wall.isoformat()
+            )
+            self.last_wallbox_packet = snapshot
 
     def add_sums(self):
         labels = {
@@ -555,6 +600,7 @@ class PlantEngine:
                 text = record[field]
                 packet[key] = Decimal(text) if candidate is not None and text is not None else None
                 observed[key] = received
+        self.update_wallbox_output(packet, observed, deadlines, now, wall)
         packet["diagnostics/valid-properties"] = ",".join(
             sorted(
                 key.replace("-", "")

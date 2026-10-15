@@ -151,8 +151,10 @@ only their device topics. The bundled battery energy boundary is unverified,
 so household kWh remains unavailable until matching AC evidence exists.
 The optional local eCharger API contributes its existing total-energy counter to
 Wallbox daily kWh and a shared-vector household day balance without Wallbox.
-These accounts preserve previous baselines; Wallbox alone is independent of the
-battery boundary. Session counters and independently initialized daily subtraction
+The Wallbox day measurement and its diagnostics belong to the existing eCharger
+Homie identity; household exclusion remains on the plant. Derived Wallbox daily
+coverage does not contribute to physical charger availability. These accounts
+preserve previous baselines; Wallbox alone is independent of the battery boundary. Session counters and independently initialized daily subtraction
 are excluded. Implementation is offline tested; live acceptance remains pending.
 The current Item/rule/query inventory and old/new comparison manifest supplement
 the historical migration ledger without changing current openHAB ownership.

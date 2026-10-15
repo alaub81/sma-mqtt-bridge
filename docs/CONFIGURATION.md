@@ -719,10 +719,10 @@ The feature has not been deployed or live accepted by these tests.
 With both `SMAB_PLANT_ENABLED=true` and the independently enabled local API
 `SMAB_ECHARGER_ENABLED=true`, two further read-only kWh properties are declared:
 
-| Topic under `homie/sma-plant/` | Meaning |
+| Topic (default device IDs) | Meaning |
 | --- | --- |
-| `wallbox/dailyconsumption` | Change in the local API `measurements/totalenergy` counter over the covered local day. |
-| `house/dailyconsumptionwithoutwallbox` | The household counter balance minus that Wallbox counter change, using one shared baseline vector. |
+| `homie/sma-echarger/measurements/dailyconsumption` | Change in the local API `measurements/totalenergy` counter over the covered local day. |
+| `homie/sma-plant/house/dailyconsumptionwithoutwallbox` | The household counter balance minus that Wallbox counter change, using one shared baseline vector. |
 
 No additional ENV flag, InfluxDB connection, API call, command or polling interval
 is introduced. API-only and API+SEMP installations use the same local total-energy
@@ -740,9 +740,14 @@ Negative or decreasing derived daily energy is unavailable/inconsistent, never
 clamped. No assumption about unmetered Wallbox standby consumption is added;
 this property has the scope of the existing Wallbox total-energy measurement.
 
-`diagnostics/wallboxdaystatus` and `housewithoutwallboxdaystatus` report coverage;
-`wallboxenergytime` and `housewithoutwallboxenergytime` report the oldest committed
-input UTC time. The observed API serial is validated before a hashed identity is
+The Wallbox value and its `diagnostics/wallboxdaystatus` / `wallboxenergytime`
+properties use the configured eCharger Homie device ID, alongside totalenergy
+and sessionenergy. The plant retains `diagnostics/housewithoutwallboxdaystatus`
+and `housewithoutwallboxenergytime`. Diagnostics report coverage and oldest
+committed input UTC time. A partial Wallbox day does not degrade charger readiness.
+The previous plant wallbox node and its two diagnostics are retired through the
+existing topic manifest on upgrade; the same persisted wallbox account/baseline
+is reused. Keep existing openHAB Item identity/history when updating a link. The observed API serial is validated before a hashed identity is
 passed to the ledger together with the selected primary/fallback counter channel;
 identity, endpoint or counter-channel changes block only affected Wallbox accounts.
 State uses additional `wallbox` and `housewithoutwallbox` accounts in the same

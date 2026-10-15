@@ -1,6 +1,6 @@
 # PV inventory and plant aggregation design
 
-Reviewed: **2026-10-14**. Plant calculations are implemented and offline
+Inventory reviewed: **2026-10-14**; Wallbox topic ownership updated **2026-10-15**. Plant calculations are implemented and offline
 tested alongside the read-only inventory; deployment and migration remain pending. Existing Items, rules, links,
 persistence and the running resource recorder were not changed.
 
@@ -167,10 +167,12 @@ enabled contributors in that group; unavailability never reduces membership:
 | `homie/sma-plant/house/consumptionwithcharging` | W | `PowerConsumptionBatIncl`; preserve distinct legacy meaning |
 | `homie/sma-plant/house/dailyconsumption` | kWh | `Strom_Tagesverbrauch_Number_Result`; household day balance |
 | `homie/sma-plant/house/totalconsumption` | kWh | New household energy counter from a common starting baseline |
-| `homie/sma-plant/wallbox/dailyconsumption` | kWh | Local API total-energy counter delta; independent of battery boundary |
+| `homie/sma-echarger/measurements/dailyconsumption` | kWh | Local API total-energy counter delta; independent of battery boundary |
 | `homie/sma-plant/house/dailyconsumptionwithoutwallbox` | kWh | Household counter balance minus Wallbox delta over one shared baseline |
 
-The two Wallbox-related topics require the independently enabled local eCharger API.
+The Wallbox day counter belongs to the configured eCharger Homie device; household
+energy without Wallbox belongs to the plant. Both require the independently enabled
+local eCharger API and the plant calculation flag.
 They use the existing total-energy counter, never the session counter; household
 kWh without Wallbox retains the battery-boundary gate. No additional device I/O.
 

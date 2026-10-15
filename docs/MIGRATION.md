@@ -375,3 +375,17 @@ independent. Initial partial days and missing/reset/stale inputs remain explicit
 No new live Item, persistence policy, Shelly history, seven-day exclusion rule or
 control ownership was changed. Existing power-integral day values need a measured
 comparison against this counter method. See the [configuration contract](CONFIGURATION.md#wallbox-daily-consumption).
+
+## Wallbox day-topic ownership correction, 2026-10-15
+
+At Andreas' request, Wallbox daily consumption now belongs to the configured
+eCharger Homie identity: measurements/dailyconsumption, float kWh, read-only.
+The Wallbox day-status/snapshot-time diagnostics move with it. Household energy
+without Wallbox remains on the plant. Existing activation requirements are unchanged.
+The persistent wallbox account is reused without a new baseline. Owned old plant
+wallbox topics/diagnostics retire through the existing manifest. Preserve the
+openHAB Item/history when relinking an already created day Item; the new channel
+suffix is measurements#dailyconsumption under the existing eCharger Thing.
+Homie discovery/channel structure was checked against the official
+[openHAB Homie binding documentation](https://www.openhab.org/addons/bindings/homie/).
+No live Item/link/persistence change or deployment is included in this correction.
