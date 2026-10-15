@@ -189,9 +189,7 @@ class PlantConfigurationTests(PlantFixture):
 
     def test_generic_repeated_profile_and_single_device_suppression(self):
         engine = self.engine(env={"SMAB_INVERTER3_ENABLED": "false"})
-        self.assertFalse(
-            any(p.node == "pv" and p.id != "total-earnings" for p in engine.state.properties)
-        )
+        self.assertFalse(any(p.node == "pv" for p in engine.state.properties))
         self.assertFalse(any(p.node == "battery" for p in engine.state.properties))
         engine.refresh(100, self.wall)
         self.assertEqual(engine.state.fresh_values(100)["house/consumption"], "1600")
@@ -505,9 +503,7 @@ class PlantMeasurementTests(PlantFixture):
         )
         new = PlantEngine(changed, list(engine.sources.values()))
         new.refresh(101, self.wall + timedelta(seconds=1))
-        self.assertFalse(
-            any(p.node == "pv" and p.id != "total-earnings" for p in new.state.properties)
-        )
+        self.assertFalse(any(p.node == "pv" for p in new.state.properties))
         self.assertEqual(
             new.state.fresh_values(101)["diagnostics/import-day-status"], "configuration-changed"
         )

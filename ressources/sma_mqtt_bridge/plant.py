@@ -228,13 +228,16 @@ class PlantEngine:
         self.add_sums()
         self.add_house_power()
         tariffs = {d.id: Decimal(str(d.yield_tariff_per_kwh)) for d in config.inverters}
-        if self.groups["pv"]:
+        paid_members = [
+            member
+            for member in self.groups["pv"]
+            if member["totalyield"].source in config.configured_tariffs
+        ]
+        if paid_members:
             self.recipes["pv/total-earnings"] = (
                 "Total PV yield remuneration",
                 config.plant.currency,
-                tuple(
-                    (m["totalyield"], tariffs[m["totalyield"].source]) for m in self.groups["pv"]
-                ),
+                tuple((m["totalyield"], tariffs[m["totalyield"].source]) for m in paid_members),
             )
         properties = [
             Property(
