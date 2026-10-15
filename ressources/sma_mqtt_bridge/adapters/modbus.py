@@ -195,6 +195,16 @@ class ModbusReader:
             raise ProtocolError("Invalid Modbus response payload")
         return list(struct.unpack(">" + "H" * poller["count"], body[2:]))
 
+    def conditional_zero(self, prop, blocks):
+        """Require guard observations from this read, never cached values."""
+        guards = prop.get("invalidAsZeroWhen", {})
+        definitions = {p["id"]: p for p in self.profile["properties"]}
+        return bool(guards) and all(
+            definitions[ref]["poller"] in blocks
+            and decode(blocks[definitions[ref]["poller"]], definitions[ref]) in values
+            for ref, values in guards.items()
+        )
+
     async def read(self):
         """Verify local identity on every new session before measurement reads."""
 
@@ -222,8 +232,22 @@ class ModbusReader:
                         if poller["id"] not in blocks:
                             blocks[poller["id"]] = await self.read_block(reader, writer, poller)
                         selected.add(poller["id"])
+                # Read each guard on the same connection as its dependent DC sample.
+                refs = {
+                    ref
+                    for p in self.definitions
+                    if p["poller"] in selected
+                    for ref in p.get("invalidAsZeroWhen", {})
+                }
+                guard_pollers = {p["poller"] for p in self.profile["properties"] if p["id"] in refs}
+                for poller in self.profile["pollers"]:
+                    if poller["id"] in guard_pollers and poller["id"] not in blocks:
+                        blocks[poller["id"]] = await self.read_block(reader, writer, poller)
                 result = {
-                    p["node"] + "/" + p["id"]: decode(blocks[p["poller"]], p)
+                    p["node"] + "/" + p["id"]: decode(
+                        blocks[p["poller"]],
+                        p | {"invalidAsZero": True} if self.conditional_zero(p, blocks) else p,
+                    )
                     for p in self.definitions
                     if p["poller"] in selected
                 }

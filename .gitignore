@@ -2,6 +2,7 @@
 .env.*
 !.env.example
 smab.env
+smab.env.*
 smab.*.env
 !smab.example.env
 docker-compose.yml
