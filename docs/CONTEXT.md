@@ -251,3 +251,16 @@ independently of the numeric zero default. Explicit zero activates contribution;
 omission excludes it. Battery/disabled/unassigned sources never activate the
 channel. Only configured PV counters gate remuneration freshness. Removing all
 applicable tariffs uses normal manifest retirement; energy baselines are unchanged.
+
+## Consistent optional diagnostic publication, 2026-10-15
+
+Plant internal observations and its MQTT publication inventory are separate.
+The plant diagnostics flag hides all optional coverage, input, timestamp and
+average diagnostics from metadata and values while preserving internal calculations,
+readiness, checkpoints and debug evidence. Derived Wallbox day diagnostics follow
+the eCharger diagnostics flag independently. Operational measurement-source status
+remains the explicit exception; source status and Homie device state stay usable
+by the existing widget. Device profile channel groups remain authoritative:
+Basic derating stays Basic even beneath the diagnostics topic path. Existing
+Advanced/profile/SEMP filtering remains unchanged. Hidden owned topics retire
+through the persistent MQTT manifest on reconnect without resetting energy state.

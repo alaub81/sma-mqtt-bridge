@@ -185,7 +185,7 @@ class HomiePublisher:
         )
 
     def properties(self, states):
-        props = [p for state in states for p in state.properties]
+        props = [p for state in states for p in state.published_properties]
         for state in states:
             status_key, time_key = state.diagnostic_keys
             # Operational source availability stays usable when optional diagnostics are disabled.
@@ -225,7 +225,10 @@ class HomiePublisher:
     def snapshot(self, states, now=None):
         result = {}
         for state in states:
-            result.update(state.fresh_values(now))
+            published = {p.key for p in state.published_properties}
+            result.update(
+                (key, value) for key, value in state.fresh_values(now).items() if key in published
+            )
             if state.contributes_availability or state.diagnostics_enabled:
                 result[state.diagnostic_keys[0]] = state.status(now)
             if state.diagnostics_enabled:
@@ -369,7 +372,7 @@ class HomiePublisher:
             observed_inventory = tuple(
                 (
                     s.id,
-                    s.properties,
+                    s.published_properties,
                     s.contributes_availability,
                     s.diagnostics_enabled,
                     s.monitor is not None,

@@ -25,6 +25,10 @@ wie „noch offen“ beschreiben den damaligen Stand, nicht die aktuelle Aufgabe
 - [ ] Neue Vergütungs-/Durchschnittskanäle nach separatem Deployment live prüfen;
   sieben vollständige Tage sammeln. Bestehende openHAB-Berechnungen bis zur
   getrennten Migration erhalten. Private Tarife selbst in smab.env eintragen.
+- [ ] Durchschnittsverbrauch prüfen, sobald die Werte für sieben vollständige
+  abgeschlossene Tage vorliegen: Berechnung mit und ohne Wallbox anhand der
+  zugrunde liegenden Tageswerte nachvollziehen und Ergebnisse auf Plausibilität
+  prüfen.
 
 - [ ] Produktions-`smab.env` aufräumen: nur Werte behalten, die von den wirksamen
   Standardwerten abweichen, einschließlich notwendiger installationsspezifischer
@@ -867,3 +871,20 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
   deaktivierte/Batterie-Tarife, unkonfigurierte Messquellen, JSON-/ENV-Priorität
   mit expliziter Null sowie Retained-Bereinigung ohne Änderung der Energie-Basen.
   Keine Installation, Veröffentlichung oder Änderung privater Tarifwerte.
+
+## 2026-10-15 – Diagnose-Schalter vereinheitlicht
+
+- Auf Andreas' Auftrag sämtliche optionalen Anlagen-Diagnosen unter den
+  Plant-Schalter gestellt, einschließlich Tagesabdeckung, Zeitstempel,
+  Eingangsprobleme und Durchschnittsabdeckung. Tagesdiagnosen der Wallbox folgen
+  unabhängig dem eCharger-Schalter. Quellenstatus bleibt ausdrücklich sichtbar.
+- Interne Messwerte/Berechnungen, Frische, Readiness und Energie-Ledger unverändert.
+  Debug aktiviert keine MQTT-Kanäle. Bestehende Advanced-/Gerätegruppenfilter bleiben
+  erhalten; als Basic eingestufte Werte wie deratingreason bleiben Basic.
+- Discovery und Werte verwenden denselben Veröffentlichungsbestand. Vorherige
+  optionale Retained-Werte/Metadaten werden über das vorhandene Manifest bereinigt;
+  kein neues Zustandsformat, kein Reset und keine Änderung privater Konfiguration.
+- Validierung: 368 Offline-Tests einschließlich fünf neuer Diagnose-/Retirement-
+  Tests bestanden; vollständiger Linter und Compose-Parität samt Overrides bestanden.
+  Keine Geräte-/Brokerverbindung; lokale Fake-Server außerhalb der Socket-Sandbox.
+  Live-Installation und Prüfung im MQTT Explorer bleiben offen.

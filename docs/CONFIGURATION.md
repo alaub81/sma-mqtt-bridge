@@ -75,7 +75,7 @@ the independently configured portal retains its PV-share channels.
 | Home Manager advanced | Skip Unit 1 metadata polling, assignment-table reads and all delegated `device-*` channels. Keep the six Unit 2 plant/grid readings. UDP currently exposes only basic readings. |
 | Inverter advanced | Omit published identity channels and explicitly tagged supplementary properties, including Sunny Boy type and power-limit parameters. Keep the existing energy, power, phase, battery, internal temperature and operating-status measurements. |
 | eCharger advanced | Omit firmware, SEMP control setpoints and raw parameter duplicates. Keep charging measurements, vehicle-status text/code, readable charging settings and command feedback. |
-| Diagnostics | Keep operational source status channels regardless of this flag. Omit last-success timestamps and optional failure/timeout/outage metrics, Home Manager rejected-block count and SEMP raw health/event/registration/mode codes. |
+| Diagnostics | Keep operational source status channels regardless of this flag. Hide optional plant coverage/input/time/average diagnostics and derived Wallbox day diagnostics under their owning device flag. Omit last-success timestamps and optional failure/timeout/outage metrics, Home Manager rejected-block count and SEMP raw health/event/registration/mode codes. |
 
 Operational availability is always advertised for enabled measurement sources, including
 `diagnostics#apistatus`, `diagnostics#sempstatus` and `portal#status` used by the garage widget.
@@ -85,6 +85,15 @@ from the same freshness/error policy used by supervision. Disabled adapters stil
 and do not advertise source status. Optional diagnostic channels are retired through the existing
 persistent topic manifest when disabled; operational status channels remain owned and published.
 Source readiness does not certify every property's timestamp or immediate broker reachability.
+
+Classification, not the topic path alone, controls visibility. A profile explicitly
+marking `diagnostics/deratingreason` as Basic keeps that measurement available
+when diagnostics are disabled. All Advanced-classified channels follow their
+device Advanced flag. The plant currently has no Advanced channels.
+Plant day accounting, freshness, readiness and debug logging continue internally
+when optional MQTT diagnostics are hidden; debug flags never reenable topics.
+Recreate the container with the updated ENV; a restart alone does not reload ENV.
+The existing state volume/manifest must be preserved for retained retirement.
 
 Filters apply before Modbus scheduling and value decoding: blocks containing only disabled properties
 are not polled. Blocks shared with enabled values and mandatory identity checks are still read;
@@ -646,7 +655,7 @@ device polling or InfluxDB credentials are required.
 | `SMAB_PLANT_PUBLISH_PARTIAL_DAY` | `false` | Boolean; test mode publishing initial partial-day counter deltas from the first valid saved snapshot. Status remains `partial`. Does not override gaps, resets, battery-boundary or input-validity guards. |
 | `SMAB_PLANT_DEBUG_ENABLED` | `false` | Boolean; opt into calculation and selected register evidence. Requires enabled plant and `SMAB_LOG_LEVEL=DEBUG` to emit logs. No extra device reads. |
 | `SMAB_PLANT_DEBUG_INTERVAL_SECONDS` | `60` | Positive number of seconds; minimum interval between calculation reports and between reports per selected register. No immediate log on every change. |
-| `SMAB_PLANT_DIAGNOSTICS_ENABLED` | `true` | Boolean; optional source receipt diagnostics. Per-value coverage/date/boundary diagnostics remain available. |
+| `SMAB_PLANT_DIAGNOSTICS_ENABLED` | `true` | Boolean; publish optional plant diagnostics including coverage, dates, boundaries, input status and averages. False removes their metadata and retained values; operational plantstatus remains. |
 
 JSON uses `plant.enabled`, `homieId`, `gridSource`, `updateIntervalSeconds`,
 `maxSkewSeconds`, `boundaryToleranceSeconds`, `checkpointIntervalSeconds`,
@@ -703,7 +712,7 @@ logical source and internal property key. Reasons distinguish `missing-or-invali
 `negative-directional-flow` and `sample-skew`; negative household results are
 identified by `house/consumption` or `house/consumptionwithcharging` with
 `negative-balance`. With no blocking input/balance it reports `{"status":"ready"}`.
-This diagnostic remains available when optional source diagnostics are disabled.
+This diagnostic follows `SMAB_PLANT_DIAGNOSTICS_ENABLED`, like all optional plant diagnostics.
 A retained device value is not evidence of a currently valid source observation.
 Invalid PV power blocks both PV power sums and household W, including at night;
 calendar darkness alone never converts an invalid register into a measured zero. Values can include `partial`,
@@ -858,7 +867,9 @@ this property has the scope of the existing Wallbox total-energy measurement.
 
 The Wallbox value and its `diagnostics/wallboxdaystatus` / `wallboxenergytime`
 properties use the configured eCharger Homie device ID, alongside totalenergy
-and sessionenergy. The plant retains `diagnostics/housewithoutwallboxdaystatus`
+and sessionenergy. These optional Wallbox diagnostics follow
+`SMAB_ECHARGER_DIAGNOSTICS_ENABLED`, independently of the plant flag.
+The plant retains `diagnostics/housewithoutwallboxdaystatus`
 and `housewithoutwallboxenergytime`. Diagnostics report coverage and oldest
 committed input UTC time. A partial Wallbox day does not degrade charger readiness.
 The previous plant wallbox node and its two diagnostics are retired through the

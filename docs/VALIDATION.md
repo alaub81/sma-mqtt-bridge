@@ -1748,3 +1748,25 @@ JSON tariffs and explicit ENV-zero precedence, and retained retirement with
 byte-preserved energy state. Existing zero-tariff/single-PV and weighted-sum tests
 remain covered. Full lint, Compose parity including overrides and diff hygiene pass.
 No build, deployment, publication, device I/O or private tariff changes occurred.
+
+## Optional plant diagnostic visibility, 2026-10-15
+
+SMAB_PLANT_DIAGNOSTICS_ENABLED=false now removes all optional plant diagnostics
+from Homie discovery and published values, including coverage, energy timestamps,
+input problems and seven-day status. The operational plantstatus remains, just as
+other enabled measurement-source status does. Derived Wallbox day coverage/time
+follows SMAB_ECHARGER_DIAGNOSTICS_ENABLED independently. Debug does not reenable
+MQTT diagnostics. Profile classification is unchanged; Basic derating remains
+visible and existing Advanced flags still control Advanced groups.
+
+A publication inventory distinct from internal observations preserves calculation,
+freshness, readiness and ledger behavior. All 368 offline tests pass, including
+five new tests for plant metadata/value suppression with byte-identical ledger,
+source-error status, debug independence, all four plant/Wallbox flag combinations,
+Basic derating preservation and actual retained retirement on both logical outputs.
+Existing source-status, Advanced filtering, widget and publication-cache regressions
+remain covered. Full lint over 174 public files, Compose parity including overrides
+and diff hygiene pass. Local fake-server tests run outside the socket sandbox.
+No image build/deployment, device/broker access or openHAB change occurred; target
+MQTT Explorer acceptance remains pending. Preserve the existing state volume so
+the ownership manifest can retire the previous optional topics.
