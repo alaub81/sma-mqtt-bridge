@@ -1920,3 +1920,115 @@ both Wallbox variants, six-date history cutoff, missing-day denominator, midnigh
 DST, restart, stale-current omission and committed-only publication. Complete lint
 and Compose parity pass. This is offline evidence; no deployment, live MQTT or
 openHAB change was performed.
+
+## InfluxDB 2 history-copy preparation, 2026-10-15
+
+The user supplied screenshots of 17 distinct orphaned Item links and confirmed
+InfluxDB 2.x. A worksheet preserves all 17 Item names with no inferred targets;
+15 are copy candidates, while unsupported frequency and semantically different
+production-based earnings stay separate. Target names and persistence metadata
+are pending. No connection, database write or Item removal occurred.
+
+The offline Flux generator defaults to read-only counts and first/last previews.
+Explicit copy mode changes measurement and an existing matching item tag, preserving
+other tags, fields and timestamps. It guards empty sources, unexpected item tags
+and populated target intervals. It has no deletion or automatic overwrite path.
+Checks are not transactional; concurrent writes in the target interval must be
+prevented. Partial failures require review, not blind retry. The workflow documents
+backup, fixed UTC bounds, per-pair review and later validation before Item removal.
+
+All 394 offline tests and full lint pass. Four new tests cover the mapping inventory,
+read-only defaults, generated copy guards, identity/time validation and Flux literal
+escaping. These tests validate generated text, not Flux execution against a live
+InfluxDB server. Live schema review, execution and copied-history acceptance remain
+open. Official openHAB and Flux documentation was consulted.
+
+## Refreshed Item inventory and Grafana comparisons, 2026-10-15
+
+Read-only live metadata captured through the existing Safari session supplies
+159 scoped Items, with 18 targeted Item-detail checks covering channel links,
+units and effective persistence. The original 2026-10-14 inventory remains
+unchanged. Public CSVs exclude states, credentials and private broker identifiers.
+Nine retained Items have confirmed canonical links; retained PV total daily yield
+is currently unlinked. Two Home Manager power Items and three Carport voltage
+Items have actual new names and correct links, but openHAB reports them as not
+persisted. The old production-remuneration Item is unlinked. Both new average
+Items are linked, use kWh/d metadata and have everyChange/restoreOnStartup policies.
+These facts establish configuration, not successful stored measurements.
+
+The existing Grafana dashboard was backed up and updated in TESTS with its UID
+preserved. The generated model matches all 47 current Item pairs and 95 measurement
+queries, adding the without-Wallbox average methods comparison and a standalone
+inclusive average. Existing solid lines, no point markers and global time selection
+are preserved. The updated intro and both new panels were visible after import.
+The average panels showed no data in the selected last-hour window; complete
+history coverage and numerical equivalence remain unaccepted. No live Item,
+persistence-policy or InfluxDB changes occurred. No old Bridge history is silently
+joined to a replacement Item, and no production earnings become feed-in earnings.
+
+An automatic review rejected discarding unsaved Grafana editor state. It was not
+discarded: the editor tab remains open and the import used a separate tab, preserving
+the draft. The saved dashboard was separately backed up before updating. Direct
+openHAB API certificate verification was not bypassed; the already open Safari
+session supplied the metadata export instead. Official openHAB and Grafana
+configuration/export documentation was consulted.
+
+All 394 offline tests and full lint pass. The worksheet regression distinguishes
+ten relinks, five replacement candidates and two archive-only entries. CSV and
+model consistency checks pass; live Flux migration remains unexecuted.
+
+## Inventory follow-up and corrected PV links, 2026-10-15
+
+Live Item details confirm persistence on the five Home Manager/Carport replacement
+Items and the new feed-in earnings Item (EUR, grid#totalearnings). Inventory now
+contains 160 scoped Items, 20 targeted channel checks and 48 comparison pairs.
+After Andreas corrected the links, independent reads confirm lifetime yield only
+on totalyield and daily yield only on totaldailyyield, both with
+everyChange/restoreOnStartup. Earlier mixed-history points were not changed.
+The 56-panel, 97-query Grafana follow-up model is prepared but not saved: the
+import folder selection remains unresponsive. Prior saved dashboard is preserved.
+All 394 offline tests and the linter passed. No InfluxDB copy or deletion ran;
+full history/value comparison remains separate.
+
+### Grafana follow-up saved after restart, 2026-10-15
+
+After Andreas restarted Grafana, the follow-up was imported directly from TESTS,
+preserving the existing dashboard UID and folder. The saved dashboard visibly
+shows 48 comparison pairs, confirmed persistence, corrected PV link notes and
+the new feed-in earnings comparison panel. This resolves the earlier unsaved
+import status. Query/value and history acceptance remain separate. No database
+history was copied or repaired.
+
+## Live history copy execution, 2026-10-15
+
+The three populated replacement histories returned 205,552 copied points in total.
+Carport L1/L2 have no source data. Backup availability was user-confirmed only.
+See [the execution record](INFLUX2_ITEM_MIGRATION.md#live-execution-2026-10-15).
+Independent post-copy acceptance remains pending after the verification queries
+encountered a full query queue. No Item or original measurement was deleted.
+All 394 tests and the linter passed after fixing Flux generation.
+
+## PV nighttime power sentinel, 2026-10-15
+
+All 396 offline tests and the full linter pass. Bundled STP8/SB4 active power now
+normalizes the explicit raw SMA int32 sentinel to 0 W on successful reads via
+validated profile opt-in. Tests cover normal/negative values, disabled opt-in,
+invalid profile settings, nighttime PV/house readiness and invalidation on source
+error or expired power. Existing identity and truncated-response tests still pass.
+This reproduces the supplied openHAB transformation for the sentinel, not a
+verified standby classifier. No live deployment or nighttime acceptance is claimed.
+Host overrides need reconciliation; energy-state resets are outside this change.
+
+## Invalid-value audit and ledger continuity, 2026-10-15
+
+Static review found further legacy-zeroing differences on DC measurements and
+inverter grid powers, but no additional confirmed live failure. These channels
+remain unchanged pending evidence. Battery and energy-counter invalid values are
+not safe zero substitutes. The complete audit is in
+[INVALID_VALUE_AUDIT.md](INVALID_VALUE_AUDIT.md).
+
+A regression correction excludes the power-only invalidAsZero option from ledger
+identity; existing signatures and persisted accounts survive this option change.
+All 397 tests and the full linter pass, including existing freshness, missing-input
+and reset cases.
+Live deployment and pre-existing configuration-changed diagnosis remain pending.

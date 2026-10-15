@@ -404,7 +404,8 @@
         -2147483648
       ],
       "datatype": "integer",
-      "channelGroup": "basic"
+      "channelGroup": "basic",
+      "invalidAsZero": true
     },
     {
       "id": "power-l1",

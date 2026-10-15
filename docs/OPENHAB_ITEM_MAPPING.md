@@ -1,15 +1,24 @@
 # openHAB old and new Item mapping
 
-Updated 2026-10-15. The inverter/Home Manager inventory was observed on
-2026-10-14; nine plant Item names, labels, units and channel links were read
-in the live openHAB UI on 2026-10-15. Scope: three inverters, Home Manager and
-related plant/household calculations. Andreas excludes Wallbox Items from
-comparison. Grafana and its prerequisites are step two.
+Updated after the live metadata inventory on 2026-10-15. The
+[current inventory](pv-item-inventory-2026-10-15.csv) records 160 scoped Items;
+[20 targeted channel/persistence checks](pv-channel-inventory-2026-10-15.csv)
+distinguish actual links from expected topics. Original 2026-10-14 inventories
+remain unchanged. Wallbox Items remain outside this comparison.
 
-There are **46 recorded Item pairs**, **2 old calculations without a bridge
-counterpart**, and **33 observed new-only Items**. All eight previously missing
-new plant Item names are now confirmed. No missing new Item names remain in
-this scoped mapping. Value equivalence remains a separate comparison.
+There are **48 recorded Item pairs**, **no unmatched old calculation Items**, and **52 observed new-only or retained historical Items**. Pairing confirms
+identity, not equal algorithms or complete histories. The average pair explicitly
+has different semantics. Current comparison readiness is in
+[pv-comparison-2026-10-15.csv](pv-comparison-2026-10-15.csv).
+
+Existing daily/battery/house Items were retained through relinking. The two
+Home Manager power Items have new names, as do three Carport voltage Items.
+All five new Items now have **everyChange/restoreOnStartup persistence**,
+verified after Andreas enabled it. The new `smaplant_Einspeisevergutung_gesamt`
+Item is linked to `grid/totalearnings` with EUR and persistence.
+Andreas corrected the PV links; live verification confirms lifetime yield only on
+`pv#totalyield` and daily yield only on `pv#totaldailyyield`. Both Items retain
+everyChange/restoreOnStartup persistence. Prior mixed-history validation is separate.
 
 The [complete CSV](openhab-item-mapping.csv) carries status, exact Homie topic
 and comparison notes. [New-only CSV](openhab-new-only-items.csv) and
@@ -17,10 +26,10 @@ and comparison notes. [New-only CSV](openhab-new-only-items.csv) and
 Item names and German labels below preserve the recorded installation spelling.
 Groups are excluded because they are not measurement/state counterparts.
 
-## Old Items without a bridge counterpart
+## Calculations requiring semantic comparison
 
-- **Strom_Durchschnitt_Tagesverbrauch_Number_Result** (Stromverbrauch Tagesdurchschnitt): Seven-day average excluding Wallbox ON days retained in openHAB for Smart-Grid; no bridge replacement selected.
-- **TotalPowerEarnings** (Gesamt Stromverdienst): Tariff calculation retained in openHAB; no bridge replacement selected.
+- **Strom_Durchschnitt_Tagesverbrauch_Number_Result** now pairs with `smaplant_Hausverbrauch_ohne_Wallbox_im_SiebenTageDurchschnitt` for a methods comparison: legacy excludes charging days, bridge subtracts measured Wallbox energy and includes today.
+- **TotalPowerEarnings** (Gesamt Stromverdienst) pairs with the newly verified `smaplant_Einspeisevergutung_gesamt` at `grid/totalearnings`. Check tariffs and corrected counter basis. Keep the former Bridge PV-production earnings history separate.
 
 ## Recorded Item pairs
 
@@ -44,9 +53,9 @@ A pair confirms the recorded channel association, not numerical equivalence.
 | Old Item | Old label | New Item | New label | Unit |
 | --- | --- | --- | --- | --- |
 | SMAEnergyMeter_BezogeneEnergie | Bezogene Energie | smahomemanager_Bezogene_Energie | Bezogene Energie | kWh |
-| SMAEnergyMeter_BezogeneLeistung | Leistung Bezug | smahomemanager_Netzbezugsleistung | Netzbezugsleistung | W |
+| SMAEnergyMeter_BezogeneLeistung | Leistung Bezug | smahomemanager_Bezogene_Leistung | Bezogene Leistung | W |
 | SMAEnergyMeter_EingespeisteEnergie | Eingespeiste Energie | smahomemanager_Eingespeiste_Energie | Eingespeiste Energie | kWh |
-| SMAEnergyMeter_EingespeisteLeistung | Leistung Einspeisung | smahomemanager_Einspeiseleistung | Einspeiseleistung | W |
+| SMAEnergyMeter_EingespeisteLeistung | Leistung Einspeisung | smahomemanager_Netzeinspeiseleistung | Netzeinspeiseleistung | W |
 
 ### Inverter 1 roof
 
@@ -132,9 +141,9 @@ an updated inventory before claiming current installation completeness.
 | — | — | smainv3carport_Leistung_Phase_L3 | Leistung Phase L3 | W |
 | — | — | smainv3carport_Netzeinspeiseleistung | Netzeinspeiseleistung | W |
 | — | — | smainv3carport_Netzfrequenz | Netzfrequenz | Hz |
-| — | — | smainv3carport_Netzspannung_Phase_L1 | Netzspannung Phase L1 | V |
-| — | — | smainv3carport_Netzspannung_Phase_L2 | Netzspannung Phase L2 | V |
-| — | — | smainv3carport_Netzspannung_Phase_L3 | Netzspannung Phase L3 | V |
+| — | — | smainv3carport_Spannung_Phase_L1 | Netzspannung Phase L1 | V |
+| — | — | smainv3carport_Spannung_Phase_L2 | Netzspannung Phase L2 | V |
+| — | — | smainv3carport_Spannung_Phase_L3 | Netzspannung Phase L3 | V |
 | — | — | smainv3carport_Netzstrom_Phase_L2 | Netzstrom Phase L2 | A |
 | — | — | smainv3carport_Netzstrom_Phase_L3 | Netzstrom Phase L3 | A |
 | — | — | smainv3carport_Verfugbarkeit_der_Datenquelle | Verfügbarkeit der Datenquelle | — |
@@ -171,8 +180,8 @@ seven-day average, which excludes entire charging days and averages remaining da
 ## Home Manager power target rename, 2026-10-15
 
 The maintained CSV targets now use measurements/powerdrawn for the existing
-smahomemanager_Netzbezugsleistung Item and measurements/powergridfeedin for
-smahomemanager_Einspeiseleistung. The recorded old live links used powerimport
+smahomemanager_Bezogene_Leistung Item and measurements/powergridfeedin for
+smahomemanager_Netzeinspeiseleistung. The recorded old live links used powerimport
 and powerexport. This is a documented migration target, not a new observation
 or a performed live relink; preserve these Item identities and histories.
 
@@ -184,3 +193,15 @@ house-power names. This is a migration target, not performed live relinking.
 Home Manager energyimport/energyexport retain their IDs and now include configured
 private offsets; remove equivalent legacy link/rule corrections before switching
 to these corrected totals. Keep existing Item names, units, rules and history.
+
+## Current Grafana comparison scope
+
+The dashboard update is saved from its backed-up version, preserving solid lines,
+no point markers, global time selection and existing panels. Home Manager power
+queries use the actual new Item names; older Bridge histories remain separate.
+An earnings panel uses the verified new feed-in remuneration Item. A methods-comparison panel adds the old average against the Bridge without-Wallbox
+average; a separate panel shows the inclusive Bridge average in kWh/d. Old and new
+average algorithms are not assumed numerically equivalent. The previously missing persistence is now confirmed enabled. The corrected PV links and possible earlier mixed history
+are explained in panel descriptions; the old production-remuneration Item remains
+separate from the new feed-in earnings comparison. Publication evidence belongs in
+VALIDATION.md; full history/value acceptance is separate.

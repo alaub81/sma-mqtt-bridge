@@ -345,3 +345,58 @@ days, not always seven. The startup partial day participates independently of
 daily-channel visibility. Omit invalid/missing days; measured zero remains valid.
 Keep both including/excluding-Wallbox channels under the plant. Preserve durable
 counter baselines, history schema and checkpoint cadence. No external backfill.
+
+## New Item history migration, 2026-10-15
+
+Andreas chooses new openHAB Items after channel renaming and requires transferring
+InfluxDB histories before removing old Items. InfluxDB version 2.x is confirmed;
+actual target names remain unknown. Prepare explicit old/new mappings and
+non-deleting copies preserving timestamps, fields and tags. Keep removed frequency
+and old PV-production remuneration separate from current feed-in remuneration.
+No automatic Item deletion or monetary-history reinterpretation is authorized.
+
+## Partial Item reuse and Grafana refresh, 2026-10-15
+
+The live inventory refines the blanket new-Item migration plan: ten listed Items
+retain their identities, five have actual replacement names, and two histories
+remain separate. Unchanged Item identities require no database copy. Current
+Grafana comparisons follow confirmed Item/link evidence, while missing persistence
+and absent links remain explicit. Average algorithms differ and must be labelled
+as a methods comparison. Reuse the existing dashboard UID/folder and preserve its
+solid-line style and global time selection. No history rewrite is inferred.
+
+## Follow-up persistence and earnings inventory, 2026-10-15
+
+Andreas enabled persistence on the five actual replacement Items; live Item details
+confirm the policies. A new feed-in earnings Item is also linked and persisted,
+separate from the old PV-production remuneration Item. Inventory now contains
+160 scoped Items and 48 pairs. A discovered daily/lifetime PV link conflict is
+explicitly pending correction; the user will perform it after the Safari link
+editor failed to respond. No successful save is inferred from opening a dialog.
+
+### PV link correction verified, 2026-10-15
+
+Andreas corrected the links manually. Live Item details confirm that
+`smaplant_PVGesamtertrag` has only `pv#totalyield` and
+`smaplant_PVGesamttagesertrag` has only `pv#totaldailyyield`. Both retain
+everyChange/restoreOnStartup persistence. The link conflict is resolved; review
+any earlier mixed lifetime-history interval separately, without automatic repair.
+The 48-pair Grafana follow-up was saved in the existing TESTS folder after
+Grafana restarted. Opening import from that folder bypassed the unresponsive
+folder picker. Updated introduction and earnings panel were verified in the UI.
+
+## PV nighttime sentinel compatibility, 2026-10-15
+
+Existing openHAB active-power channels use `smalimit.js`, which converts negative
+raw values to zero. The user confirmed nighttime standby. The bundled PV profiles
+now explicitly normalize the raw SMA int32 invalid-power sentinel to 0 W on a
+successful read. This preserves nighttime house calculations without synthesizing
+values during communication failures. It does not classify status 307 (OK) as
+standby and does not clamp other negative readings. See [profiles](PROFILES.md).
+
+## Power-only profile compatibility and ledger identity
+
+The validated `invalidAsZero` power option is excluded from energy-ledger binding
+identity. Adding it to otherwise identical profiles must preserve existing daily
+bases and average history. All other signature inputs remain unchanged. See the
+[invalid-value audit](INVALID_VALUE_AUDIT.md) for remaining compatibility differences.

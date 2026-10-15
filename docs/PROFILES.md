@@ -176,3 +176,19 @@ string with whole seconds and `Z`. It requires datatype string, scale 1, an empt
 unit, and no valueMap/minimum/maximum. Explicit raw invalid sentinels are applied
 before conversion. The Home Manager profile uses it for an additional Basic
 plant-time-iso mapping alongside Advanced raw plant-time, without another poll.
+
+## Explicit PV power sentinel compatibility
+
+The bundled STP8 and SB4 profiles set `invalidAsZero: true` on active power
+(register 30775). A successfully read raw int32 SMA sentinel `-2147483648` is
+normalized to 0 W before publication and plant calculations, matching the existing
+openHAB `smalimit.js` behavior for this sentinel. Other negative numeric readings
+are preserved. This is an explicit compatibility rule, not inferred standby: the
+status code 307 means OK and does not prove standby. No zero is generated for a
+failed read, truncated response, identity mismatch or expired observation.
+
+The optional boolean defaults to false. It is accepted only for numeric, unscaled
+int32 power in W with the sole invalid sentinel `-2147483648` and no value map or
+format. Energy counters, battery measurements and other invalid values retain
+their existing behavior. Host profile overrides must carry this property explicitly;
+updating only the container does not change an overriding profile file.

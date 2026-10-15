@@ -1064,3 +1064,142 @@ Bestehende API-/SEMP-Mappings und alle bisherigen Topics bleiben erhalten.
   insufficient-history ohne Wert. Live-Abnahme nach Installation bleibt offen.
 - Alle 390 Offline-Tests, vollständiger Linter und Compose-Parität bestanden.
   Auf Wunsch als lokales Release v0.6.1 vorbereitet; kein Push oder Deployment.
+
+## 2026-10-15 – Neue Items und InfluxDB-2-Historien vorbereiten
+
+- Andreas meldet 17 verwaiste Links nach Kanalumbenennung und möchte neue Items.
+  Alte Items erst nach Historienkopie und Prüfung entfernen. Screenshots inventarisiert:
+  docs/influx2-item-migration-2026-10-15.csv; tatsächliche neue Namen fehlen noch.
+- InfluxDB 2.x bestätigt. Offline-Generator tools/influx2_copy_item.py erzeugt
+  lesende Vorschau oder explizite Flux-Kopierabfrage pro Item-Paar. Originale bleiben;
+  Zeitstempel/Felder/Tags erhalten, Measurement und vorhandenes item-Tag umbenennen.
+  Leere Quelle, fremdes item-Tag und belegtes Zielintervall verhindern die Kopie.
+- 15 Kandidaten für gleiche Bedeutung. Frequenz ohne Nachfolger separat erhalten;
+  alte PV-Ertragsvergütung nicht in die neue Einspeisevergütung kopieren.
+- Offen: neue Item-Namen, tatsächliche Persistenz-Metadaten, Bucket/Organisation,
+  Backup und Stichtag festlegen; Abfragen live prüfen, kopieren und kontrollieren.
+  Keine InfluxDB-Verbindung, Kopie oder Item-Löschung durchgeführt.
+- Anleitung: docs/INFLUX2_ITEM_MIGRATION.md. Alle 394 Offline-Tests und der
+  vollständige Linter bestanden. Keine Live-Flux-Abnahme und kein Deployment.
+
+## 2026-10-15 – Inventar und Grafana nach Kanalwechsel aktualisiert
+
+- Andreas bestätigt Item-Erhalt durch Neuverknüpfung für Tagesertrag/Batterie/
+  Hauswerte; pauschale Neuanlage und Historienkopie damit überholt. Lesende
+  Live-Inventur: 159 Items im Projektumfang, 18 gezielte Link-/Persistenzprüfungen.
+  Neue CSVs vom 15.10.; ursprüngliche Inventur vom 14.10. unverändert erhalten.
+- Zehn der 17 gemeldeten Items behalten den Namen und benötigen keine Datenkopie.
+  Neun davon live korrekt verknüpft; PVGesamttagesertrag aktuell ohne Link.
+  Zwei Home-Manager-Leistungen und drei Carport-Spannungen haben tatsächlich neue
+  Itemnamen; alle fünf laut openHAB noch ohne InfluxDB-Historisierung.
+- Vergütung des bisherigen PV-Ertrags aktuell ohne Link, kein bestätigtes neues
+  Einspeisevergütungsitem. Alte Geldhistorie nicht als Netzeinspeisevergütung nutzen.
+  Frequenz bleibt ohne Nachfolger. Beides separat erhalten.
+- Durchschnittsitems mit/ohne Wallbox live bestätigt, Einheit kWh/d und Persistence
+  everyChange/restoreOnStartup. Grafana-Methodenvergleich erklärt die abweichende
+  alte Ladetag-Ausnahme und das neue Fenster einschließlich heute.
+- Bestehendes Dashboard SMA · Alt und Neu im Vergleich im Ordner TESTS gesichert
+  und aktualisiert: 47 Alt/Neu-Paare plus zusätzliches Durchschnittspanel,
+  95 Messreihenabfragen. Home-Manager-Abfragen auf tatsächliche neue Items gestellt;
+  durchgezogene Linien ohne Punkte und gemeinsamer Zeitraum bleiben erhalten.
+- Neue Panels und Hinweistexte nach Import sichtbar; im geprüften letzten Stunden-
+  fenster noch keine Durchschnittsdaten. Vollständige Historien-/Wertabnahme offen.
+- Automatische Prüfung blockierte das Verwerfen ungespeicherter Editoränderungen.
+  Entwurf blieb offen; Update in separatem Tab durchgeführt, keine Arbeit verworfen.
+- Alle 394 Offline-Tests und vollständiger Linter bestanden; Zuordnung sämtlicher
+  Dashboardpaare geprüft. Keine Items, Links, Persistence-Regeln oder InfluxDB-
+  Historien geändert. Kein Commit oder Push für diese Dokumentationsänderung.
+
+## 2026-10-15 – Historisierung bestätigt, neues Vergütungsitem ergänzt
+
+- Alle fünf neuen Home-Manager-/Carport-Items nach Andreas' Ergänzung live geprüft:
+  InfluxDB everyChange/restoreOnStartup jetzt aktiv. Frühere offene Konfiguration
+  damit erledigt; gespeicherte Historien und eventuelle Alt-Datenkopie separat prüfen.
+- Neues smaplant_Einspeisevergutung_gesamt mit grid#totalearnings, EUR und
+  Persistence bestätigt. Bisherige PV-Ertragsvergütung bleibt separat erhalten.
+  Inventar: 160 Items, 20 gezielte Kanalprüfungen, 48 Alt/Neu-Paare.
+- Weiter offen: smaplant_PVGesamtertrag ist zugleich mit totalyield und
+  totaldailyyield verbunden; smaplant_PVGesamttagesertrag bleibt ohne Link.
+  Andreas hat Korrektur freigegeben. Safari-Linkdialog reagierte nicht auf
+  Itemauswahl, kein Speichern erfolgt; Andreas hängt den Tageskanal selbst um
+  und meldet sich. Vor Abschluss beide Links erneut prüfen. Eventuelle Mischwerte
+  in der bisherigen Gesamtertrags-Historie nicht automatisch ändern oder löschen.
+- Grafana-Ergänzung vorbereitet: fehlende Historisierung nicht mehr als offen
+  melden, neues Einspeisevergütungsitem vergleichen, PV-Linkkonflikt kennzeichnen.
+  Originale Historien und alte Itemnamen bleiben erhalten.
+
+- Erledigt: Andreas hat den PV-Tageskanal umgehängt. Beide Items live erneut
+  geprüft: Gesamtertrag nur totalyield, Tagesertrag nur totaldailyyield; beide
+  weiterhin mit everyChange/restoreOnStartup. Inventar und Zuordnung aktualisiert.
+- Grafana-Folgemodell mit 48 Paaren vorbereitet; noch nicht gespeichert, weil die
+  Ordnerauswahl im Import nicht reagiert. Bisheriges Dashboard bleibt erhalten.
+- 394 Offline-Tests und Linter bestanden. Keine InfluxDB-Historien kopiert,
+  repariert oder gelöscht; mögliche frühere Mischwerte separat prüfen.
+
+- Erledigt nach Grafana-Neustart: Aktualisierung im bestehenden Ordner TESTS
+  gespeichert. Import direkt aus dem Ordner umgeht die hängende Ordnerauswahl.
+  48 Paare, neues Vergütungspanel und korrigierte PV-Hinweise live sichtbar;
+  bisheriger Hinweis „noch nicht gespeichert“ damit erledigt. Historien unverändert.
+
+## 2026-10-15 – InfluxDB-Historien kopiert, Nachprüfung offen
+
+- Aktuelles Backup von Andreas bestätigt; Ort und Wiederherstellung nicht geprüft.
+- Drei befüllte Alt-Historien vor 18:00 Uhr Ortszeit kopiert: Netzbezug 85.724,
+  Einspeiseleistung 106.641, Carport L3 13.187 Messwerte. Summe 205.552.
+  L1/L2 enthalten keine Quelldaten und wurden übersprungen.
+- Flux-Generator nach Live-Typfehler und fehlerhafter Konstantprojektion korrigiert.
+  Erfolgreiche Kopierantworten gesichert; Originale und Items nicht gelöscht.
+- [ ] Unabhängige Zähl-/Wertprüfung nach Entlastung der Abfragewarteschlange
+  abschließen; bisher meldet InfluxDB „queue length exceeded“. Keine Kopie blind
+  wiederholen. Siehe [Ablaufnachweis](docs/INFLUX2_ITEM_MIGRATION.md).
+- 394 Tests und Linter bestanden. Keine Veröffentlichung oder Commit durchgeführt.
+
+## 2026-10-15 – PV-Nachtbetrieb und Hausleistung
+
+- Live im MQTT Explorer: sma-plant alert, plantstatus stale; Hausleistung retained
+  308 W mit letzter Veröffentlichung 20:20:45. Tagesstatus configuration-changed
+  und Durchschnitt insufficient-history sind separate Befunde.
+- Ursache abgeglichen: alte openHAB-Leistungsregister verwenden smalimit.js;
+  Andreas hat die Transformation geliefert (negative Werte werden null). SMA-
+  Leistungs-Sentinel -2147483648 wurde bisher in der Bridge verworfen.
+- Bundled PV-Profile behandeln genau diesen frisch gelesenen Sentinel nun explizit
+  als 0 W. Status 307 bedeutet OK, keine belastbare Standby-Erkennung. Andere
+  negative Werte bleiben erhalten; Fehler, Identitätsprüfung und Frische gelten weiter.
+- [ ] Nach Deployment verwendete Host-Profilkopien abgleichen (invalidAsZero am
+  PV-Leistungsregister), Nacht-Hausleistung und ready live prüfen. Kein Deployment
+  oder Commit in diesem Schritt. Tagesstatus configuration-changed separat prüfen.
+- Prüfung: 396 Offline-Tests und vollständiger Linter bestanden; Live-Abnahme offen.
+
+## 2026-10-15 – Weitere Ungültigwert-Fälle geprüft
+
+- [Prüfbericht](docs/INVALID_VALUE_AUDIT.md): weitere Unterschiede zu openHAB bei
+  DC-Leistung/Strom/Spannung und Wechselrichter-Netzleistungen. Aktuelle Hausleistung
+  verwendet diese Zusatzkanäle nicht; Wechselrichter-Netzquelle wäre gesondert betroffen.
+- Batterie-, Ertrags- und Energiezähler nicht pauschal nullen. Temperaturen dürfen
+  gültig negativ sein. Retained Zahlen allein beweisen keine aktuelle Messung.
+- Seiteneffekt des Nachtfixes behoben: invalidAsZero wird als reine Leistungsoption
+  nicht in die Energie-Ledger-Signatur aufgenommen. Bisherige Basen und Historien
+  bleiben bei ansonsten gleichem Profil erhalten. Persistierter Regressionstest
+  bestätigt dies; 397 Tests und vollständiger Linter bestanden.
+- [ ] Weitere bisher auf null transformierte Kanäle einzeln abnehmen; noch keine
+  pauschale Änderung. Bereits vorhandenes configuration-changed separat klären.
+
+- Ergänzte sma*-Transformationsliste mit privatem Bestand abgeglichen: Skalierungen,
+  negative→0/UNDEF, Status-MAPs und Netzenergie-Offsets enthalten. Private Konstanten
+  nicht übernommen. Offsets bei Bridge-Items genau einmal anwenden.
+- [ ] Aktive Item-/Channel-Verwendung von sma_undef.js (0→UNDEF) feststellen;
+  bestehende Things und Mapping belegen diese Zuordnung noch nicht. Status-MAP-
+  Eintrag allein beweist keinen gepollten Betriebsstatus.
+
+- Aktuellen Things-Export abgeglichen: 41 aktive Daten-Things stimmen nach
+  Leerraum-Normalisierung mit den bisherigen Deklarationen überein. 17 Kanäle
+  verwenden negative→0-Transformationen; zwei PV-Gesamtleistungen sind im Nachtfix
+  behandelt, 15 Zusatzkanäle bleiben einzeln zu bewerten. Kein Nachweis von 15 Fehlern.
+- sma_undef.js und Netzenergie-Offsetskripte sind hier nicht eingebunden. Offene
+  Item-Link-/Regelprüfung bleibt erforderlich. Batterieleistungen ohne readTransform;
+  kein PV-Betriebsstatusregister 30203 deklariert.
+
+- Item-Link-Frage geklärt: Andreas bestätigt keine zusätzlichen Transformationen
+  an den Links. Dortige Prüfung abgeschlossen. sma_undef.js und Netzoffsetskripte
+  sind weder im aktuellen Things-Export noch an diesen Links eingebunden; bloße
+  Dateipräsenz belegt keine aktive Nutzung. Regelverwendung weiterhin nicht belegt.

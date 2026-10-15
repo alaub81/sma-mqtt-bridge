@@ -75,7 +75,8 @@ it permits house kWh without completing physical acceptance or changing profile 
 An optional initial-partial-day publication flag also permits immediate counter
 comparison from the first saved snapshot while retaining partial status; covered
 midnight/restart acceptance remains required for normal calendar-day accounting.
-The Grafana comparison dashboard is already created with 46 pairs; full history
+The Grafana comparison dashboard is updated with 47 pairs and an additional
+Bridge average panel; full history
 coverage and numerical equivalence remain pending. Preserve histories and ownership.
 
 Complete the 100-row [migration ledger](migration-coverage.csv), remaining legacy
@@ -185,3 +186,51 @@ After the next installation, compare both house averages using today plus up to
 six available preceding dates. Confirm startup-day publication, midnight window
 rotation and measured Wallbox subtraction. The earlier wait for seven completed
 days is superseded; preserve state and existing Item links.
+
+## InfluxDB 2 history transfer before Item removal
+
+Complete the [Item mapping](influx2-item-migration-2026-10-15.csv) with actual new
+names and persistence metadata. Review backup/cutover, run preview and per-pair
+copy, validate history and dependent rules/charts before removing old Items.
+Keep unsupported frequency and semantically different old earnings separately.
+See the [prepared workflow](INFLUX2_ITEM_MIGRATION.md); three populated histories have been copied; independent post-copy acceptance remains pending.
+
+## Current inventory and Grafana gaps, 2026-10-15
+
+The refreshed inventory and comparison worksheet are dated 2026-10-15; retain the
+original 2026-10-14 snapshots. Ten renamed-channel Items retain their identity and
+need no InfluxDB copy; five actual replacement Items have confirmed new names.
+The two new Home Manager power Items and three Carport voltages are not persisted.
+PV total daily yield and old production remuneration have no channel link. Resolve
+these separately before accepting full comparisons. New averages are linked and
+configured for persistence, but their panels had no data in the inspected last-hour
+window. The old average and Bridge average have different algorithms. No Item,
+persistence or database changes were made while refreshing the dashboard.
+
+## Follow-up status of inventory gaps, 2026-10-15
+
+The five missing persistence policies reported above are now enabled and live
+verified. Feed-in earnings now have a linked, persisted Item and a Grafana pair.
+Do not repeat these as missing configuration. Stored-history completeness and any
+copy into the five replacement series remain separate. Resolve the PV daily/lifetime
+link conflict: daily channel currently also writes to the lifetime Item; the daily
+Item remains unlinked. Andreas will correct this manually; re-read both links
+before closing it. Do not repair or delete the affected history automatically.
+
+### PV link correction verified, 2026-10-15
+
+Andreas corrected the links manually. Live Item details confirm that
+`smaplant_PVGesamtertrag` has only `pv#totalyield` and
+`smaplant_PVGesamttagesertrag` has only `pv#totaldailyyield`. Both retain
+everyChange/restoreOnStartup persistence. The link conflict is resolved; review
+any earlier mixed lifetime-history interval separately, without automatic repair.
+The 48-pair Grafana follow-up was saved in the existing TESTS folder after
+Grafana restarted. Opening import from that folder bypassed the unresponsive
+folder picker. Updated introduction and earnings panel were verified in the UI.
+
+## Nighttime PV compatibility follow-up
+
+Deploy the explicit PV power sentinel normalization with matching host profiles.
+Verify fresh nighttime house power and plant availability; retain failure/expiry
+behavior. Investigate the independently observed configuration-changed day coverage
+without resetting energy state automatically.

@@ -1,3 +1,1 @@
 legacy_item,legacy_label,bridge_item,bridge_label,unit,status,homie_topic,notes
-Strom_Durchschnitt_Tagesverbrauch_Number_Result,Stromverbrauch Tagesdurchschnitt,,,kWh,no-bridge-counterpart,,Seven-day average excluding Wallbox ON days retained in openHAB for Smart-Grid; no bridge replacement selected.
-TotalPowerEarnings,Gesamt Stromverdienst,,,,no-bridge-counterpart,,Tariff calculation retained in openHAB; no bridge replacement selected.

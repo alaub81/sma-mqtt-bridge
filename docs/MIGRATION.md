@@ -495,3 +495,59 @@ consumption is its measured value so far, without extrapolation. Both plant
 average channel IDs and kWh/d units stay unchanged. Existing history and daily
 baselines are preserved; missing dates are omitted. See CONFIGURATION.md for
 startup-day visibility and coverage status. No live openHAB changes are included.
+
+## New Item identities and InfluxDB 2 histories, 2026-10-15
+
+Andreas now chooses new Items for the renamed channels. This supersedes earlier
+advice to keep every Item name by relinking. Preserve old Items until history copy
+and validation complete. The [17-entry worksheet](influx2-item-migration-2026-10-15.csv)
+records the supplied screenshots without inventing target Item names. The
+[InfluxDB 2 workflow](INFLUX2_ITEM_MIGRATION.md) provides an offline Flux generator.
+Fifteen entries are semantic copy candidates; removed frequency and the old
+production-remuneration series remain separate. New names, persistence metadata
+and database details still need confirmation. No live migration has occurred.
+
+## Live inventory and partial Item reuse, 2026-10-15
+
+The earlier new-Item plan is refined by live inspection: ten of the 17 listed
+Items retain their names and require relinking only, not history copying. Nine
+canonical links are confirmed; PV total daily yield remains unlinked. Five actual
+replacement Items are verified: two Home Manager powers and three Carport voltages.
+Their effective persistence is currently disabled. Removed frequency and old
+PV-production remuneration remain archive-only. The
+[current worksheet](influx2-item-migration-2026-10-15.csv) supersedes the earlier
+blank-target plan. Original source histories and Items remain untouched.
+
+The [current inventory](pv-item-inventory-2026-10-15.csv),
+[targeted live links](pv-channel-inventory-2026-10-15.csv) and
+[comparison readiness](pv-comparison-2026-10-15.csv) separate metadata presence,
+actual channel links, persistence policy and value/history acceptance. Grafana now
+uses current Home Manager power names and includes the average methods comparison.
+No linked feed-in-remuneration Item has been verified; no earnings history is
+reinterpreted or joined automatically.
+
+## Follow-up resolution of persistence and earnings gaps, 2026-10-15
+
+Live Item details now confirm everyChange/restoreOnStartup on all five new
+Home Manager/Carport Items. The new `smaplant_Einspeisevergutung_gesamt` has the
+`grid/totalearnings` link, EUR metadata and persistence. Mapping now records
+48 pairs, with no unmatched old calculation Item; algorithm and monetary-history
+acceptance still require comparison. Do not merge the old Bridge production-based
+earnings history into this new measurement.
+
+PV daily yield was found linked to `smaplant_PVGesamtertrag` in addition to its
+lifetime channel, leaving `smaplant_PVGesamttagesertrag` unlinked. The user approved
+correction, but the Safari link picker did not respond and no save occurred.
+Andreas will correct the links manually. Keep the conflict open until verified;
+the affected lifetime-history interval may contain mixed daily/lifetime values.
+
+### PV link correction verified, 2026-10-15
+
+Andreas corrected the links manually. Live Item details confirm that
+`smaplant_PVGesamtertrag` has only `pv#totalyield` and
+`smaplant_PVGesamttagesertrag` has only `pv#totaldailyyield`. Both retain
+everyChange/restoreOnStartup persistence. The link conflict is resolved; review
+any earlier mixed lifetime-history interval separately, without automatic repair.
+The 48-pair Grafana follow-up was saved in the existing TESTS folder after
+Grafana restarted. Opening import from that folder bypassed the unresponsive
+folder picker. Updated introduction and earnings panel were verified in the UI.
