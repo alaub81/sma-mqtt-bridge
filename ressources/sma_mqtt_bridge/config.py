@@ -28,8 +28,8 @@ class SafeRepr:
 @dataclass(frozen=True, repr=False)
 class Runtime(SafeRepr):
     language: str = "en"
-    translate_dir: str = DATA + "/translate"
-    profile_dir: str = DATA + "/profiles"
+    translate_dir: str = DATA + "/config/translate"
+    profile_dir: str = DATA + "/config/profiles"
     state_dir: str = DATA + "/state"
     timezone: str = "Europe/Berlin"
     log_level: str = "INFO"
@@ -412,7 +412,7 @@ def load_config(environ=None, bundled_dir=None):
     from .profiles import load_profile
 
     env = dict(os.environ if environ is None else environ)
-    filename = env.get("SMAB_CONFIG_FILE", DATA + "/config.json")
+    filename = env.get("SMAB_CONFIG_FILE", DATA + "/config/config.json")
     if not filename:
         raise ConfigError("SMAB_CONFIG_FILE must not be empty")
     explicit = "SMAB_CONFIG_FILE" in env
