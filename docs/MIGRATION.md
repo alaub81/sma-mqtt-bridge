@@ -551,3 +551,21 @@ any earlier mixed lifetime-history interval separately, without automatic repair
 The 48-pair Grafana follow-up was saved in the existing TESTS folder after
 Grafana restarted. Opening import from that folder bypassed the unresponsive
 folder picker. Updated introduction and earnings panel were verified in the UI.
+
+## Historical charging-session display, 2026-10-16
+
+The new session#status, session#energy and session#energytime channels supplement
+the existing measurements#sessionenergy Item/history. After bridge deployment,
+create/link their optional String, Number:Energy (kWh) and DateTime/String Items
+and select the matching three widget properties. The optional session#endedat
+channel records observed disconnection. No raw-channel relink, history copy,
+rescaling, automatic Item update or new device command is part of this change.
+The original 100-row migration baseline remains unchanged.
+
+The widget labels active energy, paused energy and last disconnected session
+separately, with the stored energy's source timestamp. Expired raw measurement
+values are not promoted to fresh measurements. The bounded session checkpoint
+must move with the existing state volume; it is independent of daily energy
+baselines and must not be used to reconstruct household consumption. Installation
+and live discovery/transition/rendering acceptance remain pending; see
+[the guide](../openHAB/echarger-comfort.md#session-display-after-charging).

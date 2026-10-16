@@ -719,3 +719,18 @@ transformations a second time. Optional rawenergyimport/rawenergyexport diagnost
 channels remain uncorrected. Earnings now belong to grid#totalearnings and use the
 corrected export counter once. Keep Item identities, rules and persistence; do not
 delete history or reset bridge energy baselines for these publication changes.
+
+## SMA-Plant MainUI overview
+
+The installation's SMA-Plant page combines the existing personal energy-flow,
+daily-energy, charger-comfort and BMW vehicle widgets with native openHAB layout
+blocks, cards, lists and a day chart. Overview values are followed by forecast,
+accounting quality and expandable device inventories. Numeric list entries open
+the analyzer; the detailed inventory itself is read-only. The existing charger
+widget retains its explicit controls and confirmations.
+
+The page covers the current SMA equipment members, including diagnostics and
+unlinked helper Items. A missing value is displayed as a dash and does not imply
+a zero or a working source link. Updating the page does not repair source links,
+history or accounting coverage. Existing Item metadata and global persistence
+remain authoritative. Personal-widget definitions remain independently editable.

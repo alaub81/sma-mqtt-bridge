@@ -1,6 +1,6 @@
 # eCharger garage list widget
 
-The garage entry shows vehicle connection, power and session energy (Ladesitzung:) together with
+The garage entry shows vehicle connection, power and a timestamped session display together with
 charging permission (Ladeberechtigung) and checked mode buttons with icons beside the labels. Selecting PV reveals the staged PV
 percentage slider directly below the modes. Target charging expands the energy/departure form below the modes. Additional
 settings expand in the same entry; there is no custom popup. UI labels are German. No Items, links, rules,
@@ -95,6 +95,9 @@ Session energy is not used as a charging-plan progress bar.
 | `statusItem` | Fahrzeugstatus | `measurements#vehiclestatus` / String |
 | `powerItem` | Ladeleistung | `measurements#power` / Number:Power |
 | `sessionEnergyItem` | Energie der Ladesitzung | `measurements#sessionenergy` / Number:Energy |
+| `sessionStateItem` | Zustand der Ladesitzung | `session#status` / String |
+| `sessionDisplayEnergyItem` | Gespeicherte Sitzungsenergie | `session#energy` / Number:Energy |
+| `sessionEnergyTimeItem` | Messzeitpunkt der Sitzungsenergie | `session#energytime` / DateTime or String |
 | `modeItem` | Lademodus | `settings#chargemode` / String |
 | `releaseItem` | Ladefreigabe | `settings#chargingrelease` / Switch |
 | `planItem` | Bestätigter Ladeplan | `commands#plan` / String |
@@ -112,6 +115,35 @@ Session energy is not used as a charging-plan progress bar.
 | `ledBrightnessItem` | Helligkeit der Statusbeleuchtung | `settings#ledbrightness` / String |
 | `ambientEnabledItem` | Umgebungsbeleuchtung aktiviert | `settings#ambientenabled` / Switch |
 | `ambientBrightnessItem` | Helligkeit der Umgebungsbeleuchtung | `settings#ambientbrightness` / String |
+
+### Session display after charging
+
+After rebuilding/recreating the bridge, link the three new session properties to
+Items and select them in the widget. Keep the old sessionEnergyItem and its history;
+no relinking or rescaling of the existing raw channel is required. Set energy unit
+to kWh. A DateTime Item with a local date/time display pattern is convenient for
+sessionEnergyTimeItem; a String Item displays the source's UTC timestamp directly.
+The additional session#endedat channel is optional for other views and records
+observed disconnection rather than the last watt of charging.
+
+The widget shows **Geladen** while charging, **Laden pausiert · bisher** during
+connected idle, and **Letzte Ladung** after a sampled disconnection. It always
+includes the captured amount's source time when the new view is configured. A
+resumed charge remains the same session. Abstecken is the completion boundary;
+zero power, the 180-second raw-value expiry or target mode alone do not establish
+completion. An offline/unknown state uses **Letzter Stand** and an unconfirmed
+connection notice rather than a live charging label. Waiting without a captured
+amount shows **Noch keine Sitzungsenergie**. If only the legacy Item is configured,
+the fallback explicitly says **Letzter Messwert**, without claiming session state.
+
+Persisted history survives restart/disconnect in the bridge's existing state
+volume. If a fresh session amount has never been captured by this version, it does
+not invent one from expired raw values. The amount is the last observed value,
+not proof of complete metering across outages, vehicle SOC or target achievement.
+No Item, persistence, rule or installed widget is changed by the repository export;
+reselect the new Items after installing the updated widget. Follow the official
+[MainUI widget documentation](https://www.openhab.org/docs/ui/building-pages.html)
+and [Homie channel documentation](https://www.openhab.org/addons/bindings/homie/).
 
 Preserve existing names, semantic groups, persistence and links. Writable Items
 need `autoupdate=false` and the Standard link profile; only device readback should

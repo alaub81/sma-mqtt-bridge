@@ -246,6 +246,57 @@ Source readiness follows its required fresh properties; aggregate device readine
 does not certify every source. Expiry preserves MQTT's last retained observation
 and does not publish a replacement zero or delete its topic.
 
+### Historical charging-session display
+
+The enabled local measurement source also maintains a separate, read-only session
+view on the existing eCharger Homie device. SEMP owns it when enabled; otherwise
+the local API owns it. Portal-only or disabled local adapters create no session
+tracker, history file or device reads. No additional request, timer, environment
+setting or write permission is introduced.
+
+| Published topic suffix | Type / unit | Meaning |
+| --- | --- | --- |
+| `session/status` | enum | `unknown`, `waiting`, `charging`, `paused`, `completed` |
+| `session/energy` | float / kWh | Last observed positive amount for the current session, or the saved last disconnected session |
+| `session/energytime` | string / ISO 8601 UTC | Device measurement timestamp belonging to that amount; never receipt time |
+| `session/endedat` | string / ISO 8601 UTC | Observed disconnected vehicle timestamp for the saved last session; empty while displaying a current session |
+
+All four are Basic and non-settable. The original `measurements/sessionenergy`
+channel retains its existing freshness filter, identity and unit. The new amount
+and timestamps are historical observations and may remain available indefinitely;
+they are not freshness or availability signals and never feed daily energy accounts.
+Consumers must gate live state labels with the owning API/SEMP source availability.
+The status itself expires on the existing eCharger stale limit; MQTT retained
+status alone is not proof of current charging.
+
+Fresh vehicle/power observations classify charging only for charging status with
+positive power; waiting/locked plus zero power means paused when a session amount
+has been captured. Zero power, elapsed time, a counter reset or mode/target changes
+alone never complete a session. A fresh not-connected status with zero power closes
+it, preserving the previous positive amount before the device's zero reset. This
+is observed disconnection, not a verified vehicle SOC/physical energy target.
+Replug before charging can still display the saved last session; a fresh positive
+session amount after the disconnection boundary starts the next displayed session.
+Unknown/inconsistent/stale live inputs use unknown. If the device's zero reset
+arrives before its disconnected status, retain the previous positive amount with
+unknown status (including across restart) until the boundary or new energy is
+observed. Older timestamps cannot reopen
+an ended session; a newer counter decrease is not archived as a completed charge.
+
+Bounded, atomic mode-0600 `state/echarger-session.json` uses the existing exclusive
+state-volume lock and `SMAB_MAX_STATE_BYTES`. Only changed evidence is saved;
+publication follows successful durable storage. A storage failure keeps previous
+history and reports unknown. The file stores numeric energy, source timestamps,
+connection evidence and a hashed installation identity, with no credentials or
+raw responses. Corrupt, mismatched or unsafe state fails closed; reconcile it
+manually, without deleting the topic manifest, command journals or energy ledger.
+Preserve this file when moving the existing state volume. Startup restores history
+with unknown live status until a successful local read. No prior sessions are
+reconstructed: first installation after a session value has already expired may
+show no historical amount until a fresh positive observation is captured. Gaps can
+leave the saved amount incomplete; the displayed measurement timestamp makes this
+limit explicit. Nothing backfills openHAB history.
+
 ### Temporary eCharger timestamp observation
 
 Set `SMAB_ECHARGER_TIMESTAMP_DIAGNOSTICS_ENABLED=true` in the private root

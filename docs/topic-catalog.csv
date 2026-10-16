@@ -276,6 +276,10 @@ echarger-portal-commands,portal-commands,commands/portalresult,Portal command re
 echarger-portal-commands,portal-commands,diagnostics/portalcommandslastsuccess,Last successful receipt (UTC),,diagnostics
 echarger-portal-commands,portal-commands,diagnostics/portalcommandsstatus,Source availability,,diagnostics
 echarger-portal-refresh,portal-refresh,portal/refresh,Refresh portal,,basic
+echarger-charging-session,charging-session,session/endedat,Observed session disconnection time,,basic
+echarger-charging-session,charging-session,session/energy,Observed session energy,kWh,basic
+echarger-charging-session,charging-session,session/energytime,Session energy observation time,,basic
+echarger-charging-session,charging-session,session/status,Charging session status,,basic
 derived-plant,plant,battery/totalbatterychargeenergy,Total battery charge energy,kWh,basic
 derived-plant,plant,battery/totalbatterydischargeenergy,Total battery discharge energy,kWh,basic
 derived-plant,plant,battery/totalchargepower,Total battery charging power,W,basic

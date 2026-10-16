@@ -33,6 +33,20 @@ im [Implementierungsplan](docs/IMPLEMENTATION_PLAN.md).
 
 ## Unmittelbare Restarbeiten
 
+- [x] 16.10.2026: Nach Andreas' Item-Anlage openHAB ausschließlich lesend
+  inventarisiert: elf neue Wechselrichter-Items mit jeweils passendem Channel
+  gefunden (Roof sechs, Storage vier, Carport eins). Die bestehende private
+  preview.csv um elf markierte Vorschläge ergänzt, nun 153 eindeutige Items.
+  Vorherige 142 Zeilen bytegenau erhalten und CSV vorher gesichert.
+  Vorschläge analog zu bestehenden Werten: Measurement mit Power/Voltage/Current,
+  entsprechende bisherige Icons und pEveryUpdate30s. Tags, Zielgruppe und aktuelle
+  InfluxDB-Regel einschließlich Zeit-/NULL-Filter gegen die Installation geprüft.
+  CSV unabhängig geparst, neue Zeilen geprüft und Vorschau visuell kontrolliert.
+- [ ] Andreas prüft die neuen CSV-Zeilen 144–154; erst danach Semantik, Icons und
+  Persistence an den elf Items übernehmen und die SMA-Plant-MainUI-Seite ergänzen.
+  Alle elf fehlen derzeit auf dieser Seite. Inventar-/Seitenaufnahme und separater
+  Änderungsvorschlag liegen privat unter openhab-review-2026-10-16/new-inverter-items.
+  Keine Item-, Persistence-, Seiten- oder Geräteänderung ausgeführt.
 - [x] 16.10.2026: Gemeldeten CI-Timeout im Retained-Messwerttest behoben:
   bisheriges 0,5-Sekunden-Limit enthielt Publisher-Start, Manifest-Sicherung und
   Timer. Test prüft jetzt gezielt die Publikationsschleife mit kontrollierter
@@ -88,23 +102,21 @@ im [Implementierungsplan](docs/IMPLEMENTATION_PLAN.md).
 - [ ] Frühere Abweichung von Hausverbrauch ohne Wallbox untersuchen: gespeicherter
   Tageswert lag über der Bilanz aus demselben Zählersnapshot. Grobe PV-Zähler und
   monotoner Akzeptanzschutz sind zu prüfen, kein weiterer Reset als Ersatz.
-- [ ] InfluxDB-Kopie unabhängig nachprüfen: 205.552 Punkte für zwei Home-Manager-
-  Leistungen und Carport L3 wurden bestätigt geschrieben. L1/L2 hatten keine
-  Quelldaten. Post-Copy-Abnahme fehlte wegen voller Query-Warteschlange.
-  Vor Item-Löschung Regeln/UI/Links prüfen; Originaldaten erhalten.
-  [Ablauf](docs/INFLUX2_ITEM_MIGRATION.md).
-- [ ] Früheren Zeitraum mit gemischten PV-Tages-/Gesamtertragswerten im
-  Gesamtertragsitem beurteilen; keine automatische Historienkorrektur.
+- [x] Historienarbeiten einschließlich Kopienachprüfung, Altitem-Prüfung und
+  Beurteilung des gemischten PV-Tages-/Gesamtertragszeitraums von Andreas als
+  erledigt bestätigt. Keine erneute Kopie, Löschung oder Historienkorrektur
+  ausgeführt. [Ablauf](docs/INFLUX2_ITEM_MIGRATION.md).
 - [x] 15 Zusatzkanäle einzeln bewertet und nachts um 21:39 lesend geprüft:
   vier Netzleistungen gültig, neun DC-Werte nicht verfügbar, zwei Carport-L1-Werte
   auf inaktiver Phase nicht verfügbar. Nach Andreas’ anschließender Entscheidung sechs DC-Strom-/Leistungskanäle
   mit bedingter Ersatznull umgesetzt: frische AC-Leistung 0 und Zustand OK.
   Spannungen bleiben nicht verfügbar. Lokal lesend um 21:58 bestätigt;
-  Produktionsdeployment steht noch aus. Kein eindeutiger Standby-Code verfügbar.
+  Installation auf Produktion einschließlich Versionsprüfung von Andreas bestätigt.
+  Kein eindeutiger Standby-Code verfügbar.
   [Einzelbewertung](docs/INVALID_VALUE_AUDIT.md).
 - [ ] Tagesrückkehr der neun DC-Kanäle prüfen; Umgang mit alten retained Werten
-  bei einzelnen ungültigen Kanälen für openHAB/UI festlegen. Keine synthetischen
-  Nullwerte oder automatische Historienänderungen.
+  bei einzelnen ungültigen Kanälen für openHAB/UI festlegen. Keine weiteren
+  Ersatznullregeln oder automatischen Historienänderungen.
 
 ## Produktionskonfiguration
 
@@ -114,8 +126,8 @@ im [Implementierungsplan](docs/IMPLEMENTATION_PLAN.md).
   Beschreibungen aus smab.example.env übernommen. Defaults mit Loader,
   gebündelten Profilen und Compose abgeglichen; aufgelöste Konfiguration offline
   gleich, besondere Präsenz-Semantik berücksichtigt, Werte/Quoting erhalten.
-- [ ] Bereinigte Datei auf dem Zielhost übernehmen und nach Neuerstellung prüfen.
-  Produktion nicht automatisch geändert. Private Konstanten/Zugangsdaten bleiben
+- [x] Bereinigte Datei auf dem Zielhost übernommen und Start geprüft, von Andreas
+  als erledigt bestätigt. Private Konstanten/Zugangsdaten bleiben
   ausschließlich in ignorierten Dateien mit Modus 600.
 - [ ] Bei endgültiger openHAB-Migration Energie-Offsets genau einmal anwenden und
   Rohzähler von korrigierten Gesamtständen unterscheiden. Keine zusätzlichen
@@ -136,8 +148,13 @@ im [Implementierungsplan](docs/IMPLEMENTATION_PLAN.md).
 - [x] Wiederanstecken von Andreas bestätigt: beide Quellen melden gesperrt, 0 W,
   Roh-Sitzungsenergie 0. Zeitstempel bleibt vom Abstecken und wird nach 180 s
   korrekt stale; Gesamtzähler bleibt frisch und konstant. Keine Ladefreigabe geändert.
-- [ ] Nächsten Ladebeginn separat prüfen; andere Reset-Auslöser und gewünschte
-  Publikationssemantik für letzte/aktuelle Sitzung bleiben eigenständige Fragen.
+- [x] 16.10., 07:02:00/07:02:55: Nach Andreas’ Meldung des Ladebeginns API/SEMP
+  lesend geprüft. Beide laden bei rund 10,1 kW; Sitzungsenergie wieder frisch,
+  von 0,952625 auf 1,108250 kWh (API). Zuwachs zum Gesamtzähler bis auf 0,125 Wh
+  gleich. Keine Einstellungen geändert; exakter Startzeitpunkt nicht erfasst.
+  [Evidenz](docs/ECHARGER_LIVE_CHECK_2026-10-15.md#next-charging-interval-2026-10-16).
+- [ ] Andere Reset-Auslöser, möglicher zusätzlicher Reset exakt beim Ladebeginn
+  und gewünschte Publikationssemantik für letzte/aktuelle Sitzung bleiben offen.
 - [ ] Health/Event/Modus/Autorisierung brauchen natürliche Zustandsänderung oder
   belastbare Protokollsemantik. Alte Zeitstempel nicht auf Empfangszeit erneuern.
 - [ ] Erst danach pro Kanal Frischepolitik und Nutzen des Timestamp-Recorders
@@ -156,18 +173,23 @@ im [Implementierungsplan](docs/IMPLEMENTATION_PLAN.md).
   verwenden, keine erneute Einführung des alten Namens batteryefficiency.
 - [ ] Basic-Abdeckungsstatus bei Diagnose=false sowie Home-Manager-Protokolldiagnosen
   unabhängig von Advanced gezielt abnehmen. Basic-Tagesstatus sind aktuell sichtbar.
-- [ ] Storage-Frequenz und AC-Strom L1 separat vergleichen; Sunny-Boy-L2/weitere
-  Phasen bisher ohne gültigen Nachweis nicht umdeuten. DC-B-Belegung bleibt offen.
+- [x] Storage-Frequenz und AC-Strom L1 technisch geprüft: identitätsgeprüfte
+  Direktlesungen 22:07/22:08, 50,00–50,01 Hz, 1,570–1,577 A; bei 237,66 V
+  und 360 W physikalisch plausibel. Keine unabhängige Kalibrierung behauptet.
+- [x] Sunny-Boy-Phasenzuordnung technisch abgeschlossen: 40183 erneut 329/L3;
+  L1/L2 bleiben nicht verfügbar. Tageswerte L3/DC B bereits früher geprüft und
+  von Andreas verglichen. DC B ist lesbar; physische Stringbelegung aus Software
+  nicht sicher feststellbar und nur bei weiterem Bedarf vor Ort zu klären.
 - [ ] Weitere natürliche Derating-Zustände prüfen; „Keine Abregelung“ bereits belegt.
   AC-Batterieenergiegrenze ist gut belegt; Resetverhalten und Rückgabegrad bleiben
   von einem unabhängig gemessenen physikalischen Wirkungsgrad zu unterscheiden.
 
 ## Ladeprüfungen und spätere Pflege
 
-- [ ] Garagenwidget bei natürlichem Laden live abnehmen: Anzeigen, Bedienung,
-  reaktive Aktualisierung und unveränderte Schreibsperren; installierte YAML sichern.
-- [ ] Physische Ladezielerreichung, Rückkehr aus Zielmodus und weitere Lastpunkte
-  prüfen; maximale Ladeleistung/Winter-Einphasenbetrieb gemäß
+- [x] Garagenwidget, Ladezielerreichung, Rückkehr aus Zielmodus, weitere Lastpunkte
+  und maximale Ladeleistung von Andreas als erledigt bestätigt. Keine neuen
+  Schreibtests ausgeführt; installierte YAML-Sicherung hier nicht unabhängig geprüft.
+- [ ] Winter-Einphasenbetrieb noch abnehmen gemäß
   [Grenzen und Belegen](docs/ECHARGER_POWER_LIMIT.md). Schreiben nur mit Zielauftrag;
   Home Manager bleibt Regler.
 - [ ] Watchtower/Autoheal für diese Bridge und Versionsstrategie prüfen; vorhandene
@@ -192,6 +214,97 @@ im [Implementierungsplan](docs/IMPLEMENTATION_PLAN.md).
 
 API-only-Fallback-Ausbau bei abgeschaltetem SEMP bleibt aus dem Umfang gestrichen.
 
+## openHAB-Massenpflege vorbereitet, 16.10.2026
+
+- [x] Authentifizierten REST-Lesezugriff mit lokal hinterlegtem, Git-ignoriertem
+  Token geprüft; Token weder ausgegeben noch in Vorschauen übernommen.
+- [x] 142 aktuelle SMA-Items inventarisiert: sechs Equipment-Gruppen und
+  136 Datenitems. 133 Datenitems haben jeweils einen Channel, drei keinen.
+- [x] Private Vorschau unter `private/openhab-review-2026-10-16/` erstellt,
+  einschließlich bisheriger Item-Einstellungen und Persistence-Konfiguration.
+  Alle vorgeschlagenen semantischen Tags existieren in der installierten Registry.
+- [x] Aktive InfluxDB-Regeln gelesen: alle SMA-Datenitems in pEveryChange, fünf
+  zusätzlich in pEveryUpdate. Doppelte pEveryChange-Regeln haben unterschiedliche
+  Filter; eine allgemeine NULL/UNDEF-Filterung ist daraus nicht abzuleiten.
+- [ ] Vorschläge zu Icons, Messung/Berechnung/Einstellung und Speichergruppen
+  prüfen. Die drei unverknüpften Items und Equipment-Standorte bleiben offen.
+- [ ] Auswirkungen auf Regeln und restoreOnStartup bei Befehlsaktionen prüfen;
+  die Vorschau ist keine Freigabe zur Änderung der globalen Persistence-Regeln.
+- [ ] Wiederholbaren Änderungsabgleich mit Konfliktprüfung und Rücksicherung
+  vorbereiten. Es wurden ausschließlich GET-Anfragen gesendet, keine Live-Änderung.
+
+- [x] Nachtrag: Andreas hat die fünf zusätzlichen pEveryUpdate-Mitgliedschaften
+  entfernt. REST-Nachprüfung bestätigt jetzt 136 SMA-Datenitems in pEveryChange
+  und keines in pEveryUpdate. Private Vorschau aktualisiert, Erstaufnahme bewahrt.
+- [x] Validierung: Linter vollständig bestanden; 401 Tests nach Wiederholung mit
+  lokalen Netzwerkrechten bestanden. Der erste Sandbox-Lauf konnte vier lokale
+  Testserver nicht öffnen; kein Produktfehler nachgewiesen.
+
+- [x] 16.10.: Vorschau erneut gegen die laufende Installation geprüft: alle 27
+  verwendeten semantischen Tags vorhanden. 16 von 17 lokalen Icon-Schreibweisen
+  liefern SVG; oh:car fehlt mit HTTP 404. Die ursprüngliche Vorschau bleibt
+  unverändert und ist dadurch noch nicht zur Übernahme geeignet.
+- [ ] Die drei Iconify-Symbole sind von der ausgelieferten MainUI unterstützt,
+  ihre Auslieferung ist aber nicht bestätigt: Haupt- und beide Ersatz-API-Hosts
+  antworten aus der Prüfumgebung mit HTTP 403. Clientprüfung bleibt offen.
+  Private Einzelergebnisse: installation-verification.json neben der Vorschau.
+
+- [x] Andreas bestätigt die Vorschau mit gezielter Korrektur: Wallbox-Equipment
+  erhält vorgeschlagen oh:energy statt des fehlenden oh:car. Die drei bisher
+  unverknüpften Zeititems erhalten Status + Timestamp und oh:time. Die numerische
+  Anlagenzeit ist laut vorhandener Anzeige ein Epoch-Zeitpunkt, keine Laufzeit.
+  CSV, JSON und Existenzprüfung aktualisiert; frühere Vorschau gesichert.
+  Channel-Lücken, übrige Metadaten und Live-Konfiguration bleiben unverändert.
+
+## openHAB-Massenpflege angewendet, 16.10.2026
+
+- [x] Andreas gibt die korrigierte Vorschau ausdrücklich zur Live-Anwendung frei.
+  Frische Vorprüfung: 142 Items, 138 Änderungen, keine Konflikte.
+- [x] Alle 138 Item-Definitionen einzeln geändert und direkt zurückgelesen.
+  Abschlussprüfung: alle 142 Items entsprechen den freigegebenen Icons,
+  semantischen Tags und Gruppen. Vier Items waren bereits passend.
+- [x] Wallbox-Equipment nutzt oh:energy. Die drei freigegebenen Zeititems haben
+  Status + Timestamp und oh:time. Neue Speichergruppen gemäß Vorschau: schnelle
+  Messwerte pEveryUpdate30s, langsamere pEveryUpdate60s, Energiezähler
+  pEveryChangeCron; übrige überwiegend pEveryChange. Die Refresh-Aktion hat keine
+  Persistence-Gruppe. Vorhandene globale Persistence-Regeln wurden nicht geändert.
+- [x] Vollständige vorherige Item-Einstellungen, Links, globale InfluxDB-Regeln,
+  konkreter Änderungsplan und Bestätigungsprotokoll privat gesichert.
+  Channel-Links, Typen, Labels, Einheiten, Widgets und sonstige Metadaten erhalten;
+  kein Item-Zustand und kein Gerätebefehl geschrieben. Wiederholbarer Abgleich
+  liegt privat neben Vorschau und Sicherung.
+- [ ] Drei zuvor unverknüpfte Zeititems bleiben unverknüpft; Semantikpflege behebt
+  keine fehlende Datenversorgung. Equipment-Standorte bleiben unverändert.
+- [ ] Darstellung der Iconify-Symbole im Client noch prüfen; die bekannte
+  Einschränkung der externen API-Prüfung bleibt bestehen.
+
+## MainUI-Seite SMA-Plant erstellt, 16.10.2026
+
+- [x] Neue native MainUI-Seite SMA-Plant mit eigenem Sidebar-Eintrag angelegt.
+  Grundlage ist Andreas' eingefügte Energiemanagement-Seite mit den tatsächlich
+  installierten eigenen Widgets. Die acht bisherigen Seiten und zwölf
+  Widget-Definitionen wurden unverändert zurückgelesen.
+- [x] Eingebunden: eigener Live-Energiefluss, Tagesübersicht, eCharger-Komfort,
+  BMW i3s und BMW 530d. Bestehende Item-Zuordnungen und Ladebedienung übernommen;
+  wirkungslose Demo-Parameter bei den BMW-Instanzen entfernt.
+- [x] Native KPI-Karten, Tagesdiagramm für PV/Haus/Netzbezug/Wallbox, Datenquellen,
+  Solcast-Prognose, Wärmepumpe, Bilanzqualität und sechs aufklappbare Gerätebereiche
+  ergänzt. Alle 136 SMA-Datenitems abgedeckt; insgesamt 188 vorhandene Item-Verweise.
+- [x] Desktop-Sichtprüfung mit echten Werten: Übersicht, Diagramm, Fahrzeuge und
+  Geräteakkordeon funktionieren; keine Browser-Konsolenfehler im geprüften Lauf.
+  Beschriftungen gekürzt, Tripower-DC A/B auf der Seite unterscheidbar gemacht
+  und fehlende Werte als Strich statt als 0 angezeigt. Keine Item-Definition,
+  Persistence-Regel, Regel oder eigene Widget-Definition geändert.
+- [x] JSON/YAML, Ausgangsseiten, Widget-Snapshot und Screenshots privat unter
+  private/sma-plant-page-2026-10-16/ gesichert. Nur neue Seite geschrieben; keine
+  Lade-/Fahrzeugbefehle zum Test gesendet.
+- [ ] Darstellung auf Andreas' tatsächlichen Mobil-/Tabletgeräten bei Nutzung
+  bestätigen; die Seite nutzt native responsive Spalten.
+
+- [x] Abschlussvalidierung SMA-Plant: Linter und alle 401 Tests bestanden;
+  Seiten-Readback, 136/136 SMA-Abdeckung, 188 existierende Item-Verweise und
+  Browserprüfung im privaten Nachweis festgehalten.
+
 ## Widget-Korrektur Ladeziel, 16.10.2026
 
 - [x] Screenshot-Fehler zugeordnet: zwei nicht unterstützte String()-Aufrufe in
@@ -206,3 +319,67 @@ API-only-Fallback-Ausbau bei abgeschaltetem SEMP bleibt aus dem Umfang gestriche
 - [x] Vollständiger Linter und 401 Regressionstests bestanden. Erster Testlauf
   durch vier lokale Server-Sandboxfehler blockiert; Wiederholung mit lokalen
   Netzwerkrechten erfolgreich. Keine neue Live-Abnahme behauptet.
+
+## Wallbox-Ladepause und Fortsetzung, 16.10.2026
+
+- [x] Nach Andreas’ Meldung „Ladung abgeschlossen“ um 07:09:47 und 07:10:42
+  API/SEMP lesend geprüft: beide 0 W, verbunden/wartend (200112), Sitzungsenergie
+  konstant 1,871625 kWh (API), Zeitstempel 07:09:02 bleibt stehen; Gesamtzähler
+  frisch und konstant. Keine Ladeeinstellungen geändert.
+- [x] Nachkontrolle um 07:12:24 zeigt erneute Ladung (200113), rund 1,658 kW,
+  Sitzungsenergie 1,905250 kWh mit frischem Zeitstempel und wachsendem Gesamtzähler.
+  Damit Ladepause/Fortsetzung belegt, kein endgültiger Abschluss. Kein Reset auf
+  null zwischen den Stichproben sichtbar. Ursache und exakte Übergänge unbekannt.
+- [ ] Ablauf der 180-Sekunden-Frist in dieser Pause nicht belegt, weil bei der
+  Nachkontrolle bereits wieder geladen wurde. Frühere Ruhe-Evidenz bleibt gültig;
+  Publikationspolitik und weitere Reset-Auslöser bleiben offen.
+  [Nachweis](docs/ECHARGER_LIVE_CHECK_2026-10-15.md#reported-charging-completion-and-observed-resumption-2026-10-16).
+
+## Wallbox nach erneutem Ladeende, 16.10.2026
+
+- [x] Erneute Abschlussmeldung von Andreas: fünf lesende API-/SEMP-Stichproben
+  07:17:05–07:20:26 über gut drei Minuten. Durchgehend 0 W, verbunden/wartend
+  (200112), Gesamtzähler frisch und konstant 1501,941750 kWh. Keine weitere
+  Ladefortsetzung im Beobachtungsfenster.
+- [x] Sitzungsenergie roh konstant 2,002625 kWh (API) / 2,0026 kWh (SEMP),
+  Zeitstempel 07:15:54.260. Bei 172 s noch frisch; bei 222 und 272 s korrekt
+  stale und von beiden Lesern ausgefiltert. Damit Fristablauf nach dieser Ladung
+  bestätigt; die vorherige Pause/Fortsetzung bleibt eigenständige Beobachtung.
+- [x] Keine Ladeeinstellung, Laufzeitkonfiguration, MQTT-Publikation oder
+  Persistence geändert; Health/Event/Modus/Autorisierung weiterhin alte Zeitstempel.
+- [ ] Publikationssemantik für letzte/aktuelle Sitzung mit Andreas festlegen;
+  zusätzliche Reset-Auslöser und Zustandskanal-Zeitstempel bleiben offen.
+  Keine endgültige Ziel-/SOC-Abnahme und keine MQTT-/openHAB-Zustellung aus den
+  Direktlesungen ableiten.
+  [Evidenz](docs/ECHARGER_LIVE_CHECK_2026-10-15.md#second-reported-completion-2026-10-16).
+
+## Sitzungsanzeige umgesetzt, 16.10.2026
+
+- [x] Andreas stimmt der gekennzeichneten Anzeige mit erhaltenem letztem Betrag zu.
+  Entscheidung umgesetzt: Laden → „Geladen“, verbunden bei 0 W → „pausiert · bisher“,
+  erst bestätigtes Abstecken → „Letzte Ladung“. Zeitablauf, Reset oder Moduswechsel
+  allein belegen keinen Abschluss. Damit Publikationspolitik für diese Anzeige geklärt;
+  frühere offene Einträge bleiben historischer Stand.
+- [x] Vier zusätzliche Basic-Lesekanäle unter session; ursprünglicher Rohkanal,
+  180-Sekunden-Filter, Tagesbilanz und Schreibfreigaben bleiben erhalten. SEMP hat
+  bei Aktivierung Vorrang, sonst API; keine zusätzlichen Geräteanfragen.
+- [x] Betrag/Quellzeitpunkt und letzter bestätigter Sitzungsabschluss begrenzt und
+  atomar im bestehenden Zustandsvolume gespeichert. Neustart meldet Zustand unbekannt;
+  alte Beträge beweisen keine Live-Verbindung. Fehler beim Speichern veröffentlichen
+  keinen neuen ungesicherten Betrag. Kein Rückgriff auf Secrets oder Originalexporte.
+- [x] Kanonisches Widget, Importdatei, Übersetzungen, Katalog und englische Anleitung
+  ergänzt. Drei neue optionale Item-Zuordnungen für Status/Betrag/Messzeitpunkt;
+  bisherige Item-Namen und Historien bleiben erhalten. Alt-Konfiguration zeigt
+  ausdrücklich „Letzter Messwert“. Offizielle openHAB-Dokumentation konsultiert.
+- [ ] Bridge-Neubau/Installation und neue Item-Verknüpfungen/Widget-Auswahl noch offen.
+  Danach natürliche Pause/Fortsetzung, Abstecken und Neustart in MQTT/openHAB abnehmen.
+  Bei erstmaligem Start mit bereits abgelaufenem Rohwert wird keine Sitzung erfunden;
+  Messlücken können den gespeicherten Betrag unvollständig lassen. Zustand/SOC und
+  weitere Reset-Auslöser sind eigenständige Fragen. Keine Live-Änderung ausgeführt.
+
+- [x] Abschlussvalidierung Sitzungsanzeige: alle 418 Offline-Tests und der
+  vollständige Linter erfolgreich, einschließlich Compose-Parität und Topic-Katalog.
+  14 lokale Widget-Ausdrucksfälle ohne String-Konstruktor bestanden. Versetzter
+  Nullreset vor Absteckstatus bewahrt den positiven Betrag auch über Neustart.
+  Anfangs vier lokale Testserver durch Sandbox blockiert; Abschlusslauf mit lokalen
+  Netzwerkrechten vollständig grün. Keine neue Live-Abnahme behauptet.

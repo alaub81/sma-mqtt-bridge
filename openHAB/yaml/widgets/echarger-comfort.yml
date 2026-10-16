@@ -26,6 +26,24 @@ widgets:
                 'rejected', 'rejected-retained', 'rejected-disabled',
                 'rejected-busy'].includes((props.portalResultItem && items[props.portalResultItem] ?
                 items[props.portalResultItem].state : 'UNDEF')))
+              sessionValue: >-
+                =(name) => (name && items[name] && !['NULL', 'UNDEF', ''].includes(items[name].state)
+                ? items[name].state : '')
+              sessionText: >-
+                =() => (props.demoMode ? 'Geladen: 8,0 kWh · Demo' :
+                (fn.sessionValue(props.sessionStateItem) === 'waiting' ? 'Noch keine Sitzungsenergie' :
+                (fn.sessionValue(props.sessionStateItem) && fn.sessionValue(props.sessionDisplayEnergyItem)
+                && fn.sessionValue(props.sessionEnergyTimeItem)
+                ? ((({'charging':'Geladen: ', 'paused':'Laden pausiert · bisher ',
+                'completed':'Letzte Ladung: '}[(fn.sessionValue(props.measurementStatusItem) === 'ready' || fn.sessionValue(props.sessionStateItem) === 'completed')
+                ? fn.sessionValue(props.sessionStateItem) : 'unknown'] || 'Letzter Stand: '))
+                + (items[props.sessionDisplayEnergyItem].displayState || items[props.sessionDisplayEnergyItem].state)
+                + (fn.sessionValue(props.sessionEnergyTimeItem) ? ' · Stand '
+                + (items[props.sessionEnergyTimeItem].displayState || items[props.sessionEnergyTimeItem].state) : '')
+                + ((props.measurementStatusItem && fn.sessionValue(props.measurementStatusItem) === 'ready')
+                ? '' : ' · Verbindung nicht bestätigt'))
+                : ('Letzter Messwert: ' + (fn.sessionValue(props.sessionEnergyItem)
+                ? (items[props.sessionEnergyItem].displayState || items[props.sessionEnergyItem].state) : '—')))))
               chargingMode: >-
                 =() => (props.demoMode ? (vars.demoMode || '4719') : (props.modeItem && items[props.modeItem]
                 ? items[props.modeItem].state : 'UNDEF'))
@@ -73,10 +91,8 @@ widgets:
                                 white-space: normal
                           - component: Label
                             config:
-                              text: '=''Ladesitzung: '' + (props.demoMode ? ''8,0 kWh · Demo'' : (props.sessionEnergyItem && items[props.sessionEnergyItem] && ![''NULL'',''UNDEF'',''''].includes(items[props.sessionEnergyItem].state)
-                                ? (items[props.sessionEnergyItem].displayState || items[props.sessionEnergyItem].state) : ''—'') + ((props.demoMode
-                                || (props.measurementStatusItem && items[props.measurementStatusItem] ? items[props.measurementStatusItem].state
-                                : ''UNDEF'') === ''ready'') ? '''' : '' · letzte Werte''))'
+                              text: =fn.sessionText()
+                              tooltip: Gespeicherte Sitzungsbeobachtung. 0 W bedeutet Pause; bestätigtes Abstecken beendet die Sitzung.
                               style:
                                 display: block
                                 font-size: 12px
@@ -1059,6 +1075,21 @@ widgets:
         - name: sessionEnergyItem
           label: Energie der Ladesitzung
           description: "Geladene Energie der aktuellen Ladesitzung; Number:Energy in kWh."
+          type: TEXT
+          context: item
+        - name: sessionStateItem
+          label: Zustand der Sitzungsanzeige
+          description: "Gekennzeichneter Sitzungszustand; session#status / String."
+          type: TEXT
+          context: item
+        - name: sessionDisplayEnergyItem
+          label: Gespeicherte Sitzungsenergie
+          description: "Beobachteter Betrag der laufenden oder letzten Sitzung; session#energy / Number:Energy in kWh."
+          type: TEXT
+          context: item
+        - name: sessionEnergyTimeItem
+          label: Messzeitpunkt der Sitzungsenergie
+          description: "Quellzeitpunkt des gespeicherten Betrags; session#energytime / DateTime oder String."
           type: TEXT
           context: item
         - name: modeItem

@@ -408,3 +408,18 @@ The validated `invalidAsZero` power option is excluded from energy-ledger bindin
 identity. Adding it to otherwise identical profiles must preserve existing daily
 bases and average history. All other signature inputs remain unchanged. See the
 [invalid-value audit](INVALID_VALUE_AUDIT.md) for remaining compatibility differences.
+
+## Historical eCharger session view, 2026-10-16
+
+Andreas approves a timestamped display of observed current/last session energy,
+kept independently of raw freshness. Local SEMP owns the derived view when enabled,
+otherwise local API; no new requests or control ownership. Fresh connected waiting
+with zero power is paused, following the observed pause/resumption. Only a sampled
+not-connected status with zero power closes the stored session. Retain the last
+positive observation across the device's unplug reset and Bridge restart, with
+its original source time; never infer full/target achievement from idle or expiry.
+Atomic bounded state in the existing locked volume is identity bound and published
+only after persistence. Unknown live status after restart/outage remains distinct
+from historical amount availability. The original raw session filter, other
+state-channel policies, daily accounting and device write gates remain unchanged.
+See [the contract](CONFIGURATION.md#historical-charging-session-display).

@@ -30,7 +30,10 @@ assessment; decide how consumers show individual unavailable retained measuremen
 Battery/counter invalid values are not zero; signed temperatures remain valid.
 See [the audit](INVALID_VALUE_AUDIT.md). No config.json or host profile overrides
 are present according to Andreas. The private minimal ENV candidate preserves the
-resolved configuration offline; apply it on the host separately and verify startup.
+resolved configuration offline. Andreas now confirms production installation of
+the DC compatibility change, installed-version verification, application of the
+minimal ENV and successful startup. These deployment steps are closed; daytime
+recovery and post-reset midnight checks remain separate.
 
 ## 2. Resolve remaining eCharger freshness semantics (Review 4)
 
@@ -41,8 +44,17 @@ is correctly filtered as stale. Keep this distinction in UI and persistence.
 
 The user-operated unplug reset is now confirmed in API/SEMP with a fresh zero
 session value and unchanged cumulative energy. Replug in a locked state is also sampled: raw session zero remains, while its
-unplug-time timestamp expires. Charging-start behavior and other possible reset
-triggers remain separate acceptance. Health/event/mode/authorization still require an
+unplug-time timestamp expires. The next charging interval on October 16 confirms
+fresh, increasing session energy in API/SEMP, consistent with cumulative growth.
+The exact start instant and any additional reset there were not captured; other
+possible reset triggers remain separate acceptance. A subsequent reported completion
+was sampled as idle, followed by resumed charging with increasing session energy;
+this does not establish final completion or idle expiry in that interval.
+After a second completion report, five samples over approximately 201 seconds
+confirmed sustained sampled idle and session expiry: unchanged raw session energy
+was omitted by both readers beyond 180 seconds while cumulative energy remained
+fresh and constant. That interval closes the scoped idle-expiry check; final
+SOC/target completion and last/current-session publication policy remain separate. Health/event/mode/authorization still require an
 actual state transition or verified protocol contract. Do not refresh old samples
 on receipt. Decide separately whether to retain/archive timestamp recording.
 No device setting or charging-controller change is part of these read checks.
@@ -54,26 +66,28 @@ Five replacement Items have persistence; PV daily/lifetime links are corrected.
 Remuneration has a linked persisted Item; both house averages have live values.
 Do not repeat these as missing setup. Full numerical acceptance remains distinct.
 
-Independently verify the 205,552 copied history points before removing obsolete
-Items; original measurements remain. Carport L1/L2 had no source history. Earlier
-verification was blocked by query-queue saturation. Review any prior mixed
-PV daily/lifetime history separately. See [the transfer record](INFLUX2_ITEM_MIGRATION.md).
+Andreas now confirms completion of the history work, including copy verification,
+obsolete-Item review and the mixed PV daily/lifetime period. Do not repeat data
+copying or historical changes based on the earlier pending list. See
+[the transfer record](INFLUX2_ITEM_MIGRATION.md).
 
 Complete the 100-row migration ledger for rules, UI, persistence, units, offsets,
 DST/day boundaries and dependency ownership. Preserve Shelly/Smart-Grid logic until
 equivalent behavior is accepted. Apply grid-energy offsets exactly once. Use the
 current mapping instead of historical unmatched-link counts. Verify the Home
 Manager ISO DateTime link, canonical batteryenergyreturnratio naming, coverage
-status grouping and remaining Storage current/frequency comparisons. Other
+status grouping. Storage current/frequency passed a targeted live plausibility
+check; Sunny Boy L3 assignment and DC-B readability are established. Physical
+DC-B wiring is not inferable from these reads and is optional on-site clarification. Other
 Derating states need natural events. Finer PV counter precision remains a separate
 possible improvement, not a reason to revoke accepted existing measurements.
 
 ## 4. Resume charging checks when the vehicle can charge
 
-The single-phase L3/total-power comparison is already sampled and consistent.
-Other natural load points and Item-level acceptance remain. Validate the garage
-widget, physical target completion and return from target mode. Maximum-power and
-winter single-phase behavior have separate [bounds](ECHARGER_POWER_LIMIT.md).
+Andreas now accepts the garage widget, physical target completion, return from
+target mode, other load points and maximum charging power. No additional write
+checks were performed to obtain that confirmation. Only winter single-phase
+operation remains pending under the [documented bounds](ECHARGER_POWER_LIMIT.md).
 Preserve existing write gates and readback/uncertainty protection. Home Manager
 remains the charging controller; live writes need explicit target instructions.
 
@@ -102,3 +116,14 @@ Run the full linter, regression suite, Compose parity and hosted multi-architect
 CI/security gates for relevant changes. Tags or local passing tests alone do not
 establish published-image or live installation acceptance. Preserve private files,
 state volume, topic manifest and command journals on every deployment.
+
+## Session-display installation acceptance, 2026-10-16
+
+The approved historical session view and widget are implemented locally; see
+[the contract](CONFIGURATION.md#historical-charging-session-display). Rebuild/recreate
+the service, discover/link the three widget session Items, install the canonical
+widget export and select those Items. Accept the next natural charge/pause/resume,
+disconnect and restart with source availability and measurement-time labels.
+Verify history survives the existing state volume and does not affect raw expiry
+or daily counters. No live writes, deployment or target/SOC completion follow
+from offline tests. Unknown state-channel semantics remain separate work.

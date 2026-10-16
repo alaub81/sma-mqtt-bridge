@@ -20,6 +20,7 @@ from sma_mqtt_bridge.adapters.home_manager_modbus import HomeManagerModbusReader
 from sma_mqtt_bridge.adapters.meter import MeterReader
 from sma_mqtt_bridge.adapters.modbus import ModbusReader
 from sma_mqtt_bridge.adapters.portal import PortalReader
+from sma_mqtt_bridge.charging_session import PROPERTIES as SESSION_PROPERTIES
 from sma_mqtt_bridge.config import ECharger, HomeManager, Inverter, load_config
 from sma_mqtt_bridge.homie import HomiePublisher, wire_key
 from sma_mqtt_bridge.model import SourceState
@@ -77,12 +78,16 @@ def inventories(directory):
         ("commands", LOCAL_COMMAND_PROPERTIES),
         ("portal-commands", PORTAL_COMMAND_PROPERTIES),
         ("portal-refresh", PORTAL_REFRESH_PROPERTIES),
+        ("charging-session", SESSION_PROPERTIES),
     ):
         yield (
             "echarger-" + source,
             source,
             describe(
-                source, properties, availability=False, diagnostics=source != "portal-refresh"
+                source,
+                properties,
+                availability=False,
+                diagnostics=source not in ("portal-refresh", "charging-session"),
             ),
         )
 

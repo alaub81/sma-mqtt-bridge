@@ -13,6 +13,7 @@ from .adapters.meter import MeterReader
 from .adapters.modbus import ModbusReader
 from .adapters.portal import PortalReader
 from .availability import Availability, is_timeout
+from .charging_session import ChargingSession
 from .commands import LOCAL_COMMANDS, LocalCommands
 from .errors import AuthenticationError
 from .health import atomic_json, heartbeat
@@ -195,7 +196,15 @@ async def reset_reader(reader, config):
 
 
 async def supervise(
-    state, reader, interval, config, stop, refresh_portal=False, refresh=None, on_change=None
+    state,
+    reader,
+    interval,
+    config,
+    stop,
+    refresh_portal=False,
+    refresh=None,
+    on_change=None,
+    session=None,
 ):
     attempt = 0
     state.monitor = state.monitor or Availability(
@@ -226,6 +235,8 @@ async def supervise(
                     state.values = {k: v for k, v in state.values.items() if k in keys}
                 state.identity_fingerprint = getattr(reader, "identity_fingerprint", "")
                 state.update(values)
+                if session is not None:
+                    session.update(getattr(values, "session_observation", None))
                 if refresh is not None:
                     refresh.finish("completed")
                 if values and not state.fresh_values():
@@ -349,6 +360,10 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
     installed = []
     readers = sources(config)
     states = [s for s, _, _ in readers]
+    session = None
+    if config.echarger.enabled or config.echarger.semp_enabled:
+        session = ChargingSession(config)
+        states.append(session.state)
     plant = None
     if config.plant.enabled:
         from .plant import PlantEngine
@@ -427,6 +442,9 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
                 refresh_portal and state.id == "portal",
                 portal_refresh if state.id == "portal" else None,
                 plant.changed.set if plant is not None else None,
+                session
+                if state.id == ("semp" if config.echarger.semp_enabled else "api")
+                else None,
             )
         )
         for state, reader, interval in readers

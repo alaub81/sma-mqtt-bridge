@@ -136,3 +136,76 @@ charging interval is still needed for charging-start/reset behavior. The observe
 idle/unplug/replug cycle is sufficient to reject a universal acquisition-time
 interpretation for session energy; retain the existing filter until an explicit
 last-session-versus-current-session publication policy is chosen.
+
+## Next charging interval, 2026-10-16
+
+Andreas reported that the vehicle had just begun charging. Two read-only samples
+at 07:02:00 and 07:02:55 Europe/Berlin used the enabled local API and SEMP readers
+with existing identity and TLS checks. No device setting, MQTT publication,
+service restart or persistent timestamp-recorder activation was performed.
+Allowlisted numeric observations are retained privately.
+
+Both sources reported charging (200113), with power approximately 10.10 and
+10.16 kW. API session energy increased from 0.952625 to 1.108250 kWh; SEMP gave
+0.9526 and 1.1083 kWh. Both carried the same advancing session timestamps, with
+observed ages below 0.2 seconds. The API cumulative counter increased from
+1500.892000 to 1501.047750 kWh. Over approximately 55 seconds, session and total
+increments were 0.155625 and 0.155750 kWh, differing by 0.125 Wh. Their growth is
+consistent with the sampled power; this is not a calibrated meter comparison.
+
+Compared with the previous unplug/replug observations, session energy has resumed
+fresh progression during charging. The exact charging-start instant was not
+captured, so an additional reset at that instant is neither established nor ruled
+out. No MQTT/openHAB delivery or three-phase mapping acceptance is inferred.
+Health/event timestamps remain on September 11 and mode/authorization on July 21
+in both samples. Charging alone did not refresh these channels. Preserve the
+existing filters; other reset triggers and last/current-session publication policy
+remain separate decisions.
+
+## Reported charging completion and observed resumption, 2026-10-16
+
+Andreas reported that charging had completed. Read-only API/SEMP samples at
+07:09:47 and 07:10:42 Europe/Berlin both reported zero power and connected/waiting
+vehicle status (200112). API session energy remained 1.871625 kWh, SEMP
+1.8716 kWh; both retained the same device timestamp, 07:09:02.072. Its age grew
+from approximately 46 to 101 seconds, still within the 180-second limit.
+The API cumulative counter remained 1501.811000 kWh with advancing timestamps.
+These samples confirm the observed transition to idle and frozen session
+value during the pause, not a battery-SOC target or a specific cause of the stop. No device command,
+MQTT publication or configuration change was made. The session value must
+not be used as the cumulative input to daily energy accounting.
+
+A follow-up at 07:12:24, intended to inspect the expired session timestamp,
+instead found charging active again in both transports (200113), at approximately
+1.658 kW. API session energy had increased to 1.905250 kWh and SEMP to 1.9053 kWh,
+with the same new device timestamp and age below 0.1 seconds. API cumulative
+energy had increased to 1501.844125 kWh. The observed idle interval was therefore
+a pause followed by charging resumption. No reset to zero is visible across the
+sampled pause/resumption; the exact transition instants were not captured.
+This follow-up cannot establish post-180-second idle filtering because the
+session timestamp had resumed advancing. Yesterday's separate idle evidence
+remains valid. The reason for resumption, target completion and controller intent
+are not inferable from these measurements. No charging control was changed.
+
+## Second reported completion, 2026-10-16
+
+Andreas reported completion again. Read-only API/SEMP sampling began at 07:17:05
+Europe/Berlin. The first three samples through 07:18:46 all reported zero power,
+connected/waiting vehicle status (200112), unchanged API total energy
+1501.941750 kWh and session energy 2.002625 kWh (API), 2.0026 kWh (SEMP).
+The shared session timestamp stayed at 07:15:54.260 while its age increased from
+approximately 72 to 172 seconds. Total-energy timestamps continued advancing.
+No session reset was observed after the preceding charging resumption. No device
+setting, MQTT publication, runtime configuration or persistence change was made.
+
+Two further samples at 07:19:36 and 07:20:26 confirmed the same idle state,
+zero power, constant cumulative energy and unchanged raw session value/timestamp.
+Session ages were approximately 222 and 272 seconds. Both readers classified
+session energy as stale and omitted it from their current output; power,
+vehicle status and cumulative energy remained fresh. This confirms the configured
+180-second session filter across this observed charging-to-idle interval.
+Five samples over approximately 201 seconds showed no further charging resumption.
+This does not certify permanent completion, vehicle SOC/target achievement or
+actual MQTT/openHAB delivery. Existing retained-session behavior and any future
+last/current-session publication policy remain separate; no new zero or reset
+was synthesized. Health/event/mode/authorization timestamps stayed old throughout.

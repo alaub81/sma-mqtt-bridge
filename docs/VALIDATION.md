@@ -38,6 +38,27 @@ Andreas owns those steps. The earlier resource/operational acceptance stays clos
 
 ## Local verification
 
+### Newly created inverter Item review, 2026-10-16
+
+Read-only openHAB REST inventory found 11 new uniquely linked inverter Items:
+six Tripower phase values, four Storage phase/grid values and Sunny Boy L1 current.
+Each retains generic Point semantics, no icon and only its equipment group.
+The existing private review CSV now has 153 unique Item rows; the original 142
+rows remain byte-identical and were backed up before appending. New rows 144–154
+are marked `new-proposal-only`. Proposed tags and persistence group were checked
+against the installed registry and current InfluxDB rule. The rule uses everyUpdate,
+restoreOnStartup and every5min with 30seconds and NULL_UNDEF filters; the group
+name does not itself mean an exact periodic 30-second sampling schedule.
+
+Artifact Tool populated and inspected the added rows; the CSV was independently
+parsed and checked for unique names, preserved source rows and complete proposal
+fields. A rendered review was visually checked. All 11 Items are absent from the
+current SMA-Plant page. Their Item changes and page integration await Andreas'
+requested CSV review. No Item definition/state, persistence configuration, page or
+device write was sent. Existing dated inventories and earlier approved JSON
+proposals remain evidence of their original scope; new facts/proposals are saved
+separately in the ignored review directory.
+
 ### Deterministic retained-value regression, 2026-10-16
 
 The reported container CI run timed out after 0.5 seconds in
@@ -2155,6 +2176,148 @@ Validation after this change: `./tests/test-check.sh` passed all 401 tests;
 socket permission outside the restricted shell sandbox; no device network access
 was used by the automated test suite.
 
+## Remaining measurement review and user closures, 2026-10-15
+
+Andreas confirms the history-work group complete: copied-history verification,
+obsolete-Item review and assessment of the mixed PV daily/lifetime history period.
+He also confirms the charging-acceptance group complete except winter single-phase
+operation: garage widget, physical target completion, return from target mode,
+other load points and maximum charging power. These are user confirmations, not
+new independent inspection, database changes or charging writes. A backup of the
+installed widget YAML was not independently inspected in this review.
+
+Bounded, identity-verified direct Modbus reads at 22:07 and 22:08 CEST obtained:
+
+| Quantity | Observed | Assessment |
+| --- | --- | --- |
+| Storage frequency, 30803 | 50.00 / 50.01 Hz | Valid U32/FIX2, plausible grid frequency |
+| Storage L1 current, 30977 | 1.570 / 1.577 A | Valid S32/FIX3 |
+| Storage AC active power, 30775 | 359 / 360 W | Consistent scale and operating range |
+| Storage L1 voltage, 30783, temporary read-only probe | 237.66 V in second sample | With 1.577 A gives about 375 VA; 360 W is plausible, not an exact unity-power-factor equality |
+| Storage derating, 30219 | 884, no derating | Existing model-scoped mapping confirmed |
+| Sunny Boy phase selection, 40183, temporary read-only probe | 329, L3 | Confirms earlier documented assignment |
+| Sunny Boy L1/L2/L3 power/voltage and L2/L3 current | SMA NaN at night | Does not invalidate previously accepted daytime L3 measurements |
+| Sunny Boy DC input B current/voltage/power | SMA NaN at night | Earlier production scan found valid zero and Andreas accepted the comparison; no proof of physical string wiring |
+| PV derating, 30219 | Enum NaN at night | Additional natural derating states remain unverified |
+
+Storage current/frequency technical plausibility and Sunny Boy phase semantics are
+closed. This is neither calibrated accuracy acceptance nor simultaneous openHAB
+comparison. Sunny Boy DC-B readability is closed; physical wiring is optional
+on-site clarification, not a required runtime fix. L1/L2 histories/topics are not
+relabelled. Earlier matching official model lists remain the register/enum sources
+in [REGISTER_VALIDATION.md](REGISTER_VALIDATION.md) and
+[the daytime availability report](MODBUS_AVAILABILITY_2026-10-12.md).
+No public property, device setting, MQTT value or production profile was changed.
+Further derating states need natural events and cannot be claimed from this sample.
+
+## Production deployment confirmation, 2026-10-15
+
+Andreas confirms both remaining deployment steps complete: installation of the
+conditional DC-zero rule with installed-version verification, and adoption of
+smab.env.clean with startup verification. No exact installed version was supplied
+in this confirmation; no new independent host inspection is claimed. Daytime DC
+recovery and post-reset midnight/day/average acceptance remain separate.
+
+## openHAB bulk-maintenance inventory, 2026-10-16
+
+Authenticated read-only REST requests retrieved the current Item registry, links,
+installed semantic tags, six SMA Thing channel descriptions and the active InfluxDB
+persistence configuration. The scoped inventory contains 142 Items: six equipment
+groups, 133 uniquely linked data Items and three unlinked data Items. Of 136 data
+Items, 135 have no icon category and all currently use the generic Point tag.
+
+A private proposal and settings snapshot are stored beneath the ignored
+`private/openhab-review-2026-10-16/` directory. Proposed semantic tags were checked
+against the installed registry. Material Design supplementary SVG names were
+checked in the official upstream repository. Rendering in the installed clients
+is not yet accepted. Proposals distinguish measurements, calculations, settings
+and actions; unlinked Items retain their existing settings pending review.
+
+All 136 data Items belong to pEveryChange; five also belong to pEveryUpdate.
+The active configuration includes two pEveryChange selectors with different filter
+lists, so a universal NULL/UNDEF exclusion has not been established. Configuration
+inspection confirms configured strategies, not successful historical writes or
+complete rule dependencies. No Item, link, device setting, persistence policy or
+history was modified. Credential material was read from the existing ignored file
+and was not printed or included in proposal artifacts.
+
+Andreas subsequently removed the five additional pEveryUpdate memberships. A fresh
+REST read confirms all 136 SMA data Items remain in pEveryChange and none remain
+in pEveryUpdate. The private preview was refreshed and the initial settings
+snapshot preserved separately. These were user-operated changes.
+
+Validation: the complete linter passed. All 401 tests passed when repeated with
+local-network permissions; the initial sandbox run blocked four loopback test
+servers. No runtime source was changed for this inventory.
+
+### Installed semantic tags and icon existence recheck, 2026-10-16
+
+All 27 distinct proposed semantic tags were rechecked against the live installed
+registry and exist. This confirms tag existence, not every proposed functional
+classification. All 17 local icon spellings were requested from the installed
+classic icon provider with SVG format. Sixteen returned SVG payloads; oh:car
+returned 404, as did a deliberately nonexistent control name. The prior upstream
+icon check did not establish installed icon availability.
+
+The actual installed MainUI icon component accepts if/iconify prefixes and
+includes the Iconify loader. The three proposed external icon names remain
+unconfirmed for delivery: the primary and both configured fallback public hosts
+returned 403 from the audit environment. This does not establish that clients
+on the user's network receive the same result. A private per-Item JSON audit
+records the findings. Neither the preview CSV nor live configuration was modified.
+
+Andreas accepted a targeted proposal correction: replace the missing car icon
+with verified energy and assign Status/Timestamp plus time to the three unlinked
+time Items. The numeric time Item's existing display uses epoch-second conversion,
+supporting Timestamp rather than Duration. CSV, JSON and the private audit now
+agree across all 142 records; prior files are preserved. This changes the proposal
+only. Source links and actual update behavior of the three Items remain unresolved.
+
+## Approved openHAB Item maintenance applied, 2026-10-16
+
+Following Andreas' explicit approval, a fresh comparison found 138 changes across
+142 proposed SMA Items with no conflicts. The operation saved the current Item
+definitions and metadata, all channel links, the global InfluxDB configuration
+and the exact mutation plan in the ignored private review directory before
+writing. Each of the 138 Item-definition PUTs was followed by a successful readback.
+The final registry comparison confirmed all 142 proposed definitions with no
+mismatches; four Items required no change.
+
+The approved changes include icons, semantic tags and Item group memberships.
+Persistence memberships now follow the reviewed measurement classes; the action
+Item has no persistence group. The global persistence configuration was not edited.
+The Wallbox equipment uses energy and the three explicitly reviewed time Items
+use Status/Timestamp and time. Existing channel links, Item types, labels, group
+functions and all non-semantic metadata were compared before and after and
+preserved. Requests did not address Item state/command or device write endpoints.
+
+This accepts the Item-definition transfer, not Iconify rendering, missing time
+Item source links, historical data quality or complete openHAB migration. Iconify
+client rendering and three pre-existing unlinked time Items remain open.
+
+## Native SMA-Plant MainUI page, 2026-10-16
+
+Created the user-requested SMA-Plant responsive layout page in MainUI, based on
+the supplied energy-page configuration and installed personal-widget definitions.
+It reuses live energy flow, daily energy overview, eCharger comfort and both BMW
+vehicle widgets. Native cards, an InfluxDB-backed day chart, source status, forecast,
+heat-pump and quality lists supplement six expandable equipment inventories.
+Coverage validation confirms all 136 scoped SMA data Items and 188 existing
+Item references. No new Item or replacement widget definition was introduced.
+
+The page was read back after creation and refinement. All eight existing pages
+and twelve personal-widget definitions were preserved at creation. Desktop browser
+inspection confirmed live values, the rendered chart, both vehicle widgets and
+an expandable inverter inventory. The checked browser error log was empty.
+Missing states display a dash in native lists; page-level A/B labels distinguish
+otherwise identical Tripower labels without changing Items. Native responsive
+columns are configured; real mobile/tablet rendering remains user acceptance.
+Private JSON/YAML sources, before/after snapshots and screenshots are retained.
+No device commands or Item/persistence/rule writes were used for this UI task.
+
+The complete linter and all 401 regression tests passed after this UI addition.
+The private verification record includes reference coverage and browser checks.
+
 ## Target-plan widget feedback correction, 2026-10-16
 
 The reported `String is not a function` error maps to two remaining constructor
@@ -2169,3 +2332,80 @@ Installation and visual confirmation remain pending.
 Full repository lint and all 401 regression tests passed. The initial sandboxed
 run failed four local-server binds; rerunning with local network permissions
 passed. These checks do not establish live MainUI rendering acceptance.
+
+## eCharger session progression after replug, 2026-10-16
+
+Following Andreas' charging-start report, two API/SEMP samples at 07:02:00 and
+07:02:55 Europe/Berlin confirm charging at approximately 10.1 kW and fresh session
+energy in both sources. API session growth was 0.155625 kWh versus 0.155750 kWh
+cumulative growth; session timestamp ages were below 0.2 seconds. This accepts
+fresh session progression in this next charging interval. It does not establish
+an exact start/reset boundary, MQTT/openHAB delivery or complete phase acceptance.
+Health/event/mode/authorization timestamps remained old. Existing freshness policy
+is unchanged; no device writes or runtime changes were made. See
+[the scoped report](ECHARGER_LIVE_CHECK_2026-10-15.md#next-charging-interval-2026-10-16).
+
+## eCharger idle interval and resumption, 2026-10-16
+
+After Andreas reported completion, API/SEMP at 07:09:47 and 07:10:42 Europe/Berlin
+confirmed zero power, connected/waiting status and unchanged session energy
+(1.871625 kWh API) with a fixed 07:09:02 timestamp. Cumulative energy remained
+fresh and constant. At 07:12:24, both sources instead showed charging again at
+approximately 1.658 kW, fresh session energy (1.905250 kWh API) and cumulative
+growth. This accepts a sampled charging pause/resumption with continuing session
+energy, not final target completion or an observed session reset. The intended
+idle-expiry check is inconclusive because charging had resumed; previous idle
+expiry evidence remains separate. No cause/controller intent is inferred and no
+control, MQTT or configuration writes were made. See
+[the report](ECHARGER_LIVE_CHECK_2026-10-15.md#reported-charging-completion-and-observed-resumption-2026-10-16).
+
+## eCharger session expiry after second reported completion, 2026-10-16
+
+Five read-only API/SEMP samples from 07:17:05 to 07:20:26 Europe/Berlin confirmed
+zero power, connected/waiting status and constant fresh cumulative energy
+(1501.941750 kWh API). Raw session energy remained 2.002625 kWh API / 2.0026 kWh
+SEMP, timestamp 07:15:54.260. It was fresh at approximately 172 seconds and
+correctly stale/omitted by both readers at approximately 222 and 272 seconds.
+This accepts session expiry across this observed charging-to-idle interval;
+no further charging resumption occurred within the sampled window. It does not
+accept vehicle SOC/physical target completion, permanent idle or MQTT/openHAB
+delivery. Health/event/mode/authorization retained old timestamps. No settings,
+MQTT publications, runtime configuration or persistence were changed. See
+[the evidence](ECHARGER_LIVE_CHECK_2026-10-15.md#second-reported-completion-2026-10-16).
+
+## Historical charging-session view, 2026-10-16
+
+Implemented the user-approved timestamped display as four additional read-only
+Basic properties on the existing eCharger identity. The raw session measurement's
+filter/unit/topic and Wallbox daily accounting are unchanged. The selected owner
+is SEMP when enabled, otherwise API, using only existing successful reader results.
+With both disabled no tracker/state file is created. Derived history does not
+contribute physical-source availability or command rights.
+
+Deterministic tests cover pause/expiry/resumption, disconnect reset, replug/new
+charging, restart with unknown live state, late/replayed samples, invalid/future/
+naive timestamps, unknown vehicle states, corrupted/identity-mismatched/symlink
+state, durable-write failure with secret-free logging, and source selection for
+API-only/SEMP-only/both/disabled configurations. A zero reset arriving before the
+disconnected status preserves the last positive observation with unknown state,
+including across restart; only later boundary evidence archives it. API adapter
+metadata tests preserve source age and the existing filtered property inventory.
+No additional device request is made by session tracking.
+
+The canonical widget and manual export include optional state/amount/source-time
+Items, with explicit historical fallback and connection qualification. Fourteen
+local JavaScript expression cases passed with the String constructor unavailable:
+charging, paused, completed, waiting, unknown, offline, missing/NULL/UNDEF bindings,
+legacy fallback and demo. This is expression validation, not installed MainUI
+parser/rendering acceptance. Official openHAB widget and Homie documentation was
+consulted and linked from the maintained guide.
+
+The complete linter passed and all 418 offline tests passed, including Compose
+parity and generated catalog validation. The initial sandboxed full run failed
+four loopback-server binds; the final run with local-network permissions passed.
+No running bridge, installed Items/widgets, persistence data or device settings
+were changed. Rebuild/recreate, link/select the three new session Items, and
+verify the next natural transitions and restart in MQTT/openHAB. First startup
+with an already-expired raw session does not reconstruct missing history; gaps
+can leave the saved observed amount incomplete. Physical SOC/target completion
+and unresolved health/event/mode/authorization timestamp semantics remain separate.
