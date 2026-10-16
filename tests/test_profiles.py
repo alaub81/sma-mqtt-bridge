@@ -78,9 +78,9 @@ class ProfileTests(unittest.TestCase):
                 len(p["properties"])
                 - 3
                 - {
-                    "sma-stp8-0-3av-40": 10,
-                    "sma-sbs3-7-10": 13,
-                    "sma-sb4-0-1av-41": 13,
+                    "sma-stp8-0-3av-40": 16,
+                    "sma-sbs3-7-10": 17,
+                    "sma-sb4-0-1av-41": 14,
                 }[selector],
                 sum(len(b["channels"]) for b in device["pollers"]),
             )

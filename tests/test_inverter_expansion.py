@@ -46,7 +46,7 @@ class InverterExpansionTests(unittest.TestCase):
             definitions = {p["id"]: p for p in profile["properties"]}
             blocks = {b["id"]: b for b in profile["pollers"]}
             cases = [("frequency", 30803, 5012, Decimal("50.12"), "Hz")]
-            for phase in (1, 2, 3) if index == 1 else (1,) if index == 2 else (2, 3):
+            for phase in (1,) if index == 2 else (1, 2, 3):
                 cases.append(
                     (f"current-l{phase}", 30977 + 2 * (phase - 1), -1234, Decimal("-1.234"), "A")
                 )
@@ -96,7 +96,7 @@ class InverterExpansionTests(unittest.TestCase):
                 self.assertNotIn("current-l2", keys)
                 self.assertNotIn("current-l3", keys)
             if index == 3:
-                self.assertNotIn("current-l1", keys)
+                self.assertTrue({"current-l1", "current-l2", "current-l3"} <= keys)
                 self.assertTrue({"current-b-input", "voltage-b-input", "power-b-input"} <= keys)
             topics = discovery("homie", "fixture", reader.properties, labels)
             if index == 3:

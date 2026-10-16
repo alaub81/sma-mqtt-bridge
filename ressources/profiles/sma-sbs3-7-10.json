@@ -101,7 +101,7 @@
       "id": "ac-power",
       "function": 4,
       "start": 30775,
-      "count": 2,
+      "count": 4,
       "intervalSeconds": 5.0
     },
     {
@@ -124,6 +124,20 @@
       "start": 31397,
       "count": 8,
       "intervalSeconds": 60.0
+    },
+    {
+      "id": "phase-voltage",
+      "function": 4,
+      "start": 30783,
+      "count": 2,
+      "intervalSeconds": 5.0
+    },
+    {
+      "id": "grid-power",
+      "function": 4,
+      "start": 30865,
+      "count": 4,
+      "intervalSeconds": 5.0
     }
   ],
   "properties": [
@@ -318,7 +332,7 @@
       "byteOrder": "big",
       "wordOrder": "big",
       "scale": 0.1,
-      "unit": "°C",
+      "unit": "\u00b0C",
       "invalid": [
         -2147483648
       ],
@@ -542,7 +556,7 @@
       "byteOrder": "big",
       "wordOrder": "big",
       "scale": 0.1,
-      "unit": "°C",
+      "unit": "\u00b0C",
       "invalid": [
         -2147483648
       ],
@@ -604,7 +618,7 @@
       "datatype": "enum",
       "channelGroup": "basic",
       "valueMap": {
-        "557": "Übertemperatur (TmpDrt)",
+        "557": "\u00dcbertemperatur (TmpDrt)",
         "884": "Keine Abregelung (NoneDrt)",
         "1705": "Frequenzabweichung (HzDrt)",
         "3520": "Spannungsabweichung (VDrt)"
@@ -644,6 +658,78 @@
         18446744073709551615
       ],
       "datatype": "float",
+      "channelGroup": "basic"
+    },
+    {
+      "id": "power-l1",
+      "node": "measurements",
+      "name": "Power L1",
+      "poller": "ac-power",
+      "offset": 2,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "integer",
+      "channelGroup": "basic"
+    },
+    {
+      "id": "volt-g1",
+      "node": "measurements",
+      "name": "Grid voltage phase L1",
+      "poller": "phase-voltage",
+      "offset": 0,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.01,
+      "unit": "V",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "float",
+      "channelGroup": "basic"
+    },
+    {
+      "id": "power-drawn",
+      "node": "measurements",
+      "name": "Power drawn",
+      "poller": "grid-power",
+      "offset": 0,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "integer",
+      "channelGroup": "basic"
+    },
+    {
+      "id": "power-grid-feed-in",
+      "node": "measurements",
+      "name": "Power grid feed-in",
+      "poller": "grid-power",
+      "offset": 2,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "integer",
       "channelGroup": "basic"
     }
   ],
