@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "runtime": {
     "language": "en",
-    "translateDir": "/data/sma-mqtt-bridge/translate",
-    "profileDir": "/data/sma-mqtt-bridge/profiles",
+    "translateDir": "/data/sma-mqtt-bridge/config/translate",
+    "profileDir": "/data/sma-mqtt-bridge/config/profiles",
     "stateDir": "/data/sma-mqtt-bridge/state",
     "timezone": "Europe/Berlin",
     "logLevel": "INFO",

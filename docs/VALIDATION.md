@@ -38,24 +38,103 @@ Andreas owns those steps. The earlier resource/operational acceptance stays clos
 
 ## Local verification
 
+### Deleted timestamp Item references removed, 2026-10-16
+
+After Andreas deleted the unlinked Wallbox energy snapshot-time and Home Manager
+DateTime helper Items, read-only registry checks confirmed both absent. Exactly
+their two SMA-Plant detail rows were removed; Home Manager/Wallbox counts changed
+from 9/42 to 8/41. Page backup/readback and browser inspection confirm the result;
+the existing linked Home Manager ISO time remains. Other pages are unchanged.
+No further Item deletion, link, source or persistence change was made.
+
+### Three empty MainUI values investigated, 2026-10-16
+
+Read-only Item/link/Thing checks distinguish three causes. The Wallbox energy
+snapshot-time String Item is NULL and has no channel link. Its optional
+wallboxenergytime diagnostic channel is absent from the current Thing; the
+accepted cleaned configuration disables eCharger diagnostics. The Home Manager
+DateTime helper is also NULL/unlinked, while its existing planttimeiso String
+Item has a current ISO timestamp. Neither missing helper has an automatic data
+source merely because it appears in the semantic model or page.
+
+Wallbox health is linked to measurements#health but empty. An identity-checked
+local API and SEMP read at 08:22:52 Europe/Berlin returned code 307 (OK) in both
+sources, each with device timestamp 2026-09-11T15:00:55.290Z. Both adapters exclude
+that observation under the configured 180-second timestamp limit, producing no
+new health value. Existing source availability is ready. This confirms an old
+state timestamp rather than missing protocol data; it does not settle whether
+health uses change-time semantics. No source-age policy, Item/link, page,
+persistence configuration or device setting was changed. Narrow private records
+retain only selected Item metadata and health value/time evidence.
+
+### Session text function context correction verified, 2026-10-16
+
+The session formatter previously called a sibling helper through fn inside its
+own context definition. The child label now calls the value helper and passes
+five explicit arguments to the formatter. Eleven local JavaScript cases pass
+with fn deliberately absent from the helper evaluation scope, covering waiting,
+charging, paused, completed, stale source, zero, missing data and demo behavior.
+The canonical YAML and generated manual import are synchronized. Only two
+expressions change; controls, props, commands and other widget content are intact.
+
+The installed widget is file-defined (editable=false). An initial REST PUT did not
+replace it; readback showed the old definition, with no retry. Andreas subsequently
+copied the corrected YAML into openHAB. Fresh REST readback exactly matches the
+prepared widget definition. After reloading SMA-Plant, browser inspection shows
+`Letzter Messwert: 0 kWh` and no sessionValue/TypeError text. A screenshot is saved
+privately. No control or charging command was used for verification. This accepts
+the live formatter fix for the observed fallback display; other session states
+remain covered by the eleven local cases rather than new live charging tests.
+
+### Approved inverter Item and MainUI extension applied, 2026-10-16
+
+Following Andreas' explicit approval, all 11 reviewed Item definitions were updated
+and read back: measurement semantics, the approved icons and pEveryUpdate30s group
+membership. Existing channels, units and non-semantic metadata are unchanged.
+The global InfluxDB configuration was not modified. Before/after snapshots and
+the concrete change plan remain in the ignored review directory.
+
+SMA-Plant adds exactly six Tripower, four Storage and one Sunny Boy detail rows;
+their accordion counts are now 26/25/26. Removing those additions and restoring
+the three counts exactly reconstructs the previous page. The saved page was read
+back and covers 147/147 SMA data Items. Other pages, personal widgets, unrelated
+Item definitions and channel links were compared and preserved. An initial strict
+comparison differed only in semantic tag order on the Carport current Item;
+read-only revalidation of unordered tags/groups confirms zero differences without
+repeating a live write. The existing CSV marks the 11 additions applied-confirmed
+and preserves its earlier 142 rows byte for byte.
+
+Browser inspection confirms the added device entries, working existing icon types,
+live voltage/Storage power readings and dashes for unavailable phase values.
+Screenshots were saved privately. The unchanged charger widget separately shows
+a sessionValue expression error; widget definitions and its instance were not
+edited by this extension. This UI observation does not establish future database
+sample delivery or complete numerical measurement acceptance. No Item state,
+device command, source profile, rule or energy baseline was written.
+
+The private current inventory contains 153 Items: six equipment groups and 147
+data Items. The full linter passed across 200 files and all 418 offline tests of
+the current checkout passed; those checks are separate from the live readback.
+
 ### Newly created inverter Item review, 2026-10-16
 
 Read-only openHAB REST inventory found 11 new uniquely linked inverter Items:
 six Tripower phase values, four Storage phase/grid values and Sunny Boy L1 current.
-Each retains generic Point semantics, no icon and only its equipment group.
+At review time each retained generic Point semantics, no icon and only its equipment group.
 The existing private review CSV now has 153 unique Item rows; the original 142
-rows remain byte-identical and were backed up before appending. New rows 144–154
-are marked `new-proposal-only`. Proposed tags and persistence group were checked
+rows remain byte-identical and were backed up before appending. At the proposal
+checkpoint, rows 144–154 were marked `new-proposal-only`; their confirmed applied
+status is recorded above. Proposed tags and persistence group were checked
 against the installed registry and current InfluxDB rule. The rule uses everyUpdate,
 restoreOnStartup and every5min with 30seconds and NULL_UNDEF filters; the group
 name does not itself mean an exact periodic 30-second sampling schedule.
 
 Artifact Tool populated and inspected the added rows; the CSV was independently
 parsed and checked for unique names, preserved source rows and complete proposal
-fields. A rendered review was visually checked. All 11 Items are absent from the
-current SMA-Plant page. Their Item changes and page integration await Andreas'
-requested CSV review. No Item definition/state, persistence configuration, page or
-device write was sent. Existing dated inventories and earlier approved JSON
+fields. A rendered review was visually checked. At that checkpoint all 11 Items
+were absent from SMA-Plant and awaited Andreas' CSV review. The approved
+application is recorded above. No live write was sent during the proposal step.
+Existing dated inventories and earlier approved JSON
 proposals remain evidence of their original scope; new facts/proposals are saved
 separately in the ignored review directory.
 
@@ -2409,3 +2488,54 @@ verify the next natural transitions and restart in MQTT/openHAB. First startup
 with an already-expired raw session does not reconstruct missing history; gaps
 can leave the saved observed amount incomplete. Physical SOC/target completion
 and unresolved health/event/mode/authorization timestamp semantics remain separate.
+
+## Session Item and page configuration applied, 2026-10-16
+
+The four user-created session Items were identified by their existing Homie links.
+Energy uses Measurement/Energy, oh:energy and pEveryChangeCron; status uses
+Status/Info, oh:text and pEveryChange; both timestamps use Status/Timestamp,
+oh:time and pEveryChange. All four belong to the existing charger equipment.
+The energy Item's existing kWh metadata was preserved.
+
+Four detail rows were added to SMA-Plant (45 charger rows). The existing widget
+instance receives sessionStateItem, sessionDisplayEnergyItem and
+sessionEnergyTimeItem. Readback confirms definitions and bindings; channel links,
+global persistence, widget definitions and other pages were unchanged. Private
+before/after snapshots, mutation plan and verification were saved. Browser review
+confirms the new rows and icons. No device command or synthetic Item update occurred.
+
+Before definition updates, status was waiting and energy/timestamps were NULL.
+After the updates status was also NULL, and the widget rendered its legacy
+"Letzter Messwert: 0 kWh" fallback. Configuration acceptance does not establish
+next-session publication, database sample storage, or transition acceptance; these
+remain pending a natural fresh source update. No restart or MQTT replay was used.
+
+The full linter passed across 200 files and all 418 offline tests passed. Four
+loopback-server tests were initially sandbox-blocked; rerunning with permitted
+local ports passed. No product code or installed widget definition was changed.
+
+## Compact session summary without timestamp, 2026-10-16
+
+At Andreas' request, the garage widget omits the observation date/time suffix
+from its session summary. The captured-time presence check, energy/state labels,
+connection warning and source timestamp Items remain unchanged. The canonical
+YAML and manual-import export are updated together. This is a repository-only
+presentation change; installed mobile rendering remains pending.
+
+Validation passed: full repository lint, all 418 offline tests and six local
+JavaScript expression cases for charging, pause, completion, offline, waiting
+and missing source time. No browser or live installation acceptance is claimed.
+
+## Separate configuration and state mounts, 2026-10-16
+
+Both standalone Compose files now mount the unchanged host configuration directory
+read-only at /data/sma-mqtt-bridge/config. JSON, profile and translation defaults
+follow that target. The project-scoped data_smab_state volume and its state target
+are unchanged; no ledger, manifest or command-journal migration is performed.
+Explicit installation file paths require the documented config/ prefix update.
+
+Validation: full lint passed across 200 files; all 418 offline tests passed with
+local loopback test ports permitted (four were initially sandbox-blocked).
+Compose rendering/parity passed for defaults and explicit overrides, including
+the read-only configuration mount and writable state volume. No live container
+recreation or installation acceptance is claimed.

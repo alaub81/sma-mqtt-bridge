@@ -1,6 +1,6 @@
 # eCharger garage list widget
 
-The garage entry shows vehicle connection, power and a timestamped session display together with
+The garage entry shows vehicle connection, power and a compact session display together with
 charging permission (Ladeberechtigung) and checked mode buttons with icons beside the labels. Selecting PV reveals the staged PV
 percentage slider directly below the modes. Target charging expands the energy/departure form below the modes. Additional
 settings expand in the same entry; there is no custom popup. UI labels are German. No Items, links, rules,
@@ -36,6 +36,15 @@ confirmed energy/end-time comparison are preserved. See the official
 Updating the widget requires no charging command.
 
 ## Shared expressions and update check
+
+The session label passes validated Item values explicitly to `sessionText`.
+Do not call sibling `fn` helpers from inside a function declared by the same
+`oh-context`: the installed MainUI evaluated that function without its own `fn`
+dictionary and displayed a sessionValue error. The value checks now run at the
+child label, where the documented function context is available; the formatter
+receives five arguments and keeps the existing waiting/charging/paused/completed,
+fallback and source-status text. Update the actual YAML file for a file-defined
+widget; a read-only REST widget cannot be replaced through the UI component API.
 
 The existing `oh-context` defines `localWriteAllowed`, `portalWriteAllowed` and
 `chargingMode`. These functions preserve the previous expressions and are
@@ -121,15 +130,16 @@ Session energy is not used as a charging-plan progress bar.
 After rebuilding/recreating the bridge, link the three new session properties to
 Items and select them in the widget. Keep the old sessionEnergyItem and its history;
 no relinking or rescaling of the existing raw channel is required. Set energy unit
-to kWh. A DateTime Item with a local date/time display pattern is convenient for
-sessionEnergyTimeItem; a String Item displays the source's UTC timestamp directly.
+to kWh. Keep sessionEnergyTimeItem configured: the source time is required to
+identify a captured observation, but is omitted from the compact garage summary.
+Use the separate Item/detail view when the observation time is needed.
 The additional session#endedat channel is optional for other views and records
 observed disconnection rather than the last watt of charging.
 
 The widget shows **Geladen** while charging, **Laden pausiert · bisher** during
-connected idle, and **Letzte Ladung** after a sampled disconnection. It always
-includes the captured amount's source time when the new view is configured. A
-resumed charge remains the same session. Abstecken is the completion boundary;
+connected idle, and **Letzte Ladung** after a sampled disconnection. The summary
+shows the energy and session state without a date/time suffix. A resumed charge
+remains the same session. Abstecken is the completion boundary;
 zero power, the 180-second raw-value expiry or target mode alone do not establish
 completion. An offline/unknown state uses **Letzter Stand** and an unconfirmed
 connection notice rather than a live charging label. Waiting without a captured

@@ -29,19 +29,17 @@ slots:
             =(name) => (name && items[name] && !['NULL', 'UNDEF', ''].includes(items[name].state)
             ? items[name].state : '')
           sessionText: >-
-            =() => (props.demoMode ? 'Geladen: 8,0 kWh · Demo' :
-            (fn.sessionValue(props.sessionStateItem) === 'waiting' ? 'Noch keine Sitzungsenergie' :
-            (fn.sessionValue(props.sessionStateItem) && fn.sessionValue(props.sessionDisplayEnergyItem)
-            && fn.sessionValue(props.sessionEnergyTimeItem)
+            =(sessionState, sessionEnergy, sessionTime, sourceStatus, rawEnergy) =>
+            (props.demoMode ? 'Geladen: 8,0 kWh · Demo' :
+            (sessionState === 'waiting' ? 'Noch keine Sitzungsenergie' :
+            (sessionState && sessionEnergy && sessionTime
             ? ((({'charging':'Geladen: ', 'paused':'Laden pausiert · bisher ',
-            'completed':'Letzte Ladung: '}[(fn.sessionValue(props.measurementStatusItem) === 'ready' || fn.sessionValue(props.sessionStateItem) === 'completed')
-            ? fn.sessionValue(props.sessionStateItem) : 'unknown'] || 'Letzter Stand: '))
+            'completed':'Letzte Ladung: '}[(sourceStatus === 'ready' || sessionState === 'completed')
+            ? sessionState : 'unknown'] || 'Letzter Stand: '))
             + (items[props.sessionDisplayEnergyItem].displayState || items[props.sessionDisplayEnergyItem].state)
-            + (fn.sessionValue(props.sessionEnergyTimeItem) ? ' · Stand '
-            + (items[props.sessionEnergyTimeItem].displayState || items[props.sessionEnergyTimeItem].state) : '')
-            + ((props.measurementStatusItem && fn.sessionValue(props.measurementStatusItem) === 'ready')
+            + ((props.measurementStatusItem && sourceStatus === 'ready')
             ? '' : ' · Verbindung nicht bestätigt'))
-            : ('Letzter Messwert: ' + (fn.sessionValue(props.sessionEnergyItem)
+            : ('Letzter Messwert: ' + (rawEnergy
             ? (items[props.sessionEnergyItem].displayState || items[props.sessionEnergyItem].state) : '—')))))
           chargingMode: >-
             =() => (props.demoMode ? (vars.demoMode || '4719') : (props.modeItem && items[props.modeItem]
@@ -90,7 +88,12 @@ slots:
                             white-space: normal
                       - component: Label
                         config:
-                          text: =fn.sessionText()
+                          text: >-
+                            =fn.sessionText(fn.sessionValue(props.sessionStateItem),
+                            fn.sessionValue(props.sessionDisplayEnergyItem),
+                            fn.sessionValue(props.sessionEnergyTimeItem),
+                            fn.sessionValue(props.measurementStatusItem),
+                            fn.sessionValue(props.sessionEnergyItem))
                           tooltip: Gespeicherte Sitzungsbeobachtung. 0 W bedeutet Pause; bestätigtes Abstecken beendet die Sitzung.
                           style:
                             display: block

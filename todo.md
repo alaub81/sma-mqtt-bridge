@@ -33,6 +33,25 @@ im [Implementierungsplan](docs/IMPLEMENTATION_PLAN.md).
 
 ## Unmittelbare Restarbeiten
 
+- [x] 16.10.2026: Nach Andreas' Löschung der beiden Zeit-Items genau deren
+  Anzeigen aus SMA-Plant entfernt: Wallbox-Energiebilanzzeit und zusätzliches
+  Home-Manager-DateTime-Item. Nichtexistenz der Items vorher geprüft; Seite
+  gesichert und Änderung zurückgelesen. Listenzähler Home Manager 9→8,
+  Wallbox 42→41; bestehende ISO-Anlagenzeit bleibt erhalten. Browser bestätigt
+  beide entfernten Anzeigen und neue Zähler. Andere Seiten unverändert.
+- [x] 16.10.2026, 08:22: Drei leere Anzeigen gezielt lesend geprüft.
+  Wallbox-Energiebilanzzeit: Item NULL ohne Link; zugehöriger optionaler
+  Diagnosekanal fehlt im aktuellen Thing und ist in der bereinigten Konfiguration
+  abgeschaltet. Home-Manager-DateTime-Hilfsitem ebenfalls NULL ohne Link;
+  das verknüpfte ISO-Zeititem liefert aktuelle Werte. Wallbox-Gerätezustand ist
+  korrekt verknüpft, aber beide Quellen liefern Code 307/OK mit unverändertem
+  Gerätezeitstempel vom 11.09.2026. API und SEMP filtern ihn bei 180 Sekunden
+  Altersgrenze; keine neuen Health-Messwerte werden veröffentlicht.
+- [x] Entscheidung zu beiden unversorgten Zeit-Hilfsitems: von Andreas gelöscht,
+  Anzeigen aus der Seite entfernt; vorhandene ISO-Anlagenzeit bleibt erhalten.
+- [ ] Health als letzten bekannten Zustand mit Zeit-/Verfügbarkeitskennzeichnung behandeln erst nach
+  Klärung seiner Änderungszeit-Semantik. Keine künstlichen Frischezeitstempel,
+  keine globale Lockerung der Messwert-Altersgrenze. Noch nichts live geändert.
 - [x] 16.10.2026: Nach Andreas' Item-Anlage openHAB ausschließlich lesend
   inventarisiert: elf neue Wechselrichter-Items mit jeweils passendem Channel
   gefunden (Roof sechs, Storage vier, Carport eins). Die bestehende private
@@ -42,11 +61,34 @@ im [Implementierungsplan](docs/IMPLEMENTATION_PLAN.md).
   entsprechende bisherige Icons und pEveryUpdate30s. Tags, Zielgruppe und aktuelle
   InfluxDB-Regel einschließlich Zeit-/NULL-Filter gegen die Installation geprüft.
   CSV unabhängig geparst, neue Zeilen geprüft und Vorschau visuell kontrolliert.
-- [ ] Andreas prüft die neuen CSV-Zeilen 144–154; erst danach Semantik, Icons und
-  Persistence an den elf Items übernehmen und die SMA-Plant-MainUI-Seite ergänzen.
-  Alle elf fehlen derzeit auf dieser Seite. Inventar-/Seitenaufnahme und separater
-  Änderungsvorschlag liegen privat unter openhab-review-2026-10-16/new-inverter-items.
-  Keine Item-, Persistence-, Seiten- oder Geräteänderung ausgeführt.
+- [x] Andreas hat die neuen CSV-Zeilen 144–154 freigegeben. Alle elf Items mit
+  den geprüften Icons, Measurement/Power beziehungsweise Voltage/Current und
+  pEveryUpdate30s versehen und einzeln zurückgelesen. Links, Einheiten, sonstige
+  Metadaten und globale Persistence-Regeln erhalten.
+- [x] SMA-Plant um genau elf Detailzeilen ergänzt: Roof sechs, Storage vier,
+  Carport eins. Die drei Wertzähler zeigen jetzt 26/25/26. Vollständige
+  Seitenabdeckung 147/147 SMA-Datenitems; andere Seiten und Widget-Definitionen
+  unverändert. Aktuelle Item-Aufnahme, Änderungsplan, Sicherungen, Readback und
+  Screenshots privat unter new-inverter-items/approved-application abgelegt.
+  CSV-Zeilen als applied-confirmed markiert; vorherige 142 Zeilen erhalten.
+  Aktuelles privates Inventar umfasst 153 Items (sechs Equipment-Gruppen,
+  147 Datenitems). Vollständiger Linter über 200 Dateien und alle 418 Tests
+  des aktuellen Arbeitsstands bestanden; Live-Readback separat geprüft.
+  Erste Gesamtprüfung meldete lediglich umsortierte semantische Tags; lesender
+  Vergleich ohne Reihenfolgeabhängigkeit bestätigt alle Änderungen ohne Fehler.
+  Keine Schreibwiederholung, kein Item-State und kein Gerätebefehl.
+- [x] sessionValue-Anzeigefehler lokal korrigiert: sessionText erhält fünf geprüfte
+  Werte vom untergeordneten Label; kein Aufruf eines gleichrangigen fn-Helfers
+  innerhalb der Textfunktion. Elf lokale Prüffälle ohne fn im Funktionskontext
+  bestanden. Kanonisches YAML und generierter Import stimmen überein; Bedienung,
+  Schreibsperren und übrige Widgetdefinition unverändert.
+- [x] Andreas hat die korrigierte eCharger-YAML nach openHAB kopiert. REST-Readback
+  stimmt vollständig mit der vorbereiteten Widgetdefinition überein. Nach
+  Browser-Neuladen erscheint „Letzter Messwert: 0 kWh“ statt des sessionValue-
+  Fehlers; Screenshot gesichert. Keine Ladebefehle zur Prüfung gesendet.
+  Frühere REST-Übernahme war wegen editable=false erfolglos und wurde nicht
+  wiederholt; Installation und Prüfung sind jetzt über den Dateipfad abgeschlossen.
+  Speicherung künftiger Samples bleibt von dieser Anzeigeprüfung getrennt.
 - [x] 16.10.2026: Gemeldeten CI-Timeout im Retained-Messwerttest behoben:
   bisheriges 0,5-Sekunden-Limit enthielt Publisher-Start, Manifest-Sicherung und
   Timer. Test prüft jetzt gezielt die Publikationsschleife mit kontrollierter
@@ -383,3 +425,49 @@ API-only-Fallback-Ausbau bei abgeschaltetem SEMP bleibt aus dem Umfang gestriche
   Nullreset vor Absteckstatus bewahrt den positiven Betrag auch über Neustart.
   Anfangs vier lokale Testserver durch Sandbox blockiert; Abschlusslauf mit lokalen
   Netzwerkrechten vollständig grün. Keine neue Live-Abnahme behauptet.
+
+## Neue Sitzungsitems eingebunden, 16.10.2026
+
+- [x] Vier von Andreas angelegte session-Items live anhand ihrer Channel-Links
+  identifiziert und mit Icons, semantischen Tags und Wallbox-Equipment versehen.
+  Energie: Measurement/Energy, oh:energy, pEveryChangeCron; Zustand:
+  Status/Info, oh:text, pEveryChange; beide Quellzeiten: Status/Timestamp,
+  oh:time, pEveryChange. Bestehende kWh-Metadaten erhalten.
+- [x] Alle vier Detailzeilen auf SMA-Plant ergänzt; Wallbox zählt 45 Werte.
+  Zustand, gespeicherte Energie und Messzeitpunkt direkt der Widget-Instanz
+  zugeordnet. Definitionen und Seite zurückgelesen; andere Seiten, Widgets,
+  Channel-Links und globale Persistence unverändert. Sicherung und Nachweis
+  privat unter openhab-review-2026-10-16/session-items abgelegt.
+- [ ] Natürliche nächste Sitzung prüfen. Vor der Definitionspflege war Status
+  waiting, Betrag/Zeiten NULL; danach auch Status NULL. Widget zeigt deshalb
+  weiterhin „Letzter Messwert: 0 kWh“. Keine künstliche Zustandsaktualisierung,
+  MQTT-Neupublikation oder Neustart ausgeführt. Die Konfiguration ist übernommen,
+  Versorgung und Übergänge der nächsten Sitzung sind noch nicht abgenommen.
+- [x] Abschlussprüfung: vollständiger Linter über 200 Dateien und alle 418 Tests
+  bestanden. Vier Testserver im ersten Sandbox-Lauf blockiert; Wiederholung mit
+  erlaubten lokalen Ports erfolgreich.
+
+## Kompakte Sitzungsanzeige ohne Datum, 16.10.2026
+
+- [x] Auf Andreas’ Wunsch den langen Stand-Zeitstempel aus der kompakten
+  Garagenanzeige entfernt. Energie, Sitzungszustand und Verbindungshinweis bleiben.
+  Quellzeit-Item und Prüfung auf vorhandenen Messzeitpunkt bleiben erhalten;
+  Zeitstempel sind weiterhin über die bestehenden Detailansichten verfügbar.
+  Kanonisches YAML und generierte Importdatei gemeinsam aktualisiert.
+- [ ] Aktualisierte Widget-Definition installieren und mobile Darstellung prüfen.
+  Keine Live-Änderung und kein Gerätebefehl ausgeführt.
+- [x] Validierung: vollständiger Linter, alle 418 Offline-Tests und sechs lokale
+  Ausdrucksfälle bestanden; fehlende Quellzeit führt weiterhin zur Altwertanzeige.
+
+## Getrennte Konfigurations- und State-Mounts, 16.10.2026
+
+- [x] Beide Compose-Dateien binden den unveränderten Hostordner schreibgeschützt
+  nach /data/sma-mqtt-bridge/config ein; JSON-, Profil- und Übersetzungsdefaults
+  folgen diesem Pfad. State-Ziel und benanntes Volume bleiben unverändert.
+- [x] Upgrade-Hinweise für explizite Datei-/Zertifikat-/Passwortpfade ergänzt.
+  Keine privaten Dateien oder laufenden Container verändert.
+- [ ] Installation mit aktualisiertem Image und Compose neu erstellen und
+  tatsächliche Mounts prüfen; keine State-Migration oder Baseline-Rücksetzung.
+- [x] Validierung: vollständiger Linter (200 Dateien), 418 Offline-Tests und
+  Compose-Parität samt Overrides erfolgreich. Vier zunächst durch die Sandbox
+  blockierte Loopback-Tests liefen mit erlaubten lokalen Testports erfolgreich.

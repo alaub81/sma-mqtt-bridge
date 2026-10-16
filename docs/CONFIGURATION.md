@@ -4,7 +4,7 @@ Andreas requested this contract on 2026-10-10. It is binding for the Python impl
 
 ## Host files and precedence
 
-The private `smab.env` belongs in the repository root next to the Compose files. Keep the agreed name `smab.env`; a leading dot only hides a file and does not protect secrets. A name such as `.smab.env` has no automatic Compose loading behavior. Only `.env` is automatically used for Compose interpolation; our service environment file is explicitly selected by `env_file`. `smab.example.env` documents every available variable, including its purpose, type and default. Store other installation files under `./data/sma-mqtt-bridge/` relative to the Compose project directory; bind-mount that directory to `/data/sma-mqtt-bridge` in the container:
+The private `smab.env` belongs in the repository root next to the Compose files. Keep the agreed name `smab.env`; a leading dot only hides a file and does not protect secrets. A name such as `.smab.env` has no automatic Compose loading behavior. Only `.env` is automatically used for Compose interpolation; our service environment file is explicitly selected by `env_file`. `smab.example.env` documents every available variable, including its purpose, type and default. Store other installation files under `./data/sma-mqtt-bridge/` relative to the Compose project directory; bind-mount that directory read-only to `/data/sma-mqtt-bridge/config` in the container:
 
 ```text
 smab.env               # Explicit overrides and installation credentials, host only
@@ -19,7 +19,22 @@ Docker volume data_smab_state -> /data/sma-mqtt-bridge/state
                        # Heartbeat and owned MQTT-topic manifest
 ```
 
-Both Compose files mount the project-scoped named volume `data_smab_state` at the state path, over the configuration bind mount. Docker initializes a fresh volume from the image-owned directory for UID/GID 10001. Keep this volume when replacing containers; `docker compose down -v` deletes it. Changing the Compose project name creates a different volume. Only one bridge instance may write this state. If overriding UID/GID, prepare matching ownership on the state volume; host-file access alone is insufficient. If changing `SMAB_STATE_DIR` or JSON `runtime.stateDir`, also adjust the volume target.
+Both Compose files mount the project-scoped named volume `data_smab_state` at the state path, alongside the configuration bind mount. Docker initializes a fresh volume from the image-owned directory for UID/GID 10001. Keep this volume when replacing containers; `docker compose down -v` deletes it. Changing the Compose project name creates a different volume. Only one bridge instance may write this state. If overriding UID/GID, prepare matching ownership on the state volume; host-file access alone is insufficient. If changing `SMAB_STATE_DIR` or JSON `runtime.stateDir`, also adjust the volume target.
+
+### Mount layout upgrade, 2026-10-16
+
+The host directory stays unchanged; only its container target moves from
+`/data/sma-mqtt-bridge` to `/data/sma-mqtt-bridge/config`. Use the updated image
+and Compose file together and recreate the service. Explicit ENV/JSON paths for
+configuration, profiles, translations, certificates, keys and password files
+must include the new `config/` component when they refer to this bind mount.
+Do not change `SMAB_STATE_DIR`, the Compose project name or the state volume.
+No state migration or energy-baseline reset is required.
+
+The separate targets prevent Docker from creating a state mountpoint inside the
+host configuration directory. Existing host `state/` remnants are not migrated
+or deleted automatically. Back up the named volume separately; a backup of the
+host configuration directory does not include active runtime state.
 
 The private `smab.env` and data directory are excluded from Git and Docker build contexts. Compose reads `smab.env` on the host and passes its values into the container; the file itself is not mounted. Keep `smab.env` readable only by its host owner, and secret files/private keys readable only by the owner/container user. Never generate a configuration file containing resolved passwords or session tokens. Do not rewrite user configuration automatically.
 
@@ -123,8 +138,8 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 | `SMAB_DATA_DIR` | `./data/sma-mqtt-bridge` | Compose host bind directory. |
 | `SMAB_ENV_FILE` | `./smab.env` | Compose service ENV file; optional for diagnostics. |
 | `SMAB_UID`, `SMAB_GID` | `10001` | Compose-only integer user/group IDs; align file access with the host account. |
-| `SMAB_CONFIG_FILE` | `/data/sma-mqtt-bridge/config.json` | Optional JSON configuration. |
-| `SMAB_PROFILE_DIR` | `/data/sma-mqtt-bridge/profiles` | Verified device profile directory. |
+| `SMAB_CONFIG_FILE` | `/data/sma-mqtt-bridge/config/config.json` | Optional JSON configuration. |
+| `SMAB_PROFILE_DIR` | `/data/sma-mqtt-bridge/config/profiles` | Verified device profile directory. |
 | `SMAB_STATE_DIR` | `/data/sma-mqtt-bridge/state` | Non-secret persistent state and heartbeat; Compose mounts `data_smab_state` here. |
 | `SMAB_TIMEZONE` | `Europe/Berlin` | IANA timezone for timestamps and day boundaries. |
 | `SMAB_LOG_LEVEL` | `INFO` | `DEBUG`, `INFO`, `WARNING`, `ERROR`; redact secrets at every level. |
@@ -612,7 +627,7 @@ All write gates stay false by default. Plan transmission/mode activation and por
 
 `SMAB_LANGUAGE` (string, default `en`; JSON `runtime.language`) selects bundled English or German
 (`de`) display labels. `SMAB_TRANSLATE_DIR` (container path, default
-`/data/sma-mqtt-bridge/translate`; JSON `runtime.translateDir`) selects host translation overrides.
+`/data/sma-mqtt-bridge/config/translate`; JSON `runtime.translateDir`) selects host translation overrides.
 The image includes `ressources/translate/en.json` and `de.json`. Copy `translate/example.json` to
 `data/sma-mqtt-bridge/translate/de.json` to customize German labels, or to `fr.json` and select `fr`
 to add another language. The host directory is covered by the existing data bind mount; it is not

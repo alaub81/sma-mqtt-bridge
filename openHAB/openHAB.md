@@ -734,3 +734,13 @@ unlinked helper Items. A missing value is displayed as a dash and does not imply
 a zero or a working source link. Updating the page does not repair source links,
 history or accounting coverage. Existing Item metadata and global persistence
 remain authoritative. Personal-widget definitions remain independently editable.
+
+The approved October 16 inverter extension adds six Roof phase measurements,
+four Storage phase/grid measurements and Carport L1 current to the detail lists.
+After removing the two subsequently deleted timestamp helpers, the page covers
+145 SMA data Items; the inverter accordions contain 26/25/26
+values. The eleven new Items use the same measurement semantics, icon conventions
+and pEveryUpdate30s membership as their existing counterparts. That group's active
+InfluxDB rule includes a time filter; its name is not a guarantee of exact periodic
+sampling. Device reads, global persistence rules and existing widget definitions
+remain independent of these page additions.

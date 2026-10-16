@@ -11,7 +11,8 @@ services:
     volumes:
       - type: bind
         source: ${SMAB_DATA_DIR:-./data/sma-mqtt-bridge}
-        target: /data/sma-mqtt-bridge
+        target: /data/sma-mqtt-bridge/config
+        read_only: true
       - type: volume
         source: data_smab_state
         target: /data/sma-mqtt-bridge/state

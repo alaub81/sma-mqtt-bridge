@@ -38,7 +38,7 @@ implicitly enable a source. Disabled adapters perform no device I/O.
 
 Root `smab.env` is private; `smab.example.env` documents all supported variables.
 Optional JSON, reusable profiles, certificates and password files live under
-`data/sma-mqtt-bridge/`, mounted at `/data/sma-mqtt-bridge`. Persistent state uses
+`data/sma-mqtt-bridge/`, mounted read-only at `/data/sma-mqtt-bridge/config`. Persistent state uses
 `data_smab_state` at `/data/sma-mqtt-bridge/state`. Preserve the topic manifest,
 command uncertainty journals and process-lock protection during storage changes.
 Resolved environment secrets must never be written into generated configuration.

@@ -71,10 +71,14 @@ def check(overrides):
         raise ValueError("Container user override was not applied")
     source = (ROOT / overrides.get("SMAB_DATA_DIR", "./data/sma-mqtt-bridge")).resolve()
     mounts = {mount["target"]: mount for mount in dev["volumes"]}
-    if set(mounts) != {"/data/sma-mqtt-bridge", "/data/sma-mqtt-bridge/state"}:
+    if set(mounts) != {"/data/sma-mqtt-bridge/config", "/data/sma-mqtt-bridge/state"}:
         raise ValueError("Unexpected configuration/state mount paths")
-    data_mount = mounts["/data/sma-mqtt-bridge"]
-    if data_mount["type"] != "bind" or Path(data_mount["source"]) != source:
+    data_mount = mounts["/data/sma-mqtt-bridge/config"]
+    if (
+        data_mount["type"] != "bind"
+        or Path(data_mount["source"]) != source
+        or not data_mount.get("read_only", False)
+    ):
         raise ValueError("Host data directory override was not applied")
     state_mount = mounts["/data/sma-mqtt-bridge/state"]
     if (
