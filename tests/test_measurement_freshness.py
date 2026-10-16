@@ -285,6 +285,25 @@ class ReaderLifetimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("measurements/current-l1", delayed.fresh_values(1002))
         self.assertEqual(delayed.status(1002), "stale")
 
+    async def test_api_session_observation_preserves_source_time_without_expanding_base_inventory(
+        self,
+    ):
+        for include_base in (False, True):
+            values, state = await self.read_api(
+                [
+                    ("Measurement.Metering.GridMs.TotWIn.ChaSta", "3000", 3),
+                    ("Measurement.Operation.EVeh.ChaStt", "200113", 2),
+                    ("Measurement.ChaSess.WhIn", "1500", 1),
+                ],
+                include_base=include_base,
+            )
+            sample = values.session_observation
+            self.assertEqual(sample.energy, Decimal("1.5"))
+            self.assertEqual(sample.energy_time.isoformat(), self.stamp(1).replace("Z", "+00:00"))
+            self.assertEqual(sample.observed_at, 997)
+            self.assertEqual("measurements/session-energy" in values, include_base)
+            self.assertFalse(any(p.node == "session" for p in state.properties))
+
     async def test_api_total_energy_fallback_uses_selected_channel_not_primary_age(self):
         rows = [
             ("Measurement.Metering.GridMs.TotWhIn.ChaSta", "NaN", 179),

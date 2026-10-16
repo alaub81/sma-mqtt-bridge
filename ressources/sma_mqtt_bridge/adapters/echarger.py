@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from types import MappingProxyType
 
+from ..charging_session import observation as session_observation
 from ..config import echarger_ssl_context
 from ..errors import AuthenticationError, ProtocolError
 from ..model import Property, SampleValues, channel_group_enabled, number
@@ -216,8 +217,8 @@ def observation_time(channel, value, timestamp, stale_seconds, now, monotonic):
     return monotonic - (now - measured).total_seconds()
 
 
-def timed_values(values, channel_times, channels):
-    return SampleValues(
+def timed_values(values, channel_times, channels, session=None):
+    result = SampleValues(
         values,
         {
             key: channel_times[channel]
@@ -225,6 +226,8 @@ def timed_values(values, channel_times, channels):
             if key in values and values[key] is not None and channel in channel_times
         },
     )
+    result.session_observation = session
+    return result
 
 
 def base_properties(advanced):
@@ -376,7 +379,7 @@ def semp_values(
     text, stale_seconds, now=None, advanced=True, diagnostics=True, timestamp_observer=None
 ):
     root = xml_root(text)
-    catalog, channel_times = {}, {}
+    catalog, channel_times, raw_values, raw_stamps = {}, {}, {}, {}
     monotonic = time.monotonic()
     now = datetime.now(timezone.utc) if now is None else now
     for p in root.findall(f"{{{NS}}}Parameters/{{{NS}}}Parameter"):
@@ -385,6 +388,7 @@ def semp_values(
             raise ProtocolError("Missing/duplicate SEMP parameter channel")
         raw = p.findtext(f"{{{NS}}}value")
         stamp = p.findtext(f"{{{NS}}}timestamp")
+        raw_values[channel], raw_stamps[channel] = raw, stamp
         if channel.startswith(("Measurement.", "Setpoint.")):
             if timestamp_observer is not None:
                 timestamp_observer.observe("semp", channel, raw, stamp, stale_seconds, now)
@@ -406,7 +410,12 @@ def semp_values(
         node + "/" + id: channel
         for node, id, channel, group in extra_channels(advanced, diagnostics)
     }
-    return timed_values(result, channel_times, channels)
+    return timed_values(
+        result,
+        channel_times,
+        channels,
+        session_observation(raw_values, raw_stamps, stale_seconds, now, monotonic),
+    )
 
 
 class SempReader:
@@ -560,6 +569,7 @@ class EChargerReader:
                 if not isinstance(live, list):
                     raise ProtocolError("Unexpected live-measurement response")
                 values, phase_power_units, channel_times = {}, {}, {}
+                raw_values, raw_stamps = {}, {}
                 property_channels = {}
                 for m in live:
                     if (
@@ -587,6 +597,10 @@ class EChargerReader:
                         raise ProtocolError("Conflicting live measurement timestamps")
                     monotonic = time.monotonic()
                     now = datetime.now(timezone.utc)
+                    raw_values[m["channelId"]], raw_stamps[m["channelId"]] = (
+                        entry.get("value"),
+                        stamp,
+                    )
                     values[m["channelId"]] = current_measurement(
                         entry.get("value"), stamp, self.settings.stale_seconds, now
                     )
@@ -645,7 +659,18 @@ class EChargerReader:
                     baseline.pop("settings/charge-mode")
                     result.update(baseline)
                     property_channels.update(BASE_TIMED_CHANNELS)
-                return timed_values(result, channel_times, property_channels)
+                return timed_values(
+                    result,
+                    channel_times,
+                    property_channels,
+                    session_observation(
+                        raw_values,
+                        raw_stamps,
+                        self.settings.stale_seconds,
+                        datetime.now(timezone.utc),
+                        time.monotonic(),
+                    ),
+                )
             except AuthenticationError:
                 self.token, self.expires = None, 0
                 if attempt:

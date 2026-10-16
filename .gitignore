@@ -28,3 +28,4 @@ build/
 # Private target-host resource observations.
 smab-resource-soak*.jsonl
 smab-resource-soak*.log
+openhab_api_key
