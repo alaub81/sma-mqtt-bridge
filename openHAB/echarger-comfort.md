@@ -25,6 +25,16 @@ remain unchanged. The repository linter checks that the generated file is curren
 For manual import, paste the generated file into the MainUI widget editor instead
 of also installing the file configuration below.
 
+## Target-plan feedback compatibility
+
+If the target-plan feedback shows `Error: 'String' is not a function`, update the
+existing widget from the regenerated manual-import file or canonical YAML above.
+Both energy-state conversions now use `'' + value`; MainUI does not expose the
+`String()` constructor in its expression context. The kWh/Wh validation and
+confirmed energy/end-time comparison are preserved. See the official
+[expression documentation](https://www.openhab.org/docs/ui/widget-expressions-variables.html).
+Updating the widget requires no charging command.
+
 ## Shared expressions and update check
 
 The existing `oh-context` defines `localWriteAllowed`, `portalWriteAllowed` and

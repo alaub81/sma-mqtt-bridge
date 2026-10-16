@@ -2137,3 +2137,18 @@ Validation after this change: `./tests/test-check.sh` passed all 401 tests;
 `./tests/linter-check.sh` passed all checks. Loopback fixture tests required local
 socket permission outside the restricted shell sandbox; no device network access
 was used by the automated test suite.
+
+## Target-plan widget feedback correction, 2026-10-16
+
+The reported `String is not a function` error maps to two remaining constructor
+calls in the plan feedback expression. Both now use text concatenation; canonical
+YAML and generated manual import match. Seventeen local JavaScript evaluations
+with the String constructor unavailable passed, including kWh/Wh conversion,
+invalid states, time mismatch, uncertainty and demo feedback. Date handling used
+a test substitute; this is not a MainUI parser or browser acceptance check.
+No command payload, write gate, live widget or device setting was changed.
+Installation and visual confirmation remain pending.
+
+Full repository lint and all 401 regression tests passed. The initial sandboxed
+run failed four local-server binds; rerunning with local network permissions
+passed. These checks do not establish live MainUI rendering acceptance.

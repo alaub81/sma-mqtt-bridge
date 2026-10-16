@@ -870,9 +870,9 @@ widgets:
                                       === vars.end) : ((props.apiStatusItem && items[props.apiStatusItem] ? items[props.apiStatusItem].state :
                                       ''UNDEF'') === ''ready'' && fn.chargingMode() === ''4720'' && [''confirmed'',''already-confirmed''].includes((props.localResultItem
                                       && items[props.localResultItem] ? items[props.localResultItem].state : ''UNDEF'')) && (vars.energy * 1 >
-                                      0 && String((props.planEnergyItem && items[props.planEnergyItem] ? items[props.planEnergyItem].state : ''UNDEF'')).match(/^[+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?(?:
+                                      0 && ('''' + (props.planEnergyItem && items[props.planEnergyItem] ? items[props.planEnergyItem].state : ''UNDEF'')).match(/^[+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?(?:
                                       (?:kWh|Wh))?$/) && vars.end && dayjs(vars.end).isValid() && (Number.parseFloat((props.planEnergyItem &&
-                                      items[props.planEnergyItem] ? items[props.planEnergyItem].state : ''UNDEF'')) / (String((props.planEnergyItem
+                                      items[props.planEnergyItem] ? items[props.planEnergyItem].state : ''UNDEF'')) / (('''' + (props.planEnergyItem
                                       && items[props.planEnergyItem] ? items[props.planEnergyItem].state : ''UNDEF'')).endsWith('' Wh'') ? 1000
                                       : 1)) === vars.energy * 1 && dayjs((props.planEndItem && items[props.planEndItem] ? items[props.planEndItem].state
                                       : ''UNDEF'')).isValid() && dayjs((props.planEndItem && items[props.planEndItem] ? items[props.planEndItem].state

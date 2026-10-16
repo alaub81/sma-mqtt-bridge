@@ -183,3 +183,18 @@ im [Implementierungsplan](docs/IMPLEMENTATION_PLAN.md).
   Grid-Guard-Testschreiben. Mindest-PV und Tagesanteile sind kein Live-Lademix.
 
 API-only-Fallback-Ausbau bei abgeschaltetem SEMP bleibt aus dem Umfang gestrichen.
+
+## Widget-Korrektur Ladeziel, 16.10.2026
+
+- [x] Screenshot-Fehler zugeordnet: zwei nicht unterstützte String()-Aufrufe in
+  der Rückmeldeanzeige des Ladeplans. Beide durch Textverkettung ersetzt;
+  kanonisches YAML und generierte Importdatei aktualisiert. Keine Änderung an
+  Schreibfreigaben, Befehlen oder Energie-/Zielzeitprüfung.
+- [x] Offizielle MainUI-Ausdrucksdokumentation konsultiert. 17 lokale
+  Ausdrucksfälle ohne String-Konstruktor bestanden: kWh/Wh, numerische Werte,
+  ungültige Werte, abweichende Zielzeit, unklarer Status und Demo.
+- [ ] Aktualisierte Widget-Definition in openHAB übernehmen und Anzeige prüfen;
+  bisher nur Repository-Dateien geändert, keine Gerätebefehle gesendet.
+- [x] Vollständiger Linter und 401 Regressionstests bestanden. Erster Testlauf
+  durch vier lokale Server-Sandboxfehler blockiert; Wiederholung mit lokalen
+  Netzwerkrechten erfolgreich. Keine neue Live-Abnahme behauptet.
