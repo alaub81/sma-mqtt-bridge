@@ -540,28 +540,49 @@ class AsyncRuntimeTests(unittest.IsolatedAsyncioTestCase):
         state = SourceState(
             "fixture", "test-device", (Property("measurements", "power", "Power"),), 5
         )
-        state.update({"measurements/power": 10})
-        stop, clients = asyncio.Event(), []
+        now = 100
+        state.update({"measurements/power": 10}, now=now)
+        stop = asyncio.Event()
 
         class ExpiringClient(FakeClient):
             async def publish(self, topic, payload, **kwargs):
+                nonlocal now
                 await super().publish(topic, payload, **kwargs)
                 if topic.endswith("/$state") and payload == "ready":
-                    state.values = {
-                        k: (v, received - 10) for k, (v, received) in state.values.items()
-                    }
+                    now = 106
                 if topic.endswith("/$state") and payload == "alert":
                     stop.set()
 
-        def factory(*args, **kwargs):
-            client = ExpiringClient(*args, **kwargs)
-            clients.append(client)
-            return client
+        client = ExpiringClient()
+        publisher = HomiePublisher(self.config, [state])
+        snapshot = publisher.snapshot
+        cycles = 0
 
-        publisher = HomiePublisher(self.config, [state], factory)
-        await asyncio.wait_for(publisher.run(stop), 0.5)
-        power = [(p, k) for t, p, k in clients[0].messages if t.endswith("/measurements/power")]
+        async def next_cycle(_stop, _seconds):
+            nonlocal cycles
+            cycles += 1
+            self.assertLessEqual(cycles, 2, "Publisher failed to observe the expired measurement")
+            await asyncio.sleep(0)
+
+        # Exercise retention without wall-clock expiry, periodic waits or startup fsync.
+        with (
+            patch.object(
+                publisher, "snapshot", side_effect=lambda states: snapshot(states, now=now)
+            ),
+            patch("sma_mqtt_bridge.homie.wait_stop", side_effect=next_cycle),
+        ):
+            await asyncio.wait_for(
+                publisher.publish_values(client, "homie/test-device", [state], stop, {}, 0, None),
+                5,
+            )
+        power = [(p, k) for t, p, k in client.messages if t.endswith("/measurements/power")]
         self.assertEqual([p for p, _ in power], ["10"])
+        self.assertTrue(all(options["retain"] for _, options in power))
+        self.assertEqual(
+            [p for t, p, _ in client.messages if t.endswith("/$state")], ["ready", "alert"]
+        )
+        self.assertEqual(state.values["measurements/power"], ("10", 100))
+        self.assertEqual(cycles, 2)
 
     async def test_unacknowledged_shutdown_aborts_transport_for_will(self):
         from unittest.mock import MagicMock

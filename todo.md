@@ -33,6 +33,14 @@ im [Implementierungsplan](docs/IMPLEMENTATION_PLAN.md).
 
 ## Unmittelbare Restarbeiten
 
+- [x] 16.10.2026: Gemeldeten CI-Timeout im Retained-Messwerttest behoben:
+  bisheriges 0,5-Sekunden-Limit enthielt Publisher-Start, Manifest-Sicherung und
+  Timer. Test prüft jetzt gezielt die Publikationsschleife mit kontrollierter
+  Zeit, zwei begrenzten Zyklen und unveränderter letzter Beobachtung; retained
+  Wert 10 sowie ready→alert werden explizit geprüft. Kein Produktcode geändert.
+  200 gezielte Wiederholungen und alle 406 Offline-Tests erfolgreich.
+  Neuer gehosteter CI-Lauf bleibt separat; genaue Ursache der ursprünglichen
+  Runner-Verzögerung nicht unabhängig nachgewiesen.
 - [x] 16.10.2026: Alle aktuellen Wechselrichter-Topics abgeglichen:
   [Vergleich mit Register-/Scanbelegen](docs/INVERTER_TOPIC_PARITY_2026-10-16.md),
   vollständige Matrix mit 44 verschiedenen Runtime-Properties.

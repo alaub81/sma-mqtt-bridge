@@ -38,6 +38,23 @@ Andreas owns those steps. The earlier resource/operational acceptance stays clos
 
 ## Local verification
 
+### Deterministic retained-value regression, 2026-10-16
+
+The reported container CI run timed out after 0.5 seconds in
+`test_stale_retained_measurement_keeps_last_observation`. That deadline included
+publisher startup, durable manifest writes and periodic waits, not only the
+retention behavior under test. The regression now exercises the publication loop
+with controlled observation time (100 to 106 seconds for a five-second lifetime)
+and cooperative, immediate cycle progression. A two-cycle bound detects missing
+expiry handling independently of host speed; a five-second watchdog catches hangs.
+It explicitly checks retained value 10, ready-to-alert transition, unchanged
+observation time and no stale-value deletion/republication. Existing lifecycle
+tests continue to cover full publisher startup/shutdown. Production code is unchanged.
+
+The targeted regression passed 200 consecutive runs; the full 406-test offline
+suite passed. Hosted CI acceptance requires a new run; the original CI delay was
+not reproduced or independently attributed to a specific disk/scheduler operation.
+
 ### Inverter topic parity, 2026-10-16
 
 The [cross-device review](INVERTER_TOPIC_PARITY_2026-10-16.md) compares all 44
