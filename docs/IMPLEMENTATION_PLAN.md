@@ -7,6 +7,12 @@ Current evidence is in [VALIDATION.md](VALIDATION.md), the German task list in
 
 ## 1. Preserve accepted deployment and upgrade continuity
 
+For the locally prepared [inverter topic additions](INVERTER_TOPIC_PARITY_2026-10-16.md),
+verify new phase/grid discovery and values after an explicitly requested deployment.
+The exact bundled additions preserve released energy identities; retain normal
+profile mismatch handling for custom overrides. No baseline reset is required
+solely for these recognized telemetry additions.
+
 Andreas accepts the release/CI step. The supplied production logs confirm the
 nighttime PV sentinel normalization, and live MQTT now shows plant ready with
 fresh house power. The user requested a backed-up energy-ledger reset; day and

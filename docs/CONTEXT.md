@@ -205,6 +205,14 @@ authorize a push or deployment.
 
 ## Complete register coverage decision, 2026-10-12
 
+The [2026-10-16 parity review](INVERTER_TOPIC_PARITY_2026-10-16.md) closes
+documented, availability-backed phase/grid telemetry gaps while retaining
+device-specific unsupported/inactive quantities. Exact normalized bundled-profile
+hashes permit only these telemetry additions to retain the released energy
+fingerprint layout. Runtime polling uses the full new profiles. Unrecognized
+profile changes still fail the existing accounting identity guard; no baseline
+reset or automatic ledger rebase is introduced.
+
 The goal includes all verified readable device values and readable configurable
 parameters, beyond the original openHAB baseline. The
 [Modbus completeness audit](MODBUS_TOPIC_AUDIT.md) inventories candidates without

@@ -38,6 +38,42 @@ Andreas owns those steps. The earlier resource/operational acceptance stays clos
 
 ## Local verification
 
+### Inverter topic parity, 2026-10-16
+
+The [cross-device review](INVERTER_TOPIC_PARITY_2026-10-16.md) compares all 44
+distinct inverter runtime properties against the official model lists and the
+dated production scan. Six Tripower phase mappings and four Storage phase/grid
+mappings close available-value gaps. The two PV profiles now have identical
+direct property inventories; inactive Storage phases and battery/PV-only
+quantities remain explicit differences. Tripower requests are unchanged; Storage
+adds two short read blocks and extends its existing AC-power block.
+
+All 406 offline tests pass, including canonical phase topic discovery,
+signed/zero/sentinel decoding, shared offsets, optional freshness and PV
+metadata parity. Full lint passes across 198 files, and the regenerated catalog
+includes all additions. Fixed hashes of the released, normalized profile energy
+identities confirm compatibility for the exact bundled telemetry additions;
+mutating a counter or another property still changes the fingerprint. Runtime
+profiles are not mutated by fingerprint construction. The earlier Sunny Boy L1
+addition is included in this compatibility. No energy state was reset or rebased.
+These results do not establish deployment or live MQTT/openHAB acceptance.
+
+### Sunny Boy L1 current completion, 2026-10-16
+
+The bundled Sunny Boy profile now exposes Basic read-only
+`measurements/currentl1` in A. The official SBxx-1AV-41 V16 source archive was
+downloaded again and its recorded SHA-256 verified; its L1 row confirms
+30977/S32/FIX3. The existing five-second phase-current block expands to six
+registers. L2/L3 addresses, units and topics stay unchanged.
+
+All 402 offline regressions pass, including shared-block phase separation,
+signed/zero/sentinel decoding, read-only German discovery with optional groups
+disabled and readiness when inactive L1 is unavailable. The initial sandbox run
+blocked four loopback test servers; the complete rerun with local port permission
+passes. The full linter passes, and the generated topic catalog includes L1.
+No live device access, deployment or MQTT/openHAB value acceptance is implied.
+The inactive phase may still return SMA NaN. See [register evidence](REGISTER_VALIDATION.md#sunny-boy-l1-current-completion-2026-10-16).
+
 The external Linux resource recorder now includes schema-2 cgroup block I/O and
 process logical/storage counters plus continuity-safe rates. Six new regressions
 cover multiple devices, empty versus unavailable controllers, malformed/duplicate

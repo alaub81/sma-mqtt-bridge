@@ -4,6 +4,10 @@ Evidence date: 2026-10-10. The three bundled profiles now contain the existing 4
 
 ## Source evidence
 
+For the current cross-device additions and remaining differences, see the
+[2026-10-16 topic parity review](INVERTER_TOPIC_PARITY_2026-10-16.md).
+Historical mapping counts below describe their dated checkpoints.
+
 | Profile | Official register evidence | Installed firmware verified locally |
 | --- | --- | --- |
 | `sma-stp8-0-3av-40` | [Parameter-STP8-10-3AV-40 V13](https://files.sma.de/downloads/Parameter-STP8-10-3AV-40_V13.zip), [GG10 variant](https://files.sma.de/downloads/Parameter-STP8-10-3AV-40__GG10_V13.zip), valid from 4.00.61.R | 4.10.10.R |
@@ -120,6 +124,24 @@ user's request as a documented, potentially unavailable phase. This is offline-t
 profile implementation, not a new bridge/MQTT/openHAB deployment acceptance.
 The three profiles now contain 47 measurement properties plus nine identity
 properties. Historical audit coverage counts describe the pre-extension snapshot.
+
+## Sunny Boy L1 current completion, 2026-10-16
+
+The missing Sunny Boy `measurements/currentl1` mapping is now included using
+30977 (`GridMs.A.phsA`), two registers, S32/FIX3, scale 0.001 A, RO. The official
+[SBxx-1AV-41 V16 archive](https://files.sma.de/downloads/PARAMETER-HTML_SBxx-1AV-41-V16.zip)
+was downloaded again; its SHA-256 matches the source-evidence table above.
+`parameterlist_de.html` confirms the mapping. The phase-current FC04 block now
+starts at 30977 with six registers and retains its five-second interval; L2/L3
+offsets change to 2/4, preserving addresses 30979/30981. Big-endian decoding,
+signed values, valid zero and sentinel -2147483648 follow the existing contract.
+
+The new property is Basic, non-settable and optional for readiness. It remains
+discoverable with Advanced and Diagnostics disabled. Earlier L1 NaN observations
+remain valid evidence of an unavailable inactive phase, not a reason to omit its
+metadata. No device read, deployment or live MQTT/openHAB acceptance was performed
+for this correction. Offline regressions cover addresses, shared-block offsets,
+scaling, signed/zero/NaN decoding, discovery and readiness with unavailable L1.
 
 ## Small inverter measurement extension, 2026-10-12
 

@@ -33,6 +33,46 @@ im [Implementierungsplan](docs/IMPLEMENTATION_PLAN.md).
 
 ## Unmittelbare Restarbeiten
 
+- [x] 16.10.2026: Alle aktuellen Wechselrichter-Topics abgeglichen:
+  [Vergleich mit Register-/Scanbelegen](docs/INVERTER_TOPIC_PARITY_2026-10-16.md),
+  vollständige Matrix mit 44 verschiedenen Runtime-Properties.
+  Tripower fehlten sechs Zuordnungen für Phasenleistung/-spannung trotz
+  vorhandener gültiger Register im bereits gelesenen Block. Ergänzt als
+  powerl1–3 und voltagel1–3; beide PV-Profile haben jetzt dieselben 33 direkten
+  Properties. Keine zusätzlichen Tripower-Abfragen.
+- [x] Storage um belegte L1-Leistung/-Spannung sowie Netzbezug/-Einspeisung
+  ergänzt: vier Basic-Lesewerte, zwei neue kurze Fünf-Sekunden-Blöcke und
+  bestehender AC-Leistungsblock erweitert. Gültige Null beim Netzleistungsscan
+  belegt keine unabhängige Hausmessung; keine neue Bilanzquelle aktiviert.
+  Inaktive Storage-Phasen und reine PV-/Batteriefunktionen bleiben begründete
+  Unterschiede. Weitere Registerkandidaten bleiben separat zurückgestellt.
+- [x] Profiländerungen gegen Energie-Fingerprint geprüft: eng auf exakt
+  erkannte gebündelte Ergänzungen begrenzte Kompatibilität erhält die bisherigen
+  Basen einschließlich des vorigen Sunny-Boy-L1-Fixes. Fremde Profiländerungen
+  bleiben geschützt; keine Ledger-Umschreibung oder Rücksetzung.
+  Validierung: alle 406 Offline-Tests und vollständiger Linter über 198 Dateien
+  bestanden; generierter Topic-Katalog aktuell. Alte Profil-Energiesignaturen
+  anhand festgehaltener Prüfsummen getestet; andere Mappingänderungen bleiben
+  sichtbar und die Laufzeitprofile werden nicht verändert.
+- [ ] Neue Wechselrichter-Topics nach Neubau/Installation in MQTT prüfen;
+  Host-Profilkopien gegebenenfalls explizit aktualisieren. Kein Deployment,
+  Live-Gerätezugriff oder openHAB-/Historieneingriff erfolgt.
+- [x] 16.10.2026: Fehlendes `measurements/currentl1` bei inverter3/Carport
+  lokal geprüft. Im gebündelten Profil `sma-sb4-0-1av-41` fehlt die
+  Property `current-l1`; der Phasenstrom-Poller liest nur 30979–30982
+  für L2/L3. Auch im generierten Topic-Katalog fehlt Sunny Boy currentl1.
+  Kein ENV-Schalter ist die Ursache; Laufzeit und Geräte wurden nicht geändert.
+- [x] 16.10.2026: Auf Andreas' Wunsch Sunny-Boy-Phasenstrom L1 ergänzt:
+  `measurements/currentl1`, Basic, lesend, A. Offizielle V16-Liste erneut
+  heruntergeladen, Prüfsumme abgeglichen und 30977/S32/FIX3 bestätigt.
+  Stromblock auf sechs Register ab 30977 erweitert; L2/L3-Adressen und
+  Fünf-Sekunden-Intervall bleiben erhalten. Ungültiges L1 bleibt nicht verfügbar
+  und blockiert ready nicht. Topic-Katalog und Regressionen aktualisiert.
+  Validierung: alle 402 Offline-Tests erfolgreich; vollständiger Linter erfolgreich.
+  Vier lokale Testserver waren zunächst durch die Sandbox blockiert;
+  Wiederholung mit erlaubten Loopback-Ports vollständig bestanden.
+- [ ] L1-Ergänzung nach Neubau/Installation in MQTT prüfen; die inaktive Phase
+  kann weiterhin SMA-NaN liefern. Kein Live-Zugriff oder Deployment ausgeführt.
 - [ ] Nach dem heutigen Reset den nächsten Mitternachtsübergang und Folgetag prüfen:
   Tagesstatus, Hausverbrauch mit/ohne Wallbox sowie beide Sieben-Tage-Durchschnitte.
   Heute enthält nur die seit dem Neustart gemessene Zeit. Frühere Abnahme bleibt

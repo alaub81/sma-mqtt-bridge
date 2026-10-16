@@ -640,6 +640,114 @@
         "4560": "Externe Vorgabe (WSptMaxDrt)",
         "4561": "Externe Vorgabe 2 (WSptMax2Drt)"
       }
+    },
+    {
+      "id": "power-l1",
+      "node": "measurements",
+      "name": "Power L1",
+      "poller": "power-a",
+      "offset": 8,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "integer",
+      "channelGroup": "basic"
+    },
+    {
+      "id": "power-l2",
+      "node": "measurements",
+      "name": "Power L2",
+      "poller": "power-a",
+      "offset": 10,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "integer",
+      "channelGroup": "basic"
+    },
+    {
+      "id": "power-l3",
+      "node": "measurements",
+      "name": "Power L3",
+      "poller": "power-a",
+      "offset": 12,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 1,
+      "unit": "W",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "integer",
+      "channelGroup": "basic"
+    },
+    {
+      "id": "volt-g1",
+      "node": "measurements",
+      "name": "Grid voltage phase L1",
+      "poller": "power-a",
+      "offset": 14,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.01,
+      "unit": "V",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "float",
+      "channelGroup": "basic"
+    },
+    {
+      "id": "volt-g2",
+      "node": "measurements",
+      "name": "Grid voltage phase L2",
+      "poller": "power-a",
+      "offset": 16,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.01,
+      "unit": "V",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "float",
+      "channelGroup": "basic"
+    },
+    {
+      "id": "volt-g3",
+      "node": "measurements",
+      "name": "Grid voltage phase L3",
+      "poller": "power-a",
+      "offset": 18,
+      "type": "uint32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.01,
+      "unit": "V",
+      "invalid": [
+        4294967295
+      ],
+      "datatype": "float",
+      "channelGroup": "basic"
     }
   ],
   "commands": [],

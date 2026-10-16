@@ -79,8 +79,8 @@
     {
       "id": "phase-currents",
       "function": 4,
-      "start": 30979,
-      "count": 4,
+      "start": 30977,
+      "count": 6,
       "intervalSeconds": 5.0
     },
     {
@@ -496,11 +496,29 @@
       "channelGroup": "basic"
     },
     {
+      "id": "current-l1",
+      "node": "measurements",
+      "name": "Grid current phase L1",
+      "poller": "phase-currents",
+      "offset": 0,
+      "type": "int32",
+      "length": 2,
+      "byteOrder": "big",
+      "wordOrder": "big",
+      "scale": 0.001,
+      "unit": "A",
+      "invalid": [
+        -2147483648
+      ],
+      "datatype": "float",
+      "channelGroup": "basic"
+    },
+    {
       "id": "current-l2",
       "node": "measurements",
       "name": "Grid current phase L2",
       "poller": "phase-currents",
-      "offset": 0,
+      "offset": 2,
       "type": "int32",
       "length": 2,
       "byteOrder": "big",
@@ -554,7 +572,7 @@
       "node": "measurements",
       "name": "Grid current phase L3",
       "poller": "phase-currents",
-      "offset": 2,
+      "offset": 4,
       "type": "int32",
       "length": 2,
       "byteOrder": "big",

@@ -29,6 +29,7 @@ class SunnyBoyPhaseTests(unittest.TestCase):
             ("power-l3", 30781, 456, Decimal(456), 0x80000000),
             ("volt-g2", 30785, 23012, Decimal("230.12"), 0xFFFFFFFF),
             ("volt-g3", 30787, 23134, Decimal("231.34"), 0xFFFFFFFF),
+            ("current-l1", 30977, -5678, Decimal("-5.678"), 0x80000000),
             ("current-l2", 30979, -1234, Decimal("-1.234"), 0x80000000),
             ("current-l3", 30981, 2345, Decimal("2.345"), 0x80000000),
         ):
@@ -48,7 +49,17 @@ class SunnyBoyPhaseTests(unittest.TestCase):
         self.assertEqual(pollers["power-a"]["count"], 20)
         self.assertEqual(pollers["power-a"]["intervalSeconds"], 3)
         self.assertEqual(pollers["phase-currents"]["intervalSeconds"], 5)
-        self.assertEqual(pollers["phase-currents"]["count"], 4)
+        self.assertEqual(pollers["phase-currents"]["count"], 6)
+
+    def test_shared_current_block_keeps_all_phase_offsets_distinct(self):
+        words = [0xFFFF, 0xFB2E, 0, 2345, 0, 6789]
+        for key, expected in (
+            ("current-l1", Decimal("-1.234")),
+            ("current-l2", Decimal("2.345")),
+            ("current-l3", Decimal("6.789")),
+        ):
+            with self.subTest(key=key):
+                self.assertEqual(decode(words, self.definitions[key]), expected)
 
     def test_discovery_preserves_l1_and_adds_read_only_l2_l3_with_optional_filters_off(self):
         labels = load_translation("de", self.tmp.name)
@@ -56,6 +67,7 @@ class SunnyBoyPhaseTests(unittest.TestCase):
         for suffix, unit, label in (
             ("powerl1", "W", "Leistung Phase L1"),
             ("voltg1", "V", "Netzspannung Phase L1"),
+            ("currentl1", "A", "Netzstrom Phase L1"),
             ("powerl2", "W", "Leistung Phase L2"),
             ("powerl3", "W", "Leistung Phase L3"),
             ("voltg2", "V", "Netzspannung Phase L2"),
@@ -78,6 +90,7 @@ class SunnyBoyPhaseTests(unittest.TestCase):
                 "measurements/status": "Ok (Ok)",
                 "measurements/power-l1": None,
                 "measurements/volt-g1": None,
+                "measurements/current-l1": None,
                 "measurements/power-l2": None,
                 "measurements/volt-g2": None,
                 "measurements/current-l2": None,
@@ -93,5 +106,5 @@ class SunnyBoyPhaseTests(unittest.TestCase):
         self.assertEqual(values["measurements/power-l3"], "456")
         self.assertEqual(values["measurements/voltage-l3"], "231.34")
         self.assertEqual(values["measurements/current-l3"], "2.345")
-        for key in ("power-l1", "volt-g1", "power-l2", "volt-g2", "current-l2"):
+        for key in ("power-l1", "volt-g1", "current-l1", "power-l2", "volt-g2", "current-l2"):
             self.assertNotIn("measurements/" + key, values)

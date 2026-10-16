@@ -10,6 +10,7 @@ from decimal import Decimal
 from zoneinfo import ZoneInfo
 
 from .energy_balances import EnergyBalances
+from .energy_profile_compat import released_energy_layout
 from .errors import ConfigError
 from .model import Property, SampleValues, SourceState, number, payload
 from .plant_debug import PlantDebug
@@ -33,19 +34,22 @@ class Input:
 
 
 def energy_binding_profile(profile):
-    """Keep power-only sentinel compatibility out of cumulative-energy identity."""
+    """Preserve energy identity across approved sentinel and exact telemetry additions."""
     if profile is None:
         return None
-    return profile | {
-        "properties": [
-            {
-                key: value
-                for key, value in prop.items()
-                if key not in ("invalidAsZero", "invalidAsZeroWhen")
-            }
-            for prop in profile["properties"]
-        ]
-    }
+    return released_energy_layout(
+        profile
+        | {
+            "properties": [
+                {
+                    key: value
+                    for key, value in prop.items()
+                    if key not in ("invalidAsZero", "invalidAsZeroWhen")
+                }
+                for prop in profile["properties"]
+            ]
+        }
+    )
 
 
 def plant_plan(config):

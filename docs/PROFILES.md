@@ -127,6 +127,11 @@ every existing channel. See [channel configuration](CONFIGURATION.md#optional-ch
 
 ## Explicit Sunny Boy L2/L3 channels
 
+The [2026-10-16 parity review](INVERTER_TOPIC_PARITY_2026-10-16.md) completes
+Tripower phase power/voltage and Storage L1 power/voltage plus grid-power
+telemetry. Both PV profiles now have the same direct property inventory.
+Host overrides need explicit updates; inactive Storage phases stay excluded.
+
 The Sunny Boy profile additionally provides measurements/powerl2, powerl3, voltg2,
 voltg3, currentl2 and currentl3. See the
 [register extension](REGISTER_VALIDATION.md#sunny-boy-l2l3-profile-extension-2026-10-12)
@@ -143,6 +148,15 @@ that copy. No new environment setting is needed and existing explicit poll-inter
 overrides continue to apply to all profile blocks. Rebuild/recreate the bridge to
 load the bundled extension. Production publication and openHAB links require a
 separate installation check; no running service or instance was changed here.
+
+### Sunny Boy L1 current completion, 2026-10-16
+
+The profile now also declares basic read-only `measurements/currentl1`, backed by
+30977 (S32/FIX3, scale 0.001 A). The existing phase-current block expands to
+30977–30982 at the unchanged five-second interval. L2/L3 retain their original
+addresses, units and topic IDs. SMA NaN stays unavailable and does not block
+readiness. Host profile overrides need the same explicit update; deployment and
+live value acceptance remain separate. See [register evidence](REGISTER_VALIDATION.md#sunny-boy-l1-current-completion-2026-10-16).
 
 ## Type/limits, frequency and selected AC/battery measurements
 

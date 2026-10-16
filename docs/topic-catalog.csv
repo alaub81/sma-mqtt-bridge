@@ -62,6 +62,7 @@ sma-sb4-0-1av-41,inverter<N>,measurements/activepower,Power,W,basic
 sma-sb4-0-1av-41,inverter<N>,measurements/configuredactivepowerlimit,Set active power limit,W,advanced
 sma-sb4-0-1av-41,inverter<N>,measurements/currentainput,DC current input A,A,basic
 sma-sb4-0-1av-41,inverter<N>,measurements/currentbinput,DC current input B,A,basic
+sma-sb4-0-1av-41,inverter<N>,measurements/currentl1,Grid current phase L1,A,basic
 sma-sb4-0-1av-41,inverter<N>,measurements/currentl2,Grid current phase L2,A,basic
 sma-sb4-0-1av-41,inverter<N>,measurements/currentl3,Grid current phase L3,A,basic
 sma-sb4-0-1av-41,inverter<N>,measurements/dailyyield,Daily yield,kWh,basic
@@ -118,10 +119,14 @@ sma-sbs3-7-10,inverter<N>,measurements/frequency,Grid frequency,Hz,basic
 sma-sbs3-7-10,inverter<N>,measurements/gridcontactor,Op.GriSwStt,,basic
 sma-sbs3-7-10,inverter<N>,measurements/internaltemperature,Cab.TmpVal,°C,basic
 sma-sbs3-7-10,inverter<N>,measurements/operatingtime,Operating time,s,advanced
+sma-sbs3-7-10,inverter<N>,measurements/powerdrawn,Power drawn,W,basic
+sma-sbs3-7-10,inverter<N>,measurements/powergridfeedin,Power grid feed-in,W,basic
+sma-sbs3-7-10,inverter<N>,measurements/powerl1,Power L1,W,basic
 sma-sbs3-7-10,inverter<N>,measurements/ratedactivepower,Rated active power WMaxOutRtg,W,advanced
 sma-sbs3-7-10,inverter<N>,measurements/status,Op.Health,,basic
 sma-sbs3-7-10,inverter<N>,measurements/totalyield,Total yield,kWh,basic
 sma-sbs3-7-10,inverter<N>,measurements/type,Device type,,advanced
+sma-sbs3-7-10,inverter<N>,measurements/voltagel1,Voltage L1,V,basic
 sma-stp8-0-3av-40,inverter<N>,diagnostics/deratingreason,Reason for derating,,basic
 sma-stp8-0-3av-40,inverter<N>,diagnostics/inverter<N>consecutivefailures,Source consecutiveFailures,,diagnostics
 sma-stp8-0-3av-40,inverter<N>,diagnostics/inverter<N>failures,Source failures,,diagnostics
@@ -151,12 +156,18 @@ sma-stp8-0-3av-40,inverter<N>,measurements/powerainput,DC power input A,W,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/powerbinput,DC power input B,W,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/powerdrawn,Power drawn,W,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/powergridfeedin,Power grid feed-in,W,basic
+sma-stp8-0-3av-40,inverter<N>,measurements/powerl1,Power L1,W,basic
+sma-stp8-0-3av-40,inverter<N>,measurements/powerl2,Power L2,W,basic
+sma-stp8-0-3av-40,inverter<N>,measurements/powerl3,Power L3,W,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/ratedactivepower,Rated active power WMaxOutRtg,W,advanced
 sma-stp8-0-3av-40,inverter<N>,measurements/status,Condition,,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/totalyield,Total yield,kWh,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/type,Device type,,advanced
 sma-stp8-0-3av-40,inverter<N>,measurements/voltageainput,DC voltage input A,V,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/voltagebinput,DC voltage input B,V,basic
+sma-stp8-0-3av-40,inverter<N>,measurements/voltagel1,Voltage L1,V,basic
+sma-stp8-0-3av-40,inverter<N>,measurements/voltagel2,Voltage L2,V,basic
+sma-stp8-0-3av-40,inverter<N>,measurements/voltagel3,Voltage L3,V,basic
 home-manager-udp,home-manager,diagnostics/homemanagerconsecutivefailures,Source consecutiveFailures,,diagnostics
 home-manager-udp,home-manager,diagnostics/homemanagerfailures,Source failures,,diagnostics
 home-manager-udp,home-manager,diagnostics/homemanagerlastsuccess,Last successful receipt (UTC),,diagnostics
