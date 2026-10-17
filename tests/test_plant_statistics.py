@@ -184,19 +184,19 @@ class StatisticsTests(PlantFixture):
         engine.ledger.persist(100, force=True)
         packet = {}
         engine.update_averages(packet, end)
-        self.assertEqual(packet["house/average-daily-consumption"], Decimal(81) / 7)
+        self.assertEqual(packet["house/average-daily-consumption"], Decimal(91) / 7)
         self.assertEqual(packet["diagnostics/average-day-status"], "complete")
         restarted = self.engine(ac=True)
         restarted.update_averages(packet, end)
-        self.assertEqual(packet["house/average-daily-consumption"], Decimal(81) / 7)
+        self.assertEqual(packet["house/average-daily-consumption"], Decimal(91) / 7)
         history = restarted.ledger.committed["house"]["history"]
         self.assertEqual(len(history), 7)
         del history[(end.date() - timedelta(days=1)).isoformat()]
         restarted.update_averages(packet, end)
-        self.assertEqual(packet["house/average-daily-consumption"], Decimal(65) / 6)
+        self.assertEqual(packet["house/average-daily-consumption"], Decimal(75) / 6)
         self.assertEqual(packet["diagnostics/average-day-status"], "partial")
         restarted.update_averages(packet, end + timedelta(days=1))
-        self.assertIsNone(packet["house/average-daily-consumption"])
+        self.assertEqual(packet["house/average-daily-consumption"], Decimal(65) / 5)
 
     def test_gaps_are_skipped_and_failed_checkpoint_keeps_committed_average(self):
         engine = self.engine(ac=True)
@@ -204,7 +204,7 @@ class StatisticsTests(PlantFixture):
         engine.ledger.persist(100, force=True)
         packet = {}
         engine.update_averages(packet, end)
-        self.assertEqual(packet["house/average-daily-consumption"], Decimal("10.8"))
+        self.assertEqual(packet["house/average-daily-consumption"], Decimal("12.8"))
         self.assertEqual(packet["diagnostics/average-day-status"], "partial")
         self.assertEqual(len(engine.ledger.committed["house"]["history"]), 5)
         engine.ledger.committed.clear()
@@ -225,7 +225,7 @@ class StatisticsTests(PlantFixture):
                 engine.ledger.persist(100, force=True)
                 packet = {}
                 engine.update_averages(packet, end)
-                self.assertEqual(packet["house/average-daily-consumption"], Decimal(81) / 7)
+                self.assertEqual(packet["house/average-daily-consumption"], Decimal(91) / 7)
                 data = copy.deepcopy(engine.ledger.data)
                 data["accounts"]["house"]["history"][end.date().isoformat()] = "NaN"
                 with self.assertRaises(StateError):
@@ -240,7 +240,7 @@ class StatisticsTests(PlantFixture):
         engine.ledger.dirty = True
         self.fill(engine, 102)
         engine.refresh(102, self.wall + timedelta(seconds=2))
-        self.assertEqual(engine.state.fresh_values(102)["house/average-daily-consumption"], "3")
+        self.assertEqual(engine.state.fresh_values(102)["house/average-daily-consumption"], "4")
         self.assertIn(
             "house/averagedailyconsumption",
             engine.state.fresh_values(102)["diagnostics/valid-properties"],
@@ -250,7 +250,7 @@ class StatisticsTests(PlantFixture):
         engine.ledger.last_save = 102
         self.fill(engine, 102.5)
         engine.refresh(102.5, self.wall + timedelta(seconds=2.5))
-        self.assertEqual(engine.state.fresh_values(102.5)["house/average-daily-consumption"], "3")
+        self.assertEqual(engine.state.fresh_values(102.5)["house/average-daily-consumption"], "4")
 
     def test_today_starts_immediately_and_updates_without_partial_daily_channel(self):
         engine = self.engine(ac=True)
@@ -271,11 +271,59 @@ class StatisticsTests(PlantFixture):
         engine.ledger.persist(104, force=True)
         packet = {}
         engine.update_averages(packet, self.wall)
-        self.assertEqual(packet["house/average-daily-consumption"], 9)
+        self.assertEqual(packet["house/average-daily-consumption"], 340)
         self.assertEqual(packet["diagnostics/average-day-status"], "partial")
         packet["diagnostics/house-energy-status"] = "unavailable"
         engine.update_averages(packet, self.wall)
-        self.assertEqual(packet["house/average-daily-consumption"], Decimal("10.5"))
+        self.assertEqual(packet["house/average-daily-consumption"], Decimal(340))
+
+    def test_startup_preview_then_completed_days_survive_restart_and_outage(self):
+        for partial in ("true", "false"):
+            with self.subTest(partial=partial):
+                engine = self.engine(ac=True, env={"SMAB_PLANT_PUBLISH_PARTIAL_DAY": partial})
+                engine.ledger.data["accounts"].clear()
+                start = datetime(2026, 10, 20, 12, tzinfo=engine.zone)
+                ref = engine.groups["pv"][0]["totalyield"].identity
+
+                # Use the real recipe identities, with unchanged zero counters for other inputs.
+                inputs = [(m["totalyield"], 1) for m in engine.groups["pv"]]
+                inputs += [(engine.grid["energyimport"], 1), (engine.grid["energyexport"], -1)]
+                for member in engine.groups["battery"]:
+                    inputs += [
+                        (member["batterydischargeenergy"], 1),
+                        (member["batterychargeenergy"], -1),
+                    ]
+                signs = {r.identity: Decimal(sign) for r, sign in inputs}
+
+                def step(wall, value, engine=engine, signs=signs, ref=ref):
+                    counters = dict.fromkeys(signs, Decimal(0))
+                    counters[ref] = Decimal(value)
+                    engine.ledger.observe(
+                        "house", counters, signs, "0" * 64, wall, wall, daily_only=True
+                    )
+                    engine.ledger.persist(100, force=True)
+                    packet = {"diagnostics/house-energy-status": "unavailable"}
+                    engine.update_averages(packet, wall)
+                    return packet["house/average-daily-consumption"]
+
+                self.assertEqual(step(start, 100), 0)
+                midnight = start.replace(hour=0) + timedelta(days=1)
+                self.assertEqual(step(midnight - timedelta(seconds=30), 114), 14)
+                self.assertEqual(step(midnight, 114), 7)
+                self.assertEqual(step(midnight + timedelta(hours=12), 120), 10)
+                restarted = self.engine(ac=True, env={"SMAB_PLANT_PUBLISH_PARTIAL_DAY": partial})
+                packet = {}
+                restarted.update_averages(packet, midnight + timedelta(hours=12))
+                self.assertEqual(packet["house/average-daily-consumption"], 10)
+                step(midnight + timedelta(days=1, seconds=-30), 134)
+                self.assertEqual(step(midnight + timedelta(days=1), 134), 20)
+                self.assertEqual(step(midnight + timedelta(days=1, hours=12), 150), 20)
+                step(midnight + timedelta(days=2, seconds=-30), 164)
+                self.assertEqual(step(midnight + timedelta(days=2), 164), 25)
+                # Without a current midnight sample, yesterday's completed history remains usable.
+                packet = {"diagnostics/house-energy-status": "unavailable"}
+                engine.update_averages(packet, midnight + timedelta(days=3))
+                self.assertEqual(packet["house/average-daily-consumption"], 25)
 
     def test_reset_and_configuration_mismatch(self):
         engine = self.engine(ac=True)
@@ -292,7 +340,7 @@ class StatisticsTests(PlantFixture):
         self.observe_house(engine, next_day, 2)
         engine.ledger.persist(200, force=True)
         engine.update_averages(packet, next_day)
-        self.assertEqual(packet["house/average-daily-consumption"], Decimal(35) / 3)
+        self.assertEqual(packet["house/average-daily-consumption"], Decimal("13.5"))
         # Old ledgers without history remain readable and keep their baselines.
         engine.ledger.data["accounts"]["house"].pop("history")
         validate_ledger(engine.ledger.data)
@@ -321,15 +369,15 @@ class WallboxStatisticsTests(PlantFixture):
         engine.ledger.persist(100, force=True)
         packet = {}
         engine.update_averages(packet, end)
-        self.assertEqual(packet["house/average-daily-consumption"], Decimal(60) / 7)
-        self.assertEqual(packet["house/average-daily-consumption-without-wallbox"], Decimal(36) / 7)
-        # The live day contributes to both averages, including measured charging.
+        self.assertEqual(packet["house/average-daily-consumption"], Decimal(70) / 7)
+        self.assertEqual(packet["house/average-daily-consumption-without-wallbox"], Decimal(42) / 7)
+        # The live day and temporary source outages do not change either average.
         for name in ("house", "housewithoutwallbox"):
             helper.observe_house(engine, end + timedelta(hours=1), 184, name=name, wallbox=34)
         engine.ledger.persist(200, force=True)
         engine.update_averages(packet, end + timedelta(hours=1))
-        self.assertEqual(packet["house/average-daily-consumption"], Decimal(74) / 7)
-        self.assertEqual(packet["house/average-daily-consumption-without-wallbox"], Decimal(44) / 7)
+        self.assertEqual(packet["house/average-daily-consumption"], Decimal(70) / 7)
+        self.assertEqual(packet["house/average-daily-consumption-without-wallbox"], Decimal(42) / 7)
         self.assertFalse(any("average" in p.key for p in engine.wallbox_state.properties))
         self.assertEqual(
             engine.state.property_index()["house/average-daily-consumption"].unit, "kWh/d"

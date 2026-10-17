@@ -5,7 +5,7 @@ import hashlib
 import json
 import time
 from dataclasses import dataclass
-from datetime import date, datetime, timedelta, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from zoneinfo import ZoneInfo
 
@@ -791,9 +791,9 @@ class PlantEngine:
         self.debug.report(self, now, wall)
 
     def update_averages(self, packet, wall):
-        """Average available calendar days in today's seven-day window."""
+        """Average completed days, with a two-calendar-day startup preview."""
         today = wall.astimezone(self.zone).date()
-        days = {(today - timedelta(days=i)).isoformat() for i in range(1, 7)}
+        days = {(today - timedelta(days=i)).isoformat() for i in range(1, 8)}
         accounts = [("house", "house/average-daily-consumption", "average-day-status")]
         if self.wallbox is not None:
             accounts.append(
@@ -808,20 +808,20 @@ class PlantEngine:
             history = record.get("history", {})
             valid = (
                 not self.ledger.binding_changed
-                and record.get("date") == today.isoformat()
-                and all(date.fromisoformat(day) < today for day in history)
+                and record.get("date", "9999-12-31") <= today.isoformat()
+                and all(day < record["date"] for day in history)
             )
             values = [Decimal(history[d]) for d in days if d in history] if valid else []
-            status_key = "diagnostics/" + (
-                "house-energy-status" if name == "house" else "house-without-wallbox-day-status"
-            )
-            status = packet.get(status_key, record.get("dailyStatus"))
-            current = None
-            if valid and status in ("complete", "partial"):
-                current = record.get("dailyValue")
-                if current is None and status == "partial":
-                    # Startup-day averages include measured consumption since the baseline,
-                    # independently of the daily channel's partial-day visibility setting.
+            # Once history exists, current source availability cannot change the divisor.
+            if valid and not values and record.get("date") == today.isoformat():
+                start_day = datetime.fromisoformat(record["start"]).astimezone(self.zone).date()
+                elapsed = (today - start_day).days
+                startup = (elapsed == 0 and record.get("dailyStatus") == "partial") or (
+                    elapsed == 1
+                    and record.get("dailyStatus") == "complete"
+                    and record.get("totalStatus") == "ready"
+                )
+                if startup:
                     inputs = [(m["totalyield"], 1) for m in self.groups["pv"]]
                     inputs += [(self.grid["energyimport"], 1), (self.grid["energyexport"], -1)]
                     for member in self.groups["battery"]:
@@ -833,13 +833,15 @@ class PlantEngine:
                         inputs.append((self.wallbox, -1))
                     signs = {ref.identity: Decimal(sign) for ref, sign in inputs}
                     if signs.keys() == record.get("last", {}).keys():
-                        current = self.ledger.balance(
-                            {k: Decimal(v) for k, v in record["last"].items()},
-                            signs,
-                            record["dailyBase"],
-                        )
-                if current is not None and Decimal(current) >= 0:
-                    values.append(Decimal(current))
+                        counters = {k: Decimal(v) for k, v in record["last"].items()}
+                        current = self.ledger.balance(counters, signs, record["totalBase"])
+                        daily = self.ledger.balance(counters, signs, record["dailyBase"])
+                        if (
+                            current.is_finite()
+                            and current >= 0
+                            and self.ledger.accept(daily, record.get("dailyValue"))
+                        ):
+                            values.append(current / (elapsed + 1))
             packet[key] = sum(values, Decimal(0)) / len(values) if values else None
             packet["diagnostics/" + diagnostic] = (
                 "complete" if len(values) == 7 else "partial" if values else "insufficient-history"
