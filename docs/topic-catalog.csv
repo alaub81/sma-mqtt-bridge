@@ -58,7 +58,7 @@ sma-sb4-0-1av-41,inverter<N>,diagnostics/inverter<N>timeouts,Source timeouts,,di
 sma-sb4-0-1av-41,inverter<N>,identity/firmware,Firmware version,,advanced
 sma-sb4-0-1av-41,inverter<N>,identity/model,Device type,,advanced
 sma-sb4-0-1av-41,inverter<N>,identity/serial,Serial number,,advanced
-sma-sb4-0-1av-41,inverter<N>,measurements/activepower,Power,W,basic
+sma-sb4-0-1av-41,inverter<N>,measurements/activepower,PV production,W,basic
 sma-sb4-0-1av-41,inverter<N>,measurements/configuredactivepowerlimit,Set active power limit,W,advanced
 sma-sb4-0-1av-41,inverter<N>,measurements/currentainput,DC current input A,A,basic
 sma-sb4-0-1av-41,inverter<N>,measurements/currentbinput,DC current input B,A,basic
@@ -113,7 +113,7 @@ sma-sbs3-7-10,inverter<N>,measurements/batteryvoltage,Battery voltage,V,basic
 sma-sbs3-7-10,inverter<N>,measurements/configuredactivepowerlimit,Set active power limit,W,advanced
 sma-sbs3-7-10,inverter<N>,measurements/currentbatcapacity,Battery capacity,%,basic
 sma-sbs3-7-10,inverter<N>,measurements/currentl1,Grid current phase L1,A,basic
-sma-sbs3-7-10,inverter<N>,measurements/dailyyield,Daily yield,kWh,basic
+sma-sbs3-7-10,inverter<N>,measurements/dailyyield,Daily discharge,kWh,basic
 sma-sbs3-7-10,inverter<N>,measurements/feedintime,Feed-in time,s,advanced
 sma-sbs3-7-10,inverter<N>,measurements/frequency,Grid frequency,Hz,basic
 sma-sbs3-7-10,inverter<N>,measurements/gridcontactor,Op.GriSwStt,,basic
@@ -139,7 +139,7 @@ sma-stp8-0-3av-40,inverter<N>,diagnostics/inverter<N>timeouts,Source timeouts,,d
 sma-stp8-0-3av-40,inverter<N>,identity/firmware,Firmware version,,advanced
 sma-stp8-0-3av-40,inverter<N>,identity/model,Device type,,advanced
 sma-stp8-0-3av-40,inverter<N>,identity/serial,Serial number,,advanced
-sma-stp8-0-3av-40,inverter<N>,measurements/activepower,Power,W,basic
+sma-stp8-0-3av-40,inverter<N>,measurements/activepower,PV production,W,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/configuredactivepowerlimit,Set active power limit,W,advanced
 sma-stp8-0-3av-40,inverter<N>,measurements/currentainput,DC current input A,A,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/currentbinput,DC current input B,A,basic

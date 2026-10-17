@@ -487,3 +487,15 @@ API-only-Fallback-Ausbau bei abgeschaltetem SEMP bleibt aus dem Umfang gestriche
   Sommerzeit abgedeckt. Vier lokale Testserver benötigen erlaubte Loopback-Ports.
 - [ ] Neue Version installieren und Tagesstabilität sowie nächsten Tageswechsel
   live vergleichen. Keine historische Datenkorrektur oder neue Baseline beauftragt.
+
+## 17.10.2026: Einheitliche Labels und manuelle Item-Neuanlage
+
+- [x] Einheitliche Labels umgesetzt: Hausverbrauchsleistung, PV-Produktion /
+  PV-Gesamtproduktion, Gerätezustand, Tagesentladung, Netzrelais, Interne Temperatur.
+  Profile, Topics, Einheiten und Energie-Baselines unverändert.
+- [x] [14-Kanal-Umstellungsliste](docs/item-label-migration-2026-10-17.csv) erstellt.
+  Alle 420 Tests erfolgreich; Linter-Fachprüfungen erfolgreich. Textprüfung scheitert
+  nur an vorhandener unversionierter Numbers-Datei, die unverändert bleibt.
+- [ ] Andreas baut/deployt und ersetzt Items manuell; Referenzen, Gruppen und
+  Persistenz umstellen. Historie wird nicht automatisch übertragen. Drei bereits
+  passende Item-Namen müssen nicht neu angelegt werden.

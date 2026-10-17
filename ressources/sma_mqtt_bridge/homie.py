@@ -90,6 +90,13 @@ def publication_key(state, key):
 
 
 def publication_property(state, prop):
+    # Display-only distinctions preserve profile hashes and durable energy baselines.
+    if state.id.startswith("inverter"):
+        storage = "measurements/current-bat-stat-charge" in state.property_index()
+        if prop.key == "measurements/active-power" and not storage:
+            return replace(prop, name="PV production")
+        if prop.key == "measurements/day-yield" and storage:
+            return replace(prop, id="daily-yield", name="Daily discharge")
     alias = publication_aliases(state).get(prop.key)
     if alias is not None:
         key, name = alias

@@ -2557,3 +2557,11 @@ current-day growth leaves both completed-day averages unchanged.
 Validation: full linter and 419 offline regression tests passed. The initial
 sandbox run blocked four loopback test servers; the permitted local-port run
 passed. No live deployment or MQTT/openHAB numerical acceptance is claimed.
+
+## Item label harmonization, 2026-10-17
+
+All 420 automated tests pass, including PV/Storage label separation and stable
+channel identities/units. Local MQTT tests ran outside the sandbox for localhost
+binding. Linter checks pass except text hygiene for the pre-existing untracked
+binary docs/openhab-item-mapping.numbers, unchanged and excluded from the commit.
+Topic catalog regenerated. Live discovery/Item recreation awaits deployment.

@@ -1,0 +1,15 @@
+homie_device,channel_suffix,previous_item,target_item,target_label,item_type_unit
+sma-plant,house#consumptionpower,smaplant_Berechnete_Hausverbrauchsleistung,smaplant_Hausverbrauchsleistung,Hausverbrauchsleistung,Number:Power / W
+sma-inv1-roof,measurements#activepower,smainv1roof_Leistung,smainv1roof_PVProduktion,PV-Produktion,Number:Power / W
+sma-inv3-carport,measurements#activepower,smainv3carport_Leistung,smainv3carport_PVProduktion,PV-Produktion,Number:Power / W
+sma-plant,pv#totalactivepower,smaplant_PVGesamtwirkleistung,smaplant_PVGesamtproduktion,PV-Gesamtproduktion,Number:Power / W
+sma-inv1-roof,measurements#status,smainv1roof_Zustand,smainv1roof_Geratezustand,Gerätezustand,String
+sma-inv2-battery,measurements#status,smainv2battery_Geratezustand,smainv2battery_Geratezustand,Gerätezustand,String
+sma-inv3-carport,measurements#status,smainv3carport_Zustand,smainv3carport_Geratezustand,Gerätezustand,String
+sma-inv2-battery,measurements#dailyyield,smainv2battery_Tagesertrag,smainv2battery_Tagesentladung,Tagesentladung,Number:Energy / kWh
+sma-inv1-roof,measurements#gridcontactor,smainv1roof_NetzrelaisSchutz,smainv1roof_Netzrelais,Netzrelais,String
+sma-inv2-battery,measurements#gridcontactor,smainv2battery_Netzschaltzustand,smainv2battery_Netzrelais,Netzrelais,String
+sma-inv3-carport,measurements#gridcontactor,smainv3carport_NetzrelaisSchutz,smainv3carport_Netzrelais,Netzrelais,String
+sma-inv1-roof,measurements#internaltemperature,smainv1roof_Interne_Temperatur,smainv1roof_Interne_Temperatur,Interne Temperatur,Number:Temperature / °C
+sma-inv2-battery,measurements#internaltemperature,smainv2battery_Gehausetemperatur,smainv2battery_Interne_Temperatur,Interne Temperatur,Number:Temperature / °C
+sma-inv3-carport,measurements#internaltemperature,smainv3carport_Interne_Temperatur,smainv3carport_Interne_Temperatur,Interne Temperatur,Number:Temperature / °C

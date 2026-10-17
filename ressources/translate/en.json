@@ -43,6 +43,8 @@
     "DC current input": "DC current input",
     "DC power input": "DC power input",
     "DC voltage input": "DC voltage input",
+    "PV production": "PV production",
+    "Daily discharge": "Daily discharge",
     "Daily yield": "Daily yield",
     "Data Change Counter": "Data Change Counter",
     "Device Class": "Device Class",

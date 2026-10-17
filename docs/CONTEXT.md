@@ -433,3 +433,12 @@ date, then consumption since startup / 2 on the following date. Discard the
 partial start date when the first full day closes. Both house accounts reuse
 existing durable history/start/baselines; no schema change or reset. Current input
 availability cannot alter the completed-day divisor. Gaps stay excluded.
+
+## Consistent inverter and plant labels, 2026-10-17
+
+
+Andreas approved Hausverbrauchsleistung, PV-Produktion/PV-Gesamtproduktion,
+Gerätezustand, Tagesentladung (Storage daily counter), Netzrelais and Interne
+Temperatur. Publication-only names preserve profile hashes, topics, units and
+energy baselines. Andreas will recreate affected Items manually after deployment;
+see [the worksheet](ITEM_LABEL_MIGRATION_2026-10-17.md). No live changes included.
