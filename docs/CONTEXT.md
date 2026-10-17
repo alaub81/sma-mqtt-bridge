@@ -436,7 +436,6 @@ availability cannot alter the completed-day divisor. Gaps stay excluded.
 
 ## Consistent inverter and plant labels, 2026-10-17
 
-
 Andreas approved Hausverbrauchsleistung, PV-Produktion/PV-Gesamtproduktion,
 Gerätezustand, Tagesentladung (Storage daily counter), Netzrelais and Interne
 Temperatur. Publication-only names preserve profile hashes, topics, units and
