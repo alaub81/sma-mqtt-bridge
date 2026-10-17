@@ -8,7 +8,7 @@ from pathlib import Path
 
 from sma_mqtt_bridge.config import load_config
 from sma_mqtt_bridge.errors import ConfigError
-from sma_mqtt_bridge.homie import HomiePublisher, discovery
+from sma_mqtt_bridge.homie import HomiePublisher, discovery, publication_property
 from sma_mqtt_bridge.model import Property, SourceState
 from sma_mqtt_bridge.translation import BUNDLED, load_translation
 
@@ -31,6 +31,22 @@ class TranslationTests(unittest.TestCase):
                 self.assertNotEqual(prop["name"], "-", (path.name, prop["id"]))
                 self.assertIn(prop["name"], labels, (path.name, prop["id"]))
         self.assertEqual(labels["Battery state of charge"], "Batterieladezustand")
+
+    def test_inverter_display_names_preserve_topics_and_storage_power(self):
+        power = Property("measurements", "active-power", "Power", unit="W")
+        day = Property("measurements", "day-yield", "Daily yield", unit="kWh")
+        soc = Property("measurements", "current-bat-stat-charge", "Battery state of charge")
+        pv = SourceState("inverter1", "pv", (power, day), 180)
+        storage = SourceState("inverter2", "battery", (power, day, soc), 180)
+        self.assertEqual(publication_property(pv, power).name, "PV production")
+        self.assertEqual(publication_property(storage, power), power)
+        for state, expected in ((pv, "Daily yield"), (storage, "Daily discharge")):
+            published = publication_property(state, day)
+            self.assertEqual(published.name, expected)
+            self.assertEqual(published.key, "measurements/daily-yield")
+            self.assertEqual(published.unit, "kWh")
+        self.assertEqual(power.name, "Power")
+        self.assertEqual(day.key, "measurements/day-yield")
 
     def test_custom_language_partial_override_and_config_precedence(self):
         with tempfile.TemporaryDirectory() as tmp:
