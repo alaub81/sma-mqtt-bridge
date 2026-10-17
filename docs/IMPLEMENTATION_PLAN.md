@@ -127,3 +127,10 @@ disconnect and restart with source availability and measurement-time labels.
 Verify history survives the existing state volume and does not affect raw expiry
 or daily counters. No live writes, deployment or target/SOC completion follow
 from offline tests. Unknown state-channel semantics remain separate work.
+
+## Completed-day average acceptance, 2026-10-17
+
+After deployment, verify both house averages remain stable during the day and
+rotate at a covered midnight. Existing completed history is reused without reset.
+A new ledger additionally needs startup-preview and first-full-day transition
+acceptance; do not reset production state solely to repeat this check.

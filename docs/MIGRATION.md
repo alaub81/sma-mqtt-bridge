@@ -569,3 +569,11 @@ must move with the existing state volume; it is independent of daily energy
 baselines and must not be used to reconstruct household consumption. Installation
 and live discovery/transition/rendering acceptance remain pending; see
 [the guide](../openHAB/echarger-comfort.md#session-display-after-charging).
+
+## Completed-day averages, 2026-10-17
+
+The October 15 current-day average policy is superseded: after the startup
+preview, both household averages use only valid completed days in the preceding
+seven calendar dates. Start date: consumption since start; second date: consumption
+since start / 2; first full day closed: discard the partial start date. Topic IDs,
+units, Item links and history remain unchanged. No live Item or persistence edits.

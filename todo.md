@@ -471,3 +471,19 @@ API-only-Fallback-Ausbau bei abgeschaltetem SEMP bleibt aus dem Umfang gestriche
 - [x] Validierung: vollständiger Linter (200 Dateien), 418 Offline-Tests und
   Compose-Parität samt Overrides erfolgreich. Vier zunächst durch die Sandbox
   blockierte Loopback-Tests liefen mit erlaubten lokalen Testports erfolgreich.
+
+## Durchschnitt aus vollen Tagen, 17.10.2026
+
+- [x] Andreas bestätigt die neue Regel: Starttag Verbrauch seit Start; am zweiten
+  Kalendertag Verbrauch seit Start / 2. Nach Abschluss des ersten vollen Tages
+  nur volle abgeschlossene Tage mitteln, höchstens die sieben vorherigen Daten.
+  Der unvollständige Starttag fällt dann heraus. Frühere Regel mit laufendem
+  Tag ist damit ausdrücklich abgelöst; Entscheidung zum Flapping geklärt.
+- [x] Beide Hausdurchschnitte umgesetzt. Kurzzeitig fehlende aktuelle Eingänge
+  verändern den Teiler nicht mehr; gespeicherte Historie und Baselines bleiben.
+  Keine neuen Zustandsfelder, kein Reset und keine Live-Änderung erforderlich.
+- [x] Vollständiger Linter und 419 Offline-Tests bestanden; Startphase mit und
+  ohne Partial-Tagespublikation, Tageswechsel, Neustart, Messlücken, Wallbox und
+  Sommerzeit abgedeckt. Vier lokale Testserver benötigen erlaubte Loopback-Ports.
+- [ ] Neue Version installieren und Tagesstabilität sowie nächsten Tageswechsel
+  live vergleichen. Keine historische Datenkorrektur oder neue Baseline beauftragt.

@@ -423,3 +423,13 @@ only after persistence. Unknown live status after restart/outage remains distinc
 from historical amount availability. The original raw session filter, other
 state-channel policies, daily accounting and device write gates remain unchanged.
 See [the contract](CONFIGURATION.md#historical-charging-session-display).
+
+## Completed-day household averages, 2026-10-17
+
+Supersedes the immediate current-day window from October 15 at Andreas’ request.
+Use the last seven completed local dates, dividing by available valid full days.
+Before the first full day closes, show consumption since startup on the start
+date, then consumption since startup / 2 on the following date. Discard the
+partial start date when the first full day closes. Both house accounts reuse
+existing durable history/start/baselines; no schema change or reset. Current input
+availability cannot alter the completed-day divisor. Gaps stay excluded.

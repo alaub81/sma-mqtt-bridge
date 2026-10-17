@@ -2539,3 +2539,21 @@ local loopback test ports permitted (four were initially sandbox-blocked).
 Compose rendering/parity passed for defaults and explicit overrides, including
 the read-only configuration mount and writable state volume. No live container
 recreation or installation acceptance is claimed.
+
+## Completed-day household averages, 2026-10-17
+
+Locally implemented the approved startup preview and completed-day window for
+both house averages. Existing ledger schema, signatures, baselines, topic IDs
+and kWh/d units are preserved. Official [openHAB Homie documentation](https://www.openhab.org/addons/bindings/homie/)
+consulted; no Item, link or persistence changes are needed for this calculation.
+
+Deterministic tests cover first-date consumption, second-date consumption / 2,
+first full day replacing the partial start date, two completed days, seven-day
+rotation, zero consumption, missing dates, restart, failed checkpoints, source
+unavailability and 23/25-hour calendar days. Startup is tested with partial daily
+publication enabled and disabled; existing wallbox subtraction tests verify that
+current-day growth leaves both completed-day averages unchanged.
+
+Validation: full linter and 419 offline regression tests passed. The initial
+sandbox run blocked four loopback test servers; the permitted local-port run
+passed. No live deployment or MQTT/openHAB numerical acceptance is claimed.
