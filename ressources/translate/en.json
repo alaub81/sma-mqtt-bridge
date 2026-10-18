@@ -203,6 +203,15 @@
     "Raw grid import energy": "Raw grid import energy",
     "Raw grid export energy": "Raw grid export energy",
     "Corrected grid import energy": "Corrected grid import energy",
-    "Corrected grid export energy": "Corrected grid export energy"
+    "Corrected grid export energy": "Corrected grid export energy",
+    "Daily yield (Wh resolution)": "Daily yield (Wh resolution)",
+    "Total yield (Wh resolution)": "Total yield (Wh resolution)",
+    "Daily discharge (Wh resolution)": "Daily discharge (Wh resolution)",
+    "Total discharge (Wh resolution)": "Total discharge (Wh resolution)",
+    "Battery condition": "Battery condition",
+    "Highest reported battery temperature": "Highest reported battery temperature",
+    "Lowest reported battery temperature": "Lowest reported battery temperature",
+    "Event number": "Event number",
+    "Power limitation source (raw code)": "Power limitation source (raw code)"
   }
 }

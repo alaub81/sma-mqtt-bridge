@@ -38,7 +38,12 @@ class InverterTopicParityTests(unittest.TestCase):
                 self.assertEqual(digest, expected)
                 self.assertEqual(json.dumps(profile, sort_keys=True), original)
                 # An unrecognized edit must still change the energy identity.
-                for key in ("total-yield", "power-l1"):
+                for key in (
+                    "total-yield",
+                    "power-l1",
+                    "total-yield-precise",
+                    "daily-yield-precise",
+                ):
                     modified = json.loads(original)
                     next(p for p in modified["properties"] if p["id"] == key)["scale"] = 2
                     changed = energy_binding_profile(modified)

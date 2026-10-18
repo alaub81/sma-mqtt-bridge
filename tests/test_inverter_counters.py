@@ -27,6 +27,37 @@ class InverterCounterTests(unittest.TestCase):
             for model in ("sma-stp8-0-3av-40", "sma-sbs3-7-10", "sma-sb4-0-1av-41")
         ]
 
+    def test_parallel_fine_energy_decoding_discovery_and_legacy_mapping(self):
+        for index, profile in enumerate(self.profiles):
+            definitions = {p["id"]: p for p in profile["properties"]}
+            blocks = {b["id"]: b for b in profile["pollers"]}
+            reader = ModbusReader(
+                Inverter(advanced_channels_enabled=False, diagnostics_enabled=False), profile
+            )
+            topics = discovery("homie", "fixture", reader.properties)
+            for key, address in (("total-yield-precise", 30513), ("daily-yield-precise", 30517)):
+                prop = definitions[key]
+                block = blocks[prop["poller"]]
+                self.assertEqual(block["start"] + prop["offset"], address)
+                self.assertEqual((block["start"], block["count"]), (30513, 40))
+                self.assertEqual(block["intervalSeconds"], 60 if index == 2 else 180)
+                for raw in (0, 1, 2724, 2**53 + 1):
+                    self.assertEqual(decode(words(prop, raw), prop), Decimal(raw) / 1000)
+                self.assertIsNone(decode(words(prop, 2**64 - 1), prop))
+                root = "homie/fixture/measurements/" + key.replace("-", "")
+                self.assertEqual(topics[root + "/$unit"], "kWh")
+                self.assertEqual(topics[root + "/$datatype"], "float")
+                self.assertEqual(topics[root + "/$settable"], "false")
+            for key, address in (("total-yield", 30531), ("day-yield", 30537)):
+                prop = definitions[key]
+                self.assertEqual(blocks[prop["poller"]]["start"] + prop["offset"], address)
+                self.assertEqual(decode(words(prop, 3), prop), 3)
+            plant_refs = str(profile.get("plant", {}))
+            self.assertNotIn("yield-precise", plant_refs)
+            state = SourceState("fixture", "fixture", reader.properties, 60)
+            state.update({"measurements/status": "Ok (Ok)"}, now=10)
+            self.assertEqual(state.status(10), "ready")
+
     def test_duration_u64_keeps_seconds_and_precision_above_float_range(self):
         for profile in self.profiles:
             definitions = {p["id"]: p for p in profile["properties"]}

@@ -66,7 +66,12 @@ class ProfileTests(unittest.TestCase):
             p = load_profile(selector, self.tmp.name, require_validated=True)
             self.assertEqual(
                 [
-                    (b["function"], b["start"], b["count"], b["intervalSeconds"])
+                    (
+                        b["function"],
+                        b["start"] + (4 if b["id"] == "yield" else 0),
+                        b["count"] - (4 if b["id"] == "yield" else 0),
+                        b["intervalSeconds"],
+                    )
                     for b in p["pollers"][1 : 1 + len(device["pollers"])]
                 ],
                 [
@@ -78,9 +83,9 @@ class ProfileTests(unittest.TestCase):
                 len(p["properties"])
                 - 3
                 - {
-                    "sma-stp8-0-3av-40": 16,
-                    "sma-sbs3-7-10": 17,
-                    "sma-sb4-0-1av-41": 14,
+                    "sma-stp8-0-3av-40": 18,
+                    "sma-sbs3-7-10": 22,
+                    "sma-sb4-0-1av-41": 16,
                 }[selector],
                 sum(len(b["channels"]) for b in device["pollers"]),
             )

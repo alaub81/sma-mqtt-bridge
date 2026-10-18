@@ -124,6 +124,37 @@ EXTRA = [
         "kWh",
     )
 ]
+# API-owned diagnostics; raw codes deliberately have no guessed enum meanings.
+API_DIAGNOSTICS = (
+    ("event-number", "Measurement.Operation.Evt.EvtNo", "Event number", "string"),
+    (
+        "power-limitation-source-code",
+        "Measurement.Operation.WMaxLimSrc",
+        "Power limitation source (raw code)",
+        "integer",
+    ),
+)
+
+
+def api_diagnostic_values(values):
+    """Decode only timestamp-accepted diagnostic values, never refresh stale states."""
+    result = {}
+    for key, channel, _, datatype in API_DIAGNOSTICS:
+        raw = values.get(channel)
+        if datatype == "string":
+            value = (
+                raw if isinstance(raw, str) and 0 < len(raw) <= 128 and raw.isprintable() else None
+            )
+        else:
+            value = number(raw)
+            if value is not None and not (
+                0 <= value <= 4294967295 and value == value.to_integral_value()
+            ):
+                value = None
+        result["diagnostics/" + key] = value
+    return result
+
+
 PHASE_POWER_CHANNELS = frozenset(f"Measurement.GridMs.W.phs{phase}" for phase in "ABC")
 
 for i, phase in enumerate("ABC", 1):
@@ -511,6 +542,11 @@ class EChargerReader:
             )
             for id, _, unit in EXTRA
         ]
+        if settings.diagnostics_enabled:
+            props += [
+                Property("diagnostics", key, name, datatype, channel_group="diagnostics")
+                for key, _, name, datatype in API_DIAGNOSTICS
+            ]
         if include_base:
             props += [
                 p
@@ -639,6 +675,8 @@ class EChargerReader:
                     result["measurements/" + id] = (
                         value / 1000 if id == "total-energy" and value is not None else value
                     )
+                if self.settings.diagnostics_enabled:
+                    result.update(api_diagnostic_values(values))
                 energy_channel = property_channels.get("measurements/total-energy")
                 self.identity_fingerprint = (
                     hashlib.sha256(
