@@ -606,6 +606,23 @@ class PlantEngine:
             for ref, _ in inputs
         ):
             return None, None, "init", None
+        record = self.ledger.data["accounts"].get(name)
+        # Never calibrate a replacement device or a regressed clock into old baselines.
+        if record is not None and (
+            record["hardware"] != hardware or set(record["last"]) != set(values)
+        ):
+            return None, None, "configuration-changed", None
+        if record is not None and wall < datetime.fromisoformat(record["lastTime"]):
+            return None, None, "clock-error", None
+        paired = {}
+        for ref, _ in inputs:
+            source = self.sources[ref.source]
+            pair = getattr(source, "legacy_counters", {}).get(ref.key)
+            if pair is not None and pair[1] == source.values[ref.key][1]:
+                paired[ref.identity] = pair[0]
+        values = self.ledger.precise_values(values, paired)
+        if values is None:
+            return None, None, "unavailable", None
         oldest_wall = wall - timedelta(seconds=now - oldest)
         token = (
             tuple(sorted(values.items())),

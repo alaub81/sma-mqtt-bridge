@@ -7,6 +7,7 @@ from decimal import Decimal
 from pathlib import Path
 from uuid import uuid4
 
+from .energy_profile_compat import precision_inputs as configured_precision_inputs
 from .errors import StateError
 from .model import number
 from .storage import MISSING, read_state, state_lock, write_state
@@ -57,9 +58,14 @@ def validate_ledger(data):
     try:
         if (
             not isinstance(data, dict)
-            or set(data) != {"schemaVersion", "signature", "accounts"}
+            or set(data)
+            != (
+                {"schemaVersion", "signature", "accounts", "precisionOffsets"}
+                if data.get("schemaVersion") == 2
+                else {"schemaVersion", "signature", "accounts"}
+            )
             or type(data["schemaVersion"]) is not int
-            or data["schemaVersion"] != 1
+            or data["schemaVersion"] not in (1, 2)
             or not isinstance(data["signature"], str)
             or len(data["signature"]) != 64
             or any(c not in "0123456789abcdef" for c in data["signature"])
@@ -68,6 +74,20 @@ def validate_ledger(data):
             - {"import", "export", "house", "wallbox", "housewithoutwallbox"}
         ):
             raise ValueError
+        if data["schemaVersion"] == 2:
+            offsets = data["precisionOffsets"]
+            if not isinstance(offsets, dict) or len(offsets) > 64:
+                raise ValueError
+            for key, value in offsets.items():
+                if not isinstance(key, str) or not key or len(key) > 512:
+                    raise ValueError
+                if value is not None and (
+                    not isinstance(value, str)
+                    or len(value) > 32
+                    or number(value) is None
+                    or abs(Decimal(value)) > 1
+                ):
+                    raise ValueError
         for record in data["accounts"].values():
             if not isinstance(record, dict) or set(record) - {"history"} != ACCOUNT_FIELDS:
                 raise ValueError
@@ -127,7 +147,10 @@ def reset_energy_baselines(config):
 
 
 class EnergyBalances:
-    def __init__(self, config, signature, zone):
+    def __init__(self, config, signature, zone, *, precision_inputs=None):
+        precision_inputs = (
+            configured_precision_inputs(config) if precision_inputs is None else precision_inputs
+        )
         self.settings = config.plant
         self.zone = zone
         self.path = Path(config.runtime.state_dir) / "energy-balances.json"
@@ -143,6 +166,36 @@ class EnergyBalances:
         self.dirty = False
         self.force_save = False
         self.last_save = None
+        self.precision_backup = None
+        if self.data["schemaVersion"] == 2:
+            self.binding_changed |= set(self.data["precisionOffsets"]) != set(precision_inputs)
+        elif precision_inputs and not self.binding_changed:
+            if loaded is not MISSING:
+                self.precision_backup = copy.deepcopy(self.data)
+            existing = {key for record in self.data["accounts"].values() for key in record["last"]}
+            self.data = self.data | {
+                "schemaVersion": 2,
+                "precisionOffsets": {
+                    key: None if key in existing else "0" for key in precision_inputs
+                },
+            }
+            self.dirty = self.force_save = True
+
+    def precise_values(self, values, paired):
+        """Align fine increments once to the previous coarse accounting origin."""
+        if self.binding_changed or self.data["schemaVersion"] == 1:
+            return values
+        offsets = dict(self.data["precisionOffsets"])
+        for key in values.keys() & offsets.keys():
+            if offsets[key] is None:
+                coarse = paired.get(key)
+                if coarse is None or abs(coarse - values[key]) > 1:
+                    return None
+                offsets[key] = str(coarse - values[key])
+        if offsets != self.data["precisionOffsets"]:
+            self.data["precisionOffsets"] = offsets
+            self.dirty = self.force_save = True
+        return {key: value + Decimal(offsets.get(key) or "0") for key, value in values.items()}
 
     def persist(self, monotonic, *, force=False):
         if self.binding_changed or not self.dirty:
@@ -153,6 +206,10 @@ class EnergyBalances:
             or self.last_save is None
             or monotonic - self.last_save >= self.settings.checkpoint_interval_seconds
         ):
+            if self.precision_backup is not None:
+                backup = self.path.with_name(f"energy-balances.before-fine-{uuid4().hex}.json")
+                write_state(backup, self.precision_backup, self.max_bytes)
+                self.precision_backup = None
             write_state(self.path, self.data, self.max_bytes)
             self.committed = copy.deepcopy(self.data["accounts"])
             self.dirty = self.force_save = False
@@ -177,6 +234,21 @@ class EnergyBalances:
         oldest_wall = oldest_wall.astimezone(timezone.utc)
         sample_wall = (sample_wall or wall).astimezone(timezone.utc)
         local_day = wall.astimezone(self.zone).date()
+        record = self.data["accounts"].get(name)
+        offsets = self.data.get("precisionOffsets", {})
+        if (
+            record is not None
+            and record["hardware"] == hardware
+            and wall >= utc_time(record["lastTime"])
+            and any(
+                offsets.get(key) is not None and Decimal(offsets[key]) <= value < 0
+                for key, value in values.items()
+            )
+        ):
+            # A real reset can cross the calibrated origin; never persist negative counters.
+            record["dailyStatus"] = record["totalStatus"] = "reset"
+            self.dirty = self.force_save = True
+            return None, None, "reset"
         encoded = {key: str(value) for key, value in values.items()}
         try:
             counter_vector(encoded)

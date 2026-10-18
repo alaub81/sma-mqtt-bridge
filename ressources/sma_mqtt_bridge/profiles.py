@@ -207,8 +207,18 @@ def validate_mappings(poller_list, property_list):
                 "requiredForReady",
                 "invalidAsZero",
                 "invalidAsZeroWhen",
+                "legacyCounterOffset",
             ),
         )
+        if "legacyCounterOffset" in prop and (
+            not integer(prop["legacyCounterOffset"], 0, 123)
+            or not isinstance(prop["poller"], str)
+            or prop["poller"] not in pollers
+            or prop["legacyCounterOffset"] + 2 > pollers[prop["poller"]]["count"]
+            or (prop["type"], prop["length"], prop["unit"], prop["datatype"], prop["scale"])
+            != ("uint64", 4, "kWh", "float", 0.001)
+        ):
+            raise ConfigError("Invalid whole-kWh counter transition mapping")
         if "requiredForReady" in prop and type(prop["requiredForReady"]) is not bool:
             raise ConfigError("Profile requiredForReady must be boolean")
         if (

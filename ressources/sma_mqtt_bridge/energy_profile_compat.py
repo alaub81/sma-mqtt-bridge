@@ -24,6 +24,50 @@ FINE_ENERGY_LAYOUTS = {
 BATTERY_DIAGNOSTIC_LAYOUT = "8c00a833953b17b12a27cbfac3d2bb87649122c675a178b8060c010ae92ad728"
 
 
+STANDARD_FINE_LAYOUTS = {
+    "sma-stp8-0-3av-40": "dacccfccaf076e25754e83e08858b8347e844ca6d175142cd6e7ca111c22bc9c",
+    "sma-sbs3-7-10": "6120dc2403e2f134d7972b05c86d8bc3951f4da6b0970c7518628af6c91eb2ea",
+    "sma-sb4-0-1av-41": "44306f8e8336cd8562d278c5422fe1ca2990f243fa06aa5763f99e71e4c1d3d3",
+}
+
+
+def without_standard_precision(profile):
+    """Recover the exact previous parallel layout for verified counter upgrades."""
+    digest = hashlib.sha256(json.dumps(profile, sort_keys=True).encode()).hexdigest()
+    if digest != STANDARD_FINE_LAYOUTS.get(profile.get("id")):
+        return profile
+    profile = json.loads(json.dumps(profile))
+    precise = []
+    storage = profile["id"] == "sma-sbs3-7-10"
+    for prop in profile["properties"]:
+        if prop["id"] not in ("total-yield", "day-yield"):
+            continue
+        total = prop["id"] == "total-yield"
+        copy = dict(prop)
+        copy.pop("legacyCounterOffset", None)
+        copy["id"] = "total-yield-precise" if total else "daily-yield-precise"
+        copy["name"] = ("Total" if total else "Daily") + (
+            " discharge (Wh resolution)" if storage else " yield (Wh resolution)"
+        )
+        precise.append(copy)
+        prop.pop("legacyCounterOffset", None)
+        prop.update(
+            offset=18 if total else 24,
+            type="uint32",
+            length=2,
+            scale=1,
+            invalid=[4294967295],
+            datatype="integer",
+        )
+    precise.sort(key=lambda p: p["offset"])
+    index = next(
+        (i for i, p in enumerate(profile["properties"]) if p["id"] == "battery-condition"),
+        len(profile["properties"]),
+    )
+    profile["properties"][index:index] = precise
+    return profile
+
+
 def without_battery_observations(profile):
     """Keep existing baselines for these optional, non-accounting observations."""
     digest = hashlib.sha256(json.dumps(profile, sort_keys=True).encode()).hexdigest()
@@ -58,7 +102,9 @@ def without_parallel_energy(profile):
 
 def released_energy_layout(profile):
     """Use pre-2026-10-16 layout for these exact additions, without changing polling."""
-    profile = without_parallel_energy(without_battery_observations(profile))
+    profile = without_parallel_energy(
+        without_battery_observations(without_standard_precision(profile))
+    )
     expected = TELEMETRY_LAYOUTS.get(profile.get("id"))
     if expected is None:
         return profile
@@ -87,3 +133,19 @@ def released_energy_layout(profile):
                 prop["offset"] -= 2
     profile["properties"] = [prop for prop in profile["properties"] if prop["id"] not in removed]
     return profile
+
+
+def precision_inputs(config):
+    """Find active accounting counters with a same-block legacy transition pair."""
+    result = set()
+    for device in config.inverters:
+        if not device.enabled or device.role not in ("pv", "hybrid"):
+            continue
+        profile = config.profiles[device.id]
+        reference = profile.get("plant", {}).get("pv", {}).get("totalyield")
+        if any(
+            "measurements/" + p["id"] == reference and "legacyCounterOffset" in p
+            for p in profile["properties"]
+        ):
+            result.add(device.id + "/" + reference)
+    return result

@@ -249,7 +249,7 @@ class WallboxDailyTests(PlantFixture):
         self.assertIn(
             "api/measurements/total-energy", data["accounts"]["housewithoutwallbox"]["dailyBase"]
         )
-        self.assertEqual(data["schemaVersion"], 1)
+        self.assertEqual(data["schemaVersion"], 2)
 
     def test_missing_stale_or_negative_wallbox_does_not_block_existing_house(self):
         engine = self.covered_day(ac=True)

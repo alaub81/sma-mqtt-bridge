@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from decimal import Decimal
 
 from ..errors import ProtocolError
-from ..model import Property, channel_group_enabled
+from ..model import Property, SampleValues, channel_group_enabled
 from ..plant_debug import PlantDebug
 from ..profiles import verify_identity
 
@@ -251,6 +251,21 @@ class ModbusReader:
                     for p in self.definitions
                     if p["poller"] in selected
                 }
+                paired = {}
+                for prop in self.definitions:
+                    if "legacyCounterOffset" in prop and prop["poller"] in selected:
+                        legacy = prop | {
+                            "offset": prop["legacyCounterOffset"],
+                            "type": "uint32",
+                            "length": 2,
+                            "scale": 1,
+                            "invalid": [4294967295],
+                        }
+                        paired[prop["node"] + "/" + prop["id"]] = decode(
+                            blocks[prop["poller"]], legacy
+                        )
+                result = SampleValues(result, {})
+                result.legacy_counters = paired
                 if self.energy_ratio and "measurements/battery-charge-energy" in result:
                     charged = result["measurements/battery-charge-energy"]
                     discharged = result.get("measurements/battery-discharge-energy")

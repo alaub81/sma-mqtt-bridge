@@ -35,7 +35,7 @@ class InverterCounterTests(unittest.TestCase):
                 Inverter(advanced_channels_enabled=False, diagnostics_enabled=False), profile
             )
             topics = discovery("homie", "fixture", reader.properties)
-            for key, address in (("total-yield-precise", 30513), ("daily-yield-precise", 30517)):
+            for key, address in (("total-yield", 30513), ("day-yield", 30517)):
                 prop = definitions[key]
                 block = blocks[prop["poller"]]
                 self.assertEqual(block["start"] + prop["offset"], address)
@@ -48,10 +48,10 @@ class InverterCounterTests(unittest.TestCase):
                 self.assertEqual(topics[root + "/$unit"], "kWh")
                 self.assertEqual(topics[root + "/$datatype"], "float")
                 self.assertEqual(topics[root + "/$settable"], "false")
-            for key, address in (("total-yield", 30531), ("day-yield", 30537)):
+            for key, address in (("total-yield", 30513), ("day-yield", 30517)):
                 prop = definitions[key]
                 self.assertEqual(blocks[prop["poller"]]["start"] + prop["offset"], address)
-                self.assertEqual(decode(words(prop, 3), prop), 3)
+                self.assertEqual(decode(words(prop, 3), prop), Decimal("0.003"))
             plant_refs = str(profile.get("plant", {}))
             self.assertNotIn("yield-precise", plant_refs)
             state = SourceState("fixture", "fixture", reader.properties, 60)
@@ -89,7 +89,7 @@ class InverterCounterTests(unittest.TestCase):
             for raw in (0, 1, 1234567, 2**53 + 1):
                 self.assertEqual(decode(words(prop, raw), prop), Decimal(raw) / 1000)
             self.assertIsNone(decode(words(prop, 2**64 - 1), prop))
-        self.assertEqual(definitions["total-yield"]["scale"], 1)
+        self.assertEqual(definitions["total-yield"]["scale"], 0.001)
         for profile in (self.profiles[0], self.profiles[2]):
             self.assertFalse(any(p["id"].endswith("-energy") for p in profile["properties"]))
 

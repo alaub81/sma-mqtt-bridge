@@ -4,6 +4,7 @@ import copy
 import json
 import tempfile
 import unittest
+from decimal import Decimal
 from pathlib import Path
 
 from sma_mqtt_bridge.adapters.modbus import decode
@@ -83,24 +84,26 @@ class ProfileTests(unittest.TestCase):
                 len(p["properties"])
                 - 3
                 - {
-                    "sma-stp8-0-3av-40": 18,
-                    "sma-sbs3-7-10": 22,
-                    "sma-sb4-0-1av-41": 16,
+                    "sma-stp8-0-3av-40": 16,
+                    "sma-sbs3-7-10": 20,
+                    "sma-sb4-0-1av-41": 14,
                 }[selector],
                 sum(len(b["channels"]) for b in device["pollers"]),
             )
             for energy_id in ("day-yield", "total-yield"):
                 energy = next(x for x in p["properties"] if x["id"] == energy_id)
                 self.assertEqual(energy["unit"], unit)
-                self.assertEqual(energy["datatype"], "integer")
-                self.assertEqual(energy["scale"], 1)
-                self.assertEqual(decode([0] * energy["offset"] + [0, 2], energy), 2)
+                self.assertEqual(energy["datatype"], "float")
+                self.assertEqual(energy["scale"], 0.001)
+                self.assertEqual(
+                    decode([0] * energy["offset"] + [0, 0, 0, 2], energy), Decimal("0.002")
+                )
             prop = next(x for x in p["properties"] if x["id"] == "total-yield")
             self.assertEqual(prop["unit"], unit)
-            self.assertEqual(prop["type"], "uint32")
-            words = [0] * prop["offset"] + [0x8000, 1]
-            self.assertEqual(decode(words, prop), 2147483649)
-            self.assertIsNone(decode([0] * prop["offset"] + [0xFFFF, 0xFFFF], prop))
+            self.assertEqual(prop["type"], "uint64")
+            words = [0] * prop["offset"] + [0, 0, 0x8000, 1]
+            self.assertEqual(decode(words, prop), Decimal("2147483.649"))
+            self.assertIsNone(decode([0] * prop["offset"] + [0xFFFF] * 4, prop))
             if selector == "sma-sb4-0-1av-41":
                 device_type = next(x for x in p["properties"] if x["id"] == "type")
                 self.assertEqual(device_type["datatype"], "integer")
@@ -146,6 +149,7 @@ class ProfileTests(unittest.TestCase):
             lambda p: p.update(schemaVersion=True),
             lambda p: p["protocol"].update(type="unknown"),
             lambda p: p["pollers"][0].update(function=6),
+            lambda p: p["properties"][0].update(legacyCounterOffset=999),
             lambda p: p["pollers"][0].update(count=126),
             lambda p: p["properties"][0].update(poller="missing"),
             lambda p: p["properties"][3].update(length=1),

@@ -155,6 +155,12 @@ class SourceState:
         by_key = self.property_index()
         if set(values) - by_key.keys():
             raise ProtocolError("Adapter returned an undeclared property")
+        legacy = getattr(values, "legacy_counters", {})
+        self.legacy_counters = {
+            key: pair
+            for key, pair in getattr(self, "legacy_counters", {}).items()
+            if key not in values
+        } | {key: (value, now) for key, value in legacy.items() if value is not None}
         usable = False
         for key, value in values.items():
             encoded = payload(value, by_key[key], self.max_payload_bytes)

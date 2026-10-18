@@ -275,17 +275,17 @@
       "node": "measurements",
       "name": "Daily yield",
       "poller": "yield",
-      "offset": 24,
-      "type": "uint32",
-      "length": 2,
+      "offset": 4,
+      "type": "uint64",
+      "length": 4,
       "byteOrder": "big",
       "wordOrder": "big",
-      "scale": 1,
+      "scale": 0.001,
       "unit": "kWh",
       "invalid": [
-        4294967295
+        18446744073709551615
       ],
-      "datatype": "integer",
+      "datatype": "float",
       "channelGroup": "basic"
     },
     {
@@ -293,18 +293,19 @@
       "node": "measurements",
       "name": "Total yield",
       "poller": "yield",
-      "offset": 18,
-      "type": "uint32",
-      "length": 2,
+      "offset": 0,
+      "type": "uint64",
+      "length": 4,
       "byteOrder": "big",
       "wordOrder": "big",
-      "scale": 1,
+      "scale": 0.001,
       "unit": "kWh",
       "invalid": [
-        4294967295
+        18446744073709551615
       ],
-      "datatype": "integer",
-      "channelGroup": "basic"
+      "datatype": "float",
+      "channelGroup": "basic",
+      "legacyCounterOffset": 18
     },
     {
       "id": "current-bat-stat-charge",
@@ -751,42 +752,6 @@
         -2147483648
       ],
       "datatype": "integer",
-      "channelGroup": "basic"
-    },
-    {
-      "id": "total-yield-precise",
-      "node": "measurements",
-      "name": "Total discharge (Wh resolution)",
-      "poller": "yield",
-      "offset": 0,
-      "type": "uint64",
-      "length": 4,
-      "byteOrder": "big",
-      "wordOrder": "big",
-      "scale": 0.001,
-      "unit": "kWh",
-      "invalid": [
-        18446744073709551615
-      ],
-      "datatype": "float",
-      "channelGroup": "basic"
-    },
-    {
-      "id": "daily-yield-precise",
-      "node": "measurements",
-      "name": "Daily discharge (Wh resolution)",
-      "poller": "yield",
-      "offset": 4,
-      "type": "uint64",
-      "length": 4,
-      "byteOrder": "big",
-      "wordOrder": "big",
-      "scale": 0.001,
-      "unit": "kWh",
-      "invalid": [
-        18446744073709551615
-      ],
-      "datatype": "float",
       "channelGroup": "basic"
     },
     {

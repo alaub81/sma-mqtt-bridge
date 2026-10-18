@@ -41,8 +41,6 @@ class InverterTopicParityTests(unittest.TestCase):
                 for key in (
                     "total-yield",
                     "power-l1",
-                    "total-yield-precise",
-                    "daily-yield-precise",
                 ):
                     modified = json.loads(original)
                     next(p for p in modified["properties"] if p["id"] == key)["scale"] = 2
