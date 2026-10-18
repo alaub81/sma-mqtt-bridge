@@ -326,7 +326,13 @@ class ReaderLifetimeTests(unittest.IsolatedAsyncioTestCase):
         self.assertNotIn("measurements/total-energy", state.fresh_values(1002))
 
     async def test_semp_reader_filter_keeps_timing_and_api_independence(self):
-        reader = SempReader(ECharger(semp_device_id="fixture"), 10000, include_settings=False)
+        reader = SempReader(
+            ECharger(
+                semp_device_id="fixture", advanced_channels_enabled=True, diagnostics_enabled=True
+            ),
+            10000,
+            include_settings=False,
+        )
         identity = f'<Device2EM xmlns="{NS}"><DeviceInfo><Identification><DeviceId>fixture</DeviceId></Identification></DeviceInfo></Device2EM>'
         body = f'<Device2EM xmlns="{NS}"><Parameters><Parameter><channelId>Measurement.Metering.GridMs.TotWIn.ChaSta</channelId><value>0</value><timestamp>{self.stamp(179)}</timestamp></Parameter></Parameters></Device2EM>'
         reader.http.request = AsyncMock(side_effect=[(200, {}, identity), (200, {}, body)])

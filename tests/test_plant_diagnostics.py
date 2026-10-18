@@ -125,7 +125,7 @@ class PlantDiagnosticRetirementTests(unittest.IsolatedAsyncioTestCase):
         fixture = test_wallbox_daily.WallboxDailyTests()
         fixture.setUp()
         self.addCleanup(fixture.doCleanups)
-        enabled = fixture.engine(ac=True)
+        enabled = fixture.engine(ac=True, env={"SMAB_ECHARGER_DIAGNOSTICS_ENABLED": "true"})
         enabled.refresh(100, fixture.wall)
         saved = enabled.ledger.path.read_bytes()
         disabled = fixture.engine(

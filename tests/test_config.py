@@ -45,6 +45,73 @@ class ConfigTests(unittest.TestCase):
             ["sma-stp8-0-3av-40", "sma-sbs3-7-10", "sma-sb4-0-1av-41"],
         )
 
+    def test_minimal_operational_defaults_remain_overridable(self):
+        config = load_config(self.env)
+        self.assertEqual(config.runtime.language, "en")
+        self.assertEqual(config.home_manager.transport, "modbus-tcp")
+        self.assertEqual(config.portal.poll_interval_seconds, 900)
+        self.assertEqual(config.portal.stale_seconds, 1800)
+        self.assertTrue(config.plant.publish_partial_day)
+        self.assertTrue(config.mqtt.tls_verify)
+        self.assertTrue(config.echarger.tls_verify)
+        self.assertFalse(config.commands.enabled)
+        self.assertFalse(config.echarger.timestamp_diagnostics_enabled)
+        for device in (*config.inverters, config.home_manager, config.echarger):
+            self.assertFalse(device.advanced_channels_enabled)
+            self.assertFalse(device.diagnostics_enabled)
+        self.assertFalse(config.portal.diagnostics_enabled)
+        self.assertFalse(config.plant.diagnostics_enabled)
+        changed = load_config(
+            self.env
+            | {
+                "SMAB_LANGUAGE": "de",
+                "SMAB_HOME_MANAGER_TRANSPORT": "udp",
+                "SMAB_PORTAL_POLL_INTERVAL_SECONDS": "0",
+                "SMAB_PORTAL_STALE_SECONDS": "180",
+                "SMAB_PLANT_PUBLISH_PARTIAL_DAY": "false",
+                "SMAB_INVERTER1_ADVANCED_CHANNELS_ENABLED": "true",
+                "SMAB_HOME_MANAGER_DIAGNOSTICS_ENABLED": "true",
+            }
+        )
+        self.assertEqual(changed.runtime.language, "de")
+        self.assertEqual(changed.home_manager.transport, "udp")
+        self.assertEqual(changed.portal.poll_interval_seconds, 0)
+        self.assertEqual(changed.portal.stale_seconds, 180)
+        self.assertFalse(changed.plant.publish_partial_day)
+        self.assertTrue(changed.inverters[0].advanced_channels_enabled)
+        self.assertTrue(changed.home_manager.diagnostics_enabled)
+        self.assertFalse(changed.has_sources)
+
+    def test_enabled_profile_role_defaults_and_explicit_override(self):
+        env = self.env | {
+            "SMAB_MQTT_HOST": "broker.invalid",
+            "SMAB_INVERTER1_ENABLED": "true",
+            "SMAB_INVERTER1_HOST": "inverter.invalid",
+        }
+        self.assertEqual(load_config(env).inverters[0].role, "pv")
+        battery = env | {"SMAB_INVERTER1_PROFILE": "sma-sbs3-7-10"}
+        self.assertEqual(load_config(battery).inverters[0].role, "battery")
+        self.assertEqual(
+            load_config(env | {"SMAB_INVERTER1_ROLE": "none"}).inverters[0].role, "none"
+        )
+        write_json(
+            self.directory.name, "role.json", {"inverters": [{"id": "inverter1", "role": "none"}]}
+        )
+        json_env = env | {"SMAB_CONFIG_FILE": str(Path(self.directory.name, "role.json"))}
+        self.assertEqual(load_config(json_env).inverters[0].role, "none")
+        self.assertEqual(
+            load_config(json_env | {"SMAB_INVERTER1_ROLE": "pv"}).inverters[0].role, "pv"
+        )
+        disabled = load_config(
+            env
+            | {
+                "SMAB_INVERTER1_ENABLED": "false",
+                "SMAB_INVERTER1_PROFILE": "file:does-not-exist.json",
+            }
+        )
+        self.assertEqual(disabled.inverters[0].role, "none")
+        self.assertFalse(disabled.has_sources)
+
     def test_hosts_and_credentials_do_not_enable_sources(self):
         config = load_config(
             {"SMAB_INVERTER1_HOST": "test.invalid", "SMAB_ECHARGER_PASSWORD": "fixture-password"}
@@ -211,7 +278,7 @@ class ConfigTests(unittest.TestCase):
         )
 
     def test_public_json_and_complete_env_example(self):
-        load_config({"SMAB_CONFIG_FILE": str(ROOT / "config.example.json")})
+        load_config({"SMAB_CONFIG_FILE": str(ROOT / "docs" / "config.example.json")})
         env = {}
         lines = (ROOT / "smab.example.env").read_text().splitlines()
         for index, line in enumerate(lines):
@@ -247,11 +314,7 @@ class ConfigTests(unittest.TestCase):
                 value = getattr(section, field.name)
                 if key != "SMAB_MQTT_HOST":
                     if isinstance(value, bool):
-                        if field.name in {"advanced_channels_enabled", "diagnostics_enabled"}:
-                            self.assertTrue(value)
-                            self.assertEqual(env[key], "false")
-                        else:
-                            self.assertEqual(env[key], str(value).lower())
+                        self.assertEqual(env[key], str(value).lower())
                     elif isinstance(value, (int, float)):
                         self.assertEqual(float(env[key]), value)
                     else:

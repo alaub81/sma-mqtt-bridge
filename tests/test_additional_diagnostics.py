@@ -108,7 +108,12 @@ class WallboxDiagnosticTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(values["diagnostics/event-number"], "3701")
         self.assertEqual(values["diagnostics/power-limitation-source-code"], 0)
         props = {p.key: p for p in reader.properties}
-        semp = {p.key for p in SempReader(ECharger(), 10000).properties}
+        semp = {
+            p.key
+            for p in SempReader(
+                ECharger(advanced_channels_enabled=True, diagnostics_enabled=True), 10000
+            ).properties
+        }
         topics = discovery("homie", "fixture", reader.properties)
         for key in ("event-number", "power-limitation-source-code"):
             self.assertEqual(props["diagnostics/" + key].channel_group, "diagnostics")

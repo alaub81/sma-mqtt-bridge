@@ -34,6 +34,7 @@ class OffsetTests(PlantFixture):
         engine = self.engine(
             ac=True,
             env={
+                "SMAB_HOME_MANAGER_DIAGNOSTICS_ENABLED": "true",
                 "SMAB_HOME_MANAGER_ENERGY_IMPORT_OFFSET_KWH": "1000.25",
                 "SMAB_HOME_MANAGER_ENERGY_EXPORT_OFFSET_KWH": "2000.5",
                 "SMAB_PLANT_FEED_IN_TARIFF_PER_KWH": "0.1",
@@ -174,7 +175,9 @@ class NameTests(unittest.TestCase):
 
     def test_plant_valid_property_list_uses_the_published_names(self):
         with tempfile.TemporaryDirectory() as tmp:
-            config = load_config({"SMAB_STATE_DIR": tmp})
+            config = load_config(
+                {"SMAB_STATE_DIR": tmp, "SMAB_ECHARGER_ADVANCED_CHANNELS_ENABLED": "true"}
+            )
             state = SourceState(
                 "plant",
                 "fixture",
@@ -194,7 +197,9 @@ class NameTests(unittest.TestCase):
 
     def test_charger_firmware_both_transports_and_no_delegated_rename(self):
         with tempfile.TemporaryDirectory() as tmp:
-            config = load_config({"SMAB_STATE_DIR": tmp})
+            config = load_config(
+                {"SMAB_STATE_DIR": tmp, "SMAB_ECHARGER_ADVANCED_CHANNELS_ENABLED": "true"}
+            )
             for source, reader in (
                 ("api", EChargerReader(config.echarger, 4096)),
                 ("semp", SempReader(config.echarger, 4096)),
@@ -219,7 +224,9 @@ class NameTests(unittest.TestCase):
 class RenameRetirementTests(unittest.IsolatedAsyncioTestCase):
     async def test_all_old_alias_topics_retire_without_losing_new_measurements(self):
         with tempfile.TemporaryDirectory() as tmp:
-            config = load_config({"SMAB_STATE_DIR": tmp})
+            config = load_config(
+                {"SMAB_STATE_DIR": tmp, "SMAB_ECHARGER_ADVANCED_CHANNELS_ENABLED": "true"}
+            )
             for source, aliases in (
                 ("inverter3", INVERTER_ALIASES),
                 ("plant", PLANT_ALIASES),

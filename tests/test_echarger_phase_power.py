@@ -92,7 +92,7 @@ class EChargerPhasePowerTests(unittest.IsolatedAsyncioTestCase):
                 self.assertEqual(snapshot["measurements/power-l2"], "0")
                 self.assertEqual(snapshot["measurements/power-l3"], "-2.125")
                 self.assertNotIn("measurements/power-l1", state.required_keys)
-        semp = SempReader(ECharger(), 10000)
+        semp = SempReader(ECharger(advanced_channels_enabled=True, diagnostics_enabled=True), 10000)
         self.assertFalse(any(p.id.startswith("power-l") for p in semp.properties))
         await semp.close()
 
@@ -114,7 +114,9 @@ class EChargerPhasePowerTests(unittest.IsolatedAsyncioTestCase):
     async def test_previous_frequency_value_and_metadata_are_retired(self):
         with tempfile.TemporaryDirectory() as tmp:
             config = load_config({"SMAB_STATE_DIR": tmp})
-            reader = EChargerReader(ECharger(), 10000)
+            reader = EChargerReader(
+                ECharger(advanced_channels_enabled=True, diagnostics_enabled=True), 10000
+            )
             self.addAsyncCleanup(reader.close)
             state = SourceState("api", "fixture", reader.properties, 60)
             client = FakeClient()

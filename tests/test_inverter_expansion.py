@@ -35,7 +35,9 @@ class InverterExpansionTests(unittest.TestCase):
                 self.assertEqual(prop["channelGroup"], "advanced")
                 self.assertEqual(decode([0] * prop["offset"] + [0, raw], prop), raw)
                 self.assertIsNone(decode([0] * prop["offset"] + [65535, 65535], prop))
-            all_reader = ModbusReader(Inverter(), profile)
+            all_reader = ModbusReader(
+                Inverter(advanced_channels_enabled=True, diagnostics_enabled=True), profile
+            )
             topics = discovery("homie", "fixture", all_reader.properties)
             for key in ("type", "maxpower", "setmaxpower"):
                 self.assertEqual(topics[f"homie/fixture/measurements/{key}/$settable"], "false")

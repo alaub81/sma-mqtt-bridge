@@ -20,8 +20,8 @@ from tests.test_runtime import FakeClient
 class ChannelTests(unittest.TestCase):
     def test_defaults_precedence_and_independent_flags(self):
         defaults = load_config({})
-        self.assertTrue(defaults.home_manager.advanced_channels_enabled)
-        self.assertTrue(defaults.echarger.diagnostics_enabled)
+        self.assertFalse(defaults.home_manager.advanced_channels_enabled)
+        self.assertFalse(defaults.echarger.diagnostics_enabled)
         with tempfile.TemporaryDirectory() as tmp:
             path = write_json(
                 tmp, "config.json", {"homeManager": {"advancedChannelsEnabled": False}}
@@ -30,9 +30,9 @@ class ChannelTests(unittest.TestCase):
                 {"SMAB_CONFIG_FILE": path, "SMAB_INVERTER2_DIAGNOSTICS_ENABLED": "false"}
             )
             self.assertFalse(config.home_manager.advanced_channels_enabled)
-            self.assertTrue(config.home_manager.diagnostics_enabled)
+            self.assertFalse(config.home_manager.diagnostics_enabled)
             self.assertFalse(config.inverters[1].diagnostics_enabled)
-            self.assertTrue(config.inverters[0].diagnostics_enabled)
+            self.assertFalse(config.inverters[0].diagnostics_enabled)
             override = load_config(
                 {"SMAB_CONFIG_FILE": path, "SMAB_HOME_MANAGER_ADVANCED_CHANNELS_ENABLED": "true"}
             )

@@ -208,7 +208,12 @@ class SessionSupervisorTests(unittest.IsolatedAsyncioTestCase):
                 )
                 + "</Parameters></Device2EM>"
             )
-            values = semp_values(text, 180)
+            values = semp_values(
+                text,
+                180,
+                advanced=config.echarger.advanced_channels_enabled,
+                diagnostics=config.echarger.diagnostics_enabled,
+            )
             state = SourceState("semp", "fixture", (), 180)
             # Use actual reader metadata; the supervisor must still validate every key.
             from sma_mqtt_bridge.adapters.echarger import SempReader

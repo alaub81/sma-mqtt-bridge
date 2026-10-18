@@ -33,6 +33,8 @@ def words(value):
 def adapter():
     return HomeManagerModbusReader(
         HomeManager(
+            advanced_channels_enabled=True,
+            diagnostics_enabled=True,
             host="fixture.invalid",
             serial="123",
             transport="modbus-tcp",
@@ -96,6 +98,8 @@ class HomeManagerProfileTests(unittest.TestCase):
 
     def test_activation_transport_host_identity_and_interval_precedence(self):
         env = {
+            "SMAB_HOME_MANAGER_DIAGNOSTICS_ENABLED": "true",
+            "SMAB_HOME_MANAGER_ADVANCED_CHANNELS_ENABLED": "true",
             "SMAB_HOME_MANAGER_ENABLED": "true",
             "SMAB_HOME_MANAGER_TRANSPORT": "modbus-tcp",
             "SMAB_HOME_MANAGER_HOST": "fixture.invalid",

@@ -35,6 +35,10 @@ class PlantFixture(unittest.TestCase):
             "SMAB_PLANT_CHECKPOINT_INTERVAL_SECONDS": "1",
             "SMAB_HOME_MANAGER_ENABLED": "true",
             "SMAB_HOME_MANAGER_SERIAL": "424242",
+            "SMAB_HOME_MANAGER_TRANSPORT": "udp",
+            "SMAB_PLANT_PUBLISH_PARTIAL_DAY": "false",
+            "SMAB_PLANT_DIAGNOSTICS_ENABLED": "true",
+            "SMAB_LANGUAGE": "en",
         }
         for slot, role in ((1, "pv"), (2, "battery"), (3, "pv")):
             self.env.update(
@@ -225,6 +229,7 @@ class PlantConfigurationTests(PlantFixture):
         self.assertEqual(engine.state.fresh_values(100)["house/consumption"], "1600")
         engine = self.engine(
             env={
+                "SMAB_INVERTER1_ADVANCED_CHANNELS_ENABLED": "true",
                 "SMAB_INVERTER4_ENABLED": "true",
                 "SMAB_INVERTER4_HOST": "four.invalid",
                 "SMAB_INVERTER4_PROFILE": "sma-sbs3-7-10",
@@ -280,6 +285,7 @@ class PlantConfigurationTests(PlantFixture):
             load_config(self.env | {"SMAB_INVERTER1_ADVANCED_CHANNELS_ENABLED": "false"})
         engine = self.engine(
             env={
+                "SMAB_INVERTER1_ADVANCED_CHANNELS_ENABLED": "true",
                 "SMAB_INVERTER4_ENABLED": "true",
                 "SMAB_INVERTER4_HOST": "four.invalid",
                 "SMAB_INVERTER4_PROFILE": "sma-sbs3-7-10",

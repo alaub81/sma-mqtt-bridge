@@ -477,7 +477,7 @@ class WriteTests(unittest.IsolatedAsyncioTestCase):
         self.assertTrue(cfg.portal.commands_enabled)
         self.assertFalse(cfg.echarger.enabled)
         self.assertFalse(cfg.echarger.commands_enabled)
-        self.assertEqual(cfg.portal.poll_interval_seconds, 0)
+        self.assertEqual(cfg.portal.poll_interval_seconds, 900)
         with self.assertRaises(ConfigError):
             load_config(env | {"SMAB_PORTAL_ENABLED": "false"})
         cfg = load_config(env | {"SMAB_COMMANDS_ENABLED": "false"})

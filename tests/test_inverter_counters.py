@@ -110,7 +110,9 @@ class InverterCounterTests(unittest.TestCase):
     def test_groups_readiness_and_read_only_discovery(self):
         labels = load_translation("de", self.tmp.name)
         for index, profile in enumerate(self.profiles):
-            reader = ModbusReader(Inverter(), profile)
+            reader = ModbusReader(
+                Inverter(advanced_channels_enabled=True, diagnostics_enabled=True), profile
+            )
             topics = discovery("homie", "fixture", reader.properties, labels)
             for key, unit in (("operatingtime", "s"), ("feedintime", "s")):
                 root = f"homie/fixture/measurements/{key}"

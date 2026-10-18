@@ -70,8 +70,8 @@ class Inverter(SafeRepr):
     yield_tariff_per_kwh: float = 0.0
     role: str = "none"
     ready_properties: str = ""
-    advanced_channels_enabled: bool = True
-    diagnostics_enabled: bool = True
+    advanced_channels_enabled: bool = False
+    diagnostics_enabled: bool = False
     id: str = ""
     enabled: bool = False
     host: str = ""
@@ -91,9 +91,9 @@ class HomeManager(SafeRepr):
     energy_import_offset_kwh: float = 0.0
     energy_export_offset_kwh: float = 0.0
     ready_properties: str = ""
-    advanced_channels_enabled: bool = True
-    diagnostics_enabled: bool = True
-    transport: str = "udp"
+    advanced_channels_enabled: bool = False
+    diagnostics_enabled: bool = False
+    transport: str = "modbus-tcp"
     profile: str = "sma-home-manager-2-modbus"
     modbus_port: int = 502
     poll_interval_seconds: float = 3.0
@@ -118,8 +118,8 @@ class HomeManager(SafeRepr):
 class ECharger(SafeRepr):
     api_ready_properties: str = ""
     semp_ready_properties: str = ""
-    advanced_channels_enabled: bool = True
-    diagnostics_enabled: bool = True
+    advanced_channels_enabled: bool = False
+    diagnostics_enabled: bool = False
     timestamp_diagnostics_enabled: bool = False
     timestamp_diagnostics_max_bytes: int = 1048576
     timestamp_diagnostics_summary_interval_seconds: float = 300.0
@@ -148,7 +148,7 @@ class ECharger(SafeRepr):
 @dataclass(frozen=True, repr=False)
 class Portal(SafeRepr):
     ready_properties: str = ""
-    diagnostics_enabled: bool = True
+    diagnostics_enabled: bool = False
     enabled: bool = False
     base_url: str = "https://ennexos.sunnyportal.com"
     api_base_url: str = "https://uiapi.sunnyportal.com/api/v1"
@@ -160,8 +160,8 @@ class Portal(SafeRepr):
     plant_id: str = ""
     device_id: str = ""
     timeout_seconds: float = 15.0
-    poll_interval_seconds: float = 0.0
-    stale_seconds: float = 180.0
+    poll_interval_seconds: float = 900.0
+    stale_seconds: float = 1800.0
     commands_enabled: bool = False
 
 
@@ -186,10 +186,10 @@ class Plant(SafeRepr):
     checkpoint_interval_seconds: float = 300.0
     initial_consumption_kwh: float = 0.0
     assume_ac_battery_energy: bool = False
-    publish_partial_day: bool = False
+    publish_partial_day: bool = True
     debug_enabled: bool = False
     debug_interval_seconds: float = 60.0
-    diagnostics_enabled: bool = True
+    diagnostics_enabled: bool = False
 
 
 @dataclass(frozen=True, repr=False)
@@ -499,6 +499,9 @@ def load_config(environ=None, bundled_dir=None):
             )
             profiles[slot] = profile
             default = replace(default, **profile["protocol"]["defaults"])
+            groups = set(profile.get("plant", {})) & {"pv", "battery"}
+            if len(groups) == 1:
+                default = replace(default, role=next(iter(groups)))
         device = section(default, device_data, env, prefix, recognized)
         if device.role not in ("none", "pv", "battery", "hybrid"):
             raise ConfigError("Inverter role must be none, pv, battery or hybrid")

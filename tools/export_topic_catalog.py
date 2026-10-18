@@ -56,21 +56,38 @@ def inventories(directory):
     for path in sorted(BUNDLED.glob("*.json")):
         profile = json.loads(path.read_text())
         if profile.get("kind") == "home-manager-modbus-read":
-            reader = HomeManagerModbusReader(HomeManager(), profile)
+            reader = HomeManagerModbusReader(
+                HomeManager(advanced_channels_enabled=True, diagnostics_enabled=True), profile
+            )
             reader.assignments = {0: (1, 1234, 3)}
             reader.rebuild_delegated()
             yield path.stem, "home-manager", describe("home-manager", reader.properties)
         elif profile.get("validation", {}).get("status") == "validated":
-            reader = ModbusReader(Inverter(), profile)
+            reader = ModbusReader(
+                Inverter(advanced_channels_enabled=True, diagnostics_enabled=True), profile
+            )
             yield path.stem, "inverter<N>", describe("inverter<N>", reader.properties)
     yield (
         "home-manager-udp",
         "home-manager",
-        describe("home-manager", MeterReader(HomeManager()).properties),
+        describe(
+            "home-manager",
+            MeterReader(
+                HomeManager(advanced_channels_enabled=True, diagnostics_enabled=True)
+            ).properties,
+        ),
     )
     for source, reader in (
-        ("api", EChargerReader(ECharger(), 4096)),
-        ("semp", SempReader(ECharger(), 4096)),
+        (
+            "api",
+            EChargerReader(
+                ECharger(advanced_channels_enabled=True, diagnostics_enabled=True), 4096
+            ),
+        ),
+        (
+            "semp",
+            SempReader(ECharger(advanced_channels_enabled=True, diagnostics_enabled=True), 4096),
+        ),
     ):
         yield "echarger-" + source, source, describe(source, reader.properties)
     yield "portal", "portal", describe("portal", PortalReader.properties)
@@ -96,8 +113,11 @@ def inventories(directory):
         "SMAB_PROFILE_DIR": directory,
         "SMAB_MQTT_HOST": "broker.invalid",
         "SMAB_PLANT_ENABLED": "true",
+        "SMAB_PLANT_DIAGNOSTICS_ENABLED": "true",
+        "SMAB_ECHARGER_DIAGNOSTICS_ENABLED": "true",
         "SMAB_HOME_MANAGER_ENABLED": "true",
         "SMAB_HOME_MANAGER_SERIAL": "424242",
+        "SMAB_HOME_MANAGER_TRANSPORT": "udp",
         "SMAB_ECHARGER_ENABLED": "true",
         "SMAB_ECHARGER_HOST": "charger.invalid",
         "SMAB_ECHARGER_EXPECTED_SERIAL": "424243",

@@ -1,9 +1,9 @@
 # Standalone deployment service using the published GHCR image.
-# Runtime options must match docker-compose.dev.yml (checked by tests/compose_check.py).
+# Runtime options match compose.dev.yml; see tests/compose_check.py.
+# For Linux Home Manager UDP multicast, replace networks with network_mode: host.
 services:
   sma-mqtt-bridge:
     image: ghcr.io/alaub81/sma-mqtt-bridge:${SMAB_BRIDGE_VERSION:-latest}
-    pull_policy: always
     user: "${SMAB_UID:-10001}:${SMAB_GID:-10001}"
     env_file:
       - path: ${SMAB_ENV_FILE:-./smab.env}
@@ -16,11 +16,8 @@ services:
       - type: volume
         source: data_smab_state
         target: /data/sma-mqtt-bridge/state
-    # networks:
-    #   - app-nw
-    #   - backend-nw
-    # Linux host networking is needed for Home Manager multicast on the Pi.
-    network_mode: host
+    networks:
+      - app-nw
     init: true
     read_only: true
     security_opt:
@@ -32,14 +29,6 @@ services:
 volumes:
   data_smab_state:
 
-# networks:
-#   app-nw:
-#     internal: false
-#     driver: bridge
-#     driver_opts:
-#       com.docker.network.bridge.name: app-${PROJECT_NAME}
-#   backend-nw:
-#     internal: true
-#     driver: bridge
-#     driver_opts:
-#       com.docker.network.bridge.name: be-${PROJECT_NAME}
+networks:
+  app-nw:
+    driver: bridge

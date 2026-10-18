@@ -99,10 +99,20 @@ class PowerMetadataTests(unittest.TestCase):
         self.assertNotIn(KEY, settings_values(catalog(), from_api=False))
 
     def test_api_ownership_and_translated_integer_channel(self):
-        api = EChargerReader(ECharger(), 4096)
+        api = EChargerReader(
+            ECharger(advanced_channels_enabled=True, diagnostics_enabled=True), 4096
+        )
         prop = next(p for p in api.properties if p.key == KEY)
         self.assertFalse(prop.settable)
-        self.assertNotIn(KEY, {p.key for p in SempReader(ECharger(), 4096).properties})
+        self.assertNotIn(
+            KEY,
+            {
+                p.key
+                for p in SempReader(
+                    ECharger(advanced_channels_enabled=True, diagnostics_enabled=True), 4096
+                ).properties
+            },
+        )
         metadata = discovery(
             "homie",
             "sma-echarger",

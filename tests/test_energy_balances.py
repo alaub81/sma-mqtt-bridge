@@ -20,7 +20,9 @@ class EnergyBalanceTests(unittest.TestCase):
     def setUp(self):
         self.directory = tempfile.TemporaryDirectory()
         self.addCleanup(self.directory.cleanup)
-        self.config = load_config({"SMAB_STATE_DIR": self.directory.name})
+        self.config = load_config(
+            {"SMAB_STATE_DIR": self.directory.name, "SMAB_PLANT_PUBLISH_PARTIAL_DAY": "false"}
+        )
         self.signature = hashlib.sha256(b"fixture").hexdigest()
         self.hardware = hashlib.sha256(b"meter").hexdigest()
         self.zone = ZoneInfo("Europe/Berlin")

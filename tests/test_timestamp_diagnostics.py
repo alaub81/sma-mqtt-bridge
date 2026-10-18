@@ -221,7 +221,11 @@ class TimestampReaderTests(unittest.IsolatedAsyncioTestCase):
             )
             results = []
             for sink in (None, observer):
-                reader = SempReader(ECharger(), 10000, timestamp_observer=sink)
+                reader = SempReader(
+                    ECharger(advanced_channels_enabled=True, diagnostics_enabled=True),
+                    10000,
+                    timestamp_observer=sink,
+                )
                 reader.http.request = AsyncMock(side_effect=[(200, {}, body), (200, {}, body)])
                 with (
                     patch("sma_mqtt_bridge.adapters.echarger.validate_semp_identity"),

@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-FILES = ("docker-compose.dev.yml", "docker-compose.example.yml")
+FILES = ("compose.dev.yml", "compose.example.yml")
 
 
 def render(filename, overrides):
@@ -60,8 +60,18 @@ def check(overrides):
     tag = overrides.get("SMAB_BRIDGE_VERSION", "latest")
     if deployment.pop("image") != f"ghcr.io/alaub81/sma-mqtt-bridge:{tag}":
         raise ValueError("Unexpected deployment image/tag")
-    if deployment.pop("pull_policy") != "always":
-        raise ValueError("Deployment must pull its GHCR image")
+    if "pull_policy" in deployment:
+        raise ValueError("Deployment must use the normal Compose pull policy")
+    if set(deployment.get("networks", {})) != {"app-nw"} or "network_mode" in deployment:
+        raise ValueError("Default deployment must use only app-nw")
+    host = render("compose.host.example.yml", overrides)
+    if host.pop("network_mode") != "host" or "networks" in host:
+        raise ValueError("Host variant must use only host networking")
+    expected_host = dict(deployment)
+    expected_host.pop("networks")
+    expected_host["image"] = f"ghcr.io/alaub81/sma-mqtt-bridge:{tag}"
+    if host != expected_host:
+        raise ValueError("Host variant runtime options differ")
     if dev != deployment:
         raise ValueError("Compose runtime options differ")
     if dev["environment"].get("SMAB_MQTT_HOST") != "mqtt.example.invalid":
@@ -100,7 +110,7 @@ def main():
         },
     ):
         check(overrides)
-    print("Both standalone Compose files render with identical runtime options; overrides passed.")
+    print("Development and deployment match; host variant and overrides passed.")
     return 0
 
 

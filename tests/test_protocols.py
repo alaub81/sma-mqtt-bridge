@@ -258,10 +258,16 @@ class DecodeTests(unittest.TestCase):
         self.assertEqual(values["parameters/chrg-plan-en-raw"], 3)
         self.assertEqual(values["parameters/chrg-stpwhenfltm-raw"], 5)
         self.assertIsNone(values["control/active-charging-count"])
-        adapter = SempReader(ECharger(), 10000)
+        adapter = SempReader(
+            ECharger(advanced_channels_enabled=True, diagnostics_enabled=True), 10000
+        )
         self.assertEqual(len({p.key for p in adapter.properties}), len(adapter.properties))
         self.assertTrue(set(values).issubset({p.key for p in adapter.properties}))
-        shared = SempReader(ECharger(), 10000, include_settings=False)
+        shared = SempReader(
+            ECharger(advanced_channels_enabled=True, diagnostics_enabled=True),
+            10000,
+            include_settings=False,
+        )
         self.assertFalse(any(p.node == "settings" for p in shared.properties))
 
     def test_portal_nullable_preference_rights_and_identity(self):
@@ -468,7 +474,12 @@ class AsyncProtocolTests(unittest.IsolatedAsyncioTestCase):
         primary = "Measurement.Metering.GridMs.TotWhIn.ChaSta"
         fallback = "Measurement.Metering.GridMs.TotWhIn"
         stamp = "2026-10-11T10:00:00+00:00"
-        adapter = EChargerReader(ECharger(expected_serial="123"), 10000)
+        adapter = EChargerReader(
+            ECharger(
+                expected_serial="123", advanced_channels_enabled=True, diagnostics_enabled=True
+            ),
+            10000,
+        )
         adapter.access_token = AsyncMock(return_value="fixture-token")
         catalog = [
             {
@@ -603,7 +614,12 @@ class AsyncProtocolTests(unittest.IsolatedAsyncioTestCase):
     async def test_api_pending_settings_do_not_leak_through_display_aliases(self):
         from sma_mqtt_bridge.adapters.echarger import EChargerReader
 
-        adapter = EChargerReader(ECharger(expected_serial="123"), 10000)
+        adapter = EChargerReader(
+            ECharger(
+                expected_serial="123", advanced_channels_enabled=True, diagnostics_enabled=True
+            ),
+            10000,
+        )
         self.addAsyncCleanup(adapter.close)
         adapter.access_token = AsyncMock(return_value="fixture-token")
         for status in ("Confirmed", "Pending", None):

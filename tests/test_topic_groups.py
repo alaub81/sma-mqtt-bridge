@@ -46,14 +46,28 @@ class TopicGroupTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             hm_profile = load_home_manager_profile("sma-home-manager-2-modbus", directory)
         factories = [
-            (ECharger(), lambda s: EChargerReader(s, 4096)),
-            (ECharger(), lambda s: SempReader(s, 4096)),
-            (HomeManager(), lambda s: HomeManagerModbusReader(s, hm_profile)),
+            (
+                ECharger(advanced_channels_enabled=True, diagnostics_enabled=True),
+                lambda s: EChargerReader(s, 4096),
+            ),
+            (
+                ECharger(advanced_channels_enabled=True, diagnostics_enabled=True),
+                lambda s: SempReader(s, 4096),
+            ),
+            (
+                HomeManager(advanced_channels_enabled=True, diagnostics_enabled=True),
+                lambda s: HomeManagerModbusReader(s, hm_profile),
+            ),
         ]
         for path in BUNDLED.glob("*.json"):
             raw = json.loads(path.read_text())
             if raw.get("validation", {}).get("status") == "validated":
-                factories.append((Inverter(), lambda s, profile=raw: ModbusReader(s, profile)))
+                factories.append(
+                    (
+                        Inverter(advanced_channels_enabled=True, diagnostics_enabled=True),
+                        lambda s, profile=raw: ModbusReader(s, profile),
+                    )
+                )
         for settings, factory in factories:
             full = factory(settings)
             for advanced, diagnostics in (

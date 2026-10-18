@@ -108,7 +108,9 @@ class InverterTopicParityTests(unittest.TestCase):
 
     def test_storage_meter_block_and_supported_l1_are_read_only_optional_measurements(self):
         profile = self.profile("sma-sbs3-7-10")
-        reader = ModbusReader(Inverter(), profile)
+        reader = ModbusReader(
+            Inverter(advanced_channels_enabled=True, diagnostics_enabled=True), profile
+        )
         definitions = {p["id"]: p for p in profile["properties"]}
         blocks = {p["id"]: p for p in profile["pollers"]}
         for key, address, expected in (

@@ -22,8 +22,10 @@ class HomeManagerPowerNamesTests(unittest.TestCase):
             config = load_config({"SMAB_STATE_DIR": tmp, "SMAB_LANGUAGE": "de"})
             profile = load_home_manager_profile("sma-home-manager-2-modbus", tmp)
             for reader in (
-                MeterReader(HomeManager()),
-                HomeManagerModbusReader(HomeManager(), profile),
+                MeterReader(HomeManager(advanced_channels_enabled=True, diagnostics_enabled=True)),
+                HomeManagerModbusReader(
+                    HomeManager(advanced_channels_enabled=True, diagnostics_enabled=True), profile
+                ),
             ):
                 state = SourceState("home-manager", "meter", reader.properties, 30)
                 old_keys = {p.key for p in reader.properties}
@@ -111,7 +113,14 @@ class HomeManagerPowerRetirementTests(unittest.IsolatedAsyncioTestCase):
     async def test_old_topics_retire_and_new_values_publish_on_actual_stack(self):
         with tempfile.TemporaryDirectory() as tmp:
             config = load_config({"SMAB_STATE_DIR": tmp})
-            state = SourceState("home-manager", "meter", MeterReader(HomeManager()).properties, 30)
+            state = SourceState(
+                "home-manager",
+                "meter",
+                MeterReader(
+                    HomeManager(advanced_channels_enabled=True, diagnostics_enabled=True)
+                ).properties,
+                30,
+            )
             state.update({"measurements/power-import": 120, "measurements/power-export": 0})
             client = FakeClient()
             publisher = HomiePublisher(config, [state], lambda *a, **k: client)
