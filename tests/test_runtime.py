@@ -493,9 +493,42 @@ class AsyncRuntimeTests(unittest.IsolatedAsyncioTestCase):
             ),
         )
         publisher = HomiePublisher(config, [state], factory)
-        await asyncio.wait_for(publisher.run(stop), 0.5)
+        retrying, resume = asyncio.Event(), asyncio.Event()
+        retry_delays = []
+
+        async def controlled_wait(stopping, seconds):
+            self.assertIs(stopping, stop)
+            if stopping.is_set():
+                return
+            retry_delays.append(seconds)
+            retrying.set()
+            await resume.wait()
+
+        # Exercise the retry boundary without racing disk sync or CI scheduling.
+        # Timeouts below only guard hangs; elapsed time is not an acceptance criterion.
+        with patch("sma_mqtt_bridge.homie.wait_stop", side_effect=controlled_wait):
+            task = asyncio.create_task(publisher.run(stop))
+            try:
+                await asyncio.wait_for(retrying.wait(), 5)
+                self.assertEqual(len(clients), 1)
+                self.assertFalse(publisher.status["test-device"])
+                self.assertEqual(len(retry_delays), 1)
+                self.assertGreaterEqual(retry_delays[0], config.runtime.reconnect_min_seconds)
+                self.assertLessEqual(retry_delays[0], config.runtime.reconnect_max_seconds)
+                resume.set()
+                await asyncio.wait_for(task, 5)
+            finally:
+                stop.set()
+                resume.set()
+                if not task.done():
+                    task.cancel()
+                await asyncio.gather(task, return_exceptions=True)
         self.assertEqual(len(clients), 2)
-        self.assertTrue(any(t.endswith("/$homie") for t, _, _ in clients[1].messages))
+        messages = [(topic, value) for topic, value, _ in clients[1].messages]
+        self.assertIn(("homie/test-device/$homie", "4.0.0"), messages)
+        self.assertIn(("homie/test-device/measurements/power", "10"), messages)
+        self.assertIn(("homie/test-device/$state", "ready"), messages)
+        self.assertEqual(messages[-1], ("homie/test-device/$state", "disconnected"))
 
     async def test_invalid_power_retains_last_value_then_recovers_without_alert(self):
         state = SourceState(
