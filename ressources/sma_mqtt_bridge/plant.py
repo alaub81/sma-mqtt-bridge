@@ -14,6 +14,7 @@ from .energy_profile_compat import released_energy_layout
 from .errors import ConfigError
 from .model import Property, SampleValues, SourceState, number, payload
 from .plant_debug import PlantDebug
+from .plant_price import PlantPrice
 from .plant_profiles import FIELDS
 
 WALLBOX_OUTPUTS = {
@@ -226,6 +227,8 @@ class PlantEngine:
         self.zone = ZoneInfo(config.runtime.timezone)
         self.ledger = EnergyBalances(config, signature, self.zone)
         self.changed = asyncio.Event()
+        self.price = PlantPrice(config, self.changed)
+        self.feed_in_price = PlantPrice(config, self.changed, feed_in=True)
         self.nonnegative = {
             ref
             for group in self.groups.values()
@@ -256,12 +259,11 @@ class PlantEngine:
         self.committed_times = {}
         self.add_sums()
         self.add_house_power()
-        if config.feed_in_tariff_configured:
-            self.recipes["pv/total-earnings"] = (
-                "Total feed-in remuneration",
-                config.plant.currency,
-                ((self.grid["energyexport"], Decimal(str(config.plant.feed_in_tariff_per_kwh))),),
-            )
+        self.recipes["pv/total-earnings"] = (
+            "Total feed-in remuneration",
+            config.plant.currency,
+            ((self.grid["energyexport"], Decimal(1)),),
+        )
         properties = [
             Property(
                 *key.split("/"),
@@ -273,18 +275,8 @@ class PlantEngine:
             for key, (label, unit, _) in self.recipes.items()
         ]
         self.daily_tariffs = {}
-        if config.electricity_price_configured:
-            self.daily_tariffs["grid/daily-costs"] = (
-                "import",
-                config.plant.electricity_price_per_kwh,
-                "Daily grid import costs",
-            )
-        if config.feed_in_tariff_configured:
-            self.daily_tariffs["grid/daily-earnings"] = (
-                "export",
-                config.plant.feed_in_tariff_per_kwh,
-                "Daily feed-in remuneration",
-            )
+        self.daily_tariffs["grid/daily-costs"] = ("import", None, "Daily grid import costs")
+        self.daily_tariffs["grid/daily-earnings"] = ("export", None, "Daily feed-in remuneration")
         properties += [
             Property(*key.split("/"), label, unit=config.plant.currency, channel_group="basic")
             for key, (_, _, label) in self.daily_tariffs.items()
@@ -448,6 +440,8 @@ class PlantEngine:
             diagnostics_enabled=config.plant.diagnostics_enabled,
             publish_diagnostics=config.plant.diagnostics_enabled,
         )
+        self.all_properties = self.state.properties
+        self.update_tariff_inventory()
         self.wallbox_state = None
         if self.wallbox is not None:
             self.wallbox_state = PlantState(
@@ -494,6 +488,8 @@ class PlantEngine:
         }
         self.state.guards["grid/daily-energy-import"] = (self.grid["energyimport"],)
         self.state.guards["grid/daily-energy-export"] = (self.grid["energyexport"],)
+        for key, (direction, _, _) in self.daily_tariffs.items():
+            self.state.guards[key] = (self.grid["energy" + direction],)
         energy_inputs = [m["totalyield"] for m in self.groups["pv"]]
         energy_inputs += [self.grid["energyimport"], self.grid["energyexport"]]
         energy_inputs += [
@@ -517,7 +513,20 @@ class PlantEngine:
 
     @property
     def output_states(self):
-        return (self.state,) + ((self.wallbox_state,) if self.wallbox_state is not None else ())
+        return (self.state, self.price.state, self.feed_in_price.state) + (
+            (self.wallbox_state,) if self.wallbox_state is not None else ()
+        )
+
+    def update_tariff_inventory(self):
+        """Expose remuneration only once a configured or saved tariff exists."""
+        properties = tuple(
+            prop
+            for prop in self.all_properties
+            if self.feed_in_price.price is not None
+            or prop.key not in ("pv/total-earnings", "grid/daily-earnings")
+        )
+        if properties != self.state.properties:
+            self.state.properties = properties
 
     def update_wallbox_output(self, packet, observed, deadlines, now, wall):
         """Publish the same committed account through the existing charger device."""
@@ -710,6 +719,7 @@ class PlantEngine:
     def refresh(self, now=None, wall=None):
         now = time.monotonic() if now is None else now
         wall = datetime.now(timezone.utc) if wall is None else wall
+        self.update_tariff_inventory()
         packet = {p.key: None for p in self.state.properties}
         observed, deadlines = {}, {}
         accounts = {}
@@ -720,6 +730,8 @@ class PlantEngine:
                 values, oldest, deadline, _, _ = frame
                 value = sum(values.values(), Decimal(0))
                 if key == "pv/total-earnings":
+                    if self.feed_in_price.price is None:
+                        continue
                     ref = self.grid["energyexport"]
                     raw = number(self.sources[ref.source].values[ref.key][0])
                     corrected = raw + Decimal(
@@ -727,7 +739,7 @@ class PlantEngine:
                     )
                     if corrected < 0:
                         continue
-                    value = corrected * Decimal(str(self.config.plant.feed_in_tariff_per_kwh))
+                    value = corrected * self.feed_in_price.price
                 if value >= 0 or not (key.startswith("house/") or key == "pv/total-earnings"):
                     packet[key], observed[key], deadlines[key] = value, oldest, deadline
                 else:
@@ -804,10 +816,13 @@ class PlantEngine:
                 packet[key] = Decimal(text) if candidate is not None and text is not None else None
                 observed[key] = received
         # Value and lifetime come from the published durable day-energy snapshot.
-        for key, (direction, tariff, _) in self.daily_tariffs.items():
+        for key, (direction, _, _) in self.daily_tariffs.items():
+            if key not in packet:
+                continue
             energy_key = "grid/daily-energy-" + direction
             energy = packet[energy_key]
-            packet[key] = energy * Decimal(str(tariff)) if energy is not None else None
+            rate = self.price.price if key == "grid/daily-costs" else self.feed_in_price.price
+            packet[key] = energy * rate if energy is not None and rate is not None else None
             if energy_key in observed:
                 observed[key] = observed[energy_key]
             if energy_key in deadlines:

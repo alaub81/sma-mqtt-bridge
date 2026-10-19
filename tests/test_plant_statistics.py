@@ -47,7 +47,8 @@ class RemunerationTests(PlantFixture):
 
     def test_daily_tariffs_are_independent_explicit_and_allow_zero(self):
         engine = self.engine()
-        self.assertNotIn("grid/daily-costs", engine.state.property_index())
+        engine.refresh(100, self.wall)
+        self.assertNotIn("grid/daily-costs", engine.state.fresh_values(100))
         self.assertNotIn("grid/daily-earnings", engine.state.property_index())
         engine = self.engine(
             env={

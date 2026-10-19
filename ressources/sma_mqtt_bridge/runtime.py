@@ -418,8 +418,14 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
         states.append(result_state)
         portal_reader = next(r for s, r, _ in readers if s.id == "portal")
         portal_controller = PortalCommands(config, portal_state, result_state, reader=portal_reader)
-    if local_controller is not None or portal_controller is not None or portal_refresh is not None:
-        controller = CommandRouter(local_controller, portal_controller, portal_refresh)
+    if any((local_controller, portal_controller, portal_refresh, plant)):
+        controller = CommandRouter(
+            local_controller,
+            portal_controller,
+            portal_refresh,
+            plant_price=plant.price if plant is not None else None,
+            feed_in_price=plant.feed_in_price if plant is not None else None,
+        )
     for state in states:
         state.max_payload_bytes = config.runtime.max_payload_bytes
     publisher = publisher_factory(config, states)

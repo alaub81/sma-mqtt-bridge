@@ -145,13 +145,14 @@ class PlantDiagnosticRetirementTests(unittest.IsolatedAsyncioTestCase):
             return client
 
         publisher = HomiePublisher(disabled.config, list(disabled.output_states), factory)
-        for old_state, state in zip(enabled.output_states, disabled.output_states):
-            device = state.device
-            old_props = old_publisher.properties([old_state])
+        for device in {state.device for state in disabled.output_states}:
+            old_states = [s for s in enabled.output_states if s.device == device]
+            new_states = [s for s in disabled.output_states if s.device == device]
+            old_props = old_publisher.properties(old_states)
             old = set(discovery("homie", device, old_props)) | {
                 "homie/" + device + "/" + p.key.replace("-", "") for p in old_props
             }
-            new_props = publisher.properties([state])
+            new_props = publisher.properties(new_states)
             current = set(discovery("homie", device, new_props)) | {
                 "homie/" + device + "/" + p.key.replace("-", "") for p in new_props
             }
@@ -159,7 +160,7 @@ class PlantDiagnosticRetirementTests(unittest.IsolatedAsyncioTestCase):
             self.assertTrue(retired)
             publisher.owned[device] = old
             publisher.publish_values = AsyncMock()
-            await publisher.serve_device(device, [state], asyncio.Event())
+            await publisher.serve_device(device, new_states, asyncio.Event())
             messages = {(topic, value) for topic, value, _ in clients[-1].messages}
             for topic in retired:
                 self.assertIn((topic, b""), messages)
