@@ -20,6 +20,58 @@ from sma_mqtt_bridge.homie import HomiePublisher, discovery
 
 
 class RemunerationTests(PlantFixture):
+    def test_daily_amounts_use_day_energy_and_inherit_freshness(self):
+        engine = self.engine(
+            env={
+                "SMAB_PLANT_ELECTRICITY_PRICE_PER_KWH": "0.32",
+                "SMAB_PLANT_FEED_IN_TARIFF_PER_KWH": "0.08",
+                "SMAB_PLANT_PUBLISH_PARTIAL_DAY": "true",
+                "SMAB_PLANT_CURRENCY": "EUR",
+            }
+        )
+        engine.refresh(100, self.wall)
+        self.fill(engine, 102, {"home-manager": {"energyimport": 52.5, "energyexport": 64}})
+        engine.refresh(102, self.wall + timedelta(seconds=2))
+        values = engine.state.fresh_values(102)
+        self.assertEqual(Decimal(values["grid/daily-costs"]), Decimal("0.8"))
+        self.assertEqual(Decimal(values["grid/daily-earnings"]), Decimal("0.32"))
+        metadata = discovery("homie", "sma-plant", engine.state.properties)
+        for suffix in ("dailycosts", "dailyearnings"):
+            self.assertEqual(metadata[f"homie/sma-plant/grid/{suffix}/$unit"], "EUR")
+            self.assertEqual(metadata[f"homie/sma-plant/grid/{suffix}/$settable"], "false")
+        self.assertNotIn("grid/daily-costs", engine.state.fresh_values(1000))
+        engine.sources["home-manager"].error = True
+        engine.refresh(103, self.wall + timedelta(seconds=3))
+        self.assertNotIn("grid/daily-costs", engine.state.fresh_values(103))
+        self.assertNotIn("grid/daily-earnings", engine.state.fresh_values(103))
+
+    def test_daily_tariffs_are_independent_explicit_and_allow_zero(self):
+        engine = self.engine()
+        self.assertNotIn("grid/daily-costs", engine.state.property_index())
+        self.assertNotIn("grid/daily-earnings", engine.state.property_index())
+        engine = self.engine(
+            env={
+                "SMAB_PLANT_ELECTRICITY_PRICE_PER_KWH": "0",
+                "SMAB_PLANT_PUBLISH_PARTIAL_DAY": "true",
+            }
+        )
+        engine.refresh(100, self.wall)
+        self.assertEqual(Decimal(engine.state.fresh_values(100)["grid/daily-costs"]), 0)
+        self.assertNotIn("grid/daily-earnings", engine.state.property_index())
+        self.assertFalse(engine.ledger.binding_changed)
+
+    def test_electricity_price_json_and_env_precedence(self):
+        path = Path(self.directory.name) / "electricity.json"
+        path.write_text(json.dumps({"plant": {"electricityPricePerKwh": 0.3}}))
+        config = load_config({"SMAB_CONFIG_FILE": str(path)})
+        self.assertTrue(config.electricity_price_configured)
+        self.assertEqual(config.plant.electricity_price_per_kwh, 0.3)
+        config = load_config(
+            {"SMAB_CONFIG_FILE": str(path), "SMAB_PLANT_ELECTRICITY_PRICE_PER_KWH": "0"}
+        )
+        self.assertTrue(config.electricity_price_configured)
+        self.assertEqual(config.plant.electricity_price_per_kwh, 0)
+
     def test_export_counter_currency_and_invalid_input(self):
         engine = self.engine(
             env={
@@ -144,6 +196,7 @@ class RemunerationTests(PlantFixture):
     def test_invalid_configuration(self):
         for key in (
             "SMAB_PLANT_FEED_IN_TARIFF_PER_KWH",
+            "SMAB_PLANT_ELECTRICITY_PRICE_PER_KWH",
             "SMAB_INVERTER1_YIELD_TARIFF_PER_KWH",
         ):
             for value in ("-1", "NaN", "Infinity"):
@@ -380,7 +433,7 @@ class WallboxStatisticsTests(PlantFixture):
         self.assertEqual(packet["house/average-daily-consumption-without-wallbox"], Decimal(42) / 7)
         self.assertFalse(any("average" in p.key for p in engine.wallbox_state.properties))
         self.assertEqual(
-            engine.state.property_index()["house/average-daily-consumption"].unit, "kWh/d"
+            engine.state.property_index()["house/average-daily-consumption"].unit, "kWh"
         )
 
 

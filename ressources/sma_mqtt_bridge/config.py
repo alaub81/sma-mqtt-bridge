@@ -174,6 +174,7 @@ class Commands(SafeRepr):
 
 @dataclass(frozen=True, repr=False)
 class Plant(SafeRepr):
+    electricity_price_per_kwh: float = 0.0
     feed_in_tariff_per_kwh: float = 0.0
     feed_in_energy_offset_kwh: float = 0.0
     currency: str = "€"
@@ -205,6 +206,7 @@ class Config(SafeRepr):
     interval_overrides: frozenset
     plant: Plant = Plant()
     feed_in_tariff_configured: bool = False
+    electricity_price_configured: bool = False
 
     @property
     def has_sources(self):
@@ -311,6 +313,7 @@ def section(defaults, data, env, prefix, recognized):
                 in (
                     "initial_consumption_kwh",
                     "feed_in_tariff_per_kwh",
+                    "electricity_price_per_kwh",
                     "feed_in_energy_offset_kwh",
                 )
             ):
@@ -543,6 +546,8 @@ def load_config(environ=None, bundled_dir=None):
         frozenset(intervals),
         plant,
         "feedInTariffPerKwh" in data.get("plant", {}) or "SMAB_PLANT_FEED_IN_TARIFF_PER_KWH" in env,
+        "electricityPricePerKwh" in data.get("plant", {})
+        or "SMAB_PLANT_ELECTRICITY_PRICE_PER_KWH" in env,
     )
     mqtt_needed = config.has_sources or (Path(runtime.state_dir) / "mqtt-topics.json").exists()
     if mqtt_needed:

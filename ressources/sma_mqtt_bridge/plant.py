@@ -272,12 +272,29 @@ class PlantEngine:
             )
             for key, (label, unit, _) in self.recipes.items()
         ]
+        self.daily_tariffs = {}
+        if config.electricity_price_configured:
+            self.daily_tariffs["grid/daily-costs"] = (
+                "import",
+                config.plant.electricity_price_per_kwh,
+                "Daily grid import costs",
+            )
+        if config.feed_in_tariff_configured:
+            self.daily_tariffs["grid/daily-earnings"] = (
+                "export",
+                config.plant.feed_in_tariff_per_kwh,
+                "Daily feed-in remuneration",
+            )
+        properties += [
+            Property(*key.split("/"), label, unit=config.plant.currency, channel_group="basic")
+            for key, (_, _, label) in self.daily_tariffs.items()
+        ]
         properties += [
             Property(
                 "house",
                 "average-daily-consumption",
                 "Seven-day average house consumption",
-                unit="kWh/d",
+                unit="kWh",
                 channel_group="basic",
             ),
             Property(
@@ -357,7 +374,7 @@ class PlantEngine:
                     "house",
                     "average-daily-consumption-without-wallbox",
                     "Seven-day average house consumption without wallbox",
-                    unit="kWh/d",
+                    unit="kWh",
                     channel_group="basic",
                 ),
                 Property(
@@ -786,6 +803,15 @@ class PlantEngine:
                 text = record["dailyValue"]
                 packet[key] = Decimal(text) if candidate is not None and text is not None else None
                 observed[key] = received
+        # Value and lifetime come from the published durable day-energy snapshot.
+        for key, (direction, tariff, _) in self.daily_tariffs.items():
+            energy_key = "grid/daily-energy-" + direction
+            energy = packet[energy_key]
+            packet[key] = energy * Decimal(str(tariff)) if energy is not None else None
+            if energy_key in observed:
+                observed[key] = observed[energy_key]
+            if energy_key in deadlines:
+                deadlines[key] = deadlines[energy_key]
         self.update_averages(packet, wall)
         self.update_wallbox_output(packet, observed, deadlines, now, wall)
         packet["diagnostics/valid-properties"] = ",".join(

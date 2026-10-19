@@ -199,6 +199,8 @@
     "Seven-day average house consumption without wallbox": "Seven-day average house consumption without wallbox",
     "Seven-day coverage": "Seven-day coverage",
     "Seven-day coverage without wallbox": "Seven-day coverage without wallbox",
+    "Daily grid import costs": "Daily grid import costs",
+    "Daily feed-in remuneration": "Daily feed-in remuneration",
     "Total feed-in remuneration": "Total feed-in remuneration",
     "Raw grid import energy": "Raw grid import energy",
     "Raw grid export energy": "Raw grid export energy",

@@ -199,6 +199,8 @@
     "Seven-day average house consumption without wallbox": "Hausverbrauch ohne Wallbox im Sieben-Tage-Durchschnitt",
     "Seven-day coverage": "Abdeckung des Sieben-Tage-Durchschnitts",
     "Seven-day coverage without wallbox": "Abdeckung des Sieben-Tage-Durchschnitts ohne Wallbox",
+    "Daily grid import costs": "Strombezugskosten heute",
+    "Daily feed-in remuneration": "Einspeisevergütung heute",
     "Total feed-in remuneration": "Einspeisevergütung gesamt",
     "Raw grid import energy": "Netzbezugsenergie (Rohzähler)",
     "Raw grid export energy": "Netzeinspeiseenergie (Rohzähler)",

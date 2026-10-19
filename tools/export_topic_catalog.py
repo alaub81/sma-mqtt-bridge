@@ -124,6 +124,7 @@ def inventories(directory):
         "SMAB_ECHARGER_USERNAME": "catalog",
         "SMAB_ECHARGER_PASSWORD": "synthetic-catalog-only",
         "SMAB_PLANT_FEED_IN_TARIFF_PER_KWH": "0",
+        "SMAB_PLANT_ELECTRICITY_PRICE_PER_KWH": "0",
         "SMAB_INVERTER4_ENABLED": "true",
         "SMAB_INVERTER4_HOST": "inverter4.invalid",
         "SMAB_INVERTER4_PROFILE": "sma-sbs3-7-10",
