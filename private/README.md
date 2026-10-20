@@ -1,12 +1,15 @@
-# Local references and incoming configuration
+# Private local records
 
-Everything in this directory except this README is ignored by Git. The entire directory is excluded from the Docker build context.
+Everything except this generic README is ignored by Git. The entire directory is
+excluded from Docker build contexts and images. Back it up privately; a fresh clone
+does not include these records. Never commit credentials, tokens or unreviewed exports.
 
-Local layout:
+- `CONTEXT.local.md`: local installation handoff; follow its private continuity pointers.
+- `project-documentation/`: preserved installation reports, inventories, task diaries,
+  acceptance evidence and active private follow-up.
+- `reference/sma/`: original working packages and protocol references, read-only.
+- `incoming/openhab/`: original Things/Items/rules/persistence exports, read-only.
 
-- `CONTEXT.local.md`: known installation identifiers, without credentials.
-- `reference/sma/`: original working openHAB packages, protocol regression harness and available captures.
-- `reference/bmw/`: read-only C++/Homie baseline references.
-- `incoming/openhab/`: place inverter/Home Manager Things, Items, transforms, rules and persistence exports here.
-
-These local files are not transported by Git. If this repository is cloned on another host, supply the private inputs again through a private channel. Never commit passwords, tokens or unreviewed raw exports.
+Public contracts, neutral examples and reproducible checks belong under `docs/`.
+Private originals must not be edited as part of public documentation maintenance.
+See [privacy guidance](../docs/PRIVACY.md).

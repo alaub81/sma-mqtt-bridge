@@ -2,7 +2,6 @@
 
 import json
 import unittest
-from pathlib import Path
 
 from sma_mqtt_bridge.errors import ConfigError
 from sma_mqtt_bridge.profiles import validate_profile
@@ -62,18 +61,6 @@ class InventoryTests(unittest.TestCase):
             inventory([SOURCE, SOURCE])
         with self.assertRaises(InventoryError):
             inventory(["// Empty export"])
-
-    def test_public_evidence_preserves_all_41_channels_and_19_pollers(self):
-        root = Path(__file__).resolve().parents[1]
-        path = root / "reference/inverter-things-inventory.json"
-        # Public tooling evidence is excluded from runtime images. Transport tests
-        # run there too, so the same public file is supplied by the test mounts.
-        data = json.loads(path.read_text())
-        self.assertEqual(data["status"], "migration-evidence-only")
-        self.assertFalse(data["pollingAuthorized"])
-        self.assertEqual([len(d["pollers"]) for d in data["devices"]], [6, 7, 6])
-        counts = [sum(len(p["channels"]) for p in d["pollers"]) for d in data["devices"]]
-        self.assertEqual(counts, [14, 11, 16])
 
 
 if __name__ == "__main__":

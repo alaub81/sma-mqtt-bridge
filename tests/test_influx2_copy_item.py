@@ -1,8 +1,6 @@
 """Offline checks for the explicit, non-deleting InfluxDB migration generator."""
 
-import csv
 import unittest
-from pathlib import Path
 
 from tools.influx2_copy_item import generate
 
@@ -54,23 +52,6 @@ class InfluxMigrationTests(unittest.TestCase):
             with self.subTest(override=override), self.assertRaises(ValueError):
                 self.query(**override)
         self.assertIn('org: "quoted\\"org"', self.query(mode="copy", org='quoted"org'))
-
-    def test_inventory_distinguishes_relinks_from_actual_item_changes(self):
-        root = Path(__file__).resolve().parents[1]
-        with (root / "docs/influx2-item-migration-2026-10-15.csv").open() as stream:
-            rows = list(csv.DictReader(stream))
-        self.assertEqual(len(rows), 17)
-        self.assertEqual(len({row["old_item"] for row in rows}), 17)
-        relinks = [row for row in rows if row["action"].startswith("relink-")]
-        copies = [row for row in rows if row["action"] == "copy-candidate"]
-        self.assertEqual(len(relinks), 10)
-        self.assertTrue(all(row["old_item"] == row["new_item"] for row in relinks))
-        self.assertEqual(len(copies), 5)
-        self.assertTrue(all(row["old_item"] != row["new_item"] for row in copies))
-        excluded = {row["old_item"] for row in rows if row["action"] == "archive-only"}
-        self.assertEqual(
-            excluded, {"Example_Private_Item_001", "Example_Private_Item_002"}
-        )
 
 
 if __name__ == "__main__":

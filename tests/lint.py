@@ -151,7 +151,12 @@ def check_markdown_links(files, root=ROOT):
                 destination = (
                     root / path.lstrip("/") if path.startswith("/") else root / name / ".." / path
                 )
-                if not destination.resolve().exists():
+                resolved = destination.resolve()
+                private_root = (root / "private").resolve()
+                if resolved.is_relative_to(private_root) and resolved != private_root / "README.md":
+                    print(f"{name}:{number}: public Markdown links to private data", flush=True)
+                    passed = False
+                elif not resolved.exists():
                     print(f"{name}:{number}: missing Markdown file target: {target}", flush=True)
                     passed = False
     return passed

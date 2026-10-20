@@ -81,7 +81,7 @@ jobs:
           test "$(docker run --rm sma-mqtt-bridge:ci-${{ matrix.platform }} --version)" = "sma-mqtt-bridge $SMAB_EXPECTED_VERSION"
           docker run --rm sma-mqtt-bridge:ci-${{ matrix.platform }} --check-config
           docker run --rm --entrypoint python sma-mqtt-bridge:ci-${{ matrix.platform }} -c 'import importlib.util; assert all(importlib.util.find_spec(name) is None for name in ("pip", "ensurepip")), "Build-only package installers remain in image"'
-          docker run --rm --entrypoint python -v "$PWD/tests:/app/tests:ro" -v "$PWD/tools:/app/tools:ro" -v "$PWD/docs/topic-catalog.csv:/app/docs/topic-catalog.csv:ro" -v "$PWD/docs/influx2-item-migration-2026-10-15.csv:/app/docs/influx2-item-migration-2026-10-15.csv:ro" -v "$PWD/smab.example.env:/app/smab.example.env:ro" -v "$PWD/docs/config.example.json:/app/docs/config.example.json:ro" -v "$PWD/reference/inverter-things-inventory.json:/app/reference/inverter-things-inventory.json:ro" sma-mqtt-bridge:ci-${{ matrix.platform }} tests/run_tests.py
+          docker run --rm --entrypoint python -v "$PWD/tests:/app/tests:ro" -v "$PWD/tools:/app/tools:ro" -v "$PWD/docs/topic-catalog.csv:/app/docs/topic-catalog.csv:ro" -v "$PWD/smab.example.env:/app/smab.example.env:ro" -v "$PWD/docs/config.example.json:/app/docs/config.example.json:ro" sma-mqtt-bridge:ci-${{ matrix.platform }} tests/run_tests.py
       - name: Trivy image gate
         uses: aquasecurity/trivy-action@v0.36.0
         with:

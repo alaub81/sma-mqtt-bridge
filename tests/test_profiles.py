@@ -1,7 +1,6 @@
 """Profile schema, containment, override failures and local identity gates."""
 
 import copy
-import json
 import tempfile
 import unittest
 from decimal import Decimal
@@ -57,13 +56,41 @@ class ProfileTests(unittest.TestCase):
             load_profile("test-inverter", self.tmp.name, require_validated=True)
 
     def test_existing_ranges_intervals_and_model_specific_energy_units(self):
-        root = Path(__file__).resolve().parents[1]
-        inventory = json.loads((root / "reference/inverter-things-inventory.json").read_text())
-        for device, selector, unit in zip(
-            inventory["devices"],
-            ("sma-stp8-0-3av-40", "sma-sbs3-7-10", "sma-sb4-0-1av-41"),
-            ("kWh", "kWh", "kWh"),
-        ):
+        # Model protocol baselines contain no installation Item/Thing inventory.
+        expected_blocks = {
+            "sma-stp8-0-3av-40": [
+                (4, 30201, 36, 60.0),
+                (4, 30865, 4, 5.0),
+                (4, 30517, 36, 180.0),
+                (4, 30769, 20, 3.0),
+                (4, 30957, 8, 5.0),
+                (4, 34113, 2, 120.0),
+            ],
+            "sma-sbs3-7-10": [
+                (4, 30201, 36, 60.0),
+                (4, 30517, 36, 180.0),
+                (4, 30845, 4, 30.0),
+                (4, 30849, 2, 120.0),
+                (4, 30955, 4, 60.0),
+                (4, 31393, 4, 5.0),
+                (4, 34113, 2, 120.0),
+            ],
+            "sma-sb4-0-1av-41": [
+                (4, 30053, 4, 60.0),
+                (4, 30201, 36, 20.0),
+                (4, 30865, 4, 5.0),
+                (4, 30517, 36, 60.0),
+                (4, 30769, 20, 3.0),
+                (4, 34113, 2, 120.0),
+            ],
+        }
+        expected_property_counts = {
+            "sma-stp8-0-3av-40": 33,
+            "sma-sbs3-7-10": 34,
+            "sma-sb4-0-1av-41": 33,
+        }
+        for selector, blocks in expected_blocks.items():
+            unit = "kWh"
             p = load_profile(selector, self.tmp.name, require_validated=True)
             self.assertEqual(
                 [
@@ -73,23 +100,11 @@ class ProfileTests(unittest.TestCase):
                         b["count"] - (4 if b["id"] == "yield" else 0),
                         b["intervalSeconds"],
                     )
-                    for b in p["pollers"][1 : 1 + len(device["pollers"])]
+                    for b in p["pollers"][1 : 1 + len(blocks)]
                 ],
-                [
-                    (b["function"], b["start"], b["count"], b["intervalSeconds"])
-                    for b in device["pollers"]
-                ],
+                blocks,
             )
-            self.assertEqual(
-                len(p["properties"])
-                - 3
-                - {
-                    "sma-stp8-0-3av-40": 16,
-                    "sma-sbs3-7-10": 20,
-                    "sma-sb4-0-1av-41": 14,
-                }[selector],
-                sum(len(b["channels"]) for b in device["pollers"]),
-            )
+            self.assertEqual(len(p["properties"]), expected_property_counts[selector])
             for energy_id in ("day-yield", "total-yield"):
                 energy = next(x for x in p["properties"] if x["id"] == energy_id)
                 self.assertEqual(energy["unit"], unit)
