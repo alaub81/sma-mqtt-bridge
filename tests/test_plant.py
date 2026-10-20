@@ -20,6 +20,7 @@ from sma_mqtt_bridge.model import SampleValues
 from sma_mqtt_bridge.plant import PlantEngine, plant_plan
 from sma_mqtt_bridge.profiles import BUNDLED, validate_profile
 from sma_mqtt_bridge.runtime import run_locked, sources
+from sma_mqtt_bridge.storage import write_state
 
 
 class PlantFixture(unittest.TestCase):
@@ -103,6 +104,36 @@ class PlantFixture(unittest.TestCase):
                 updates.setdefault(ref.source, {})[ref.key] = values[ref.source][metric]
         for source, update in updates.items():
             engine.sources[source].update(update, now=now)
+
+
+class PlantCheckpointTests(PlantFixture):
+    def test_fresh_frames_in_reset_preserve_shared_account_checkpoint(self):
+        engine = self.engine(ac=True, env={"SMAB_PLANT_CHECKPOINT_INTERVAL_SECONDS": "300"})
+        engine.refresh(100, self.wall)
+        key = "inverter1/measurements/total-yield"
+        self.assertIn(key, engine.ledger.data["precisionOffsets"])
+        engine.ledger.data["precisionOffsets"][key] = "-0.5"
+        engine.sources["inverter1"].update({"measurements/total-yield": 0}, now=101)
+        engine.refresh(101, self.wall + timedelta(seconds=1))
+        self.assertEqual(engine.ledger.last_save, 101)
+        with patch("sma_mqtt_bridge.energy_balances.write_state", wraps=write_state) as write:
+            for now in (103, 106, 109):
+                engine.sources["home-manager"].update(
+                    {"measurements/energy-import": 51, "measurements/energy-export": 60}, now=now
+                )
+                engine.refresh(now, self.wall + timedelta(seconds=now - 100))
+            self.assertEqual(write.call_count, 0)
+            self.assertTrue(engine.ledger.dirty)
+            self.assertFalse(engine.ledger.force_save)
+            self.assertEqual(engine.ledger.last_save, 101)
+            engine.ledger.persist(400)
+            self.assertEqual(write.call_count, 0)
+            engine.ledger.persist(401)
+            self.assertEqual(write.call_count, 1)
+        saved = json.loads(engine.ledger.path.read_text())
+        self.assertEqual(
+            saved["accounts"]["import"]["last"]["home-manager/measurements/energy-import"], "51"
+        )
 
 
 class PlantConfigurationTests(PlantFixture):

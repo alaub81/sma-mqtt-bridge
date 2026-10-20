@@ -248,8 +248,9 @@ class EnergyBalances:
             for key, value in values.items()
         ):
             # A real reset can cross the calibrated origin; never persist negative counters.
-            record["dailyStatus"] = record["totalStatus"] = "reset"
-            self.dirty = self.force_save = True
+            if record["dailyStatus"] != "reset" or record["totalStatus"] != "reset":
+                record["dailyStatus"] = record["totalStatus"] = "reset"
+                self.dirty = self.force_save = True
             return None, None, "reset"
         encoded = {key: str(value) for key, value in values.items()}
         try:

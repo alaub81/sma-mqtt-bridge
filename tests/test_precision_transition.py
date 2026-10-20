@@ -15,6 +15,7 @@ from sma_mqtt_bridge.config import load_config
 from sma_mqtt_bridge.energy_balances import EnergyBalances, validate_ledger
 from sma_mqtt_bridge.errors import StateError
 from sma_mqtt_bridge.model import Property, SampleValues, SourceState
+from sma_mqtt_bridge.storage import write_state
 
 
 class PrecisionTransitionTests(unittest.TestCase):
@@ -49,6 +50,47 @@ class PrecisionTransitionTests(unittest.TestCase):
         self.observe(old, "105", 60)
         old.persist(60, force=True)
         return copy.deepcopy(old.data)
+
+    def calibrated_reset(self):
+        self.legacy()
+        ledger = self.ledger()
+        adjusted = ledger.precise_values({"pv": Decimal("106.123")}, {"pv": Decimal(106)})
+        self.observe(ledger, str(adjusted["pv"]), 120)
+        ledger.persist(120)
+        self.assertEqual(self.observe(ledger, "-0.123", 121), (None, None, "reset"))
+        return ledger
+
+    def test_calibrated_reset_is_durable_once_and_idempotent_after_restart(self):
+        ledger = self.calibrated_reset()
+        with patch("sma_mqtt_bridge.energy_balances.write_state", wraps=write_state) as write:
+            ledger.persist(121)
+            self.assertEqual(write.call_count, 1)
+            original = ledger.path.read_bytes()
+            for seconds in (122, 123, 124):
+                self.assertEqual(self.observe(ledger, "-0.123", seconds), (None, None, "reset"))
+                ledger.persist(seconds)
+                self.assertFalse(ledger.dirty)
+                self.assertFalse(ledger.force_save)
+            self.assertEqual(write.call_count, 1)
+            self.assertEqual(ledger.path.read_bytes(), original)
+            restarted = self.ledger()
+            self.assertEqual(self.observe(restarted, "-0.123", 125), (None, None, "reset"))
+            restarted.persist(125)
+            self.assertFalse(restarted.dirty)
+            self.assertEqual(write.call_count, 1)
+
+    def test_repeated_calibrated_reset_keeps_failed_transition_pending(self):
+        ledger = self.calibrated_reset()
+        with patch(
+            "sma_mqtt_bridge.energy_balances.write_state", side_effect=StateError("fixture")
+        ):
+            with self.assertRaises(StateError):
+                ledger.persist(121)
+        self.observe(ledger, "-0.123", 122)
+        self.assertTrue(ledger.dirty)
+        self.assertTrue(ledger.force_save)
+        ledger.persist(122)
+        self.assertEqual(self.ledger().data["accounts"]["house"]["totalStatus"], "reset")
 
     def test_transition_retains_baselines_history_and_downtime_then_counts_fine_growth(self):
         original = self.legacy()
