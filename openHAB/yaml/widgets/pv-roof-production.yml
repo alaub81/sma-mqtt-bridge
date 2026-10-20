@@ -1,0 +1,1009 @@
+version: 1
+widgets:
+  pv_roof_production:
+    tags:
+      - PV
+      - Energie
+    props:
+      parameterGroups:
+        - name: display
+          label: Anzeige
+        - name: sources
+          label: DC-Items und Verfügbarkeit
+        - name: colors
+          label: Farben
+      parameters:
+        - name: title
+          label: Titel
+          type: TEXT
+          groupName: display
+          default: PV nach Dachfläche
+        - name: icon
+          label: Titel-Icon
+          type: TEXT
+          groupName: display
+          default: f7:bolt_circle
+        - name: iconColor
+          label: Titel-Icon-Farbe
+          type: TEXT
+          groupName: display
+          default: '#FFD60A'
+        - name: soLabel
+          label: Beschriftung SO
+          type: TEXT
+          groupName: display
+          default: SO
+        - name: nwLabel
+          label: Beschriftung NW
+          type: TEXT
+          groupName: display
+          default: NW
+        - name: swLabel
+          label: Beschriftung SW
+          type: TEXT
+          groupName: display
+          default: SW
+        - name: showTitle
+          label: Titel anzeigen
+          type: BOOLEAN
+          groupName: display
+          default: true
+        - name: showTotal
+          label: DC-Summe anzeigen
+          type: BOOLEAN
+          groupName: display
+          default: true
+        - name: showGrid
+          label: Modulraster anzeigen
+          type: BOOLEAN
+          groupName: display
+          default: true
+        - name: demoMode
+          label: Beispielwerte verwenden
+          type: BOOLEAN
+          groupName: display
+          default: false
+          description: Nur zur Vorschau. Ohne Aktivierung werden ausschließlich ausgewählte Items verwendet.
+        - name: soPowerItem
+          label: SO · Hausdach SO · Leistung (W/kW)
+          type: TEXT
+          groupName: sources
+          context: item
+          required: true
+          description: DC-Messwert auswählen; kein Tagesertrag und keine AC-Leistung.
+        - name: soVoltageItem
+          label: SO · Hausdach SO · Spannung (V)
+          type: TEXT
+          groupName: sources
+          context: item
+          required: false
+          description: Optional. Ohne gültigen Wert erscheint — in den Details.
+        - name: soCurrentItem
+          label: SO · Hausdach SO · Strom (A)
+          type: TEXT
+          groupName: sources
+          context: item
+          required: false
+          description: Optional. Ohne gültigen Wert erscheint — in den Details.
+        - name: nwPowerItem
+          label: NW · Hausdach NW · Leistung (W/kW)
+          type: TEXT
+          groupName: sources
+          context: item
+          required: true
+          description: DC-Messwert auswählen; kein Tagesertrag und keine AC-Leistung.
+        - name: nwVoltageItem
+          label: NW · Hausdach NW · Spannung (V)
+          type: TEXT
+          groupName: sources
+          context: item
+          required: false
+          description: Optional. Ohne gültigen Wert erscheint — in den Details.
+        - name: nwCurrentItem
+          label: NW · Hausdach NW · Strom (A)
+          type: TEXT
+          groupName: sources
+          context: item
+          required: false
+          description: Optional. Ohne gültigen Wert erscheint — in den Details.
+        - name: swPowerItem
+          label: SW · Carport vorne · Leistung (W/kW)
+          type: TEXT
+          groupName: sources
+          context: item
+          required: true
+          description: DC-Messwert auswählen; kein Tagesertrag und keine AC-Leistung.
+        - name: swVoltageItem
+          label: SW · Carport vorne · Spannung (V)
+          type: TEXT
+          groupName: sources
+          context: item
+          required: false
+          description: Optional. Ohne gültigen Wert erscheint — in den Details.
+        - name: swCurrentItem
+          label: SW · Carport vorne · Strom (A)
+          type: TEXT
+          groupName: sources
+          context: item
+          required: false
+          description: Optional. Ohne gültigen Wert erscheint — in den Details.
+        - name: roofStatusItem
+          label: Dachwechselrichter · Quellenstatus
+          type: TEXT
+          groupName: sources
+          context: item
+          description: 'Optional: Status-Item mit ready/stale/error/init. Nur ready erlaubt Messwerte; ohne Auswahl
+            erfolgt keine Quellenstatusprüfung.'
+        - name: carportStatusItem
+          label: Carport-Wechselrichter · Quellenstatus
+          type: TEXT
+          groupName: sources
+          context: item
+          description: 'Optional: Status-Item mit ready/stale/error/init. Nur ready erlaubt Messwerte; ohne Auswahl
+            erfolgt keine Quellenstatusprüfung.'
+        - name: pvColor
+          label: PV-Akzentfarbe
+          type: TEXT
+          groupName: colors
+          default: '#FFD60A'
+        - name: pvIdleColor
+          label: PV-Farbe bei 0 W
+          type: TEXT
+          groupName: colors
+          default: '#0A84FF'
+        - name: textColor
+          label: Textfarbe
+          type: TEXT
+          groupName: colors
+          default: var(--f7-text-color)
+        - name: backgroundColor
+          label: Hintergrund
+          type: TEXT
+          groupName: colors
+          default: var(--f7-card-bg-color)
+        - name: wallColor
+          label: Hauswand
+          type: TEXT
+          groupName: colors
+          default: rgba(128,128,136,0.20)
+        - name: roofColor
+          label: Dachflächen
+          type: TEXT
+          groupName: colors
+          default: rgba(128,128,136,0.10)
+        - name: windowColor
+          label: Fenster
+          type: TEXT
+          groupName: colors
+          default: var(--f7-page-bg-color)
+    component: f7-card
+    config:
+      class: smab-pv-roofs oh-cell card-prevent-open
+      expandable: true
+      stylesheet: |-
+        .smab-pv-roofs { box-sizing: border-box; container-type: inline-size; min-width: 0; }
+        .smab-pv-roofs .card-content { padding: 0; }
+        .smab-roof-scene { width: 100%; height: 0; padding-bottom: 64.516129%; position: relative; }
+        .smab-roof-house { position: absolute; top: -12px; left: 50%; transform: translateX(-50%) scale(1.2); transform-origin: 50% 0; width: 156px; height: 88px; clip-path: inset(0 0 13%); pointer-events: none; }
+        .smab-roof-stroke { position: absolute; pointer-events: none; }
+        .smab-roof-shape { position: absolute; inset: 0; pointer-events: none; }
+        .smab-roof-measure { position: absolute; width: 56px; min-width: 0; min-height: 40px; padding: 4px 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--pv-text); background: var(--pv-label); border: 1px solid var(--pv-line); border-radius: 7px; box-sizing: border-box; line-height: 1.2; text-decoration: none; }
+        .smab-roof-measure:focus-visible { outline: 2px solid var(--pv-accent); outline-offset: 2px; }
+        .smab-roof-total { border-top: 1px solid var(--pv-line); padding-top: 6px; display: flex; align-items: center; justify-content: space-between; gap: 6px; flex-wrap: wrap; }
+        @container (max-width: 180px) { .smab-roof-total { flex-direction: column; align-items: flex-start; } }
+        .smab-roof-details { margin-top: 12px; padding: 6px 8px 12px; box-sizing: border-box; min-width: 0; }
+        .smab-roof-compact { position: relative; height: 120px; container-type: inline-size; }
+        .smab-roof-header { position: absolute; top: 5px; left: 8px; right: 8px; font-size: clamp(7.5px, 4.8cqw, 11px) !important; line-height: 18px; height: 18px; gap: 4px !important; margin: 0 !important; }
+        .smab-roof-scene { position: absolute; top: 22px; left: 50%; transform: translateX(-50%); width: 160px; height: 80px; padding: 0; }
+        .smab-roof-measure { min-height: 26px; padding: 2px 0; gap: 0; }
+        .smab-roof-measure > * { font-size: 9px !important; }
+        .smab-roof-measure > *:first-child { max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .smab-roof-measure > *:last-child { font-size: 10px !important; }
+        .smab-roof-total { position: absolute; bottom: 3px; left: 8px; right: 8px; border: none; padding: 0; flex-direction: row; align-items: center; }
+        .smab-roof-total > * { font-size: 10px !important; }
+        .smab-roof-total > *:last-child { font-size: 12px !important; }
+      style:
+        min-width: '0'
+        height: auto
+        min-height: 120px
+        max-height: none
+        box-sizing: border-box
+        container-type: inline-size
+        padding: '0'
+        overflow: hidden
+        border: none
+        color: var(--pv-text)
+        background: =props.backgroundColor || 'var(--f7-card-bg-color)'
+        --pv-accent: =props.pvColor || '#FFD60A'
+        --pv-text: =props.textColor || 'var(--f7-text-color)'
+        --pv-wall: =props.wallColor || 'rgba(128,128,136,0.20)'
+        --pv-roof: =props.roofColor || 'rgba(128,128,136,0.10)'
+        --pv-window: =props.windowColor || 'var(--f7-page-bg-color)'
+        --pv-line: var(--f7-list-item-border-color, rgba(128,128,136,0.35))
+        --pv-muted: 'var(--f7-list-item-after-text-color, #8e8e93)'
+        --pv-panel: color-mix(in srgb, var(--pv-accent) 16%, transparent)
+        --pv-grid: color-mix(in srgb, var(--pv-accent) 48%, transparent)
+        --pv-label: color-mix(in srgb, var(--f7-card-bg-color) 60%, transparent)
+    slots:
+      default:
+        - component: oh-context
+          config:
+            variables:
+              pvArea: ''
+            functions:
+              power: >-
+                =(name, demo, status) => props.demoMode === true ? demo : status && (!items[status] || items[status].state
+                !== 'ready') ? Number.NaN : !name || !items[name] || !items[name].state || !/^\+?\d+(?:[.,]\d+)?(?:[eE][-+]?\d+)?\s*(?:W|kW|MW)?$/.test(items[name].state.trim())
+                ? Number.NaN : Number.parseFloat(items[name].state.replace(',', '.')) * (/kW$/.test(items[name].state.trim())
+                ? 1000 : /MW$/.test(items[name].state.trim()) ? 1000000 : 1)
+              voltage: >-
+                =(name, demo, status) => props.demoMode === true ? demo : status && (!items[status] || items[status].state
+                !== 'ready') ? Number.NaN : !name || !items[name] || !items[name].state || !/^\+?\d+(?:[.,]\d+)?(?:[eE][-+]?\d+)?\s*V?$/.test(items[name].state.trim())
+                ? Number.NaN : Number.parseFloat(items[name].state.replace(',', '.'))
+              current: >-
+                =(name, demo, status) => props.demoMode === true ? demo : status && (!items[status] || items[status].state
+                !== 'ready') ? Number.NaN : !name || !items[name] || !items[name].state || !/^\+?\d+(?:[.,]\d+)?(?:[eE][-+]?\d+)?\s*A?$/.test(items[name].state.trim())
+                ? Number.NaN : Number.parseFloat(items[name].state.replace(',', '.'))
+              formatPower: >-
+                =(watts) => !Number.isFinite(watts) || watts < 0 ? '—' : watts >= 1000 ? (watts / 1000).toFixed(2).replace('.',
+                ',') + ' kW' : watts === 0 ? '0 W' : watts < 0.01 ? '<0,01 W' : watts < 10 ? watts.toFixed(2).replace(/\.?0+$/,
+                '').replace('.', ',') + ' W' : Math.round(watts) + ' W'
+              formatUnit: >-
+                =(value, unit) => !Number.isFinite(value) || value < 0 ? '—' : value.toFixed(unit === 'A' ? 1 :
+                0).replace('.', ',') + ' ' + unit
+              panelColor: >-
+                =(watts) => !Number.isFinite(watts) || watts < 0 ? 'var(--pv-muted)' : watts === 0 ? (props.pvIdleColor
+                || '#0A84FF') : (props.pvColor || '#FFD60A')
+          slots:
+            default:
+              - component: div
+                config:
+                  class: smab-roof-compact
+                slots:
+                  default:
+                    - component: div
+                      config:
+                        class: smab-roof-header
+                        visible: =props.showTitle !== false
+                        style:
+                          display: flex
+                          align-items: center
+                          gap: 6px
+                          margin-bottom: 8px
+                          font-size: 14px
+                          font-weight: '600'
+                      slots:
+                        default:
+                          - component: oh-icon
+                            config:
+                              icon: =props.icon || 'f7:bolt_circle'
+                              width: 12
+                              height: 12
+                              style:
+                                display: block
+                                flex-shrink: '0'
+                                width: 12px
+                                height: 12px
+                                font-size: 12px
+                                color: =props.iconColor || '#FFD60A'
+                          - component: Label
+                            config:
+                              text: =props.title || 'PV nach Dachfläche'
+                              style:
+                                font-size: clamp(7.5px, 4.8cqw, 11px)
+                                font-weight: '600'
+                                line-height: 18px
+                                white-space: nowrap
+                                overflow: hidden
+                                text-overflow: ellipsis
+                                min-width: '0'
+                          - component: Label
+                            config:
+                              text: '=props.demoMode === true ? ''Beispielwerte'' : '''''
+                              style:
+                                font-size: 11px
+                                font-weight: '400'
+                                margin-left: auto
+                                color: var(--pv-muted)
+                    - component: div
+                      config:
+                        class: smab-roof-scene
+                      slots:
+                        default:
+                          - component: div
+                            config:
+                              style: {}
+                              class: smab-roof-house
+                            slots:
+                              default:
+                                - component: div
+                                  config:
+                                    style:
+                                      left: 9.7436%
+                                      top: 85.8065%
+                                      width: 77.4359%
+                                      height: 10.3226%
+                                      background: var(--pv-text)
+                                      opacity: '0.055'
+                                      border-radius: 50%
+                                    class: smab-roof-stroke
+                                - component: div
+                                  config:
+                                    style:
+                                      clip-path: polygon(59.4872% 46.4516%, 82.5641% 33.5484%, 82.5641% 65.8065%,
+                                        59.4872% 78.7097%)
+                                      background: var(--pv-wall)
+                                      opacity: '0.72'
+                                    class: smab-roof-shape
+                                - component: div
+                                  config:
+                                    style:
+                                      clip-path: polygon(24.1026% 40.0000%, 41.0256% 24.1935%, 59.4872% 46.4516%,
+                                        59.4872% 78.7097%, 24.1026% 72.2581%)
+                                      background: var(--pv-wall)
+                                    class: smab-roof-shape
+                                - component: div
+                                  config:
+                                    style:
+                                      clip-path: polygon(24.1026% 40.0000%, 47.1795% 27.0968%, 64.1026% 11.2903%,
+                                        41.0256% 24.1935%)
+                                      background: var(--pv-roof)
+                                    class: smab-roof-shape
+                                - component: div
+                                  config:
+                                    style:
+                                      clip-path: polygon(28.2051% 38.7097%, 47.4359% 28.0645%, 59.7436% 16.4516%,
+                                        40.5128% 29.0323%)
+                                      background: var(--pv-panel)
+                                      opacity: '0.65'
+                                      --pv-area-color: =fn.panelColor(fn.power(props.nwPowerItem, 1200, props.roofStatusItem))
+                                      --pv-panel: >-
+                                        =fn.power(props.nwPowerItem, 1200, props.roofStatusItem) >= 0 ? 'color-mix(in
+                                        srgb, var(--pv-area-color) 28%, transparent)' : 'color-mix(in srgb, var(--pv-area-color)
+                                        16%, transparent)'
+                                      --pv-grid: >-
+                                        =fn.power(props.nwPowerItem, 1200, props.roofStatusItem) >= 0 ? 'color-mix(in
+                                        srgb, var(--pv-area-color) 75%, transparent)' : 'color-mix(in srgb, var(--pv-area-color)
+                                        48%, transparent)'
+                                    class: smab-roof-shape smab-roof-panel smab-roof-panel-nw
+                                  slots:
+                                    default:
+                                      - component: div
+                                        config:
+                                          style: {}
+                                          class: smab-roof-shape
+                                          visible: =props.showGrid !== false
+                                        slots:
+                                          default:
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 30.9524%
+                                                  top: 37.1889%
+                                                  width: 21.1038px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(-24.5235deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 33.6996%
+                                                  top: 35.6682%
+                                                  width: 21.2059px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(-25.1216deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 36.4469%
+                                                  top: 34.1475%
+                                                  width: 21.3104px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(-25.7139deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 39.1941%
+                                                  top: 32.6267%
+                                                  width: 21.4170px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(-26.3004deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 41.9414%
+                                                  top: 31.1060%
+                                                  width: 21.5260px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(-26.8810deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 44.6886%
+                                                  top: 29.5853%
+                                                  width: 21.6371px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(-27.4558deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 34.3590%
+                                                  top: 33.8710%
+                                                  width: 31.6928px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(-18.8112deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                - component: div
+                                  config:
+                                    style:
+                                      clip-path: polygon(41.0256% 24.1935%, 64.1026% 11.2903%, 84.6154% 33.2258%,
+                                        61.5385% 49.3548%)
+                                      background: var(--pv-roof)
+                                    class: smab-roof-shape
+                                - component: div
+                                  config:
+                                    style:
+                                      clip-path: polygon(45.3846% 26.4516%, 63.5897% 15.1613%, 80.2564% 32.9032%,
+                                        61.7949% 44.8387%)
+                                      background: var(--pv-panel)
+                                      --pv-area-color: =fn.panelColor(fn.power(props.soPowerItem, 2400, props.roofStatusItem))
+                                      --pv-panel: >-
+                                        =fn.power(props.soPowerItem, 2400, props.roofStatusItem) >= 0 ? 'color-mix(in
+                                        srgb, var(--pv-area-color) 28%, transparent)' : 'color-mix(in srgb, var(--pv-area-color)
+                                        16%, transparent)'
+                                      --pv-grid: >-
+                                        =fn.power(props.soPowerItem, 2400, props.roofStatusItem) >= 0 ? 'color-mix(in
+                                        srgb, var(--pv-area-color) 75%, transparent)' : 'color-mix(in srgb, var(--pv-area-color)
+                                        48%, transparent)'
+                                    class: smab-roof-shape smab-roof-panel smab-roof-panel-so
+                                  slots:
+                                    default:
+                                      - component: div
+                                        config:
+                                          style: {}
+                                          class: smab-roof-shape
+                                          visible: =props.showGrid !== false
+                                        slots:
+                                          default:
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 48.4188%
+                                                  top: 24.5699%
+                                                  width: 30.2909px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(32.0766deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 51.4530%
+                                                  top: 22.6882%
+                                                  width: 30.2973px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(31.8579deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 54.4872%
+                                                  top: 20.8065%
+                                                  width: 30.3043px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(31.6395deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 57.5214%
+                                                  top: 18.9247%
+                                                  width: 30.3116px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(31.4211deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 60.5556%
+                                                  top: 17.0430%
+                                                  width: 30.3193px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(31.2028deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 49.4872%
+                                                  top: 31.0484%
+                                                  width: 30.2292px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(-19.4733deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 53.5897%
+                                                  top: 35.6452%
+                                                  width: 30.3709px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(-19.6628deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 57.6923%
+                                                  top: 40.2419%
+                                                  width: 30.5130px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(-19.8506deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                - component: div
+                                  config:
+                                    style:
+                                      clip-path: polygon(37.9487% 33.2258%, 44.1026% 34.5161%, 44.1026% 43.2258%,
+                                        37.9487% 41.9355%)
+                                      background: var(--pv-window)
+                                    class: smab-roof-shape
+                                - component: div
+                                  config:
+                                    style:
+                                      clip-path: polygon(37.9487% 52.9032%, 44.1026% 54.1935%, 44.1026% 62.9032%,
+                                        37.9487% 61.6129%)
+                                      background: var(--pv-window)
+                                    class: smab-roof-shape
+                                - component: div
+                                  config:
+                                    style:
+                                      left: 26.1538%
+                                      top: 67.7419%
+                                      width: 13.9097px
+                                      height: 1px
+                                      background: var(--pv-line)
+                                      transform: rotate(90.0000deg)
+                                      transform-origin: 0 50%
+                                    class: smab-roof-stroke
+                                - component: div
+                                  config:
+                                    style:
+                                      left: 57.6923%
+                                      top: 72.9032%
+                                      width: 12.7742px
+                                      height: 1px
+                                      background: var(--pv-line)
+                                      transform: rotate(90.0000deg)
+                                      transform-origin: 0 50%
+                                    class: smab-roof-stroke
+                                - component: div
+                                  config:
+                                    style:
+                                      clip-path: polygon(11.2821% 73.5484%, 46.6667% 80.0000%, 46.6667% 82.2581%,
+                                        11.2821% 75.8065%)
+                                      background: var(--pv-wall)
+                                      opacity: '0.72'
+                                    class: smab-roof-shape
+                                - component: div
+                                  config:
+                                    style:
+                                      clip-path: polygon(46.6667% 80.0000%, 59.7436% 69.6774%, 59.7436% 71.9355%,
+                                        46.6667% 82.2581%)
+                                      background: var(--pv-wall)
+                                      opacity: '0.72'
+                                    class: smab-roof-shape
+                                - component: div
+                                  config:
+                                    style:
+                                      clip-path: polygon(24.3590% 63.2258%, 59.7436% 69.6774%, 46.6667% 80.0000%,
+                                        11.2821% 73.5484%)
+                                      background: var(--pv-roof)
+                                    class: smab-roof-shape
+                                - component: div
+                                  config:
+                                    style:
+                                      clip-path: polygon(25.6410% 65.1613%, 56.6667% 70.6452%, 45.8974% 77.7419%,
+                                        14.6154% 72.2581%)
+                                      background: var(--pv-panel)
+                                      --pv-area-color: =fn.panelColor(fn.power(props.swPowerItem, 1800, props.carportStatusItem))
+                                      --pv-panel: >-
+                                        =fn.power(props.swPowerItem, 1800, props.carportStatusItem) >= 0 ? 'color-mix(in
+                                        srgb, var(--pv-area-color) 28%, transparent)' : 'color-mix(in srgb, var(--pv-area-color)
+                                        16%, transparent)'
+                                      --pv-grid: >-
+                                        =fn.power(props.swPowerItem, 1800, props.carportStatusItem) >= 0 ? 'color-mix(in
+                                        srgb, var(--pv-area-color) 75%, transparent)' : 'color-mix(in srgb, var(--pv-area-color)
+                                        48%, transparent)'
+                                    class: smab-roof-shape smab-roof-panel smab-roof-panel-sw
+                                  slots:
+                                    default:
+                                      - component: div
+                                        config:
+                                          style: {}
+                                          class: smab-roof-shape
+                                          visible: =props.showGrid !== false
+                                        slots:
+                                          default:
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 29.5192%
+                                                  top: 65.8468%
+                                                  width: 18.2517px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(159.9910deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 33.3974%
+                                                  top: 66.5323%
+                                                  width: 18.2048px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(159.9371deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 37.2756%
+                                                  top: 67.2177%
+                                                  width: 18.1578px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(159.8829deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 41.1538%
+                                                  top: 67.9032%
+                                                  width: 18.1108px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(159.8286deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 45.0321%
+                                                  top: 68.5887%
+                                                  width: 18.0640px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(159.7739deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 48.9103%
+                                                  top: 69.2742%
+                                                  width: 18.0170px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(159.7189deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 52.7885%
+                                                  top: 69.9597%
+                                                  width: 17.9701px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(159.6637deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 21.9658%
+                                                  top: 67.5269%
+                                                  width: 48.7727px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(5.6784deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                            - component: div
+                                              config:
+                                                style:
+                                                  left: 18.2906%
+                                                  top: 69.8925%
+                                                  width: 48.9053px
+                                                  height: 0.5px
+                                                  background: var(--pv-grid)
+                                                  transform: rotate(5.6630deg)
+                                                  transform-origin: 0 50%
+                                                class: smab-roof-stroke
+                                - component: div
+                                  config:
+                                    style:
+                                      left: 13.5897%
+                                      top: 76.1290%
+                                      width: 14.7613px
+                                      height: 1px
+                                      background: var(--pv-line)
+                                      transform: rotate(90.0000deg)
+                                      transform-origin: 0 50%
+                                    class: smab-roof-stroke
+                                - component: div
+                                  config:
+                                    style:
+                                      left: 45.3846%
+                                      top: 82.2581%
+                                      width: 12.7742px
+                                      height: 1px
+                                      background: var(--pv-line)
+                                      transform: rotate(90.0000deg)
+                                      transform-origin: 0 50%
+                                    class: smab-roof-stroke
+                                - component: div
+                                  config:
+                                    style:
+                                      left: 27.4359%
+                                      top: 20.9677%
+                                      width: 15.2000px
+                                      height: 0.5px
+                                      background: var(--pv-muted)
+                                      transform: rotate(0.0000deg)
+                                      transform-origin: 0 50%
+                                    class: smab-roof-stroke
+                                - component: div
+                                  config:
+                                    style:
+                                      left: 37.1795%
+                                      top: 20.9677%
+                                      width: 16.5061px
+                                      height: 0.5px
+                                      background: var(--pv-muted)
+                                      transform: rotate(19.0723deg)
+                                      transform-origin: 0 50%
+                                    class: smab-roof-stroke
+                          - component: oh-link
+                            config:
+                              class: smab-roof-measure
+                              action: variable
+                              actionVariable: pvArea
+                              actionVariableValue: '=vars.pvArea === ''nw'' ? '''' : ''nw'''
+                              tooltip: =(props.nwLabel || 'NW') + ' · DC-Details anzeigen'
+                              style:
+                                left: 4px
+                                top: 4px
+                                border-color: '=vars.pvArea === ''nw'' ? ''var(--pv-accent)'' : ''var(--pv-line)'''
+                            slots:
+                              default:
+                                - component: Label
+                                  config:
+                                    text: =props.nwLabel || 'NW'
+                                    style:
+                                      font-size: 11px
+                                      color: var(--pv-muted)
+                                - component: Label
+                                  config:
+                                    text: =fn.formatPower(fn.power(props.nwPowerItem, 1200, props.roofStatusItem))
+                                    style:
+                                      font-size: clamp(10px, 4.8cqw, 24px)
+                                      font-weight: '600'
+                                      white-space: nowrap
+                                      font-variant-numeric: tabular-nums
+                          - component: oh-link
+                            config:
+                              class: smab-roof-measure
+                              action: variable
+                              actionVariable: pvArea
+                              actionVariableValue: '=vars.pvArea === ''so'' ? '''' : ''so'''
+                              tooltip: =(props.soLabel || 'SO') + ' · DC-Details anzeigen'
+                              style:
+                                left: 76px
+                                top: 7px
+                                border-color: '=vars.pvArea === ''so'' ? ''var(--pv-accent)'' : ''var(--pv-line)'''
+                            slots:
+                              default:
+                                - component: Label
+                                  config:
+                                    text: =props.soLabel || 'SO'
+                                    style:
+                                      font-size: 11px
+                                      color: var(--pv-muted)
+                                - component: Label
+                                  config:
+                                    text: =fn.formatPower(fn.power(props.soPowerItem, 2400, props.roofStatusItem))
+                                    style:
+                                      font-size: clamp(10px, 4.8cqw, 24px)
+                                      font-weight: '600'
+                                      white-space: nowrap
+                                      font-variant-numeric: tabular-nums
+                          - component: oh-link
+                            config:
+                              class: smab-roof-measure
+                              action: variable
+                              actionVariable: pvArea
+                              actionVariableValue: '=vars.pvArea === ''sw'' ? '''' : ''sw'''
+                              tooltip: =(props.swLabel || 'SW') + ' · DC-Details anzeigen'
+                              style:
+                                left: 25px
+                                top: 50px
+                                border-color: '=vars.pvArea === ''sw'' ? ''var(--pv-accent)'' : ''var(--pv-line)'''
+                            slots:
+                              default:
+                                - component: Label
+                                  config:
+                                    text: =props.swLabel || 'SW'
+                                    style:
+                                      font-size: 11px
+                                      color: var(--pv-muted)
+                                - component: Label
+                                  config:
+                                    text: =fn.formatPower(fn.power(props.swPowerItem, 1800, props.carportStatusItem))
+                                    style:
+                                      font-size: clamp(10px, 4.8cqw, 24px)
+                                      font-weight: '600'
+                                      white-space: nowrap
+                                      font-variant-numeric: tabular-nums
+                    - component: div
+                      config:
+                        visible: =props.showTotal !== false
+                        class: smab-roof-total
+                      slots:
+                        default:
+                          - component: Label
+                            config:
+                              text: DC gesamt
+                              style:
+                                font-size: 13px
+                                color: var(--pv-muted)
+                          - component: Label
+                            config:
+                              text: >-
+                                =fn.formatPower(fn.power(props.soPowerItem, 2400, props.roofStatusItem) + fn.power(props.nwPowerItem,
+                                1200, props.roofStatusItem) + fn.power(props.swPowerItem, 1800, props.carportStatusItem))
+                              style:
+                                font-size: clamp(15px, 5cqw, 23px)
+                                white-space: nowrap
+                                flex-shrink: '0'
+                                font-weight: '600'
+                                font-variant-numeric: tabular-nums
+              - component: Label
+                config:
+                  text: >-
+                    =Number.isFinite(fn.power(props.soPowerItem, 2400, props.roofStatusItem) + fn.power(props.nwPowerItem,
+                    1200, props.roofStatusItem) + fn.power(props.swPowerItem, 1800, props.carportStatusItem)) ?
+                    '' : 'Mindestens eine DC-Leistung fehlt.'
+                  style:
+                    font-size: 11px
+                    color: var(--pv-muted)
+                    display: block
+                    margin-top: '0'
+              - component: div
+                config:
+                  visible: =['so', 'nw', 'sw'].includes(vars.pvArea)
+                  class: smab-roof-details
+                slots:
+                  default:
+                    - component: div
+                      config:
+                        style:
+                          display: flex
+                          justify-content: space-between
+                          align-items: center
+                          margin-bottom: 9px
+                          gap: 8px
+                      slots:
+                        default:
+                          - component: Label
+                            config:
+                              text: >-
+                                =vars.pvArea === 'nw' ? (props.nwLabel || 'NW') : vars.pvArea === 'so' ? (props.soLabel
+                                || 'SO') : (props.swLabel || 'SW')
+                              style:
+                                font-size: 13px
+                                font-weight: '600'
+                          - component: oh-link
+                            config:
+                              text: Schließen
+                              action: variable
+                              actionVariable: pvArea
+                              actionVariableValue: =''
+                              style:
+                                font-size: 12px
+                                color: var(--pv-muted)
+                                padding: 8px 0
+                    - component: div
+                      config:
+                        style:
+                          display: grid
+                          grid-template-columns: repeat(3, minmax(0, 1fr))
+                          gap: 8px
+                      slots:
+                        default:
+                          - component: div
+                            config:
+                              style:
+                                min-width: '0'
+                            slots:
+                              default:
+                                - component: Label
+                                  config:
+                                    text: >-
+                                      =fn.formatUnit(fn.power((vars.pvArea === 'so' ? props.soPowerItem : vars.pvArea
+                                      === 'nw' ? props.nwPowerItem : props.swPowerItem), (vars.pvArea === 'so' ?
+                                      2400 : vars.pvArea === 'nw' ? 1200 : 1800), (vars.pvArea === 'sw' ? props.carportStatusItem
+                                      : props.roofStatusItem)), 'W')
+                                    style:
+                                      font-size: clamp(13px, 3.8cqw, 18px)
+                                      font-weight: '500'
+                                      font-variant-numeric: tabular-nums
+                          - component: div
+                            config:
+                              style:
+                                min-width: '0'
+                            slots:
+                              default:
+                                - component: Label
+                                  config:
+                                    text: >-
+                                      =fn.formatUnit(fn.voltage((vars.pvArea === 'so' ? props.soVoltageItem : vars.pvArea
+                                      === 'nw' ? props.nwVoltageItem : props.swVoltageItem), (vars.pvArea === 'so'
+                                      ? 384 : vars.pvArea === 'nw' ? 375 : 300), (vars.pvArea === 'sw' ? props.carportStatusItem
+                                      : props.roofStatusItem)), 'V')
+                                    style:
+                                      font-size: clamp(13px, 3.8cqw, 18px)
+                                      font-weight: '500'
+                                      font-variant-numeric: tabular-nums
+                          - component: div
+                            config:
+                              style:
+                                min-width: '0'
+                            slots:
+                              default:
+                                - component: Label
+                                  config:
+                                    text: >-
+                                      =fn.formatUnit(fn.current((vars.pvArea === 'so' ? props.soCurrentItem : vars.pvArea
+                                      === 'nw' ? props.nwCurrentItem : props.swCurrentItem), (vars.pvArea === 'so'
+                                      ? 6.25 : vars.pvArea === 'nw' ? 3.2 : 6), (vars.pvArea === 'sw' ? props.carportStatusItem
+                                      : props.roofStatusItem)), 'A')
+                                    style:
+                                      font-size: clamp(13px, 3.8cqw, 18px)
+                                      font-weight: '500'
+                                      font-variant-numeric: tabular-nums
