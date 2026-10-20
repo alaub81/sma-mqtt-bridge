@@ -1,0 +1,1231 @@
+version: 1
+widgets:
+  sma_echarger_comfort_list:
+    component: li
+    config:
+      style:
+        list-style: none
+        padding: 16px
+        border-bottom: 1px solid var(--f7-list-item-border-color)
+    slots:
+      default:
+        - component: oh-context
+          config:
+            functions:
+              localWriteAllowed: >-
+                =() => (props.enableControls && (props.apiStatusItem && items[props.apiStatusItem] ?
+                items[props.apiStatusItem].state : 'UNDEF') === 'ready' && props.localResultItem &&
+                items[props.localResultItem] && ['NULL', 'UNDEF', 'confirmed', 'already-confirmed',
+                'rejected', 'rejected-retained', 'rejected-disabled',
+                'rejected-busy'].includes((props.localResultItem && items[props.localResultItem] ?
+                items[props.localResultItem].state : 'UNDEF')))
+              portalWriteAllowed: >-
+                =() => (props.enableControls && (props.portalStatusItem && items[props.portalStatusItem] ?
+                items[props.portalStatusItem].state : 'UNDEF') === 'ready' && props.portalResultItem &&
+                items[props.portalResultItem] && ['NULL', 'UNDEF', 'confirmed', 'already-confirmed',
+                'rejected', 'rejected-retained', 'rejected-disabled',
+                'rejected-busy'].includes((props.portalResultItem && items[props.portalResultItem] ?
+                items[props.portalResultItem].state : 'UNDEF')))
+              sessionValue: >-
+                =(name) => (name && items[name] && !['NULL', 'UNDEF', ''].includes(items[name].state)
+                ? items[name].state : '')
+              sessionText: >-
+                =(sessionState, sessionEnergy, sessionTime, sourceStatus, rawEnergy) =>
+                (props.demoMode ? 'Geladen: 8,0 kWh · Demo' :
+                (sessionState === 'waiting' ? 'Noch keine Sitzungsenergie' :
+                (sessionState && sessionEnergy && sessionTime
+                ? ((({'charging':'Geladen: ', 'paused':'Laden pausiert · bisher ',
+                'completed':'Letzte Ladung: '}[(sourceStatus === 'ready' || sessionState === 'completed')
+                ? sessionState : 'unknown'] || 'Letzter Stand: '))
+                + (items[props.sessionDisplayEnergyItem].displayState || items[props.sessionDisplayEnergyItem].state)
+                + ((props.measurementStatusItem && sourceStatus === 'ready')
+                ? '' : ' · Verbindung nicht bestätigt'))
+                : ('Letzter Messwert: ' + (rawEnergy
+                ? (items[props.sessionEnergyItem].displayState || items[props.sessionEnergyItem].state) : '—')))))
+              chargingPhases: >-
+                =(currents, apiStatus, chargingStatus) =>
+                (apiStatus === 'ready' && chargingStatus === 'Lädt'
+                && currents.every(value => /^[+-]?[0-9]+([.][0-9]+)?( (mA|A))?$/.test(value))
+                && [1, 3].includes(currents.filter(value =>
+                Math.abs(Number.parseFloat(value)) / (value.endsWith(' mA') ? 1000 : 1) > 0.5).length)
+                ? currents.filter(value =>
+                Math.abs(Number.parseFloat(value)) / (value.endsWith(' mA') ? 1000 : 1) > 0.5).length : '')
+              chargingMode: >-
+                =() => (props.demoMode ? (vars.demoMode || '4719') : (props.modeItem && items[props.modeItem]
+                ? items[props.modeItem].state : 'UNDEF'))
+            variables:
+              demoMode: '4719'
+              demoRelease: 'ON'
+              planOpen: false
+              settingsOpen: false
+          slots:
+            default:
+              - component: div
+                config:
+                  style:
+                    display: flex
+                    gap: 12px
+                    align-items: center
+                    margin-bottom: 14px
+                slots:
+                  default:
+                    - component: oh-icon
+                      config:
+                        icon: =props.chargerIcon || 'iconify:mdi:ev-station'
+                        width: 34
+                        height: 34
+                        color: '= !(props.demoMode || (props.measurementStatusItem && items[props.measurementStatusItem] ? items[props.measurementStatusItem].state
+                          : ''UNDEF'') === ''ready'') ? ''#d28a19'' : ((props.statusItem && items[props.statusItem] ? items[props.statusItem].state
+                          : ''UNDEF'') === ''Fehler am Ladepunkt'' ? ''#d94b4b'' : ((props.demoMode ? (fn.chargingMode() !== ''4721'' && props.demoConnected
+                          !== false && (vars.demoRelease || ''ON'') === ''ON'') : ((props.statusItem && items[props.statusItem] ? items[props.statusItem].state
+                          : ''UNDEF'') === ''Lädt'')) ? ''#209767'' : ''#8e8e93''))'
+                    - component: div
+                      config:
+                        style:
+                          flex: '1'
+                          min-width: '0'
+                      slots:
+                        default:
+                          - component: Label
+                            config:
+                              text: =props.chargerName || "SMA eCharger"
+                              style:
+                                display: block
+                                font-size: 16px
+                                font-weight: '600'
+                                line-height: '1.45'
+                                white-space: normal
+                          - component: Label
+                            config:
+                              text: >-
+                                =fn.sessionText(fn.sessionValue(props.sessionStateItem),
+                                fn.sessionValue(props.sessionDisplayEnergyItem),
+                                fn.sessionValue(props.sessionEnergyTimeItem),
+                                fn.sessionValue(props.measurementStatusItem),
+                                fn.sessionValue(props.sessionEnergyItem))
+                              tooltip: Gespeicherte Sitzungsbeobachtung. 0 W bedeutet Pause; bestätigtes Abstecken beendet die Sitzung.
+                              style:
+                                display: block
+                                font-size: 12px
+                                font-weight: '400'
+                                line-height: '1.45'
+                                white-space: normal
+                                opacity: '0.65'
+                    - component: div
+                      config:
+                        style:
+                          text-align: right
+                          flex-shrink: '0'
+                      slots:
+                        default:
+                          - component: Label
+                            config:
+                              text: '=(props.demoMode ? (fn.chargingMode() === ''4721'' || props.demoConnected === false || (vars.demoRelease
+                                || ''ON'') === ''OFF'' ? ''0,0 kW'' : ''4,2 kW'') : ((props.powerItem && items[props.powerItem] && ![''NULL'',
+                                ''UNDEF'', ''''].includes(items[props.powerItem].state)) ? (items[props.powerItem].displayState || items[props.powerItem].state)
+                                : ''—''))'
+                              style:
+                                display: block
+                                font-size: 20px
+                                font-weight: '600'
+                                line-height: '1.45'
+                                white-space: normal
+                          - component: oh-link
+                            config:
+                              text: '=vars.settingsOpen ? ''Einstellungen schließen'' : ''Einstellungen'''
+                              action: variable
+                              actionVariable: settingsOpen
+                              actionVariableValue: =!vars.settingsOpen
+                              style:
+                                font-size: 12px
+                                color: '#8e8e93'
+              - component: div
+                config:
+                  style:
+                    display: flex
+                    align-items: center
+                    gap: 8px
+                    margin: -4px 0 14px
+                slots:
+                  default:
+                    - component: div
+                      config:
+                        style:
+                          display: flex
+                          align-items: center
+                          gap: 2px
+                          flex-shrink: '0'
+                      slots:
+                        default:
+                          - component: oh-icon
+                            config:
+                              icon: iconify:mdi:car-outline
+                              width: 24
+                              height: 24
+                              color: '=({''connected'':''#209767'',''disconnected'':''#8e8e93'',''unknown'':''#d28a19''}[(props.demoMode ? (props.demoConnected
+                                === false ? ''disconnected'' : ''connected'') : (((props.measurementStatusItem && items[props.measurementStatusItem]
+                                ? items[props.measurementStatusItem].state : ''UNDEF'') === ''ready'') ? ([''Verbunden / wartend'',''Lädt''].includes((props.statusItem
+                                && items[props.statusItem] ? items[props.statusItem].state : ''UNDEF'')) ? ''connected'' : ((props.statusItem && items[props.statusItem]
+                                ? items[props.statusItem].state : ''UNDEF'') === ''Nicht verbunden'' ? ''disconnected'' : ''unknown'')) : ''unknown''))])'
+                          - component: oh-icon
+                            config:
+                              icon: iconify:mdi:ev-plug-type2
+                              width: 22
+                              height: 22
+                              color: '=({''connected'':''#209767'',''disconnected'':''#8e8e93'',''unknown'':''#d28a19''}[(props.demoMode ? (props.demoConnected
+                                === false ? ''disconnected'' : ''connected'') : (((props.measurementStatusItem && items[props.measurementStatusItem]
+                                ? items[props.measurementStatusItem].state : ''UNDEF'') === ''ready'') ? ([''Verbunden / wartend'',''Lädt''].includes((props.statusItem
+                                && items[props.statusItem] ? items[props.statusItem].state : ''UNDEF'')) ? ''connected'' : ((props.statusItem && items[props.statusItem]
+                                ? items[props.statusItem].state : ''UNDEF'') === ''Nicht verbunden'' ? ''disconnected'' : ''unknown'')) : ''unknown''))])'
+                          - component: Label
+                            config:
+                              visible: >-
+                                =(props.demoMode ? (props.demoConnected !== false && fn.chargingMode() !== '4721' && (vars.demoRelease || 'ON') === 'ON' ? 3 : '')
+                                : fn.chargingPhases([fn.sessionValue(props.currentL1Item), fn.sessionValue(props.currentL2Item),
+                                fn.sessionValue(props.currentL3Item)],
+                                fn.sessionValue(props.apiStatusItem), fn.sessionValue(props.statusItem))) !== ''
+                              text: >-
+                                =((props.demoMode ? (props.demoConnected !== false && fn.chargingMode() !== '4721' && (vars.demoRelease || 'ON') === 'ON' ? 3 : '')
+                                : fn.chargingPhases([fn.sessionValue(props.currentL1Item), fn.sessionValue(props.currentL2Item),
+                                fn.sessionValue(props.currentL3Item)],
+                                fn.sessionValue(props.apiStatusItem), fn.sessionValue(props.statusItem))) + '-phasig')
+                              tooltip: >-
+                                =(props.demoMode ? (props.demoConnected !== false && fn.chargingMode() !== '4721' && (vars.demoRelease || 'ON') === 'ON' ? 3 : '')
+                                : fn.chargingPhases([fn.sessionValue(props.currentL1Item), fn.sessionValue(props.currentL2Item),
+                                fn.sessionValue(props.currentL3Item)],
+                                fn.sessionValue(props.apiStatusItem), fn.sessionValue(props.statusItem))) === 1 ? 'Einphasiges Laden' : 'Dreiphasiges Laden'
+                              style:
+                                font-size: 12px
+                                font-weight: '600'
+                                margin-left: 2px
+                                color: '#209767'
+                    - component: Label
+                      config:
+                        text: '=({''connected'':''Auto angeschlossen'',''disconnected'':''Kein Auto angeschlossen'',''unknown'':((props.measurementStatusItem && items[props.measurementStatusItem] ? items[props.measurementStatusItem].state : ''UNDEF'') === ''ready'' ? ({''Gesperrt'':''Gesperrt'',''Fehler am Ladepunkt'':''Ladefehler''}[(props.statusItem && items[props.statusItem] ? items[props.statusItem].state : ''UNDEF'')] || ''Status unbekannt'') : ''Status unbekannt'')}[(props.demoMode
+                          ? (props.demoConnected === false ? ''disconnected'' : ''connected'') : (((props.measurementStatusItem && items[props.measurementStatusItem]
+                          ? items[props.measurementStatusItem].state : ''UNDEF'') === ''ready'') ? ([''Verbunden / wartend'',''Lädt''].includes((props.statusItem
+                          && items[props.statusItem] ? items[props.statusItem].state : ''UNDEF'')) ? ''connected'' : ((props.statusItem && items[props.statusItem]
+                          ? items[props.statusItem].state : ''UNDEF'') === ''Nicht verbunden'' ? ''disconnected'' : ''unknown'')) : ''unknown''))])'
+                        style:
+                          font-size: 12px
+                          line-height: '1.4'
+                          color: '=({''connected'':''#209767'',''disconnected'':''#8e8e93'',''unknown'':''#d28a19''}[(props.demoMode ? (props.demoConnected
+                            === false ? ''disconnected'' : ''connected'') : (((props.measurementStatusItem && items[props.measurementStatusItem]
+                            ? items[props.measurementStatusItem].state : ''UNDEF'') === ''ready'') ? ([''Verbunden / wartend'',''Lädt''].includes((props.statusItem
+                            && items[props.statusItem] ? items[props.statusItem].state : ''UNDEF'')) ? ''connected'' : ((props.statusItem && items[props.statusItem]
+                            ? items[props.statusItem].state : ''UNDEF'') === ''Nicht verbunden'' ? ''disconnected'' : ''unknown'')) : ''unknown''))])'
+              - component: Label
+                config:
+                  text: Ladeberechtigung
+                  style:
+                    display: block
+                    font-size: 12px
+                    font-weight: '600'
+                    line-height: '1.45'
+                    white-space: normal
+                    margin-bottom: 6px
+              - component: div
+                config:
+                  style:
+                    display: grid
+                    grid-template-columns: repeat(2, minmax(0, 1fr))
+                    gap: 10px
+                slots:
+                  default:
+                    - component: oh-button
+                      config:
+                        text: ''
+                        outline: '=(props.demoMode ? (vars.demoRelease || ''ON'') : (props.releaseItem && items[props.releaseItem] ? items[props.releaseItem].state
+                          : ''UNDEF'')) !== ''ON'''
+                        round: true
+                        disabled: '=!(props.demoMode || (fn.localWriteAllowed() && props.releaseItem && items[props.releaseItem]))'
+                        action: '=props.demoMode ? ''variable'' : ((fn.localWriteAllowed() && props.releaseItem && items[props.releaseItem]) ? ''command'' : ''none'')'
+                        actionItem: =props.releaseItem
+                        actionCommand: 'ON'
+                        actionVariable: demoRelease
+                        actionVariableValue: 'ON'
+                        style:
+                          flex: 1 1 120px
+                          height: 40px
+                          min-height: 40px
+                          max-height: 40px
+                          line-height: '1'
+                          --f7-button-height: 40px
+                          --f7-button-font-size: 12px
+                          --f7-button-padding-horizontal: 8px
+                          margin: '0'
+                          position: relative
+                          display: flex
+                          align-items: center
+                          justify-content: center
+                          gap: 6px
+                          min-width: '0'
+                          max-width: 100%
+                          padding: 0 8px
+                          box-sizing: border-box
+                          font-size: 12px
+                          text-transform: none
+                        fill: '=(props.demoMode ? (vars.demoRelease || ''ON'') : (props.releaseItem && items[props.releaseItem] ? items[props.releaseItem].state
+                          : ''UNDEF'')) === ''ON'''
+                        color: green
+                        tooltip: Erlaubt das Laden im gewählten Modus
+                        aria-label: Erlauben
+                      slots:
+                        default:
+                          - component: oh-icon
+                            config:
+                              icon: f7:lock_open
+                              width: 16
+                              height: 16
+                              style:
+                                flex-shrink: '0'
+                                pointer-events: none
+                                color: inherit
+                          - component: Label
+                            config:
+                              text: Erlauben
+                              style:
+                                display: block
+                                min-width: '0'
+                                box-sizing: border-box
+                                text-align: center
+                                white-space: nowrap
+                                overflow: hidden
+                                text-overflow: ellipsis
+                                line-height: '1.3'
+                                pointer-events: none
+                                margin: '0'
+                    - component: oh-button
+                      config:
+                        text: ''
+                        outline: '=(props.demoMode ? (vars.demoRelease || ''ON'') : (props.releaseItem && items[props.releaseItem] ? items[props.releaseItem].state
+                          : ''UNDEF'')) !== ''OFF'''
+                        round: true
+                        disabled: '=!(props.demoMode || (fn.localWriteAllowed() && props.releaseItem && items[props.releaseItem]))'
+                        action: '=props.demoMode ? ''variable'' : ((fn.localWriteAllowed() && props.releaseItem && items[props.releaseItem]) ? ''command'' : ''none'')'
+                        actionItem: =props.releaseItem
+                        actionCommand: 'OFF'
+                        actionVariable: demoRelease
+                        actionVariableValue: 'OFF'
+                        style:
+                          flex: 1 1 120px
+                          height: 40px
+                          min-height: 40px
+                          max-height: 40px
+                          line-height: '1'
+                          --f7-button-height: 40px
+                          --f7-button-font-size: 12px
+                          --f7-button-padding-horizontal: 8px
+                          margin: '0'
+                          position: relative
+                          display: flex
+                          align-items: center
+                          justify-content: center
+                          gap: 6px
+                          min-width: '0'
+                          max-width: 100%
+                          padding: 0 8px
+                          box-sizing: border-box
+                          font-size: 12px
+                          text-transform: none
+                        fill: '=(props.demoMode ? (vars.demoRelease || ''ON'') : (props.releaseItem && items[props.releaseItem] ? items[props.releaseItem].state
+                          : ''UNDEF'')) === ''OFF'''
+                        color: gray
+                        tooltip: Entzieht die Ladeberechtigung; der Lademodus bleibt eingestellt
+                        aria-label: Sperren
+                      slots:
+                        default:
+                          - component: oh-icon
+                            config:
+                              icon: f7:lock
+                              width: 16
+                              height: 16
+                              style:
+                                flex-shrink: '0'
+                                pointer-events: none
+                                color: inherit
+                          - component: Label
+                            config:
+                              text: Sperren
+                              style:
+                                display: block
+                                min-width: '0'
+                                box-sizing: border-box
+                                text-align: center
+                                white-space: nowrap
+                                overflow: hidden
+                                text-overflow: ellipsis
+                                line-height: '1.3'
+                                pointer-events: none
+                                margin: '0'
+              - component: Label
+                config:
+                  text: Lademodus
+                  style:
+                    display: block
+                    font-size: 12px
+                    font-weight: '600'
+                    line-height: '1.45'
+                    white-space: normal
+                    margin-top: 14px
+                    margin-bottom: 6px
+              - component: div
+                config:
+                  style:
+                    display: grid
+                    grid-template-columns: repeat(2, minmax(0, 1fr))
+                    gap: 10px
+                slots:
+                  default:
+                    - component: oh-button
+                      config:
+                        text: ''
+                        outline: '=(props.demoMode ? (vars.planOpen ? ''4720'' : (vars.demoMode || ''4719'')) : (props.modeItem && items[props.modeItem] ? items[props.modeItem].state
+                          : ''UNDEF'')) !== ''4719'''
+                        round: true
+                        disabled: '=!(props.demoMode || (fn.localWriteAllowed() && props.modeItem && items[props.modeItem]))'
+                        action: '=props.demoMode ? ''variable'' : ((fn.localWriteAllowed() && props.modeItem && items[props.modeItem]) ? ''command'' : ''none'')'
+                        actionItem: =props.modeItem
+                        actionCommand: '4719'
+                        actionVariable: demoMode
+                        actionVariableValue: '4719'
+                        style:
+                          flex: 1 1 120px
+                          height: 40px
+                          min-height: 40px
+                          max-height: 40px
+                          line-height: '1'
+                          --f7-button-height: 40px
+                          --f7-button-font-size: 12px
+                          --f7-button-padding-horizontal: 8px
+                          margin: '0'
+                          position: relative
+                          display: flex
+                          align-items: center
+                          justify-content: center
+                          gap: 6px
+                          min-width: '0'
+                          max-width: 100%
+                          padding: 0 8px
+                          box-sizing: border-box
+                          font-size: 12px
+                          text-transform: none
+                        fill: '=(props.demoMode ? (vars.planOpen ? ''4720'' : (vars.demoMode || ''4719'')) : (props.modeItem && items[props.modeItem] ? items[props.modeItem].state
+                          : ''UNDEF'')) === ''4719'''
+                        color: green
+                        clearVariable: planOpen
+                        tooltip: PV-Überschuss
+                        aria-label: PV-Überschuss
+                      slots:
+                        default:
+                          - component: oh-icon
+                            config:
+                              icon: '=''f7:'' + ((props.demoMode ? (vars.planOpen ? ''4720'' : (vars.demoMode || ''4719'')) : (props.modeItem && items[props.modeItem] ? items[props.modeItem].state
+                                : ''UNDEF'')) === ''4719'' ? ''checkmark_circle_fill'' : ''sun_max'')'
+                              width: 16
+                              height: 16
+                              style:
+                                flex-shrink: '0'
+                                pointer-events: none
+                                color: inherit
+                          - component: Label
+                            config:
+                              text: PV-Überschuss
+                              style:
+                                display: block
+                                min-width: '0'
+                                box-sizing: border-box
+                                text-align: center
+                                white-space: nowrap
+                                overflow: hidden
+                                text-overflow: ellipsis
+                                line-height: '1.3'
+                                pointer-events: none
+                                margin: '0'
+                    - component: oh-button
+                      config:
+                        text: ''
+                        outline: '=(props.demoMode ? (vars.planOpen ? ''4720'' : (vars.demoMode || ''4719'')) : (props.modeItem && items[props.modeItem] ? items[props.modeItem].state
+                          : ''UNDEF'')) !== ''4718'''
+                        round: true
+                        disabled: '=!(props.demoMode || (fn.localWriteAllowed() && props.modeItem && items[props.modeItem]))'
+                        action: '=props.demoMode ? ''variable'' : ((fn.localWriteAllowed() && props.modeItem && items[props.modeItem]) ? ''command'' : ''none'')'
+                        actionItem: =props.modeItem
+                        actionCommand: '4718'
+                        actionVariable: demoMode
+                        actionVariableValue: '4718'
+                        style:
+                          flex: 1 1 120px
+                          height: 40px
+                          min-height: 40px
+                          max-height: 40px
+                          line-height: '1'
+                          --f7-button-height: 40px
+                          --f7-button-font-size: 12px
+                          --f7-button-padding-horizontal: 8px
+                          margin: '0'
+                          position: relative
+                          display: flex
+                          align-items: center
+                          justify-content: center
+                          gap: 6px
+                          min-width: '0'
+                          max-width: 100%
+                          padding: 0 8px
+                          box-sizing: border-box
+                          font-size: 12px
+                          text-transform: none
+                        fill: '=(props.demoMode ? (vars.planOpen ? ''4720'' : (vars.demoMode || ''4719'')) : (props.modeItem && items[props.modeItem] ? items[props.modeItem].state
+                          : ''UNDEF'')) === ''4718'''
+                        color: green
+                        clearVariable: planOpen
+                        tooltip: Schnellladen
+                        aria-label: Schnellladen
+                      slots:
+                        default:
+                          - component: oh-icon
+                            config:
+                              icon: '=''f7:'' + ((props.demoMode ? (vars.planOpen ? ''4720'' : (vars.demoMode || ''4719'')) : (props.modeItem && items[props.modeItem] ? items[props.modeItem].state
+                                : ''UNDEF'')) === ''4718'' ? ''checkmark_circle_fill'' : ''bolt_fill'')'
+                              width: 16
+                              height: 16
+                              style:
+                                flex-shrink: '0'
+                                pointer-events: none
+                                color: inherit
+                          - component: Label
+                            config:
+                              text: Schnellladen
+                              style:
+                                display: block
+                                min-width: '0'
+                                box-sizing: border-box
+                                text-align: center
+                                white-space: nowrap
+                                overflow: hidden
+                                text-overflow: ellipsis
+                                line-height: '1.3'
+                                pointer-events: none
+                                margin: '0'
+                    - component: oh-button
+                      config:
+                        text: ''
+                        round: true
+                        color: green
+                        fill: '=(props.demoMode ? (vars.planOpen ? ''4720'' : (vars.demoMode || ''4719'')) : (props.modeItem && items[props.modeItem] ? items[props.modeItem].state
+                          : ''UNDEF'')) === ''4720'''
+                        outline: '=(props.demoMode ? (vars.planOpen ? ''4720'' : (vars.demoMode || ''4719'')) : (props.modeItem && items[props.modeItem] ? items[props.modeItem].state
+                          : ''UNDEF'')) !== ''4720'''
+                        style:
+                          flex: 1 1 120px
+                          height: 40px
+                          min-height: 40px
+                          max-height: 40px
+                          line-height: '1'
+                          --f7-button-height: 40px
+                          --f7-button-font-size: 12px
+                          --f7-button-padding-horizontal: 8px
+                          margin: '0'
+                          position: relative
+                          display: flex
+                          align-items: center
+                          justify-content: center
+                          gap: 6px
+                          min-width: '0'
+                          max-width: 100%
+                          padding: 0 8px
+                          box-sizing: border-box
+                          font-size: 12px
+                          text-transform: none
+                        action: variable
+                        actionVariable: planOpen
+                        actionVariableValue: =!vars.planOpen
+                        tooltip: Zielladen
+                        aria-label: Zielladen
+                      slots:
+                        default:
+                          - component: oh-icon
+                            config:
+                              icon: '=''f7:'' + ((props.demoMode ? (vars.planOpen ? ''4720'' : (vars.demoMode || ''4719'')) : (props.modeItem && items[props.modeItem] ? items[props.modeItem].state
+                                : ''UNDEF'')) === ''4720'' ? ''checkmark_circle_fill'' : ''scope'')'
+                              width: 16
+                              height: 16
+                              style:
+                                flex-shrink: '0'
+                                pointer-events: none
+                                color: inherit
+                          - component: Label
+                            config:
+                              text: Zielladen
+                              style:
+                                display: block
+                                min-width: '0'
+                                box-sizing: border-box
+                                text-align: center
+                                white-space: nowrap
+                                overflow: hidden
+                                text-overflow: ellipsis
+                                line-height: '1.3'
+                                pointer-events: none
+                                margin: '0'
+                    - component: oh-button
+                      config:
+                        text: ''
+                        outline: '=(props.demoMode ? (vars.planOpen ? ''4720'' : (vars.demoMode || ''4719'')) : (props.modeItem && items[props.modeItem] ? items[props.modeItem].state
+                          : ''UNDEF'')) !== ''4721'''
+                        round: true
+                        disabled: '=!(props.demoMode || (fn.localWriteAllowed() && props.modeItem && items[props.modeItem]))'
+                        action: '=props.demoMode ? ''variable'' : ((fn.localWriteAllowed() && props.modeItem && items[props.modeItem]) ? ''command'' : ''none'')'
+                        actionItem: =props.modeItem
+                        actionCommand: '4721'
+                        actionVariable: demoMode
+                        actionVariableValue: '4721'
+                        style:
+                          flex: 1 1 120px
+                          height: 40px
+                          min-height: 40px
+                          max-height: 40px
+                          line-height: '1'
+                          --f7-button-height: 40px
+                          --f7-button-font-size: 12px
+                          --f7-button-padding-horizontal: 8px
+                          margin: '0'
+                          position: relative
+                          display: flex
+                          align-items: center
+                          justify-content: center
+                          gap: 6px
+                          min-width: '0'
+                          max-width: 100%
+                          padding: 0 8px
+                          box-sizing: border-box
+                          font-size: 12px
+                          text-transform: none
+                        fill: '=(props.demoMode ? (vars.planOpen ? ''4720'' : (vars.demoMode || ''4719'')) : (props.modeItem && items[props.modeItem] ? items[props.modeItem].state
+                          : ''UNDEF'')) === ''4721'''
+                        color: red
+                        clearVariable: planOpen
+                        tooltip: Ladestopp
+                        aria-label: Ladestopp
+                      slots:
+                        default:
+                          - component: oh-icon
+                            config:
+                              icon: '=''f7:'' + ((props.demoMode ? (vars.planOpen ? ''4720'' : (vars.demoMode || ''4719'')) : (props.modeItem && items[props.modeItem] ? items[props.modeItem].state
+                                : ''UNDEF'')) === ''4721'' ? ''checkmark_circle_fill'' : ''stop_circle'')'
+                              width: 16
+                              height: 16
+                              style:
+                                flex-shrink: '0'
+                                pointer-events: none
+                                color: inherit
+                          - component: Label
+                            config:
+                              text: Ladestopp
+                              style:
+                                display: block
+                                min-width: '0'
+                                box-sizing: border-box
+                                text-align: center
+                                white-space: nowrap
+                                overflow: hidden
+                                text-overflow: ellipsis
+                                line-height: '1.3'
+                                pointer-events: none
+                                margin: '0'
+              - component: div
+                config:
+                  visible: '=!vars.planOpen && (fn.chargingMode() === ''4719'')'
+                  style:
+                    margin-top: 14px
+                    padding: 14px
+                    border-radius: 14px
+                    border: 1px solid rgba(22,121,101,0.25)
+                    background: rgba(22,121,101,0.06)
+                slots:
+                  default:
+                    - component: Label
+                      config:
+                        text: PV-Mindestanteil · — %
+                        visible: '=!(props.demoMode || (props.pvMinimumItem && items[props.pvMinimumItem] && Number.isInteger(Number.parseFloat(items[props.pvMinimumItem].state)) && Number.parseFloat(items[props.pvMinimumItem].state) >= 0 && Number.parseFloat(items[props.pvMinimumItem].state) <= 100))'
+                        style:
+                          font-size: 12px
+                    - component: oh-context
+                      config:
+                        visible: '=props.demoMode || (props.pvMinimumItem && items[props.pvMinimumItem] && Number.isInteger(Number.parseFloat(items[props.pvMinimumItem].state)) && Number.parseFloat(items[props.pvMinimumItem].state) >= 0 && Number.parseFloat(items[props.pvMinimumItem].state) <= 100)'
+                        variables:
+                          pv: '=props.demoMode ? 70 : (props.pvMinimumItem && items[props.pvMinimumItem] ? Number.parseFloat(items[props.pvMinimumItem].state) : null)'
+                          demoPvApplied: null
+                      slots:
+                        default:
+                          - component: Label
+                            config:
+                              text: '=''PV-Mindestanteil · '' + (vars.pv !== null && vars.pv !== undefined ? vars.pv : ''—'') + '' %'''
+                              style:
+                                font-size: 12px
+                                line-height: '1.4'
+                                color: var(--f7-text-color)
+                                white-space: normal
+                              tooltip: Gewünschter Mindestanteil an PV-Strom
+                          - component: oh-slider
+                            config:
+                              variable: pv
+                              min: 0
+                              max: 100
+                              step: 1
+                              label: true
+                              scale: true
+                              scaleSteps: 10
+                              unit: '%'
+                              style:
+                                margin-bottom: 24px
+                          - component: div
+                            config:
+                              style:
+                                display: flex
+                                align-items: center
+                                gap: 12px
+                                margin-top: 8px
+                            slots:
+                              default:
+                                - component: oh-button
+                                  config:
+                                    text: ''
+                                    fill: true
+                                    round: true
+                                    color: green
+                                    disabled: '=!(fn.chargingMode() === ''4719'') || (!(props.demoMode ? (vars.pv !== undefined && vars.pv !== null && vars.pv !== ''''
+                                      && Number.isInteger(vars.pv * 1) && vars.pv * 1 >= 0 && vars.pv * 1 <= 100) : (fn.portalWriteAllowed() && props.pvMinimumItem && items[props.pvMinimumItem] && (vars.pv
+                                      !== undefined && vars.pv !== null && vars.pv !== '''' && Number.isInteger(vars.pv * 1) && vars.pv * 1 >= 0 &&
+                                      vars.pv * 1 <= 100))))'
+                                    action: '=(fn.chargingMode() === ''4719'') ? (props.demoMode ? ((vars.pv !== undefined && vars.pv !== null && vars.pv !== ''''
+                                      && Number.isInteger(vars.pv * 1) && vars.pv * 1 >= 0 && vars.pv * 1 <= 100) ? ''variable'' : ''none'') : ((fn.portalWriteAllowed() && props.pvMinimumItem &&
+                                      items[props.pvMinimumItem] && (vars.pv !== undefined && vars.pv !== null && vars.pv !== '''' && Number.isInteger(vars.pv
+                                      * 1) && vars.pv * 1 >= 0 && vars.pv * 1 <= 100)) ? ''command'' : ''none'')) : ''none'''
+                                    actionVariable: demoPvApplied
+                                    actionVariableValue: =vars.pv * 1
+                                    actionItem: =props.pvMinimumItem
+                                    actionCommand: '='''' + (vars.pv * 1)'
+                                    tooltip: Übernehmen
+                                    style:
+                                      position: relative
+                                      display: flex
+                                      align-items: center
+                                      justify-content: center
+                                      gap: 6px
+                                      height: 32px
+                                      min-height: 32px
+                                      max-height: 32px
+                                      line-height: '1'
+                                      --f7-button-height: 32px
+                                      --f7-button-font-size: 11px
+                                      --f7-button-padding-horizontal: 8px
+                                      min-width: '0'
+                                      max-width: 100%
+                                      padding: 0 8px
+                                      box-sizing: border-box
+                                      font-size: 11px
+                                      text-transform: none
+                                    aria-label: Übernehmen
+                                  slots:
+                                    default:
+                                      - component: oh-icon
+                                        config:
+                                          icon: f7:checkmark
+                                          width: 14
+                                          height: 14
+                                          style:
+                                            flex-shrink: '0'
+                                            pointer-events: none
+                                            color: inherit
+                                      - component: Label
+                                        config:
+                                          text: Übernehmen
+                                          style:
+                                            display: block
+                                            min-width: '0'
+                                            box-sizing: border-box
+                                            text-align: center
+                                            white-space: nowrap
+                                            overflow: hidden
+                                            text-overflow: ellipsis
+                                            line-height: '1.3'
+                                            pointer-events: none
+                                            margin: '0'
+                                - component: Label
+                                  config:
+                                    text: '=(props.demoMode ? (vars.demoPvApplied !== undefined && vars.demoPvApplied === vars.pv * 1) : ((props.portalStatusItem
+                                      && items[props.portalStatusItem] ? items[props.portalStatusItem].state : ''UNDEF'') === ''ready'' && [''confirmed'',''already-confirmed''].includes((props.portalResultItem
+                                      && items[props.portalResultItem] ? items[props.portalResultItem].state : ''UNDEF'')) && (Number.isInteger(vars.pv
+                                      * 1) && vars.pv !== null && vars.pv !== undefined && vars.pv !== '''' && Number.parseFloat((props.pvMinimumItem
+                                      && items[props.pvMinimumItem] ? items[props.pvMinimumItem].state : ''UNDEF'')) === vars.pv * 1))) ? (props.demoMode
+                                      ? ''✓ Demo'' : ''✓'') : (props.demoMode ? '''' : ({''pending'':''…'',''uncertain'':''! Unklar'',''blocked-uncertain'':''!
+                                      Unklar'',''blocked-corrupt'':''! Gesperrt'',''rejected'':''Nicht übernommen'',''rejected-retained'':''Nicht übernommen'',''rejected-disabled'':''Bedienung
+                                      gesperrt'',''rejected-busy'':''Bitte warten''}[(props.portalResultItem && items[props.portalResultItem] ? items[props.portalResultItem].state
+                                      : ''UNDEF'')] || ''''))'
+                                    style:
+                                      font-size: 12px
+                                      line-height: '1.4'
+                                      color: var(--f7-text-color)
+                                      white-space: normal
+                                    tooltip: 'Haken: Eingabe entspricht dem bestätigten PV-Wert. Sonst letzte Portal-Rückmeldung.'
+              - component: f7-card
+                config:
+                  style:
+                    margin: 0 0 16px
+                    border-radius: 18px
+                    box-shadow: none
+                    border: 1px solid var(--f7-list-item-border-color)
+                  visible: '=vars.planOpen || fn.chargingMode() === ''4720'''
+                slots:
+                  default:
+                    - component: f7-card-content
+                      config:
+                        style:
+                          padding: 18px
+                      slots:
+                        default:
+                          - component: Label
+                            config:
+                              text: Ladeziel
+                              style:
+                                font-size: 12px
+                                line-height: '1.4'
+                                color: var(--f7-text-color)
+                                white-space: normal
+                          - component: oh-list
+                            config:
+                              style:
+                                margin: '0'
+                                --f7-list-in-list-padding-left: 0px
+                                --f7-list-item-padding-horizontal: 0px
+                                --f7-list-media-item-padding-horizontal: 0px
+                                --f7-list-item-media-margin: 0px
+                            slots:
+                              default:
+                                - component: oh-input-item
+                                  config:
+                                    title: Zielenergie (kWh)
+                                    type: number
+                                    variable: energy
+                                    min: 0
+                                    step: 0.1
+                                    placeholder: z. B. 15
+                                    outline: true
+                                    style:
+                                      --f7-input-outline-height: 28px
+                                      --f7-input-height: 28px
+                                      --f7-list-item-padding-vertical: 8px
+                                      --f7-input-outline-padding-horizontal: 8px
+                                - component: oh-input-item
+                                  config:
+                                    title: '=vars.end && dayjs(vars.end).isValid() ? ''Abfahrtszeit (UTC'' + dayjs(vars.end).format(''Z'') + '')''
+                                      : ''Abfahrtszeit'''
+                                    type: datetime-local
+                                    variable: end
+                                    outline: true
+                                    style:
+                                      --f7-input-outline-height: 28px
+                                      --f7-input-height: 28px
+                                      --f7-list-item-padding-vertical: 8px
+                                      --f7-input-outline-padding-horizontal: 8px
+                                    tooltip: '=vars.end && dayjs(vars.end).isValid() ? dayjs(vars.end).format(''DD.MM.YYYY HH:mm [UTC]Z'') : ''Browser-Zeitzone'''
+                          - component: Label
+                            config:
+                              text: '=fn.chargingMode() === ''4720'' ? ''Aktiv · Zum Ändern zuerst Modus wechseln'' : ''Entwurf'''
+                              style:
+                                font-size: 12px
+                                line-height: '1.4'
+                                color: var(--f7-text-color)
+                                white-space: normal
+                          - component: div
+                            config:
+                              style:
+                                display: flex
+                                align-items: center
+                                gap: 12px
+                                margin-top: 8px
+                            slots:
+                              default:
+                                - component: oh-button
+                                  config:
+                                    text: ''
+                                    fill: true
+                                    round: true
+                                    color: green
+                                    disabled: '=!(props.demoMode ? (vars.energy && Number.isFinite(vars.energy * 1) && vars.energy * 1 > 0 &&
+                                      vars.end && dayjs(vars.end).isValid() && dayjs(vars.end).isAfter(dayjs())) : (fn.localWriteAllowed() && props.planItem && items[props.planItem] && [''4718'',
+                                      ''4719'', ''4721''].includes((props.modeItem && items[props.modeItem] ? items[props.modeItem].state : ''UNDEF''))
+                                      && (vars.energy && Number.isFinite(vars.energy * 1) && vars.energy * 1 > 0 && vars.end && dayjs(vars.end).isValid()
+                                      && dayjs(vars.end).isAfter(dayjs()))))'
+                                    action: '=props.demoMode ? ((vars.energy && Number.isFinite(vars.energy * 1) && vars.energy * 1 > 0 && vars.end
+                                      && dayjs(vars.end).isValid() && dayjs(vars.end).isAfter(dayjs())) ? ''variable'' : ''none'') : ((fn.localWriteAllowed() && props.planItem &&
+                                      items[props.planItem] && [''4718'', ''4719'', ''4721''].includes((props.modeItem && items[props.modeItem]
+                                      ? items[props.modeItem].state : ''UNDEF'')) && (vars.energy && Number.isFinite(vars.energy * 1) && vars.energy
+                                      * 1 > 0 && vars.end && dayjs(vars.end).isValid() && dayjs(vars.end).isAfter(dayjs()))) ? ''command'' : ''none'')'
+                                    actionVariable: demoPlanApplied
+                                    actionVariableValue: =({energyKWh:vars.energy * 1,endTime:vars.end})
+                                    actionItem: =props.planItem
+                                    actionCommand: '=JSON.stringify({energyKWh: vars.energy * 1, endTime: dayjs(vars.end).format(''YYYY-MM-DDTHH:mm:ssZ'')})'
+                                    tooltip: Übernehmen
+                                    style:
+                                      position: relative
+                                      display: flex
+                                      align-items: center
+                                      justify-content: center
+                                      gap: 6px
+                                      height: 32px
+                                      min-height: 32px
+                                      max-height: 32px
+                                      line-height: '1'
+                                      --f7-button-height: 32px
+                                      --f7-button-font-size: 11px
+                                      --f7-button-padding-horizontal: 8px
+                                      min-width: '0'
+                                      max-width: 100%
+                                      padding: 0 8px
+                                      box-sizing: border-box
+                                      font-size: 11px
+                                      text-transform: none
+                                    aria-label: Übernehmen
+                                  slots:
+                                    default:
+                                      - component: oh-icon
+                                        config:
+                                          icon: f7:checkmark
+                                          width: 14
+                                          height: 14
+                                          style:
+                                            flex-shrink: '0'
+                                            pointer-events: none
+                                            color: inherit
+                                      - component: Label
+                                        config:
+                                          text: Übernehmen
+                                          style:
+                                            display: block
+                                            min-width: '0'
+                                            box-sizing: border-box
+                                            text-align: center
+                                            white-space: nowrap
+                                            overflow: hidden
+                                            text-overflow: ellipsis
+                                            line-height: '1.3'
+                                            pointer-events: none
+                                            margin: '0'
+                                - component: Label
+                                  config:
+                                    text: '=(props.demoMode ? (vars.demoPlanApplied && vars.demoPlanApplied.energyKWh === vars.energy * 1 && vars.demoPlanApplied.endTime
+                                      === vars.end) : ((props.apiStatusItem && items[props.apiStatusItem] ? items[props.apiStatusItem].state :
+                                      ''UNDEF'') === ''ready'' && fn.chargingMode() === ''4720'' && [''confirmed'',''already-confirmed''].includes((props.localResultItem
+                                      && items[props.localResultItem] ? items[props.localResultItem].state : ''UNDEF'')) && (vars.energy * 1 >
+                                      0 && ('''' + (props.planEnergyItem && items[props.planEnergyItem] ? items[props.planEnergyItem].state : ''UNDEF'')).match(/^[+]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?(?:
+                                      (?:kWh|Wh))?$/) && vars.end && dayjs(vars.end).isValid() && (Number.parseFloat((props.planEnergyItem &&
+                                      items[props.planEnergyItem] ? items[props.planEnergyItem].state : ''UNDEF'')) / (('''' + (props.planEnergyItem
+                                      && items[props.planEnergyItem] ? items[props.planEnergyItem].state : ''UNDEF'')).endsWith('' Wh'') ? 1000
+                                      : 1)) === vars.energy * 1 && dayjs((props.planEndItem && items[props.planEndItem] ? items[props.planEndItem].state
+                                      : ''UNDEF'')).isValid() && dayjs((props.planEndItem && items[props.planEndItem] ? items[props.planEndItem].state
+                                      : ''UNDEF'')).valueOf() === dayjs(vars.end).valueOf()))) ? (props.demoMode ? ''✓ Demo'' : ''✓'') : (props.demoMode
+                                      ? '''' : ({''pending'':''…'',''uncertain'':''! Unklar'',''blocked-uncertain'':''! Unklar'',''blocked-corrupt'':''!
+                                      Gesperrt'',''rejected'':''Nicht übernommen'',''rejected-retained'':''Nicht übernommen'',''rejected-disabled'':''Bedienung
+                                      gesperrt'',''rejected-busy'':''Bitte warten''}[(props.localResultItem && items[props.localResultItem] ?
+                                      items[props.localResultItem].state : ''UNDEF'')] || ''''))'
+                                    style:
+                                      font-size: 12px
+                                      line-height: '1.4'
+                                      color: var(--f7-text-color)
+                                      white-space: normal
+                                    tooltip: 'Haken: Energie und Zielzeit entsprechen dem bestätigten aktiven Ladeplan. Sonst letzte lokale Rückmeldung.'
+              - component: div
+                config:
+                  style:
+                    margin-top: 12px
+                    padding: 12px
+                    border-radius: 14px
+                    background: rgba(142,142,147,0.12)
+                slots:
+                  default:
+                    - component: oh-button
+                      config:
+                        text: ''
+                        outline: true
+                        round: true
+                        action: variable
+                        actionVariable: settingsOpen
+                        actionVariableValue: =!vars.settingsOpen
+                        color: gray
+                        style:
+                          color: '#8e8e93'
+                          border-color: '#8e8e93'
+                          position: relative
+                          display: flex
+                          align-items: center
+                          justify-content: center
+                          gap: 6px
+                          height: 40px
+                          min-height: 40px
+                          max-height: 40px
+                          line-height: '1'
+                          --f7-button-height: 40px
+                          --f7-button-font-size: 12px
+                          --f7-button-padding-horizontal: 8px
+                          min-width: '0'
+                          max-width: 100%
+                          padding: 0 8px
+                          box-sizing: border-box
+                          font-size: 12px
+                          text-transform: none
+                        tooltip: Weitere Einstellungen
+                        aria-label: Weitere Einstellungen
+                      slots:
+                        default:
+                          - component: oh-icon
+                            config:
+                              icon: f7:gear_alt
+                              width: 16
+                              height: 16
+                              style:
+                                flex-shrink: '0'
+                                pointer-events: none
+                                color: inherit
+                          - component: Label
+                            config:
+                              text: Weitere Einstellungen
+                              style:
+                                display: block
+                                min-width: '0'
+                                box-sizing: border-box
+                                text-align: center
+                                white-space: nowrap
+                                overflow: hidden
+                                text-overflow: ellipsis
+                                line-height: '1.3'
+                                pointer-events: none
+                                margin: '0'
+                    - component: div
+                      config:
+                        visible: =!!vars.settingsOpen
+                      slots:
+                        default:
+                          - component: oh-list
+                            config:
+                              style:
+                                margin: '0'
+                                --f7-list-in-list-padding-left: 0px
+                                --f7-list-item-padding-horizontal: 0px
+                                --f7-list-media-item-padding-horizontal: 0px
+                                --f7-list-item-media-margin: 0px
+                            slots:
+                              default:
+                                - component: oh-list-item
+                                  config:
+                                    title: Freigabe erforderlich
+                                    after: '=props.demoMode ? ''Aus'' : ((props.approvalRequiredItem && items[props.approvalRequiredItem] && ![''NULL'',''UNDEF'',''''].includes(items[props.approvalRequiredItem].state)) ? (items[props.approvalRequiredItem].state === ''ON'' ? ''Ein'' : (items[props.approvalRequiredItem].state === ''OFF'' ? ''Aus'' : (items[props.approvalRequiredItem].displayState || items[props.approvalRequiredItem].state))) : ''—'')'
+                                    action: '=(!props.demoMode && fn.localWriteAllowed() && props.approvalRequiredItem && items[props.approvalRequiredItem]) ? ''options'' : ''none'''
+                                    actionItem: =props.approvalRequiredItem
+                                    actionOptions: ON=Ein,OFF=Aus
+                                - component: oh-list-item
+                                  config:
+                                    title: Kabel dauerhaft verriegeln
+                                    after: '=props.demoMode ? ''Ein'' : ((props.cableLockItem && items[props.cableLockItem] && ![''NULL'',''UNDEF'',''''].includes(items[props.cableLockItem].state)) ? (items[props.cableLockItem].state === ''ON'' ? ''Ein'' : (items[props.cableLockItem].state === ''OFF'' ? ''Aus'' : (items[props.cableLockItem].displayState || items[props.cableLockItem].state))) : ''—'')'
+                                    action: '=(!props.demoMode && fn.localWriteAllowed() && props.cableLockItem && items[props.cableLockItem]) ? ''options'' : ''none'''
+                                    actionItem: =props.cableLockItem
+                                    actionOptions: ON=Ein,OFF=Aus
+                                - component: oh-list-item
+                                  config:
+                                    title: Bei vollem Fahrzeug beenden
+                                    after: '=props.demoMode ? ''Ein'' : ((props.stopWhenFullItem && items[props.stopWhenFullItem] && ![''NULL'',''UNDEF'',''''].includes(items[props.stopWhenFullItem].state)) ? (items[props.stopWhenFullItem].state === ''ON'' ? ''Ein'' : (items[props.stopWhenFullItem].state === ''OFF'' ? ''Aus'' : (items[props.stopWhenFullItem].displayState || items[props.stopWhenFullItem].state))) : ''—'')'
+                                    action: '=(!props.demoMode && fn.localWriteAllowed() && props.stopWhenFullItem && items[props.stopWhenFullItem]) ? ''options'' : ''none'''
+                                    actionItem: =props.stopWhenFullItem
+                                    actionOptions: ON=Ein,OFF=Aus
+                                - component: oh-list-item
+                                  config:
+                                    title: Statuslicht
+                                    after: '=props.demoMode ? ''Mittel'' : ((props.ledBrightnessItem && items[props.ledBrightnessItem] && ![''NULL'',
+                                      ''UNDEF'', ''''].includes(items[props.ledBrightnessItem].state)) ? (items[props.ledBrightnessItem].displayState
+                                      || items[props.ledBrightnessItem].state) : ''—'')'
+                                    action: '=(!props.demoMode && fn.localWriteAllowed() && props.ledBrightnessItem && items[props.ledBrightnessItem]) ? ''options'' : ''none'''
+                                    actionItem: =props.ledBrightnessItem
+                                    actionOptions: 5191=Niedrig,5190=Mittel,5173=Hoch
+                                - component: oh-list-item
+                                  config:
+                                    title: Ambientelicht
+                                    after: '=props.demoMode ? ''Ein'' : ((props.ambientEnabledItem && items[props.ambientEnabledItem] && ![''NULL'',''UNDEF'',''''].includes(items[props.ambientEnabledItem].state)) ? (items[props.ambientEnabledItem].state === ''ON'' ? ''Ein'' : (items[props.ambientEnabledItem].state === ''OFF'' ? ''Aus'' : (items[props.ambientEnabledItem].displayState || items[props.ambientEnabledItem].state))) : ''—'')'
+                                    action: '=(!props.demoMode && fn.localWriteAllowed() && props.ambientEnabledItem && items[props.ambientEnabledItem]) ? ''options'' : ''none'''
+                                    actionItem: =props.ambientEnabledItem
+                                    actionOptions: ON=Ein,OFF=Aus
+                                - component: oh-list-item
+                                  config:
+                                    title: Ambientelicht-Helligkeit
+                                    after: '=props.demoMode ? ''Niedrig'' : ((props.ambientBrightnessItem && items[props.ambientBrightnessItem]
+                                      && ![''NULL'', ''UNDEF'', ''''].includes(items[props.ambientBrightnessItem].state)) ? (items[props.ambientBrightnessItem].displayState
+                                      || items[props.ambientBrightnessItem].state) : ''—'')'
+                                    action: '=(!props.demoMode && fn.localWriteAllowed() && props.ambientBrightnessItem && items[props.ambientBrightnessItem]) ? ''options'' : ''none'''
+                                    actionItem: =props.ambientBrightnessItem
+                                    actionOptions: 5191=Niedrig,5190=Mittel,5173=Hoch
+              - component: Label
+                config:
+                  text: '=props.demoMode ? '''' : ({''pending'':''…'',''uncertain'':''! Unklar'',''blocked-uncertain'':''! Unklar'',''blocked-corrupt'':''!
+                    Gesperrt'',''rejected'':''Nicht übernommen'',''rejected-retained'':''Nicht übernommen'',''rejected-disabled'':''Bedienung
+                    gesperrt'',''rejected-busy'':''Bitte warten''}[(props.localResultItem && items[props.localResultItem] ? items[props.localResultItem].state
+                    : ''UNDEF'')] || '''')'
+                  style:
+                    font-size: 12px
+                    line-height: '1.4'
+                    color: var(--f7-text-color)
+                    white-space: normal
+                  tooltip: Letzte lokale Rückmeldung; bei unklarem Ergebnis nicht erneut senden.
+                  visible: '=!vars.planOpen && fn.chargingMode() !== ''4720'''
+    props:
+      parameters:
+        - name: chargerName
+          label: Name
+          type: TEXT
+          default: SMA eCharger
+        - name: chargerIcon
+          label: Ladestationssymbol
+          type: TEXT
+          default: iconify:mdi:ev-station
+          description: 'Alternativen: iconify:tabler:charging-pile oder iconify:mdi:ev-plug-type2'
+        - name: demoMode
+          label: Demo-Modus (keine Gerätebefehle)
+          type: BOOLEAN
+          default: false
+        - name: enableControls
+          label: Bedienung mit echten Items aktivieren
+          type: BOOLEAN
+          default: false
+        - name: statusItem
+          label: Fahrzeugstatus
+          description: "Status des Fahrzeuganschlusses; String-Item."
+          type: TEXT
+          context: item
+        - name: powerItem
+          label: Ladeleistung
+          description: "Aktuelle Ladeleistung; Number:Power in W oder kW."
+          type: TEXT
+          context: item
+        - name: sessionEnergyItem
+          label: Energie der Ladesitzung
+          description: "Geladene Energie der aktuellen Ladesitzung; Number:Energy in kWh."
+          type: TEXT
+          context: item
+        - name: sessionStateItem
+          label: Zustand der Sitzungsanzeige
+          description: "Gekennzeichneter Sitzungszustand; session#status / String."
+          type: TEXT
+          context: item
+        - name: sessionDisplayEnergyItem
+          label: Gespeicherte Sitzungsenergie
+          description: "Beobachteter Betrag der laufenden oder letzten Sitzung; session#energy / Number:Energy in kWh."
+          type: TEXT
+          context: item
+        - name: sessionEnergyTimeItem
+          label: Messzeitpunkt der Sitzungsenergie
+          description: "Quellzeitpunkt des gespeicherten Betrags; session#energytime / DateTime oder String."
+          type: TEXT
+          context: item
+        - name: currentL1Item
+          label: Ladestrom L1 (Phasenanzeige)
+          description: "Optional: Strom L1 der lokalen API, measurements#currentl1; Number:ElectricCurrent in A. Alle drei Phasen und API-Verfügbarkeit auswählen."
+          type: TEXT
+          context: item
+        - name: currentL2Item
+          label: Ladestrom L2 (Phasenanzeige)
+          description: "Optional: Strom L2 der lokalen API, measurements#currentl2; Number:ElectricCurrent in A. Alle drei Phasen und API-Verfügbarkeit auswählen."
+          type: TEXT
+          context: item
+        - name: currentL3Item
+          label: Ladestrom L3 (Phasenanzeige)
+          description: "Optional: Strom L3 der lokalen API, measurements#currentl3; Number:ElectricCurrent in A. Alle drei Phasen und API-Verfügbarkeit auswählen."
+          type: TEXT
+          context: item
+        - name: modeItem
+          label: Lademodus
+          description: "Aktuell gemeldeter Lademodus; String-Item mit SMA-Moduscodes."
+          type: TEXT
+          context: item
+        - name: releaseItem
+          label: Ladefreigabe
+          description: "Ladeberechtigung der Wallbox; Switch-Item."
+          type: TEXT
+          context: item
+        - name: planItem
+          label: Bestätigter Ladeplan
+          description: "Item für den kombinierten Ladeplanauftrag; String-Item. Übernehmen sendet Energie und Abfahrtszeit gemeinsam."
+          type: TEXT
+          context: item
+        - name: planEnergyItem
+          label: Geplante Ladeenergie
+          description: "Von der Wallbox zurückgelesene Zielenergie; Number:Energy in kWh."
+          type: TEXT
+          context: item
+        - name: planEndItem
+          label: Geplantes Ladeende
+          description: "Von der Wallbox zurückgelesene End- bzw. Abfahrtszeit; DateTime- oder String-Item."
+          type: TEXT
+          context: item
+        - name: pvMinimumItem
+          label: Minimaler PV-Anteil
+          description: "Minimaler PV-Anteil aus dem Portal; Dimmer-Item mit ganzzahligen Prozentwerten."
+          type: TEXT
+          context: item
+        - name: localResultItem
+          label: Ergebnis des lokalen Befehls
+          description: "Rückmeldung zu lokalen Einstellungen und Ladeplan; String-Item."
+          type: TEXT
+          context: item
+        - name: portalResultItem
+          label: Ergebnis des Portalbefehls
+          description: "Rückmeldung zur Änderung des minimalen PV-Anteils; String-Item."
+          type: TEXT
+          context: item
+        - name: measurementStatusItem
+          label: Verfügbarkeit der Datenquelle
+          description: "Messquelle auswählen: Verfügbarkeit der Datenquelle aus der SEMP- oder lokalen API-Diagnose, passend zur Messwertquelle."
+          type: TEXT
+          context: item
+        - name: apiStatusItem
+          label: Verfügbarkeit der Datenquelle
+          description: "Lokale API auswählen: Verfügbarkeit der Datenquelle aus der lokalen API-Diagnose. Wird für lokale Befehle benötigt."
+          type: TEXT
+          context: item
+        - name: portalStatusItem
+          label: Verfügbarkeit der Datenquelle
+          description: "Portal auswählen: Verfügbarkeit der Datenquelle aus dem Portal. Wird für den minimalen PV-Anteil benötigt."
+          type: TEXT
+          context: item
+        - name: approvalRequiredItem
+          label: Freigabe erforderlich
+          description: "Ob vor dem Laden eine Freigabe erforderlich ist; Switch-Item."
+          type: TEXT
+          context: item
+        - name: cableLockItem
+          label: Dauerhafte Kabelverriegelung
+          description: "Dauerhafte Verriegelung des Ladekabels; Switch-Item."
+          type: TEXT
+          context: item
+        - name: stopWhenFullItem
+          label: Bei vollem Fahrzeug beenden
+          description: "Ladevorgang bei vollem Fahrzeug beenden; Switch-Item."
+          type: TEXT
+          context: item
+        - name: ledBrightnessItem
+          label: Helligkeit der Statusbeleuchtung
+          description: "Helligkeitsstufe der Statusbeleuchtung; String-Item."
+          type: TEXT
+          context: item
+        - name: ambientEnabledItem
+          label: Umgebungsbeleuchtung aktiviert
+          description: "Umgebungsbeleuchtung ein- oder ausschalten; Switch-Item."
+          type: TEXT
+          context: item
+        - name: ambientBrightnessItem
+          label: Helligkeit der Umgebungsbeleuchtung
+          description: "Helligkeitsstufe der Umgebungsbeleuchtung; String-Item."
+          type: TEXT
+          context: item
+        - name: demoConnected
+          label: 'Demo: Auto angeschlossen'
+          type: BOOLEAN
+          default: true
