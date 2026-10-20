@@ -16,6 +16,7 @@ from test_runtime import FakeClient
 from sma_mqtt_bridge.energy_balances import EnergyBalances
 from sma_mqtt_bridge.errors import ConfigError
 from sma_mqtt_bridge.homie import HomiePublisher, discovery
+from sma_mqtt_bridge.model import SampleValues
 from sma_mqtt_bridge.plant import PlantEngine
 from sma_mqtt_bridge.runtime import run_locked
 
@@ -51,6 +52,26 @@ class WallboxDailyTests(PlantFixture):
         self.fill(engine, 220)
         engine.refresh(220, self.wall + timedelta(minutes=2))
         return engine
+
+    def test_older_fresh_api_counter_cannot_poison_restart(self):
+        engine = self.engine(ac=True)
+        engine.refresh(100, self.wall)
+        original = copy.deepcopy(engine.ledger.data["accounts"]["wallbox"])
+        self.fill(engine, 130)
+        engine.sources["api"].update(
+            SampleValues({"measurements/total-energy": 1000}, {"measurements/total-energy": 99}),
+            now=130,
+        )
+        engine.refresh(130, self.wall + timedelta(seconds=30))
+        self.assertEqual(engine.ledger.data["accounts"]["wallbox"], original)
+        restarted = EnergyBalances(engine.config, engine.ledger.data["signature"], engine.zone)
+        self.assertEqual(restarted.data["accounts"]["wallbox"], original)
+        self.fill(engine, 160, energy=1002)
+        engine.refresh(160, self.wall + timedelta(seconds=60))
+        self.assertEqual(
+            engine.ledger.data["accounts"]["wallbox"]["lastTime"],
+            (self.wall + timedelta(seconds=60)).isoformat(),
+        )
 
     def advance_balances(self, engine, *, energy=1004, pv1=112):
         self.fill(

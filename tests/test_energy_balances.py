@@ -222,6 +222,58 @@ class EnergyBalanceTests(unittest.TestCase):
             self.ledger.persist(301)
             self.assertEqual(write.call_count, 3)
 
+    def test_regressing_sample_preserves_durable_state_and_recovers(self):
+        wall = datetime(2026, 10, 14, 12, tzinfo=timezone.utc)
+        self.observe(wall, "100")
+        self.ledger.persist(0)
+        original = self.ledger.path.read_bytes()
+        for value in ("100", "101"):
+            with self.subTest(value=value):
+                self.assertEqual(
+                    self.ledger.observe(
+                        "import",
+                        {"grid/counter": Decimal(value)},
+                        {"grid/counter": Decimal(1)},
+                        self.hardware,
+                        wall + timedelta(seconds=30),
+                        wall - timedelta(seconds=1),
+                        sample_wall=wall - timedelta(seconds=1),
+                    ),
+                    (None, None, "clock-error"),
+                )
+                self.assertFalse(self.ledger.dirty)
+                self.assertFalse(self.ledger.force_save)
+                self.ledger.persist(300)
+                self.assertEqual(self.ledger.path.read_bytes(), original)
+                self.assertEqual(json.loads(original), self.ledger.data)
+        restarted = EnergyBalances(self.config, self.signature, self.zone)
+        self.assertEqual(
+            self.observe(wall + timedelta(seconds=60), "102", ledger=restarted),
+            (None, Decimal(2), "partial"),
+        )
+
+    def test_regressing_calibrated_negative_sample_cannot_mark_reset(self):
+        wall = datetime(2026, 10, 14, 12, tzinfo=timezone.utc)
+        self.observe(wall, "100")
+        self.ledger.data["precisionOffsets"] = {"grid/counter": "-0.5"}
+        self.ledger.persist(0)
+        original = self.ledger.path.read_bytes()
+        self.assertEqual(
+            self.ledger.observe(
+                "import",
+                {"grid/counter": Decimal("-0.5")},
+                {"grid/counter": Decimal(1)},
+                self.hardware,
+                wall + timedelta(seconds=30),
+                wall - timedelta(seconds=1),
+                sample_wall=wall - timedelta(seconds=1),
+            ),
+            (None, None, "clock-error"),
+        )
+        self.assertEqual(json.loads(original), self.ledger.data)
+        self.assertFalse(self.ledger.dirty)
+        self.assertFalse(self.ledger.force_save)
+
     def test_boundary_entry_is_saved_before_midnight_even_between_checkpoints(self):
         wall = datetime(2026, 10, 14, 23, 55, tzinfo=self.zone)
         self.observe(wall, "100")

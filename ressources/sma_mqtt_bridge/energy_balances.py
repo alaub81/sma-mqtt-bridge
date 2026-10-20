@@ -235,15 +235,17 @@ class EnergyBalances:
         sample_wall = (sample_wall or wall).astimezone(timezone.utc)
         local_day = wall.astimezone(self.zone).date()
         record = self.data["accounts"].get(name)
+        if record is not None:
+            if set(record["last"]) != set(values) or record["hardware"] != hardware:
+                return None, None, "configuration-changed"
+            last_time = utc_time(record["lastTime"])
+            # Reject older observations before any reset or baseline mutation.
+            if wall < last_time or sample_wall < last_time:
+                return None, None, "clock-error"
         offsets = self.data.get("precisionOffsets", {})
-        if (
-            record is not None
-            and record["hardware"] == hardware
-            and wall >= utc_time(record["lastTime"])
-            and any(
-                offsets.get(key) is not None and Decimal(offsets[key]) <= value < 0
-                for key, value in values.items()
-            )
+        if record is not None and any(
+            offsets.get(key) is not None and Decimal(offsets[key]) <= value < 0
+            for key, value in values.items()
         ):
             # A real reset can cross the calibrated origin; never persist negative counters.
             record["dailyStatus"] = record["totalStatus"] = "reset"
@@ -254,7 +256,6 @@ class EnergyBalances:
             counter_vector(encoded)
         except ValueError:
             return None, None, "invalid"
-        record = self.data["accounts"].get(name)
         if record is None:
             record = {
                 "date": local_day.isoformat(),
@@ -272,11 +273,7 @@ class EnergyBalances:
             }
             self.data["accounts"][name] = record
             self.dirty = self.force_save = True
-        if set(record["last"]) != set(values) or record["hardware"] != hardware:
-            return None, None, "configuration-changed"
         last_time = utc_time(record["lastTime"])
-        if wall < last_time:
-            return None, None, "clock-error"
         reset = any(values[key] < Decimal(record["last"][key]) for key in values)
         if reset:
             record["dailyStatus"] = record["totalStatus"] = "reset"
