@@ -13,6 +13,7 @@ from ..charging_session import observation as session_observation
 from ..config import echarger_ssl_context
 from ..errors import AuthenticationError, ProtocolError
 from ..model import Property, SampleValues, channel_group_enabled, number
+from ..sample_time import DEFAULT_FUTURE_TOLERANCE_SECONDS, sample_timestamp
 from .http import HTTP
 
 NS = "http://www.sma.de/communication/schema/SEMP/v1"
@@ -238,14 +239,22 @@ BASE_TIMED_CHANNELS = {
 }
 
 
-def observation_time(channel, value, timestamp, stale_seconds, now, monotonic):
+def observation_time(
+    channel,
+    value,
+    timestamp,
+    stale_seconds,
+    now,
+    monotonic,
+    future_tolerance_seconds=DEFAULT_FUTURE_TOLERANCE_SECONDS,
+):
     """Anchor accepted device age to a monotonic clock before further processing."""
     if channel not in REFRESHED_CHANNELS or value is None:
         return None
-    if current_measurement(value, timestamp, stale_seconds, now) is None:
+    _, age, quality = sample_timestamp(timestamp, now, stale_seconds, future_tolerance_seconds)
+    if quality != "fresh":
         return None
-    measured = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
-    return monotonic - (now - measured).total_seconds()
+    return monotonic - max(0, age)
 
 
 def timed_values(values, channel_times, channels, session=None):
@@ -396,18 +405,26 @@ def validate_semp_identity(text, expected_id, expected_serial=""):
         raise ProtocolError("SEMP serial identity mismatch")
 
 
-def current_measurement(value, timestamp, stale_seconds, now=None):
+def current_measurement(
+    value,
+    timestamp,
+    stale_seconds,
+    now=None,
+    future_tolerance_seconds=DEFAULT_FUTURE_TOLERANCE_SECONDS,
+):
     now = datetime.now(timezone.utc) if now is None else now
-    try:
-        measured = datetime.fromisoformat((timestamp or "").replace("Z", "+00:00"))
-        age = (now - measured).total_seconds()
-        return value if 0 <= age <= stale_seconds else None
-    except TypeError, ValueError, AttributeError:
-        return None
+    _, _, quality = sample_timestamp(timestamp, now, stale_seconds, future_tolerance_seconds)
+    return value if quality == "fresh" else None
 
 
 def semp_values(
-    text, stale_seconds, now=None, advanced=True, diagnostics=True, timestamp_observer=None
+    text,
+    stale_seconds,
+    now=None,
+    advanced=True,
+    diagnostics=True,
+    timestamp_observer=None,
+    future_tolerance_seconds=DEFAULT_FUTURE_TOLERANCE_SECONDS,
 ):
     root = xml_root(text)
     catalog, channel_times, raw_values, raw_stamps = {}, {}, {}, {}
@@ -423,8 +440,10 @@ def semp_values(
         if channel.startswith(("Measurement.", "Setpoint.")):
             if timestamp_observer is not None:
                 timestamp_observer.observe("semp", channel, raw, stamp, stale_seconds, now)
-            raw = current_measurement(raw, stamp, stale_seconds, now)
-            observed = observation_time(channel, raw, stamp, stale_seconds, now, monotonic)
+            raw = current_measurement(raw, stamp, stale_seconds, now, future_tolerance_seconds)
+            observed = observation_time(
+                channel, raw, stamp, stale_seconds, now, monotonic, future_tolerance_seconds
+            )
             if observed is not None:
                 channel_times[channel] = observed
         catalog[channel] = raw
@@ -445,7 +464,9 @@ def semp_values(
         result,
         channel_times,
         channels,
-        session_observation(raw_values, raw_stamps, stale_seconds, now, monotonic),
+        session_observation(
+            raw_values, raw_stamps, stale_seconds, now, monotonic, future_tolerance_seconds
+        ),
     )
 
 
@@ -494,6 +515,7 @@ class SempReader:
             advanced=self.settings.advanced_channels_enabled,
             diagnostics=self.settings.diagnostics_enabled,
             timestamp_observer=self.timestamp_observer,
+            future_tolerance_seconds=self.settings.future_tolerance_seconds,
         )
         if not self.include_settings:
             for key in tuple(values):
@@ -638,7 +660,11 @@ class EChargerReader:
                         stamp,
                     )
                     values[m["channelId"]] = current_measurement(
-                        entry.get("value"), stamp, self.settings.stale_seconds, now
+                        entry.get("value"),
+                        stamp,
+                        self.settings.stale_seconds,
+                        now,
+                        self.settings.future_tolerance_seconds,
                     )
                     observed = observation_time(
                         m["channelId"],
@@ -647,6 +673,7 @@ class EChargerReader:
                         self.settings.stale_seconds,
                         now,
                         monotonic,
+                        self.settings.future_tolerance_seconds,
                     )
                     if observed is not None:
                         channel_times[m["channelId"]] = observed
@@ -707,6 +734,7 @@ class EChargerReader:
                         self.settings.stale_seconds,
                         datetime.now(timezone.utc),
                         time.monotonic(),
+                        self.settings.future_tolerance_seconds,
                     ),
                 )
             except AuthenticationError:

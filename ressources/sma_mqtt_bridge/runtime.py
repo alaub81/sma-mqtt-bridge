@@ -84,6 +84,7 @@ def sources(config):
             config.runtime.state_dir,
             ec.timestamp_diagnostics_max_bytes,
             ec.timestamp_diagnostics_summary_interval_seconds,
+            ec.future_tolerance_seconds,
         )
         if ec.timestamp_diagnostics_enabled and (ec.enabled or ec.semp_enabled)
         else None

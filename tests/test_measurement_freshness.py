@@ -15,6 +15,7 @@ from sma_mqtt_bridge.adapters.echarger import (
     current_measurement,
     semp_values,
 )
+from sma_mqtt_bridge.charging_session import ChargingSession
 from sma_mqtt_bridge.config import ECharger, load_config
 from sma_mqtt_bridge.homie import HomiePublisher
 from sma_mqtt_bridge.model import Property, SampleValues, SourceState
@@ -33,7 +34,9 @@ class MeasurementFreshnessTests(unittest.TestCase):
             (180, True),
             (180.001, False),
             (181, False),
-            (-0.001, False),
+            (-0.001, True),
+            (-0.01, True),
+            (-0.010001, False),
         ):
             with self.subTest(age=age):
                 value = current_measurement(4500, self.stamp(age), 180, self.now)
@@ -113,6 +116,47 @@ class RemainingLifetimeTests(unittest.TestCase):
             self.assertNotIn("measurements/power", state.fresh_values(1002))
             self.assertEqual(state.status(1002), "stale")
             self.assertEqual(state.values["measurements/power"][0], "0")
+
+    def test_tiny_future_power_keeps_source_and_paused_session_available(self):
+        # All five measured leads plus the exact default tolerance boundary.
+        for lead in (0.000333, 0.001079, 0.001347, 0.001483, 0.002364, 0.01):
+            with self.subTest(lead=lead), tempfile.TemporaryDirectory() as directory:
+                session = ChargingSession(load_config({"SMAB_STATE_DIR": directory}))
+                values = self.reply(
+                    [
+                        ("Measurement.Metering.GridMs.TotWIn.ChaSta", "0", -lead),
+                        ("Measurement.Operation.EVeh.ChaStt", "200112", -lead),
+                        ("Measurement.ChaSess.WhIn", "1000", -lead),
+                    ]
+                )
+                state = self.state(values)
+                state.update(values, now=1000)
+                self.assertEqual(state.status(1000), "ready")
+                self.assertEqual(values.observed_at["measurements/power"], 1000)
+                self.assertEqual(values.session_observation.observed_at, 1000)
+                session.update(values.session_observation, now=1000)
+                self.assertEqual(session.state.fresh_values(1000)["session/status"], "paused")
+                self.assertEqual(
+                    values.session_observation.energy_time,
+                    self.now + timedelta(seconds=lead),
+                )
+                self.assertEqual(state.status(1180), "ready")
+                self.assertEqual(state.status(1180.000001), "stale")
+
+    def test_clock_tolerance_does_not_accept_larger_jumps_or_extend_old_samples(self):
+        for age in (-0.010001, -1, 180.000001):
+            with self.subTest(age=age):
+                values = self.reply(
+                    [
+                        ("Measurement.Metering.GridMs.TotWIn.ChaSta", "0", age),
+                        ("Measurement.Operation.EVeh.ChaStt", "200112", 0),
+                    ]
+                )
+                state = self.state(values)
+                state.update(values, now=1000)
+                self.assertEqual(state.status(1000), "stale")
+                self.assertIsNone(values.session_observation.power)
+                self.assertNotIn("measurements/power", values.observed_at)
 
     def test_processing_delay_consumes_remaining_time_without_hiding_missing_power(self):
         values = self.reply(
@@ -225,10 +269,13 @@ class ReaderLifetimeTests(unittest.IsolatedAsyncioTestCase):
     now = MeasurementFreshnessTests.now
     stamp = MeasurementFreshnessTests.stamp
 
-    async def read_api(self, rows, include_base=True):
+    async def read_api(self, rows, include_base=True, future_tolerance_seconds=0.01):
         reader = EChargerReader(
             ECharger(
-                expected_serial="123", advanced_channels_enabled=False, diagnostics_enabled=False
+                expected_serial="123",
+                advanced_channels_enabled=False,
+                diagnostics_enabled=False,
+                future_tolerance_seconds=future_tolerance_seconds,
             ),
             10000,
             include_base=include_base,
@@ -260,6 +307,25 @@ class ReaderLifetimeTests(unittest.IsolatedAsyncioTestCase):
         state = SourceState("api", "fixture", reader.properties, 180)
         await reader.close()
         return values, state
+
+    async def test_api_clock_tolerance_and_strict_override_share_session_and_source_policy(self):
+        for tolerance, accepted in ((0.01, True), (0, False)):
+            with self.subTest(tolerance=tolerance):
+                values, state = await self.read_api(
+                    [
+                        ("Measurement.Metering.GridMs.TotWIn.ChaSta", "0", -0.002364),
+                        ("Measurement.Operation.EVeh.ChaStt", "200112", 0),
+                    ],
+                    future_tolerance_seconds=tolerance,
+                )
+                state.update(values, now=1000)
+                if accepted:
+                    self.assertEqual(state.fresh_values(1000)["measurements/power"], "0")
+                    self.assertEqual(values.session_observation.power, 0)
+                    self.assertEqual(values.observed_at["measurements/power"], 1000)
+                else:
+                    self.assertNotIn("measurements/power", state.fresh_values(1000))
+                    self.assertIsNone(values.session_observation.power)
 
     async def test_api_channel_ages_scaling_aliases_and_conservative_exclusions(self):
         values, state = await self.read_api(

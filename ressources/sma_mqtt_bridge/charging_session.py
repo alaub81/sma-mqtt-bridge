@@ -9,6 +9,7 @@ from pathlib import Path
 
 from .errors import StateError
 from .model import Property, SampleValues, SourceState, number
+from .sample_time import DEFAULT_FUTURE_TOLERANCE_SECONDS, sample_timestamp
 from .storage import MISSING, read_state, write_state
 
 LOG = logging.getLogger(__name__)
@@ -70,14 +71,23 @@ class SessionObservation:
     observed_at: float
 
 
-def observation(raw, stamps, stale_seconds, now, monotonic):
+def observation(
+    raw,
+    stamps,
+    stale_seconds,
+    now,
+    monotonic,
+    future_tolerance_seconds=DEFAULT_FUTURE_TOLERANCE_SECONDS,
+):
     """Only fresh, nonnegative numeric inputs can advance stored session evidence."""
     values, times, ages = {}, {}, {}
     for channel in (ENERGY, VEHICLE, POWER):
         stamp, value = timestamp(stamps.get(channel)), number(raw.get(channel))
-        age = (now - stamp).total_seconds() if stamp is not None else -1
-        if value is not None and value >= 0 and 0 <= age <= stale_seconds:
-            values[channel], times[channel], ages[channel] = value, stamp, age
+        _, age, quality = sample_timestamp(
+            stamps.get(channel), now, stale_seconds, future_tolerance_seconds
+        )
+        if value is not None and value >= 0 and stamp is not None and quality == "fresh":
+            values[channel], times[channel], ages[channel] = value, stamp, max(0, age)
     return SessionObservation(
         values.get(ENERGY) / 1000 if ENERGY in values else None,
         times.get(ENERGY),

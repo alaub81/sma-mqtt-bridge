@@ -5,10 +5,11 @@ import logging
 import os
 import stat
 import time
-from datetime import datetime, timezone
+from datetime import timezone
 from pathlib import Path
 
 from .model import number
+from .sample_time import DEFAULT_FUTURE_TOLERANCE_SECONDS, sample_timestamp
 
 LOG = logging.getLogger(__name__)
 CHANNELS = frozenset(
@@ -32,22 +33,18 @@ CHANNELS = frozenset(
 )
 
 
-def sample_timestamp(timestamp, now, stale_seconds):
-    """Normalize timestamps without copying untrusted strings into diagnostics."""
-    try:
-        measured = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
-        age = (now - measured).total_seconds()
-    except AttributeError, TypeError, ValueError, OverflowError:
-        return None, None, "invalid"
-    quality = "future" if age < 0 else "fresh" if age <= stale_seconds else "stale"
-    return measured.astimezone(timezone.utc).isoformat(), age, quality
-
-
 class TimestampDiagnostics:
-    def __init__(self, state_dir, max_bytes, summary_interval_seconds):
+    def __init__(
+        self,
+        state_dir,
+        max_bytes,
+        summary_interval_seconds,
+        future_tolerance_seconds=DEFAULT_FUTURE_TOLERANCE_SECONDS,
+    ):
         self.path = Path(state_dir) / "echarger-timestamps.jsonl"
         self.max_bytes = max_bytes
         self.summary_interval = summary_interval_seconds
+        self.future_tolerance = future_tolerance_seconds
         self.previous = {}
         self.retry_after = 0
 
@@ -67,7 +64,7 @@ class TimestampDiagnostics:
             )
 
     def record(self, source, channel, value, timestamp, stale_seconds, now, monotonic):
-        stamp, age, quality = sample_timestamp(timestamp, now, stale_seconds)
+        stamp, age, quality = sample_timestamp(timestamp, now, stale_seconds, self.future_tolerance)
         numeric = number(value)
         encoded = str(numeric) if numeric is not None else None
         if encoded is not None and len(encoded) > 128:
@@ -89,6 +86,7 @@ class TimestampDiagnostics:
             "deviceTimestamp": stamp,
             "deviceAgeSeconds": age,
             "staleSeconds": stale_seconds,
+            "futureToleranceSeconds": self.future_tolerance,
             "timestampQuality": quality,
             "value": encoded,
             "valueValid": encoded is not None,

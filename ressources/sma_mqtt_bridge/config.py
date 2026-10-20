@@ -12,6 +12,7 @@ from zoneinfo import ZoneInfo, ZoneInfoNotFoundError
 
 from .errors import ConfigError
 from .json_codec import strict_json
+from .sample_time import DEFAULT_FUTURE_TOLERANCE_SECONDS
 
 DATA = "/data/sma-mqtt-bridge"
 ID = re.compile(r"[a-z0-9]+(?:-[a-z0-9]+)*\Z")
@@ -116,6 +117,7 @@ class HomeManager(SafeRepr):
 
 @dataclass(frozen=True, repr=False)
 class ECharger(SafeRepr):
+    future_tolerance_seconds: float = DEFAULT_FUTURE_TOLERANCE_SECONDS
     api_ready_properties: str = ""
     semp_ready_properties: str = ""
     advanced_channels_enabled: bool = False
@@ -320,6 +322,8 @@ def section(defaults, data, env, prefix, recognized):
                 minimum = 0
             elif field.name == "timestamp_diagnostics_max_bytes":
                 minimum, maximum = 4096, 16777216
+            elif field.name == "future_tolerance_seconds":
+                minimum, maximum = 0, 1
             elif not (
                 (isinstance(defaults, Portal) and field.name == "poll_interval_seconds")
                 or (

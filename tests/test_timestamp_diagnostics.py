@@ -81,6 +81,38 @@ class TimestampDiagnosticsTests(unittest.TestCase):
         self.observe("NaN", stamp="2026-10-11T12:00:01Z", source="semp")
         self.assertEqual(self.rows()[-1]["timestampQuality"], "future")
 
+    def test_tolerated_future_age_remains_visible_with_matching_quality(self):
+        for lead, quality in ((0.002364, "fresh"), (0.01, "fresh"), (0.010001, "future")):
+            self.observe(0, stamp=(NOW + timedelta(seconds=lead)).isoformat())
+            row = self.rows()[-1]
+            self.assertEqual(row["timestampQuality"], quality)
+            self.assertEqual(row["deviceAgeSeconds"], -lead)
+            self.assertEqual(row["futureToleranceSeconds"], 0.01)
+        strict = TimestampDiagnostics(self.directory.name, 4096, 300, 0)
+        strict.observe("semp", POWER, 0, (NOW + timedelta(milliseconds=1)).isoformat(), 180, NOW)
+        self.assertEqual(self.rows()[-1]["timestampQuality"], "future")
+        self.assertEqual(self.rows()[-1]["futureToleranceSeconds"], 0)
+
+    def test_future_tolerance_configuration_is_bounded_and_precedence_is_preserved(self):
+        key = "SMAB_ECHARGER_FUTURE_TOLERANCE_SECONDS"
+        self.assertEqual(load_config({}).echarger.future_tolerance_seconds, 0.01)
+        path = write_json(
+            self.directory.name, "clock.json", {"echarger": {"futureToleranceSeconds": 0.02}}
+        )
+        self.assertEqual(
+            load_config({"SMAB_CONFIG_FILE": path}).echarger.future_tolerance_seconds, 0.02
+        )
+        for value in ("0", "0.005", "1"):
+            self.assertEqual(
+                load_config(
+                    {"SMAB_CONFIG_FILE": path, key: value}
+                ).echarger.future_tolerance_seconds,
+                float(value),
+            )
+        for value in ("-0.001", "1.000001", "NaN", "inf"):
+            with self.subTest(value=value), self.assertRaises(ConfigError):
+                load_config({key: value})
+
     def test_rotation_permissions_and_restart(self):
         for i in range(40):
             self.observe(i)
@@ -172,6 +204,34 @@ class TimestampDiagnosticsTests(unittest.TestCase):
 
 
 class TimestampReaderTests(unittest.IsolatedAsyncioTestCase):
+    async def test_semp_reader_applies_configured_tolerance_to_source_session_and_recorder(self):
+        for tolerance, quality in ((0, "future"), (0.005, "fresh")):
+            with self.subTest(tolerance=tolerance), tempfile.TemporaryDirectory() as directory:
+                observer = TimestampDiagnostics(directory, 4096, 300, tolerance)
+                reader = SempReader(
+                    ECharger(future_tolerance_seconds=tolerance), 10000, timestamp_observer=observer
+                )
+                stamp = (NOW + timedelta(milliseconds=2.364)).isoformat()
+                body = (
+                    f'<Device2EM xmlns="{NS}"><Parameters><Parameter><channelId>{POWER}</channelId>'
+                    f"<timestamp>{stamp}</timestamp><value>0</value></Parameter>"
+                    "</Parameters></Device2EM>"
+                )
+                reader.http.request = AsyncMock(side_effect=[(200, {}, body), (200, {}, body)])
+                with (
+                    patch("sma_mqtt_bridge.adapters.echarger.validate_semp_identity"),
+                    patch("sma_mqtt_bridge.adapters.echarger.datetime") as clock,
+                ):
+                    clock.now.return_value = NOW
+                    values = await reader.read()
+                row = json.loads(observer.path.read_text().splitlines()[0])
+                self.assertEqual(row["timestampQuality"], quality)
+                self.assertEqual(row["futureToleranceSeconds"], tolerance)
+                self.assertEqual(values["measurements/power"], 0 if tolerance else None)
+                self.assertEqual(values.session_observation.power, 0 if tolerance else None)
+                self.assertEqual(reader.http.request.await_count, 2)
+                await reader.close()
+
     async def test_api_observation_preserves_outputs_and_request_count(self):
         with tempfile.TemporaryDirectory() as directory:
             observer = TimestampDiagnostics(directory, 4096, 300)
