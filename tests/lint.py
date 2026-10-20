@@ -8,6 +8,7 @@ import subprocess
 import sys
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -113,6 +114,49 @@ def check_dotenv(files):
     return passed
 
 
+def check_markdown_links(files, root=ROOT):
+    """Check local file targets in inline links/images and reference definitions.
+
+    Ignore examples inside fenced/inline code, external URLs and same-page anchors.
+    Heading anchors are deliberately outside this file-existence check.
+    """
+    passed = True
+    for name in files:
+        fence = None
+        for number, line in enumerate((root / name).read_text().splitlines(), 1):
+            marker = re.match(r"^ {0,3}(`{3,}|~{3,})(.*)$", line)
+            if fence:
+                if (
+                    marker
+                    and marker[1][0] == fence[0]
+                    and len(marker[1]) >= len(fence)
+                    and not marker[2].strip()
+                ):
+                    fence = None
+                continue
+            if marker:
+                fence = marker[1]
+                continue
+            line = re.sub(r"(`+).*?\1", "", line)
+            targets = re.findall(r"\]\(\s*(<[^>]*>|[^\s)]+)", line)
+            reference = re.match(r"^ {0,3}\[[^]]+\]:\s*(<[^>]*>|\S+)", line)
+            if reference:
+                targets.append(reference[1])
+            for target in targets:
+                target = target.removeprefix("<").removesuffix(">")
+                url = urlsplit(target)
+                if url.scheme or url.netloc or not url.path:
+                    continue
+                path = unquote(url.path)
+                destination = (
+                    root / path.lstrip("/") if path.startswith("/") else root / name / ".." / path
+                )
+                if not destination.resolve().exists():
+                    print(f"{name}:{number}: missing Markdown file target: {target}", flush=True)
+                    passed = False
+    return passed
+
+
 def check_widget_export(_files):
     return (
         subprocess.run(
@@ -161,6 +205,11 @@ def main():
         results.append((label, passed))
 
     check("Text hygiene / file coverage", files, function=check_text)
+    check(
+        "Markdown local file links",
+        [p for p in files if p.endswith(".md")],
+        function=check_markdown_links,
+    )
     check(
         "JSON syntax and duplicate keys",
         [p for p in files if p.endswith(".json")],
