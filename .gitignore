@@ -1,3 +1,4 @@
+# Private configuration and credentials.
 .env
 .env.*
 !.env.example
@@ -5,27 +6,28 @@ smab.env
 smab.env.*
 smab.*.env
 !smab.example.env
-docker-compose.yml
-config.json
 data/
 secrets/
+openhab_api_key
+
+# Private installation records; only the generic README is public.
 private/*
 !private/README.md
+
+# Local Python runtime and lint tools.
+.venv/
 .lint-venv/
 .lint-tools/
 .ruff_cache/
 __pycache__/
 *.pyc
-build/
-*.sarif
-.DS_Store
-.venv/
-*.egg-info/
 
-# Image-generated version metadata must not override local Git identity.
-**/_build_version.txt
+# Image-generated metadata must not override local Git identity.
+_build_version.txt
 
 # Private target-host resource observations.
 smab-resource-soak*.jsonl
 smab-resource-soak*.log
-openhab_api_key
+
+# macOS metadata.
+.DS_Store

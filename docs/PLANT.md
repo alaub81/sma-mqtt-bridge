@@ -1,0 +1,33 @@
+# Plant measurements and energy accounting
+
+Optional plant calculations reuse existing source observations without extra
+polling. Select enabled contributors by configured role and profile contribution
+mapping; use one grid source. Validate units and independently measured hybrid
+contributions before enabling accounting. See [configuration](CONFIGURATION.md#plant-aggregates-and-energy-state).
+
+## MQTT properties
+
+The [generated catalog](topic-catalog.csv) is the complete property inventory.
+Per-device topics remain independent. PV/storage sum topics require at least two
+configured contributors; failure does not shrink membership or fabricate zero.
+Household W balances require fresh, aligned PV, grid and battery observations.
+Wallbox daily kWh belongs to the eCharger; household energy excluding Wallbox
+belongs to the plant. Derived day coverage does not determine charger availability.
+
+## Durable accounting
+
+Counter vectors, local calendar boundaries, compatible AC storage counters and
+bounded skew determine daily balances. Preserve original observation age rather
+than renewing it during calculations. Invalid inputs, resets, backward time,
+negative balances and unsupported battery boundaries block affected accounting.
+Partial/gap/complete statuses describe coverage, independently of MQTT connectivity.
+
+Persist energy baselines, hardware/configuration fingerprints and bounded daily
+history atomically in the state volume before publishing committed balances.
+Preserve topic manifests, command journals and saved price preferences separately.
+Never reset baselines automatically after incompatible configuration/profile changes.
+Price preferences revalue the documented current counters; they do not rewrite
+historical samples or establish historical tariff accounting.
+
+Check coverage status alongside numeric values. A retained MQTT value can remain
+visible while its input is unavailable; it does not establish current freshness.

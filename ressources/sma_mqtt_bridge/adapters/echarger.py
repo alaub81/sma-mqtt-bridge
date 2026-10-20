@@ -28,7 +28,7 @@ HEALTH = {"307": "OK", "35": "Fehler", "455": "Warnung", "303": "Aus", "308": "E
 APPROVAL = {"5171": "Gesperrt", "5172": "Freigegeben"}
 
 # Verified for this model/firmware from local metadata and working protocol references.
-# See docs/VALIDATION.md; do not infer these units for other firmware versions.
+# See docs/CONFIGURATION.md; do not infer these units for other firmware versions.
 VERIFIED_LOCAL_UNITS = {
     "Parameter.Chrg.Plan.En": "kWh",
     "Parameter.Chrg.Plan.StopTm": "s",

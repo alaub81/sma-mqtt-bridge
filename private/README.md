@@ -10,6 +10,6 @@ does not include these records. Never commit credentials, tokens or unreviewed e
 - `reference/sma/`: original working packages and protocol references, read-only.
 - `incoming/openhab/`: original Things/Items/rules/persistence exports, read-only.
 
-Public contracts, neutral examples and reproducible checks belong under `docs/`.
-Private originals must not be edited as part of public documentation maintenance.
-See [privacy guidance](../docs/PRIVACY.md).
+Public instructions for current bridge use belong under `docs/`. Development
+context, plans, diaries and migration history stay private. Private original
+references must not be edited as part of documentation maintenance.
