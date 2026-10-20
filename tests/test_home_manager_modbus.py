@@ -176,6 +176,17 @@ class HomeManagerProfileTests(unittest.TestCase):
 
 
 class HomeManagerProtocolTests(unittest.IsolatedAsyncioTestCase):
+    def test_delay_uses_earliest_due_including_new_and_overdue_pollers(self):
+        reader = adapter()
+        with patch("sma_mqtt_bridge.adapters.home_manager_modbus.time.monotonic", return_value=100):
+            self.assertEqual(reader.delay(), 0)
+            reader.next_due = {p["id"]: 130 + i for i, p in enumerate(reader.pollers)}
+            self.assertEqual(reader.delay(), 30)
+            reader.next_due[reader.pollers[-1]["id"]] = 99
+            self.assertEqual(reader.delay(), 0)
+            reader.next_due.pop(reader.pollers[-1]["id"])
+            self.assertEqual(reader.delay(), 0)
+
     def session(self, bad_serial=False):
         reader = adapter()
         writer = MagicMock()

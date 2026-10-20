@@ -396,6 +396,19 @@ class AsyncProtocolTests(unittest.IsolatedAsyncioTestCase):
         adapter.interval_override = True
         self.assertEqual(adapter.interval(adapter.profile["pollers"][1]), 10)
 
+    def test_modbus_delay_uses_earliest_due_and_never_waits_for_overdue_work(self):
+        adapter = self.reader()
+        with patch("sma_mqtt_bridge.adapters.modbus.time.monotonic", return_value=100):
+            self.assertEqual(adapter.delay(), 0)
+            adapter.next_due = {p["id"]: 130 + i for i, p in enumerate(adapter.pollers)}
+            self.assertEqual(adapter.delay(), 30)
+            adapter.next_due[adapter.pollers[-1]["id"]] = 99
+            self.assertEqual(adapter.delay(), 0)
+            adapter.next_due.pop(adapter.pollers[-1]["id"])
+            self.assertEqual(adapter.delay(), 0)
+            adapter.pollers = []
+            self.assertEqual(adapter.delay(), adapter.settings.poll_interval_seconds)
+
     async def test_modbus_timeout(self):
         adapter = self.reader()
         adapter.settings = Inverter(timeout_seconds=0.01)
@@ -410,6 +423,36 @@ class AsyncProtocolTests(unittest.IsolatedAsyncioTestCase):
         http = HTTP(1, 100)
         with self.assertRaises(ProtocolError):
             await http.request("PUT", "https://fixture.invalid")
+        self.assertIsNone(http.session)
+
+    async def test_http_json_statuses_and_redacted_protocol_errors(self):
+        http = HTTP(1, 100)
+        url = "https://fixture.invalid/private-url-marker"
+        for status in (200, 201, 299):
+            with self.subTest(status=status):
+                http.request = AsyncMock(return_value=(status, {}, '{"value": 42}'))
+                self.assertEqual(
+                    await http.get_json("GET", url, token="fixture-token"), {"value": 42}
+                )
+                http.request.assert_awaited_once_with("GET", url, token="fixture-token")
+        for status, body, error in (
+            (401, "private-body-marker", AuthenticationError),
+            (403, "private-body-marker", AuthenticationError),
+            (302, "private-body-marker", ProtocolError),
+            (500, "private-body-marker", ProtocolError),
+            (200, '{"private-body-marker":1,"private-body-marker":2}', ProtocolError),
+            (200, '{"private-body-marker":NaN}', ProtocolError),
+            (200, "private-body-marker", ProtocolError),
+        ):
+            with self.subTest(status=status, body=body):
+                http.request = AsyncMock(return_value=(status, {}, body))
+                with self.assertRaises(error) as caught:
+                    await http.get_json("GET", url, token="fixture-token")
+                self.assertIs(type(caught.exception), error)
+                self.assertNotIn("private-body-marker", str(caught.exception))
+                self.assertNotIn("private-url-marker", str(caught.exception))
+                self.assertNotIn("fixture-token", str(caught.exception))
+                http.request.assert_awaited_once()
         self.assertIsNone(http.session)
 
     async def test_portal_token_refresh_and_one_read_retry(self):
