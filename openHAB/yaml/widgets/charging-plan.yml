@@ -1,0 +1,145 @@
+version: 1
+widgets:
+  smabChargingPlan:
+    props:
+      parameters:
+        - name: item
+          label: Ladeplan-Item (commands#plan)
+          type: TEXT
+          context: item
+          required: true
+        - name: modeItem
+          label: Lademodus-Item (settings#chargemode)
+          type: TEXT
+          context: item
+          required: true
+        - name: resultItem
+          label: Befehlsrückmeldung (commands#localresult)
+          type: TEXT
+          context: item
+          required: true
+    component: f7-card
+    config: {}
+    slots:
+      default:
+        - component: f7-card-header
+          config: {}
+          slots:
+            default:
+              - component: Label
+                config:
+                  text: Ladeplan vorbereiten
+        - component: f7-card-content
+          slots:
+            default:
+              - component: f7-list
+                slots:
+                  default:
+                    - component: oh-input-item
+                      config:
+                        title: Zielenergie (kWh)
+                        type: number
+                        variable: energy
+                        min: 0
+                        step: 0.1
+                        required: true
+                        outline: true
+                        style:
+                          margin-top: 0
+                          margin-bottom: 8px
+                          --f7-input-height: 36px
+                          --f7-list-item-padding-vertical: 4px
+                    - component: oh-input-item
+                      config:
+                        title: Endzeit (Browser-Zeitzone)
+                        type: datetime-local
+                        variable: end
+                        required: true
+                        outline: true
+                        style:
+                          margin-top: 0
+                          margin-bottom: 8px
+                          --f7-input-height: 36px
+                          --f7-list-item-padding-vertical: 4px
+                config:
+                  style:
+                    margin-top: 0
+                    margin-bottom: 8px
+              - component: f7-list
+                config:
+                  mediaList: true
+                  style:
+                    margin-top: 0
+                    margin-bottom: 8px
+                slots:
+                  default:
+                    - component: oh-list-item
+                      config:
+                        title: Endzeit mit Zeitzone
+                        subtitle: '=vars.end && dayjs(vars.end).isValid() ? dayjs(vars.end).format(''YYYY-MM-DDTHH:mm:ssZ'')
+                          : ''Bitte Endzeit wählen'''
+                    - component: oh-list-item
+                      config:
+                        title: Zuletzt bestätigter Plan
+                        subtitle: '=props.item ? items[props.item].state : ''Ladeplan-Item auswählen'''
+                    - component: oh-list-item
+                      config:
+                        title: Letzte lokale Rückmeldung
+                        subtitle: '=props.resultItem ? items[props.resultItem].state + '' · keine Bestätigung dieser Eingabe'' : ''Rückmeldungs-Item auswählen'''
+              - component: Label
+                config:
+                  style:
+                    display: block
+                    white-space: normal
+                    line-height: 1.5
+                    margin-bottom: 8px
+                  text: '=props.modeItem && items[props.modeItem].state === ''4720'' ? ''Zum Ändern zuerst auf PV-Laden,
+                    Schnellladen oder Stopp wechseln.'' : ''Positive Zielenergie und eine zukünftige Endzeit eingeben.
+                    Die Ladefreigabe bleibt separat.'''
+              - component: oh-button
+                config:
+                  text: Ladeplan übernehmen
+                  fill: true
+                  disabled: =!(props.item && props.modeItem && props.resultItem && Number.isFinite(vars.energy *
+                    1) && vars.energy * 1 > 0 && vars.end && dayjs(vars.end).isValid() && dayjs(vars.end).isAfter(dayjs())
+                    && ['4718', '4719', '4721'].includes(items[props.modeItem].state) && ['NULL', 'UNDEF', 'confirmed',
+                    'already-confirmed', 'rejected', 'rejected-retained', 'rejected-disabled', 'rejected-busy'].includes(items[props.resultItem].state))
+                  action: '=(props.item && props.modeItem && props.resultItem && Number.isFinite(vars.energy * 1)
+                    && vars.energy * 1 > 0 && vars.end && dayjs(vars.end).isValid() && dayjs(vars.end).isAfter(dayjs())
+                    && [''4718'', ''4719'', ''4721''].includes(items[props.modeItem].state) && [''NULL'', ''UNDEF'',
+                    ''confirmed'', ''already-confirmed'', ''rejected'', ''rejected-retained'', ''rejected-disabled'',
+                    ''rejected-busy''].includes(items[props.resultItem].state)) ? ''command'' : ''none'''
+                  actionItem: =props.item
+                  actionCommand: '=JSON.stringify({energyKWh: vars.energy * 1, endTime: dayjs(vars.end).format(''YYYY-MM-DDTHH:mm:ssZ'')})'
+                  actionConfirmation: Der vorbereitete Ladeplan wird an die Wallbox gesendet und Zielvorgabenladen
+                    nach Bestätigung aktiviert. Fortfahren?
+          config: {}
+  smabChargingPlanList:
+    props:
+      parameters:
+        - name: item
+          label: Ladeplan-Item (commands#plan)
+          type: TEXT
+          context: item
+          required: true
+        - name: modeItem
+          label: Lademodus-Item (settings#chargemode)
+          type: TEXT
+          context: item
+          required: true
+        - name: resultItem
+          label: Befehlsrückmeldung (commands#localresult)
+          type: TEXT
+          context: item
+          required: true
+    component: oh-list-item
+    config:
+      title: Ladeplan konfigurieren
+      icon: oh:time
+      subtitle: Zielenergie und Endzeit gemeinsam übernehmen
+      action: popup
+      actionModal: widget:smabChargingPlan
+      actionModalConfig:
+        item: =props.item
+        modeItem: =props.modeItem
+        resultItem: =props.resultItem

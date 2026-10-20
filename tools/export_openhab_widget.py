@@ -7,7 +7,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE = ROOT / "openHAB/yaml/widgets/echarger-comfort.yml"
-OUTPUT = ROOT / "openHAB/sma_echarger_comfort_list.yaml"
+OUTPUT = ROOT / "openHAB/imports/widgets/sma_echarger_comfort_list.yaml"
 UID = "sma_echarger_comfort_list"
 
 
