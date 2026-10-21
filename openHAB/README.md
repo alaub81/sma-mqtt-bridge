@@ -35,13 +35,12 @@ installation. File-defined widgets are read-only in MainUI.
 | [charging-plan.yml](yaml/widgets/charging-plan.yml) | `smabChargingPlan`, `smabChargingPlanList` | Optional standalone charging-plan card and popup opener |
 | [live-energy-flow.yml](yaml/widgets/live-energy-flow.yml) | `live_energy_flow` | Current power flow |
 | [daily-energy-overview.yml](yaml/widgets/daily-energy-overview.yml) | `daily_energy_overview` | Daily energy overview |
-| [pv-roof-production.yml](yaml/widgets/pv-roof-production.yml) | `pv_roof_production` | DC production on SO/NW house roofs and SW carport |
-
+| [pv-roof-production.yml](yaml/widgets/pv-roof-production.yml) | `pv_roof_production` | DC production for three configured roof areas |
 | [pv-forecast.yml](yaml/widgets/pv-forecast.yml) | `pv_forecast` | Four-day PV forecast with configurable traffic thresholds and house average |
 
-Existing installations do not need a live change because repository files moved.
-When reorganizing installed files, move a definition rather than keeping copies
-at both its former and new path. Keep widget UIDs and page references unchanged.
+Forecast widgets display forecast Items supplied by your setup; the bridge does
+not calculate a weather-based PV forecast. The widget files let you select your
+own Items and display options. Install each widget UID only once.
 
 ## Manual MainUI import
 

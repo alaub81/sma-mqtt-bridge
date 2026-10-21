@@ -195,7 +195,9 @@ def main():
         print(f"\n==> {label} ({len(paths)} files)", flush=True)
         if command:
             if not shutil.which(command[0]):
-                print(f"Missing tool: {command[0]}. See README.md (Lint checks).", flush=True)
+                print(
+                    f"Missing tool: {command[0]}. See docs/BUILDING.md (Lint checks).", flush=True
+                )
                 passed = False
             else:
                 try:

@@ -1,150 +1,144 @@
 # SMA MQTT Bridge
 
-A Python Docker service publishing SMA measurements and charging preferences through
-Homie 4 MQTT, with optional guarded eCharger controls. Target: Raspberry Pi 5,
-Linux arm64. Sunny Home Manager remains the charging controller.
+Bring your SMA solar system, battery storage and EV charger into your smart home.
+SMA MQTT Bridge collects measurements and device settings from SMA inverters,
+Sunny Home Manager 2.0 and SMA eCharger, then publishes them through **Homie 4 MQTT**.
+Your smart home can use those values for dashboards, histories and automations;
+openHAB can discover the devices through its Homie binding.
 
-Use the [user guide](docs/README.md) for setup, MQTT properties, operation and updates.
+One Docker service brings the sources together, with optional plant calculations
+for household consumption, daily energy balances, charging energy, costs and
+feed-in remuneration. The repository also includes ready-to-configure openHAB
+widgets for energy monitoring and charging controls.
 
-## Install the published image
+## What makes it useful
 
-Preserve any existing root `smab.env`. On a fresh installation, copy
-[smab.example.env](smab.example.env) to `smab.env` and configure only required settings.
-Sources and command gates default to disabled. Additional JSON is optional.
-Copy [.env.example](.env.example) to `.env` only if you need Compose overrides
-(image version, paths or container UID/GID).
-See [configuration, TLS and state storage](docs/CONFIGURATION.md).
-A compact commented installation example is available in the [Wiki quick start](docs/WIKI_QUICKSTART.md).
+- **Local device access:** inverter readings through Modbus TCP, Home Manager via
+  Modbus TCP or UDP, and eCharger via its local API and SEMP. Optional ennexOS
+  portal access adds the minimum-PV charging preference without a paid SMA API.
+- **Your choice of devices:** enable each source independently and start with only
+  the equipment you need. An existing MQTT broker is required.
+- **Extensible inverter support:** add verified register mappings as JSON profiles,
+  with host overrides, without model-specific adapter code.
+- **Customizable display labels:** use bundled English or German labels, override
+  individual labels or add another language through a JSON dictionary.
+- **Explicit charging controls:** supported eCharger settings can be enabled
+  separately from reading measurements. Device-write gates default to disabled;
+  Sunny Home Manager remains the charging controller.
+- **Docker on multiple architectures:** published images support Linux **amd64**
+  and **arm64**. Pull the same image name on either platform.
 
-Published images are available at `ghcr.io/alaub81/sma-mqtt-bridge` for Linux
-amd64 and arm64. For a reproducible deployment, pin `SMAB_BRIDGE_VERSION` in `.env`
-to a verified published release compatible with your configuration and persisted
-state; image tags omit the Git tag's `v`. The default `latest` follows the newest
-successfully published stable release. Repository changes can precede publication;
-check [update instructions](docs/UPDATING.md) before upgrading or downgrading.
+See the [supported profiles](docs/PROFILES.md), [MQTT value catalog](docs/WERTEKATALOG.md)
+and [plant calculations](docs/PLANT.md) for the available data and requirements.
+
+## Supported devices
+
+The repository includes profiles and adapters for the following devices:
+
+| Device | Exact model | Connection |
+| --- | --- | --- |
+| Sunny Tripower 8.0 | [STP8.0-3AV-40](ressources/profiles/sma-stp8-0-3av-40.json) | Modbus TCP |
+| Sunny Boy Storage 3.7 | [SBS3.7-10](ressources/profiles/sma-sbs3-7-10.json) | Modbus TCP |
+| Sunny Boy 4.0 | [SB4.0-1AV-41](ressources/profiles/sma-sb4-0-1av-41.json) | Modbus TCP |
+| Sunny Home Manager 2.0 | Sunny Home Manager 2.0 | Modbus TCP or UDP meter telegrams |
+| SMA eCharger | EVC22-3AC-20 | Local HTTPS API and independently enabled SEMP |
+
+The bundled inverter profiles currently allow firmware **4.10.10.R** for
+STP8.0-3AV-40 and SB4.0-1AV-41, and **4.07.31.R** for SBS3.7-10.
+Other models or firmware need a matching validated profile; a related model name
+alone does not establish compatibility. See the [profile guide](docs/PROFILES.md).
+
+Home Manager transport requirements are covered in the
+[Home Manager guide](docs/HOME_MANAGER_MODBUS.md). The eCharger local API verifies
+the model and configured serial; parameter units and permissions must match the
+metadata. Its model-specific unit fallbacks apply only to firmware **2.6.37.R**.
+See [eCharger configuration](docs/CONFIGURATION.md#local-echarger-controls).
+The optional ennexOS adapter supplements the charger with its minimum-PV preference;
+it is enabled and authenticated separately from local device access.
+
+## Quick start
+
+You need Docker with Compose v2, Git, a reachable MQTT broker and at least one
+supported SMA source. Enable the required device interface, such as Modbus TCP,
+before starting the bridge.
+
+### 1. Prepare a new installation
+
+```sh
+git clone https://github.com/alaub81/sma-mqtt-bridge.git
+cd sma-mqtt-bridge
+cp smab.example.env smab.env
+mkdir -p data/sma-mqtt-bridge
+chmod 600 smab.env
+```
+
+Keep an existing `smab.env` when updating. Optional JSON configuration is not
+required; the ENV file is enough to get started.
+
+### 2. Configure your broker and devices
+
+Edit `smab.env`. For example, the following settings enable one supported inverter:
+
+```dotenv
+SMAB_MQTT_HOST=mqtt.example.invalid
+SMAB_INVERTER1_ENABLED=true
+SMAB_INVERTER1_HOST=inverter.example.invalid
+SMAB_INVERTER1_PROFILE=sma-stp8-0-3av-40
+```
+
+Replace both example hostnames with addresses reachable from the container and
+choose the profile matching your actual model and firmware. Configure MQTT
+credentials if your broker requires them. MQTT defaults to TLS on port 8883 with
+certificate verification; configure the CA if your broker uses a private one.
+For an intentionally plaintext broker, explicitly set `SMAB_MQTT_TLS=false` and
+`SMAB_MQTT_PORT=1883`.
+
+All other sources remain disabled until you enable them. For Home Manager,
+eCharger, SEMP and portal settings, use the
+[full quick-start example](docs/WIKI_QUICKSTART.md) and
+[configuration reference](docs/CONFIGURATION.md).
+
+### 3. Validate and start
 
 ```sh
 docker compose -f compose.example.yml pull
 docker compose -f compose.example.yml run --rm --no-deps sma-mqtt-bridge --check-config
 docker compose -f compose.example.yml up -d
+docker compose -f compose.example.yml logs --tail=100 sma-mqtt-bridge
 ```
 
-Follow [the operating guide](docs/OPERATIONS.md) for enabled
-sources. Both Compose files are standalone and share runtime settings: development
-builds `Dockerfile-SMAB`; the example pulls the published GHCR image.
-Compose automatically reads `.env` for interpolation and passes `smab.env` to the
-service. Existing explicit `--env-file smab.env` invocations remain supported.
-The default uses one `app-nw` bridge network for Modbus, local HTTP and portal access.
-For Linux Home Manager UDP multicast, see the [network variants](docs/CONFIGURATION.md#compose-network-variants).
-Keep the `data_smab_state` volume when replacing a container.
+The image is pulled from `ghcr.io/alaub81/sma-mqtt-bridge`. Check container health,
+source availability and MQTT values using the [operating guide](docs/OPERATIONS.md).
+For a pinned image version and safe container replacement, follow
+[updates and backups](docs/UPDATING.md). Preserve the `data_smab_state` volume.
 
-Optional plant calculations use explicit per-inverter roles and existing local
-samples, with no additional device queries. PV/storage sums appear only for two
-or more configured enabled contributors; household power and grid day counters
-are separate calculated properties. See [plant setup and topics](docs/CONFIGURATION.md#plant-aggregates-and-energy-state)
-and [plant calculations and coverage](docs/PLANT.md).
-The feature is disabled by default. Preserve its energy ledger during upgrades;
-older releases may not understand the current fine-counter state schema.
+## openHAB widgets
 
-## Local development
+The included MainUI widgets cover live energy flow, daily energy totals, DC roof
+production, PV forecasts, eCharger controls and charging plans. Select the widgets
+you want and connect them to your own Items. Forecast widgets use forecast Items
+provided by your setup; the bridge does not generate a weather-based PV forecast.
 
-```sh
-./tools/build_image.sh
-docker compose --env-file smab.env -f compose.dev.yml run --rm sma-mqtt-bridge --check-config
-```
+Start with [openHAB discovery and Item setup](openHAB/openHAB.md), then use the
+[widget overview and installation guide](openHAB/README.md). File-based widget
+sources and a generated manual import for the eCharger widget are included.
 
-For native diagnostics and offline tests, use Python 3.15 to match the image and CI.
-Python 3.14 remains compatible with the runtime tests; the standalone Linux host
-resource recorder supports Python 3.9+.
+## Adapt the bridge to your setup
 
-```sh
-python3.15 -m venv .venv
-.venv/bin/python -m pip install --requirement ressources/requirements.txt
-(cd ressources && ../.venv/bin/python -m sma_mqtt_bridge --check-config)
-./tests/test-check.sh
-```
+**Add an inverter profile:** place a verified JSON profile in
+`data/sma-mqtt-bridge/profiles/` and select it with `SMAB_INVERTER<N>_PROFILE`.
+The [profile guide](docs/PROFILES.md#add-a-custom-inverter-profile) explains
+host overrides, identity checks and mapping requirements.
 
-The Python CLI reads process environment variables, not `smab.env`. It never rewrites
-private configuration. The pinned stable official image and its digest are in
-[Dockerfile-SMAB](Dockerfile-SMAB); verify published stable tags before an update.
+**Choose or add a language:** set `SMAB_LANGUAGE=de` for German discovery labels,
+or add a dictionary under `data/sma-mqtt-bridge/translate/`.
+The [translation guide](docs/TRANSLATIONS.md) covers overrides and new languages.
+Language changes preserve MQTT topic IDs, units and command payloads.
 
-## Lint checks and CI
-
-```sh
-python3.15 -m venv .lint-venv
-.lint-venv/bin/python -m pip install --requirement tests/requirements-lint.txt
-.lint-venv/bin/python tests/install_lint_tools.py
-./tests/linter-check.sh
-python3.15 tests/compose_check.py
-```
-
-The lint check rejects Python tool versions that differ from the CI pins. After
-changing `tests/requirements-lint.txt`, rerun the pip install command above.
-Creating the Python 3.15 lint environment currently needs a C++ compiler to build
-the pinned `pyjson5` helper. The application runtime image needs no compiler.
-
-All public repository files receive hygiene checks and applicable language linters.
-Ruff uses E4/E7/E9/F/I plus the focused correctness rules listed in `ruff.toml`:
-B006/B008 (shared defaults), B012 (exception suppression in finally), B018/B032
-(discarded expressions or accidental annotations), B020/B023 (loop bindings),
-B025 (duplicate handlers), RUF006 (unreferenced asyncio tasks), and RUF100 (stale
-noqa suppressions). Broad style/modernization families remain opt-in. See the
-[rule reference](https://docs.astral.sh/ruff/rules/), especially
-[loop callbacks](https://docs.astral.sh/ruff/rules/function-uses-loop-variable/)
-and [async task references](https://docs.astral.sh/ruff/rules/asyncio-dangling-task/).
-Python formatting uses a 100-column target, double quotes and four-space
-indentation. Pylint checks errors/fatal diagnostics. Widget
-export parity and local Markdown file links, including archives, are checked.
-The link check covers inline links/images and reference definitions; heading anchors
-and external URLs are outside its scope. Offline tests use deterministic fixtures
-and local test servers.
-CI runs on main-branch pushes and pull requests. Stable tag pushes invoke the
-release workflow, which requires reusable CI before building/scanning and publishing
-GHCR images. This includes Compose parity and amd64/arm64 image checks. Local test
-success is separate from a hosted workflow result.
-
-To apply only import ordering and formatting with the pinned local Ruff:
-
-```sh
-.lint-venv/bin/ruff check --select I --fix ressources tests tools
-.lint-venv/bin/ruff format ressources tests tools
-```
-
-The linter-check command itself remains read-only.
-
-## Documentation and layout
-
-| Location | Purpose |
-| --- | --- |
-| [Configuration](docs/CONFIGURATION.md), [ENV example](smab.example.env), [JSON example](docs/config.example.json) | Supported settings, defaults, deployment and command contracts |
-| [Profiles](docs/PROFILES.md) | Supported models and host profile selection |
-| [Operation](docs/OPERATIONS.md), [updates](docs/UPDATING.md) | Health, recovery, backups and image replacement |
-| [Plant](docs/PLANT.md), [value catalog](docs/WERTEKATALOG.md) | Calculations, coverage, MQTT properties and units |
-| [openHAB directory](openHAB/README.md), [MainUI guide](openHAB/openHAB.md), [garage widget](openHAB/echarger-comfort.md) | Existing Item setup and widget installation |
-| [Translations](translate/README.md) | English/German display labels and host overrides |
-| `ressources/` | Image inputs only: Python package, bundled profiles and runtime requirements |
-| `tests/`, `tools/` | Offline checks, lint/Compose tooling and widget exporter |
-
-Private `smab.env`, installation data and original references stay outside Git and
-Docker image inputs. Configuration, tests and documents stay outside `ressources/`.
-Publication of new commits/tags is explicit release work; local changes are not
-automatically published. No paid SMA Developer API or replacement charging
-controller is used.
+For all supported settings, use [smab.example.env](smab.example.env) and the
+[documentation index](docs/README.md). To build your own image, run offline tests
+or work on the source, see [building and checks](docs/BUILDING.md).
 
 ## License
 
-MIT. See [LICENSE](LICENSE). This project is not affiliated with SMA.
-
-## Build versions
-
-Local Python calls derive their version from Git: a clean stable tag reports its
-release version; later commits or tracked edits report a dev version with commit
-identity and an optional dirty suffix. Use `./tools/build_image.sh` for local image
-builds to embed that version without sending Git or private files to Docker.
-Plain Compose/Docker builds without `SMAB_BUILD_VERSION` report `0.0.0+unknown`.
-Release builds receive the version from their stable tag and verify the CLI output
-before publication. An embedded image version takes precedence over local Git.
-
-The runtime image removes build-only `pip` and its `ensurepip` bootstrap copy after
-installing and validating the pinned dependencies. Install dependency changes by
-rebuilding the image; package installation inside a running container is unsupported.
+[MIT](LICENSE). This project is not affiliated with SMA.

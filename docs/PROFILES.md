@@ -25,6 +25,41 @@ read mapping does not authorize inverter writes.
 
 See [configuration](CONFIGURATION.md) and the [topic catalog](topic-catalog.csv).
 
+## Add a custom inverter profile
+
+For a model using the implemented Modbus TCP reader, support is defined by a JSON
+file: identity checks, register blocks, types, units, sentinels, intervals and MQTT
+metadata. Verify these against official documentation for the exact model and
+firmware before using a new mapping.
+
+1. Create a profile following the schema below. Keep hostnames, serials and
+   credentials in private device configuration, outside the reusable profile.
+2. Save it under `data/sma-mqtt-bridge/profiles/`, for example `my-inverter.json`.
+3. Select that host file explicitly for the appropriate inverter slot:
+
+   ```dotenv
+   SMAB_INVERTER1_ENABLED=true
+   SMAB_INVERTER1_HOST=inverter.example.invalid
+   SMAB_INVERTER1_PROFILE=file:my-inverter.json
+   ```
+
+4. Validate configuration before connecting:
+
+   ```sh
+   docker compose -f compose.example.yml run --rm --no-deps sma-mqtt-bridge --check-config
+   ```
+
+5. Recreate the service after changing configuration or a selected profile and
+   verify identity, units and observations against the device. A successful
+   configuration check validates the schema, not hardware support.
+
+Host profiles are covered by the read-only configuration mount and do not require
+an image rebuild. A bare ID uses the host file before the bundled profile; a
+`file:` selector has no bundled fallback. Identity-only descriptors remain blocked.
+Custom profile changes can affect existing accounting fingerprints: preserve the
+state volume and follow [update guidance](UPDATING.md) before changing a profile
+used for plant energy accounting.
+
 ## Version 1 polling schema
 
 The loader rejects unknown fields and non-standard JSON numbers. Required top-level fields: `schemaVersion` (integer 1), `id`, `device`, `protocol`, `validation`, `pollers`, `properties`, `commands`. `identity` is additionally required for a validated polling profile.

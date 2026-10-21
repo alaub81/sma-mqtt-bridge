@@ -4,6 +4,21 @@ Back up both private configuration and the active Docker state volume before
 replacing an image. A backup of `data/sma-mqtt-bridge/` does not include the named
 state volume. Keep the same Compose project name, volume and state mount.
 
+## Published images and version selection
+
+Published images use `ghcr.io/alaub81/sma-mqtt-bridge` for Linux amd64 and arm64.
+Docker selects the matching platform. Image tags omit the Git release tag's `v`:
+Git tag `vX.Y.Z` corresponds to image tag `X.Y.Z`. The default `latest` follows the
+newest successfully published stable release; source changes can precede image
+publication. Choose a verified compatible release for reproducible deployments.
+
+On a fresh installation, optionally copy [.env.example](../.env.example) to `.env`
+and set `SMAB_BRIDGE_VERSION=X.Y.Z` to the chosen published version. Edit an existing
+`.env` in place rather than replacing its overrides. Compose reads `.env` for image,
+path and UID/GID interpolation and passes `smab.env` as the service environment.
+See [Docker's ENV guidance](https://docs.docker.com/compose/how-tos/environment-variables/set-environment-variables/)
+and [bridge configuration](CONFIGURATION.md#compose-usage).
+
 ## Replace the container
 
 1. Read the target version's changes and check configuration/profile overrides.
