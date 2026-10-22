@@ -40,6 +40,13 @@ private configuration. Offline tests use deterministic fixtures and local test
 servers without SMA-device or external-broker access. Local server tests require
 permission to bind loopback sockets in restricted environments.
 
+To run only the offline tests, use `./tests/test-check.sh`. It creates `.venv`
+when missing, preferring Python 3.15, then 3.14, then a compatible `python3`.
+It installs missing or mismatched dependencies from `ressources/requirements.txt`
+and reuses matching packages. Initial setup and dependency updates require internet
+access; subsequent checks run offline. An existing `.venv` must use Python 3.14+.
+No activation or manual package installation is needed for this command.
+
 ## Lint checks
 
 ```sh
