@@ -22,6 +22,14 @@ than renewing it during calculations. Invalid inputs, resets, backward time,
 negative balances and unsupported battery boundaries block affected accounting.
 Partial/gap/complete statuses describe coverage, independently of MQTT connectivity.
 
+A rising outflow counter can temporarily precede older inflow measurements.
+Household energy then reports `synchronizing` for one bounded wait, while the
+rejected energy remains unavailable. After the older inflows are sampled again,
+or the configured skew timeout expires, an unresolved decrease reports
+`inconsistent`. Retained values keep their last-known meaning. Actual counter
+resets and source changes remain blocked immediately. See the
+[accounting contract](CONFIGURATION.md#plant-aggregates-and-energy-state).
+
 Persist energy baselines, hardware/configuration fingerprints and bounded daily
 history atomically in the state volume before publishing committed balances.
 Preserve topic manifests, command journals and saved price preferences separately.

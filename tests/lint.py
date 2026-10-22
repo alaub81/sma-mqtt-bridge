@@ -3,6 +3,7 @@
 
 import json
 import re
+import shlex
 import shutil
 import subprocess
 import sys
@@ -29,7 +30,7 @@ def check_linter_versions():
     if failures:
         print("Lint environment differs from CI:\n" + "\n".join(failures), flush=True)
         print(
-            "Update with: .lint-venv/bin/python -m pip install "
+            f"Update with: {shlex.quote(sys.executable)} -m pip install "
             "--requirement tests/requirements-lint.txt",
             flush=True,
         )

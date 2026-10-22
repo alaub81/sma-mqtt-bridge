@@ -662,6 +662,7 @@ class PlantEngine:
         if (
             cached is not None
             and cached[0] == token
+            and cached[1][2] != "synchronizing"
             and (record is None or wall >= datetime.fromisoformat(record["lastTime"]))
         ):
             return cached[1]
@@ -673,6 +674,11 @@ class PlantEngine:
             wall,
             oldest_wall,
             sample_wall=wall - timedelta(seconds=now - latest),
+            sample_times={
+                ref.identity: wall
+                - timedelta(seconds=now - self.sources[ref.source].values[ref.key][1])
+                for ref, _ in inputs
+            },
             daily_only=name in ("wallbox", "housewithoutwallbox"),
         )
         result = (daily, total, status, (oldest, deadline))

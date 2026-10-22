@@ -43,15 +43,17 @@ permission to bind loopback sockets in restricted environments.
 ## Lint checks
 
 ```sh
-python3.15 -m venv .lint-venv
-.lint-venv/bin/python -m pip install --requirement tests/requirements-lint.txt
-.lint-venv/bin/python tests/install_lint_tools.py
 ./tests/linter-check.sh
 python3.15 tests/compose_check.py
 ```
 
-The lint runner rejects Python tool versions that differ from the CI pins. After
-changing `tests/requirements-lint.txt`, rerun the installation command. Creating
+The script creates `.lint-venv` when missing (preferring `python3.15`, then
+`python3.14`, then `python3`, requiring Python 3.14+), installs Python tools
+when their versions differ from the CI pins, and prepares the pinned native
+linters in `.lint-tools`. Existing matching tools are reused. Initial setup and
+dependency updates require internet access. On macOS, install the pinned Hadolint
+on PATH first (the installer reports the required version); no macOS release
+binary is provided upstream. Use Python 3.15 to match CI. Creating
 the Python 3.15 lint environment needs a C++ compiler to build the pinned
 `pyjson5` helper. The application runtime image needs no compiler.
 
@@ -77,7 +79,7 @@ To apply only import ordering and formatting with the pinned Ruff:
 .lint-venv/bin/ruff format ressources tests tools
 ```
 
-The linter-check command itself is read-only.
+The command prepares local tool directories but never fixes source files.
 
 ## Generated files
 

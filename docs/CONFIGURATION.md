@@ -698,9 +698,9 @@ device polling or InfluxDB credentials are required.
 | `SMAB_PLANT_HOMIE_ID` | `sma-plant` | Valid unique Homie device ID. |
 | `SMAB_PLANT_GRID_SOURCE` | `home-manager` | One enabled grid source; alternatively an enabled inverter slot with complete verified `grid` mappings. |
 | `SMAB_PLANT_UPDATE_INTERVAL_SECONDS` | `1` | Positive seconds; maximum wait for expiry/calendar/checkpoint checks. New source receipts/errors wake calculation immediately. |
-| `SMAB_PLANT_MAX_SKEW_SECONDS` | `240` | Positive seconds, at most 3600; maximum spread of contributing observation times, in addition to individual freshness. |
+| `SMAB_PLANT_MAX_SKEW_SECONDS` | `240` | Positive seconds, at most 3600; maximum spread of contributing observation times, in addition to individual freshness. Also bounds the one-time wait for older household energy inflows after an outflow counter advances. |
 | `SMAB_PLANT_BOUNDARY_TOLERANCE_SECONDS` | `240` | Positive seconds, at most 900; bounded uncertainty for real counter snapshots around local midnight. No extrapolation. |
-| `SMAB_PLANT_CHECKPOINT_INTERVAL_SECONDS` | `300` | Positive seconds; regular durable energy snapshot/publication cadence. Initial baselines, boundary transitions and resets are saved immediately. |
+| `SMAB_PLANT_CHECKPOINT_INTERVAL_SECONDS` | `300` | Positive seconds; regular durable energy snapshot/publication cadence. Initial baselines, boundary transitions, resets and entry into energy synchronization are saved immediately. |
 | `SMAB_PLANT_INITIAL_CONSUMPTION_KWH` | `0` | Deprecated compatibility setting, finite nonnegative number. Retained for existing ledger fingerprints/internal fields; no household lifetime topic is published. Leave existing values unchanged to preserve ledger compatibility. |
 | `SMAB_PLANT_ASSUME_AC_BATTERY_ENERGY` | `false` | Boolean; explicitly treat an unverified battery counter boundary as AC for provisional household kWh. Diagnostic boundary becomes `assumed-ac`; documented DC mappings remain blocked. |
 | `SMAB_PLANT_PUBLISH_PARTIAL_DAY` | `true` | Boolean; publishing initial partial-day counter deltas from the first valid saved snapshot. Status remains `partial`. Does not override gaps, resets, battery-boundary or input-validity guards. |
@@ -738,13 +738,35 @@ credentials, tokens, addresses or raw serials. Saves use atomic replacement with
 file/directory sync; checkpoint publication follows successful persistence. The
 topic manifest and command journals retain their existing independent files.
 
-By default the first partial day is unavailable, not zero. Subsequent full days require
+The first day reports partial coverage; its publication follows
+`SMAB_PLANT_PUBLISH_PARTIAL_DAY` below. Subsequent full days require
 bounded observations around local midnight, including 23/25-hour DST days. A
 midnight-spanning outage gives `gap`; do not interpret retained yesterday values as
 today's measurement. `reset` blocks affected lifetime accounting until manual
 reconciliation; daily accounting can start again at a covered next midnight.
 Backward wall-clock observations give `clock-error`. Nonmonotone derived house
-energy gives `inconsistent`, with no fabricated zero or lower confirmed counter.
+energy is not accepted, with no fabricated zero or lower confirmed counter.
+
+For house energy and house energy without Wallbox, a newly increased outflow
+(export, battery charging or Wallbox consumption) can arrive before older inflow
+measurements (PV, import or battery discharge). If the preceding counter vector
+was consistent and such older inflows exist, coverage temporarily reports
+`synchronizing`. This identifies a possible sampling delay, not proof of its cause.
+The bridge waits until those inflows have each been sampled at or after the
+triggering outflow observation, for at most `SMAB_PLANT_MAX_SKEW_SECONDS` after the
+first rejected frame. Repeated outflow updates do not extend the wait. If the
+balance still fails, status becomes `inconsistent`; a valid nondecreasing balance
+recovers normally. Equally current inputs, older outflows or missing timing
+evidence do not qualify for this wait.
+
+During synchronization, rejected energy candidates remain unavailable. Retained
+MQTT values stay last-known observations; they are not republished as new energy,
+listed in `validproperties` or given renewed freshness. Source freshness/skew,
+identity, clock and actual counter-reset guards remain in force. The rejected
+source vector is saved on entry so its counter high-water marks survive restart.
+A restart does not reopen a wait for an already rejected saved vector: it reports
+`inconsistent` until recovery. Ledger schema, baselines, precision offsets and
+saved daily history are unchanged; no reset or configuration change is required.
 
 Changed configuration/membership/timezone or hardware produces
 `configuration-changed` without overwriting the old baselines; current power sums
@@ -767,7 +789,7 @@ This diagnostic follows `SMAB_PLANT_DIAGNOSTICS_ENABLED`, like all optional plan
 A retained device value is not evidence of a currently valid source observation.
 Invalid PV power blocks both PV power sums and household W, including at night;
 calendar darkness alone never converts an invalid register into a measured zero. Values can include `partial`,
-`complete`, `gap`, `reset`, `clock-error`, `configuration-changed`, `inconsistent`,
+`complete`, `gap`, `reset`, `clock-error`, `configuration-changed`, `synchronizing`, `inconsistent`,
 `unavailable`, `invalid`, `init` and `unsupported-battery-boundary`. `complete` means
 covered within configured sampling tolerance, not an exact midnight meter read.
 
@@ -865,7 +887,8 @@ provisional AC override as household kWh. Both use SMAB_TIMEZONE, existing check
 midnight coverage, DST, reset and clock guards. The subtraction uses aligned
 counter snapshots, not independently initialized daily results. A late enable
 starts new partial Wallbox accounts while preserving existing grid/house baselines.
-Negative or decreasing derived daily energy is unavailable/inconsistent, never
+Negative or decreasing derived daily energy remains unavailable, with the bounded
+`synchronizing` wait above where applicable, otherwise `inconsistent`; it is never
 clamped. No assumption about unmetered Wallbox standby consumption is added;
 this property has the scope of the existing Wallbox total-energy measurement.
 

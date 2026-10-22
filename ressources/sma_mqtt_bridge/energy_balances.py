@@ -167,6 +167,7 @@ class EnergyBalances:
         self.force_save = False
         self.last_save = None
         self.precision_backup = None
+        self.synchronizing = {}
         if self.data["schemaVersion"] == 2:
             self.binding_changed |= set(self.data["precisionOffsets"]) != set(precision_inputs)
         elif precision_inputs and not self.binding_changed:
@@ -225,6 +226,7 @@ class EnergyBalances:
         oldest_wall,
         *,
         sample_wall=None,
+        sample_times=None,
         daily_only=False,
     ):
         """Never extrapolate a counter across an unobserved local midnight."""
@@ -240,7 +242,12 @@ class EnergyBalances:
                 return None, None, "configuration-changed"
             last_time = utc_time(record["lastTime"])
             # Reject older observations before any reset or baseline mutation.
-            if wall < last_time or sample_wall < last_time:
+            pending = self.synchronizing.get(name)
+            if (
+                wall < last_time
+                or sample_wall < last_time
+                or (pending is not None and wall < pending[0])
+            ):
                 return None, None, "clock-error"
         offsets = self.data.get("precisionOffsets", {})
         if record is not None and any(
@@ -251,6 +258,7 @@ class EnergyBalances:
             if record["dailyStatus"] != "reset" or record["totalStatus"] != "reset":
                 record["dailyStatus"] = record["totalStatus"] = "reset"
                 self.dirty = self.force_save = True
+            self.synchronizing.pop(name, None)
             return None, None, "reset"
         encoded = {key: str(value) for key, value in values.items()}
         try:
@@ -279,6 +287,7 @@ class EnergyBalances:
         if reset:
             record["dailyStatus"] = record["totalStatus"] = "reset"
             self.dirty = self.force_save = True
+            self.synchronizing.pop(name, None)
         next_boundary = datetime.combine(
             local_day + timedelta(days=1), time(), self.zone
         ).astimezone(timezone.utc)
@@ -288,6 +297,7 @@ class EnergyBalances:
         if last_time < before_boundary <= sample_wall:
             self.force_save = True
         if local_day.isoformat() != record["date"]:
+            self.synchronizing.pop(name, None)
             previous_day = date.fromisoformat(record["date"])
             boundary = datetime.combine(local_day, time(), self.zone).astimezone(timezone.utc)
             tolerance = timedelta(seconds=self.settings.boundary_tolerance_seconds)
@@ -352,7 +362,59 @@ class EnergyBalances:
             if inconsistent
             else record["dailyStatus"]
         )
+        if status == "inconsistent" and not reset:
+            status = self.synchronization_status(
+                name, previous, values, signs, wall, sample_times, daily_only
+            )
+        elif not inconsistent:
+            self.synchronizing.pop(name, None)
         return daily, total, status
+
+    def synchronization_status(self, name, previous, values, signs, wall, sample_times, daily_only):
+        """Wait once for older inflows, without accepting or refreshing a lower balance."""
+        if name not in ("house", "housewithoutwallbox") or sample_times is None:
+            self.synchronizing.pop(name, None)
+            return "inconsistent"
+        pending = self.synchronizing.get(name)
+        if pending is None:
+            last = {key: Decimal(value) for key, value in previous["last"].items()}
+            checks = []
+            if previous["dailyStatus"] == "complete" or (
+                self.settings.publish_partial_day and previous["dailyStatus"] == "partial"
+            ):
+                checks.append(
+                    self.accept(
+                        self.balance(last, signs, previous["dailyBase"]), previous["dailyValue"]
+                    )
+                )
+            if not daily_only and previous["totalStatus"] == "ready":
+                total = self.balance(last, signs, previous["totalBase"])
+                if name == "house":
+                    total += Decimal(str(self.settings.initial_consumption_kwh))
+                checks.append(self.accept(total, previous["totalValue"]))
+            # A saved rejected vector also prevents a restart from opening a new grace period.
+            if not checks or not all(checks) or previous["dailyStatus"] == "reset":
+                return "inconsistent"
+            advanced = [
+                sample_times[key] for key in values if signs[key] < 0 and values[key] > last[key]
+            ]
+            if not advanced:
+                return "inconsistent"
+            cutoff = max(advanced)
+            waiting = {key for key in values if signs[key] > 0 and sample_times[key] < cutoff}
+            if not waiting:
+                return "inconsistent"
+            pending = (wall, cutoff, waiting)
+            self.synchronizing[name] = pending
+            # Save the rejected source high-water marks before reporting the grace period.
+            self.force_save = True
+        since, cutoff, waiting = pending
+        if (wall - since).total_seconds() < self.settings.max_skew_seconds and any(
+            sample_times[key] < cutoff for key in waiting
+        ):
+            return "synchronizing"
+        self.synchronizing.pop(name, None)
+        return "inconsistent"
 
     @staticmethod
     def balance(values, signs, baseline):
