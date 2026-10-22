@@ -269,7 +269,7 @@ widgets:
           label: 'PV-Prognose: Icon'
           type: TEXT
           groupName: icons
-          default: iconify:mdi:weather-cloudy-clock
+          default: f7:timer
         - name: forecastColor
           label: 'PV-Prognose: Farbe'
           type: TEXT
@@ -1202,7 +1202,7 @@ widgets:
                               default:
                                 - component: oh-icon
                                   config:
-                                    icon: "=props.forecastIcon || 'iconify:mdi:weather-cloudy-clock'"
+                                    icon: "=props.forecastIcon || 'f7:timer'"
                                     width: 10
                                     height: 10
                                     style:
