@@ -11,6 +11,10 @@ The [generated catalog](topic-catalog.csv) is the complete property inventory.
 Per-device topics remain independent. PV/storage sum topics require at least two
 configured contributors; failure does not shrink membership or fabricate zero.
 Household W balances require fresh, aligned PV, grid and battery observations.
+Use the opt-in [joint recorder](CONFIGURATION.md#joint-power-and-status-recorder)
+to inspect actual calculation frames and source/plant status transitions.
+`SMAB_PLANT_POWER_MAX_SKEW_SECONDS` selects a separate W-only timing limit;
+its default 0 retains the general limit until a capture has been reviewed.
 Wallbox daily kWh belongs to the eCharger; household energy excluding Wallbox
 belongs to the plant. Derived day coverage does not determine charger availability.
 

@@ -699,6 +699,9 @@ device polling or InfluxDB credentials are required.
 | `SMAB_PLANT_GRID_SOURCE` | `home-manager` | One enabled grid source; alternatively an enabled inverter slot with complete verified `grid` mappings. |
 | `SMAB_PLANT_UPDATE_INTERVAL_SECONDS` | `1` | Positive seconds; maximum wait for expiry/calendar/checkpoint checks. New source receipts/errors wake calculation immediately. |
 | `SMAB_PLANT_MAX_SKEW_SECONDS` | `240` | Positive seconds, at most 3600; maximum spread of contributing observation times, in addition to individual freshness. Also bounds the one-time wait for older household energy inflows after an outflow counter advances. |
+| `SMAB_PLANT_POWER_MAX_SKEW_SECONDS` | `0` | Number from 0 to 3600 seconds; 0 preserves the general skew limit. A positive value selects an independent limit for W recipes only, also enforced before publication. Choose a short limit from recorded source timing; energy counters and their synchronization window keep `MAX_SKEW_SECONDS`. |
+| `SMAB_PLANT_RECORDER_ENABLED` | `false` | Boolean; record each calculation frame in `plant-frames.jsonl` under the state directory. Independent of DEBUG logging and MQTT diagnostics; no additional device reads. |
+| `SMAB_PLANT_RECORDER_MAX_BYTES` | `8388608` | Integer, 4096–16777216 bytes per file; keep the active file and one `.1` rotation. Best-effort diagnostics, storage failures do not invalidate calculations. |
 | `SMAB_PLANT_BOUNDARY_TOLERANCE_SECONDS` | `240` | Positive seconds, at most 900; bounded uncertainty for real counter snapshots around local midnight. No extrapolation. |
 | `SMAB_PLANT_CHECKPOINT_INTERVAL_SECONDS` | `300` | Positive seconds; regular durable energy snapshot/publication cadence. Initial baselines, boundary transitions, resets and entry into energy synchronization are saved immediately. |
 | `SMAB_PLANT_INITIAL_CONSUMPTION_KWH` | `0` | Deprecated compatibility setting, finite nonnegative number. Retained for existing ledger fingerprints/internal fields; no household lifetime topic is published. Leave existing values unchanged to preserve ledger compatibility. |
@@ -709,7 +712,8 @@ device polling or InfluxDB credentials are required.
 | `SMAB_PLANT_DIAGNOSTICS_ENABLED` | `true` | Boolean; publish detailed plant diagnostics including dates, boundaries, input status and accounting timestamps. False retires their metadata/retained values; operational plantstatus and Basic day/average coverage statuses remain. |
 
 JSON uses `plant.enabled`, `homieId`, `gridSource`, `updateIntervalSeconds`,
-`maxSkewSeconds`, `boundaryToleranceSeconds`, `checkpointIntervalSeconds`,
+`maxSkewSeconds`, `powerMaxSkewSeconds`, `recorderEnabled`, `recorderMaxBytes`,
+`boundaryToleranceSeconds`, `checkpointIntervalSeconds`,
 `initialConsumptionKwh`, `assumeAcBatteryEnergy`, `publishPartialDay`, `debugEnabled`,
 `debugIntervalSeconds`, `diagnosticsEnabled`; each inverter gains `role`.
 The normal defaults < optional JSON < explicit ENV precedence applies.
@@ -744,7 +748,9 @@ bounded observations around local midnight, including 23/25-hour DST days. A
 midnight-spanning outage gives `gap`; do not interpret retained yesterday values as
 today's measurement. `reset` blocks affected lifetime accounting until manual
 reconciliation; daily accounting can start again at a covered next midnight.
-Backward wall-clock observations give `clock-error`. Nonmonotone derived house
+Each unchanged counter observation retains its first monotonic-to-UTC mapping;
+calculation scheduling jitter does not move its timestamp backwards. Actual
+backward wall-clock observations still give `clock-error`. Nonmonotone derived house
 energy is not accepted, with no fabricated zero or lower confirmed counter.
 
 For house energy and house energy without Wallbox, a newly increased outflow
@@ -1152,3 +1158,33 @@ These mean 0.252 euros for each imported kWh and 0.08 euros for each exported kW
 with the default currency. Values set exclusively through ENV need no MQTT writes
 or price files. To change an ENV fallback after a MQTT override, first clear only
 the corresponding saved override using the stopped-service procedure above.
+
+### Joint power and status recorder
+
+For a baseline capture, enable `SMAB_PLANT_RECORDER_ENABLED=true` and keep
+`SMAB_PLANT_POWER_MAX_SKEW_SECONDS=0`. Recreate the container with the new image
+and ENV, preserving the state volume. The recorder runs on every calculation
+(source updates wake it, with a periodic check at `UPDATE_INTERVAL_SECONDS`),
+including unchanged values. It records the actual input vector used for that
+calculation, receipt times/ages, expected and actual units, freshness, signed W
+recipes, candidate/available outputs, source status and missing critical values,
+plant status, energy statuses and accounting times. Source updates can coalesce
+before calculation; this is not a raw protocol-packet capture or proof of devices'
+internal measurement simultaneity. Outputs indicate internal eligibility, not
+broker acknowledgement. No addresses, credentials or hardware fingerprints are
+recorded.
+
+Copy `plant-frames.jsonl` and `plant-frames.jsonl.1` from the state volume promptly
+after a natural PV ramp or status transition; retention depends on frame size and
+update frequency, not a guaranteed duration. Each file is bounded by
+`RECORDER_MAX_BYTES`. Turn recording off after the investigation. Do not delete
+or replace the volume or `energy-balances.json` to collect diagnostics.
+
+After inspecting the capture, a positive `POWER_MAX_SKEW_SECONDS` (for example
+5 seconds for a controlled comparison, not a universal recommendation) rejects
+W frames whose receipt-time spread exceeds that limit. Rejected values become
+unavailable with `sample-skew` diagnostics and recover on an aligned valid frame.
+No smoothing or fabricated zero is applied. A strict limit can increase plant
+`stale` periods because house power is its critical value. Negative house power
+also blocks readiness; kWh coverage alone does not certify current W availability.
+The general 240-second default and energy synchronization remain independent.

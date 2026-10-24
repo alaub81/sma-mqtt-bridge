@@ -16,6 +16,7 @@ from .model import Property, SampleValues, SourceState, number, payload
 from .plant_debug import PlantDebug
 from .plant_price import PlantPrice
 from .plant_profiles import FIELDS
+from .plant_recorder import PlantRecorder
 
 WALLBOX_OUTPUTS = {
     "wallbox/daily-consumption": "measurements/daily-consumption",
@@ -65,6 +66,7 @@ def plant_plan(config):
     if (
         not 0 < settings.boundary_tolerance_seconds <= 900
         or not 0 < settings.max_skew_seconds <= 3600
+        or not 0 <= settings.power_max_skew_seconds <= 3600
     ):
         raise ConfigError("Plant boundary tolerance must be <= 900 s and sample skew <= 3600 s")
     groups = {"pv": [], "battery": []}
@@ -179,6 +181,7 @@ class PlantState(SourceState):
         self.guards = {}
         self.max_skew = 0
         self.expected_units = {}
+        self.skew_limits = {}
         super().__init__(*args, **kwargs)
 
     @property
@@ -211,7 +214,7 @@ class PlantState(SourceState):
         ):
             return False
         stamps = [self.sources[ref.source].values[ref.key][1] for ref in inputs]
-        return not stamps or max(stamps) - min(stamps) <= self.max_skew
+        return not stamps or max(stamps) - min(stamps) <= self.skew_limits.get(key, self.max_skew)
 
 
 class PlantEngine:
@@ -256,6 +259,8 @@ class PlantEngine:
         self.last_packet = None
         self.last_wallbox_packet = None
         self.account_frames = {}
+        self.sample_walls = {}
+        self.recorder = PlantRecorder(config)
         self.committed_times = {}
         self.add_sums()
         self.add_house_power()
@@ -482,6 +487,9 @@ class PlantEngine:
             self.wallbox_state.guards["measurements/daily-consumption"] = (self.wallbox,)
         self.state.max_payload_bytes = config.runtime.max_payload_bytes
         self.state.max_skew = config.plant.max_skew_seconds
+        self.state.skew_limits = {
+            key: self.power_skew for key, (_, unit, _) in self.recipes.items() if unit == "W"
+        }
         self.state.expected_units = self.expected_units
         self.state.guards = {
             key: tuple(ref for ref, _ in inputs) for key, (_, _, inputs) in self.recipes.items()
@@ -579,7 +587,11 @@ class PlantEngine:
             tuple((ref, 0 if ref in charging else sign) for ref, sign in inputs),
         )
 
-    def frame(self, inputs, now):
+    @property
+    def power_skew(self):
+        return self.config.plant.power_max_skew_seconds or self.config.plant.max_skew_seconds
+
+    def frame(self, inputs, now, *, max_skew=None):
         values, stamps, expires, hardware = {}, [], [], []
         for ref, sign in inputs:
             source = self.sources[ref.source]
@@ -613,10 +625,21 @@ class PlantEngine:
                     ).encode()
                 ).hexdigest()
             hardware.append((ref.source, token))
-        if max(stamps) - min(stamps) > self.config.plant.max_skew_seconds:
+        if max(stamps) - min(stamps) > (
+            self.config.plant.max_skew_seconds if max_skew is None else max_skew
+        ):
             return None
         fingerprint = hashlib.sha256(json.dumps(sorted(set(hardware))).encode()).hexdigest()
         return values, min(stamps), min(expires), fingerprint, max(stamps)
+
+    def sample_wall(self, ref, now, wall):
+        """Map each observation once; scheduling jitter must not move it backwards."""
+        stamp = self.sources[ref.source].values[ref.key][1]
+        previous = self.sample_walls.get(ref)
+        if previous is None or previous[0] != stamp:
+            previous = (stamp, wall - timedelta(seconds=now - stamp))
+            self.sample_walls[ref] = previous
+        return previous[1]
 
     def account(self, name, inputs, now, wall):
         frame = self.frame(tuple((ref, 1) for ref, _ in inputs), now)
@@ -649,7 +672,8 @@ class PlantEngine:
         values = self.ledger.precise_values(values, paired)
         if values is None:
             return None, None, "unavailable", None
-        oldest_wall = wall - timedelta(seconds=now - oldest)
+        sample_times = {ref.identity: self.sample_wall(ref, now, wall) for ref, _ in inputs}
+        oldest_wall = min(sample_times.values())
         token = (
             tuple(sorted(values.items())),
             oldest,
@@ -673,12 +697,8 @@ class PlantEngine:
             hardware,
             wall,
             oldest_wall,
-            sample_wall=wall - timedelta(seconds=now - latest),
-            sample_times={
-                ref.identity: wall
-                - timedelta(seconds=now - self.sources[ref.source].values[ref.key][1])
-                for ref, _ in inputs
-            },
+            sample_wall=max(sample_times.values()),
+            sample_times=sample_times,
             daily_only=name in ("wallbox", "housewithoutwallbox"),
         )
         result = (daily, total, status, (oldest, deadline))
@@ -717,7 +737,7 @@ class PlantEngine:
                 {
                     key: "sample-skew"
                     for key, stamp in stamps.items()
-                    if latest - stamp > self.state.max_skew
+                    if latest - stamp > self.power_skew
                 }
             )
         return problems
@@ -730,8 +750,8 @@ class PlantEngine:
         observed, deadlines = {}, {}
         accounts = {}
         power_problems = self.power_input_problems(now)
-        for key, (_, _, inputs) in self.recipes.items():
-            frame = self.frame(inputs, now)
+        for key, (_, unit, inputs) in self.recipes.items():
+            frame = self.frame(inputs, now, max_skew=self.power_skew if unit == "W" else None)
             if frame is not None:
                 values, oldest, deadline, _, _ = frame
                 value = sum(values.values(), Decimal(0))
@@ -853,6 +873,7 @@ class PlantEngine:
             self.state.update(SampleValues(packet, observed), now=now, timestamp=wall.isoformat())
             self.last_packet = snapshot
         self.debug.report(self, now, wall)
+        self.recorder.observe(self, now, wall, packet)
 
     def update_averages(self, packet, wall):
         """Average completed days, with a two-calendar-day startup preview."""

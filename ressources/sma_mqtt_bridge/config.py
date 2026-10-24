@@ -185,6 +185,9 @@ class Plant(SafeRepr):
     grid_source: str = "home-manager"
     update_interval_seconds: float = 1.0
     max_skew_seconds: float = 240.0
+    power_max_skew_seconds: float = 0.0
+    recorder_enabled: bool = False
+    recorder_max_bytes: int = 8388608
     boundary_tolerance_seconds: float = 240.0
     checkpoint_interval_seconds: float = 300.0
     initial_consumption_kwh: float = 0.0
@@ -320,12 +323,15 @@ def section(defaults, data, env, prefix, recognized):
                 )
             ):
                 minimum = 0
-            elif field.name == "timestamp_diagnostics_max_bytes":
+            elif field.name in ("timestamp_diagnostics_max_bytes", "recorder_max_bytes"):
                 minimum, maximum = 4096, 16777216
+            elif isinstance(defaults, Plant) and field.name == "power_max_skew_seconds":
+                minimum, maximum = 0, 3600
             elif field.name == "future_tolerance_seconds":
                 minimum, maximum = 0, 1
             elif not (
                 (isinstance(defaults, Portal) and field.name == "poll_interval_seconds")
+                or (isinstance(defaults, Plant) and field.name == "power_max_skew_seconds")
                 or (
                     isinstance(defaults, HomeManager)
                     and field.name
