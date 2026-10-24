@@ -47,3 +47,8 @@ The private directory is deliberately excluded from Git and Docker build context
 - Run `./tests/linter-check.sh` and `./tests/test-check.sh` for relevant changes. Use deterministic protocol fixtures for automated tests; live writes require an explicit user-requested action.
 - The BMW bridge served as an initial structural reference. At Andreas' request, obsolete BMW sources, attribution documentation, baseline/import manifest and scaffold validation archive were removed. Do not restore these historical files; the root MIT license names the SMA project author.
 - GitHub publication and container release are later milestones. The current task authorizes local preparation, not creating a remote repository or pushing secrets/private data.
+
+## Widget source ownership
+
+- Maintain installable widget definitions only in `openHAB/yaml/widgets/`. Treat installed openHAB widgets as deployment copies; compare live definitions before updates to preserve changes.
+- Do not recreate parallel editable widget sources in ChatGPT project folders. Generate required manual imports from canonical repository files. Preserve private historical backups as evidence only.

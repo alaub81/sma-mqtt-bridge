@@ -2,6 +2,9 @@
 
 This directory separates installable YAML widget sources, generated manual imports
 and setup documentation. Widget UIDs and behavior are independent of file locations.
+The canonical, editable widget sources are maintained only in this repository
+under `yaml/widgets/`. Make changes here first and deploy from these files;
+do not maintain separate editable copies in other project directories.
 
 ```text
 openHAB/
