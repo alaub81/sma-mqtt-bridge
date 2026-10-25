@@ -223,6 +223,7 @@ async def supervise(
     refresh=None,
     on_change=None,
     session=None,
+    on_samples=None,
 ):
     attempt = 0
     state.monitor = state.monitor or Availability(
@@ -253,6 +254,8 @@ async def supervise(
                     state.values = {k: v for k, v in state.values.items() if k in keys}
                 state.identity_fingerprint = getattr(reader, "identity_fingerprint", "")
                 state.update(values)
+                if on_samples is not None:
+                    on_samples(state, values)
                 if session is not None:
                     session.update(getattr(values, "session_observation", None))
                 if refresh is not None:
@@ -289,6 +292,8 @@ async def supervise(
                 monitor.failure(reason="AuthenticationError")
                 monitor.progress("auth-blocked")
                 monitor.observe("error")
+                if on_samples is not None:
+                    on_samples(state, None)
                 if on_change is not None:
                     on_change()
                 LOG.error(
@@ -305,6 +310,8 @@ async def supervise(
                 monitor.failure(is_timeout(error), type(error).__name__)
                 monitor.progress("retrying")
                 monitor.observe("error")
+                if on_samples is not None:
+                    on_samples(state, None)
                 if on_change is not None:
                     on_change()
                 if is_timeout(error):
@@ -387,6 +394,7 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
         from .plant import PlantEngine
 
         plant = PlantEngine(config, states)
+        plant.configure_reads(readers)
         states.extend(plant.output_states)
     controller = None
     local_controller, portal_controller = None, None
@@ -469,6 +477,7 @@ async def run_locked(config, refresh_portal=False, stop=None, publisher_factory=
                 session
                 if state.id == ("semp" if config.echarger.semp_enabled else "api")
                 else None,
+                on_samples=plant.observe_source if plant is not None else None,
             )
         )
         for state, reader, interval in readers

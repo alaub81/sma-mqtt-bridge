@@ -107,6 +107,26 @@ class PlantDebug:
                     "publishPartialDay": engine.config.plant.publish_partial_day,
                     "powerProblems": engine.power_input_problems(now),
                     "inputs": inputs,
+                    "powerInputs": {
+                        ref.identity: {
+                            "value": numeric(observation[0]) if observation else None,
+                            "ageSeconds": round(now - observation[1], 3) if observation else None,
+                        }
+                        for ref, observation in (engine.power_observations(now) or {}).items()
+                    },
+                    "powerFrames": {
+                        key: {
+                            ref.identity: numeric(observation[0]) if observation else None
+                            for ref, observation in (
+                                engine.power_observations(now, key) or {}
+                            ).items()
+                        }
+                        for key, (_, unit, _) in engine.recipes.items()
+                        if unit == "W"
+                    },
+                    "powerCycle": engine.power_cycles.evidence(now)
+                    if engine.power_cycles is not None
+                    else None,
                     "powerRecipes": recipes,
                     "energyRecipes": energy_recipes,
                     "legacyInitialHouseKwh": engine.config.plant.initial_consumption_kwh,

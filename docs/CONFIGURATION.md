@@ -701,6 +701,8 @@ device polling or InfluxDB credentials are required.
 | `SMAB_PLANT_GRID_SOURCE` | `home-manager` | One enabled grid source; alternatively an enabled inverter slot with complete verified `grid` mappings. |
 | `SMAB_PLANT_UPDATE_INTERVAL_SECONDS` | `1` | Positive seconds; maximum wait for expiry/calendar/checkpoint checks. New source receipts/errors wake calculation immediately. |
 | `SMAB_PLANT_MAX_SKEW_SECONDS` | `240` | Positive seconds, at most 3600; maximum spread of contributing observation times, in addition to individual freshness. Also bounds the one-time wait for older household energy inflows after an outflow counter advances. |
+| `SMAB_PLANT_COORDINATED_READS_ENABLED` | `true` | Boolean; when plant calculations are enabled, align contributing Modbus reads and use one complete W snapshot per shared cycle. False restores independent scheduling and immediate W calculations. No additional adapter is enabled. |
+| `SMAB_PLANT_POWER_CYCLE_SECONDS` | `5` | Positive number, at most 60 seconds; shared interval for contributing W pollers when coordinated reads are enabled. Overrides their profile/device poll intervals; other pollers keep their effective intervals. |
 | `SMAB_PLANT_POWER_MAX_SKEW_SECONDS` | `0` | Number from 0 to 3600 seconds; 0 preserves the general skew limit. A positive value selects an independent limit for W recipes only, also enforced before publication. Choose a short limit from recorded source timing; energy counters and their synchronization window keep `MAX_SKEW_SECONDS`. |
 | `SMAB_PLANT_RECORDER_ENABLED` | `false` | Boolean; record each calculation frame in `plant-frames.jsonl` under the state directory. Independent of DEBUG logging and MQTT diagnostics; no additional device reads. |
 | `SMAB_PLANT_RECORDER_MAX_BYTES` | `8388608` | Integer, 4096–1073741824 bytes per file (up to 1 GiB each, 2 GiB total); keep the active file and one `.1` rotation. Best-effort diagnostics, storage failures do not invalidate calculations. |
@@ -714,7 +716,8 @@ device polling or InfluxDB credentials are required.
 | `SMAB_PLANT_DIAGNOSTICS_ENABLED` | `true` | Boolean; publish detailed plant diagnostics including dates, boundaries, input status and accounting timestamps. False retires their metadata/retained values; operational plantstatus and Basic day/average coverage statuses remain. |
 
 JSON uses `plant.enabled`, `homieId`, `gridSource`, `updateIntervalSeconds`,
-`maxSkewSeconds`, `powerMaxSkewSeconds`, `recorderEnabled`, `recorderMaxBytes`,
+`maxSkewSeconds`, `powerMaxSkewSeconds`, `coordinatedReadsEnabled`,
+`powerCycleSeconds`, `recorderEnabled`, `recorderMaxBytes`,
 `boundaryToleranceSeconds`, `checkpointIntervalSeconds`,
 `initialConsumptionKwh`, `assumeAcBatteryEnergy`, `publishPartialDay`, `debugEnabled`,
 `debugIntervalSeconds`, `diagnosticsEnabled`; each inverter gains `role`.
@@ -730,7 +733,8 @@ power balance including battery charging. Negative household results and negativ
 separate directional flows are unavailable rather than clamped. Current PV active
 power remains signed. Inverter/PV/storage units and hybrid separation are validated.
 
-Power sums and direct PV/storage counter sums update from received source samples;
+Power sums use complete shared-cycle snapshots when coordinated reads are enabled.
+Direct PV/storage counter sums continue to use received source samples;
 durable grid/house balances publish only committed snapshots. Their actual oldest
 input time is retained, not renewed on calculation or MQTT reconnect. All required
 inputs must remain fresh and within skew limits; last-known retained values remain
@@ -762,7 +766,8 @@ was consistent and such older inflows exist, coverage temporarily reports
 `synchronizing`. This identifies a possible sampling delay, not proof of its cause.
 The bridge waits until those inflows have each been sampled at or after the
 triggering outflow observation, for at most `SMAB_PLANT_MAX_SKEW_SECONDS` after the
-first rejected frame. Repeated outflow updates do not extend the wait. If the
+first rejected frame. Later outflow advances move the required inflow cutoff
+inside this same wait; they never extend its deadline. If the
 balance still fails, status becomes `inconsistent`; a valid nondecreasing balance
 recovers normally. Equally current inputs, older outflows or missing timing
 evidence do not qualify for this wait.
@@ -1196,3 +1201,59 @@ No smoothing or fabricated zero is applied. A strict limit can increase plant
 `stale` periods because house power is its critical value. Negative house power
 also blocks readiness; kWh coverage alone does not certify current W availability.
 The general 240-second default and energy synchronization remain independent.
+
+### Coordinated calculation reads
+
+With plant calculations enabled, the default `COORDINATED_READS_ENABLED=true`
+keeps each contributor's W pollers on the shared `POWER_CYCLE_SECONDS` cadence
+(default 5 seconds). Only participating Modbus pollers are retimed. Per-device
+measurement topics remain available. Other power/phase pollers, identities,
+metadata and nonparticipating devices keep their own schedules. A block shared
+by power and other properties is read and decoded together, as defined by its
+profile. Set `COORDINATED_READS_ENABLED=false` to retain independent scheduling.
+
+Contributing counter pollers retain their effective profile/device intervals,
+but use the same monotonic origin instead of adding each response delay to their
+next deadline. Commensurate intervals (for example 60 and 180 seconds) therefore
+become due together. Missed deadlines skip to the next future slot without a
+catch-up burst. HTTP/SEMP/portal scheduling and UDP listening are unchanged.
+
+Pollers remain on their existing identity-verified connection paths and respect
+Home Manager transaction/reconnect pacing. Only selected adjacent ranges with
+the same function and unit may be read together, without including undocumented
+gaps. For the bundled Home Manager profile, Unit 2 grid power (30865–30868) and
+energy (30581–30584) each form one four-register read. These are the existing
+read-only fields in the [official SMA mapping](https://files.sma.de/downloads/HM-20-Modbus-NSD-TI-de-12.pdf),
+section 6.3; no profile or energy-binding identity changes.
+
+Each W recipe requires observations of all its own configured contributions from
+the same cycle. A failed battery therefore does not block an otherwise complete
+PV-only sum. Once complete, it is immutable: subsequent single-source updates
+cannot change that cycle's plant result. UDP grid contributions join by receipt
+time without creating another listener. Late responses from an older cycle do
+not complete a newer one. A snapshot retains its genuine per-block observation
+times and is usable at most through the following cycle's collection window;
+individual freshness, units, skew, source failures and balance checks still apply.
+Missing/invalid inputs and negative house results never become zero. Holding a
+previous complete snapshot during collection does not renew its age or deadline.
+After a missed successor window, the affected W output becomes unavailable.
+
+This coordinates bridge acquisitions, not the devices' internal measurements.
+A complete cycle can still fail the balance checks; verify rapid ramps and source
+failure/recovery on the installation. Do not reset energy baselines to adopt this
+change. Keep the state volume and existing profile overrides.
+
+Recorder schema 2 preserves current raw observations in `inputs` and records the
+actual immutable W vectors in `powerFrames[recipe].inputs`, with each recipe's
+cycle evidence. Reconcile W recipes against that recipe's inputs: independent
+sums can complete even while a house cycle is waiting. `powerInputs` and
+`powerCycle` are the house snapshot and its cycle evidence. `latestPowerBalances`
+shows the immediate raw-vector comparison, which is diagnostic only. Cycle
+evidence records completion, interval, deadline and missing contributions. Existing schema-1 captures remain valid historical evidence.
+
+Schema-2 account evidence also distinguishes `lastVectorDayKwh` (the ledger's last
+source vector), `confirmedDayKwh` and `committedDayKwh`, with their existing
+observation times. Pending energy synchronization includes its original start,
+current cutoff and waiting inputs. A stored value or committed snapshot is not
+necessarily currently eligible for publication; consult the frame's status and
+freshness. No baselines, fingerprints or credentials are copied into these fields.

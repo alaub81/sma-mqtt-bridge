@@ -71,3 +71,14 @@ control writes are performed.
 Protocol references: [SMA meter protocol, sections 3.1 and 3.3](https://cdn.sma.de/fileadmin/content/www.developer.sma.de/docs/EMETER-Protokoll-TI-en-10.pdf),
 [SMA Home Manager Modbus assignment tables](https://files.sma.de/downloads/HM-20-Modbus-NSD-TI-en-12.pdf),
 and [openHAB Energy Meter channels](https://www.openhab.org/addons/bindings/smaenergymeter/).
+
+## Coordinated plant reads
+
+When the optional plant's coordinated reads are enabled, the existing Unit 2
+power-import/export fields may be read as one adjacent four-register block; the
+energy-import/export fields form a separate four-register block. This adds no
+registers or channels and preserves identity verification and transaction pacing.
+Counters retain their interval on a common scheduling origin. See
+[coordinated reads](CONFIGURATION.md#coordinated-calculation-reads) for the W cadence,
+snapshot eligibility and deployment checks. Internal device-time simultaneity is
+not established by a combined Modbus response.

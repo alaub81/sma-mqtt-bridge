@@ -204,6 +204,33 @@ class CounterTimingTests(unittest.TestCase):
         validate_ledger(self.ledger.data)
         self.assertEqual(other.read_bytes(), b"unrelated fixture state")
 
+    def test_new_outflow_waits_for_its_older_inflow_without_extending_deadline(self):
+        self.step(0)
+        self.step(1, {"charge": ".002"}, stamps={"pv1": 0, "pv2": 0})
+        self.step(120, {"charge": ".010", "pv1": ".004", "pv2": ".002"}, stamps={"pv2": 119})
+        self.assertEqual(
+            self.step(180, {"charge": ".010", "pv1": ".004", "pv2": ".002"}, stamps={"pv2": 119})[
+                2
+            ],
+            "synchronizing",
+        )
+        since, cutoff, waiting = self.ledger.synchronizing["house"]
+        self.assertEqual(since, self.wall + timedelta(seconds=1))
+        self.assertEqual(cutoff, self.wall + timedelta(seconds=120))
+        self.assertIn("pv2", waiting)
+        self.assertEqual(
+            self.step(181, {"charge": ".010", "pv1": ".004", "pv2": ".008"})[::2],
+            (Decimal(".002"), "partial"),
+        )
+
+    def test_advancing_cutoff_never_renews_original_timeout(self):
+        self.step(0)
+        self.step(1, {"charge": ".002"}, stamps={"pv1": 0})
+        self.step(239, {"charge": ".010"}, stamps={"pv1": 238})
+        self.assertEqual(self.step(241, {"charge": ".020"}, stamps={"pv1": 240})[2], "inconsistent")
+        self.assertNotIn("house", self.ledger.synchronizing)
+        self.assertEqual(self.ledger.data["accounts"]["house"]["dailyValue"], "0")
+
 
 class PlantCounterTimingTests(PlantFixture):
     def test_cached_frame_expires_grace_without_refreshing_the_confirmed_energy(self):

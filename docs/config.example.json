@@ -160,6 +160,8 @@
     "gridSource": "home-manager",
     "updateIntervalSeconds": 1.0,
     "maxSkewSeconds": 240.0,
+    "coordinatedReadsEnabled": true,
+    "powerCycleSeconds": 5.0,
     "boundaryToleranceSeconds": 240.0,
     "checkpointIntervalSeconds": 300.0,
     "initialConsumptionKwh": 0.0,

@@ -79,6 +79,10 @@ Register types: `uint16`, `int16`, `uint32`, `int32`, `uint64`, `int64`, `float3
 The identity gate compares decoded model and firmware against the profile and optionally serial against `EXPECTED_SERIAL`. Define model maps and firmware encoding from verified register evidence. `format=sma-firmware` requires U32, string datatype, scale 1 and no value map: it decodes BCD major/minor, binary build and release type. Malformed BCD is unavailable. No universal identification registers are invented. Identity-only profiles must have empty mapping arrays. Merely changing their status fails validation.
 
 Profile poller intervals are preserved unless an installation-level JSON/ENV interval was explicitly set. Scheduling uses each poller's next deadline. The supplied profiles preserve existing 3-/5-second cycles and all slower pollers; a generic fallback of 10 seconds does not override them. Properties expire after the larger of the configured stale threshold and twice their effective polling interval.
+When plant coordinated reads are enabled, participating W pollers use the shared
+plant power cycle instead; contributing counter pollers keep their effective
+intervals on a shared monotonic origin. This runtime scheduling does not modify
+profile files or accounting fingerprints. See [coordinated reads](CONFIGURATION.md#coordinated-calculation-reads).
 
 Host filenames use lowercase letters, digits and internal hyphens followed by `.json`; IDs follow the same name without the extension. Symlink files, absolute selectors and directory traversal are rejected. A custom `file:` filename may differ from the internal profile ID. The synthetic profile in `tests/helpers.py` documents executable schema usage and is **not a device profile**.
 

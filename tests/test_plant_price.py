@@ -191,7 +191,7 @@ class PlantPriceTests(unittest.IsolatedAsyncioTestCase):
                 await self.command_controller.handle(FEED_IN_PRICE.id, b"0.08")
                 stop.set()
 
-        async def supervise(*args):
+        async def supervise(*args, **_kwargs):
             await args[4].wait()
 
         readers = [

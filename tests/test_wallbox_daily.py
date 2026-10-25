@@ -477,9 +477,11 @@ class WallboxPlacementRuntimeTests(unittest.IsolatedAsyncioTestCase):
             captured.extend(states)
             return publisher
 
-        async def source_fixture(state, *_args):
-            state.update({k: v for k, (v, _) in engine.sources[state.id].values.items()})
+        async def source_fixture(state, *_args, **kwargs):
+            values = {k: v for k, (v, _) in engine.sources[state.id].values.items()}
+            state.update(values)
             state.identity_fingerprint = engine.sources[state.id].identity_fingerprint
+            kwargs["on_samples"](state, values)
             await stop.wait()
 
         async def publish(_stop):

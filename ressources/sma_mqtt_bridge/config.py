@@ -188,6 +188,8 @@ class Plant(SafeRepr):
     update_interval_seconds: float = 1.0
     max_skew_seconds: float = 240.0
     power_max_skew_seconds: float = 0.0
+    coordinated_reads_enabled: bool = True
+    power_cycle_seconds: float = 5.0
     recorder_enabled: bool = False
     recorder_max_bytes: int = 8388608
     boundary_tolerance_seconds: float = 240.0
@@ -327,6 +329,10 @@ def section(defaults, data, env, prefix, recognized):
                 minimum = 0
             elif field.name == "timestamp_diagnostics_max_bytes":
                 minimum, maximum = 4096, 16777216
+            elif isinstance(defaults, Plant) and field.name == "power_cycle_seconds":
+                if value <= 0:
+                    raise ConfigError(f"Positive number required for {key}")
+                minimum, maximum = 0, 60
             elif field.name == "recorder_max_bytes":
                 minimum, maximum = 4096, 1073741824
             elif isinstance(defaults, Plant) and field.name == "power_max_skew_seconds":

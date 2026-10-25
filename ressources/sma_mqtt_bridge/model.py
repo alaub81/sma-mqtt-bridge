@@ -160,7 +160,11 @@ class SourceState:
             key: pair
             for key, pair in getattr(self, "legacy_counters", {}).items()
             if key not in values
-        } | {key: (value, now) for key, value in legacy.items() if value is not None}
+        } | {
+            key: (value, observed_at.get(key, now))
+            for key, value in legacy.items()
+            if value is not None
+        }
         usable = False
         for key, value in values.items():
             encoded = payload(value, by_key[key], self.max_payload_bytes)

@@ -5,7 +5,7 @@ import time
 
 from ..config import Inverter
 from ..errors import ProtocolError
-from ..model import Property
+from ..model import Property, SampleValues
 from .modbus import ModbusException, ModbusReader, decode, profile_property
 
 
@@ -53,7 +53,15 @@ class HomeManagerModbusReader(ModbusReader):
         }
         self.refresh_properties()
 
+    def configure_schedule(self, power_keys, energy_keys, origin, power_seconds):
+        super().configure_schedule(power_keys, energy_keys, origin, power_seconds)
+        core = {p.key for p in self.core_properties}
+        self.core_properties = tuple(p for p in self.properties if p.key in core)
+        self.refresh_properties()
+
     def interval(self, poller):
+        if self.schedule and poller["id"] in self.schedule.power_pollers:
+            return self.schedule.power_seconds
         if self.interval_override and poller.get("unitId") == 2:
             return self.settings.poll_interval_seconds
         return poller.get("intervalSeconds", self.settings.poll_interval_seconds)
@@ -244,6 +252,7 @@ class HomeManagerModbusReader(ModbusReader):
     async def read(self):
         try:
             values = await self.connect()
+            values = SampleValues(values, {key: time.monotonic() for key in values})
             now = time.monotonic()
             expired = [
                 slot
@@ -258,24 +267,56 @@ class HomeManagerModbusReader(ModbusReader):
             due = [p for p in self.pollers if self.next_due.get(p["id"], now) <= now]
             if not due:
                 return values
-            # Short-period power reads cannot be starved by a large parameter inventory.
-            p = min(due, key=lambda p: self.next_due.get(p["id"], now) + self.interval(p))
-            words = None
-            try:
-                words = await self.paced_read(p)
-                self.rejected.discard(p["id"])
-            except ModbusException:
-                self.rejected.add(p["id"])
-            self.next_due[p["id"]] = time.monotonic() + self.interval(p)
-            if "slot" in p:
-                values.update(self.inventory_values(p, words))
-            else:
-                values.update(
-                    {
-                        v["node"] + "/" + v["id"]: decode(words, v) if words is not None else None
-                        for v in self.definitions[p["id"]]
-                    }
+            # Contributing W batches precede counter pairs and optional inventory.
+            if self.schedule:
+                power = [p for p in due if p["id"] in self.schedule.power_pollers]
+                energy = [p for p in due if p["id"] in self.schedule.energy_pollers]
+                selected = (
+                    power
+                    or energy
+                    or [min(due, key=lambda p: self.next_due.get(p["id"], now) + self.interval(p))]
                 )
+                groups = self.schedule.groups(selected)
+            else:
+                selected = [
+                    min(due, key=lambda p: self.next_due.get(p["id"], now) + self.interval(p))
+                ]
+                groups = [[p] for p in selected]
+            for group in groups:
+                first = group[0]
+                combined = first | {
+                    "count": group[-1]["start"] + group[-1]["count"] - first["start"]
+                }
+                words = None
+                try:
+                    words = await self.paced_read(combined)
+                    self.rejected.difference_update(p["id"] for p in group)
+                except ModbusException:
+                    self.rejected.update(p["id"] for p in group)
+                stamp = time.monotonic()
+                for p in group:
+                    self.advance(p, stamp)
+                    block = (
+                        words[
+                            p["start"] - first["start"] : p["start"] - first["start"] + p["count"]
+                        ]
+                        if words is not None
+                        else None
+                    )
+                    decoded = (
+                        self.inventory_values(p, block)
+                        if "slot" in p
+                        else {
+                            v["node"] + "/" + v["id"]: decode(block, v)
+                            if block is not None
+                            else None
+                            for v in self.definitions[p["id"]]
+                        }
+                    )
+                    values.update(decoded)
+                    values.observed_at.update({key: stamp for key in decoded})
+            if self.schedule and self.schedule.power_pollers <= {p["id"] for p in selected}:
+                values.power_cycle = self.schedule.cycle(now)
             if self.home_settings.diagnostics_enabled:
                 values["diagnostics/modbus-rejected-blocks"] = len(self.rejected)
             return values

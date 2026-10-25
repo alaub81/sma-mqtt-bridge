@@ -13,6 +13,7 @@ from .energy_balances import EnergyBalances
 from .energy_profile_compat import released_energy_layout
 from .errors import ConfigError
 from .model import Property, SampleValues, SourceState, number, payload
+from .plant_cycles import PowerCycles
 from .plant_debug import PlantDebug
 from .plant_price import PlantPrice
 from .plant_profiles import FIELDS
@@ -182,6 +183,8 @@ class PlantState(SourceState):
         self.max_skew = 0
         self.expected_units = {}
         self.skew_limits = {}
+        self.snapshots = {}
+        self.cycles = {}
         super().__init__(*args, **kwargs)
 
     @property
@@ -199,10 +202,12 @@ class PlantState(SourceState):
         return {
             key: value
             for key, value in super().fresh_values(now).items()
-            if now <= self.deadlines.get(key, now) and self.inputs_valid(key, available)
+            if now <= self.deadlines.get(key, now) and self.inputs_valid(key, available, now)
         }
 
-    def inputs_valid(self, key, available):
+    def inputs_valid(self, key, available, now):
+        if key in self.snapshots and not self.cycles[key].available(now):
+            return False
         inputs = self.guards.get(key, ())
         if any(ref.key not in available.get(ref.source, {}) for ref in inputs):
             return False
@@ -213,7 +218,12 @@ class PlantState(SourceState):
             for ref in inputs
         ):
             return False
-        stamps = [self.sources[ref.source].values[ref.key][1] for ref in inputs]
+        observations = self.snapshots.get(key)
+        if observations is None:
+            observations = {ref: self.sources[ref.source].values[ref.key] for ref in inputs}
+        if any(observations.get(ref) is None for ref in inputs):
+            return False
+        stamps = [observations[ref][1] for ref in inputs]
         return not stamps or max(stamps) - min(stamps) <= self.skew_limits.get(key, self.max_skew)
 
 
@@ -259,8 +269,11 @@ class PlantEngine:
         self.last_packet = None
         self.last_wallbox_packet = None
         self.account_frames = {}
+        self.account_signs = {}
         self.sample_walls = {}
         self.recorder = PlantRecorder(config)
+        self.power_cycles = None
+        self.recipe_cycles = {}
         self.committed_times = {}
         self.add_sums()
         self.add_house_power()
@@ -519,6 +532,50 @@ class PlantEngine:
         selected_sources = {ref.source for refs in self.state.guards.values() for ref in refs}
         self.state.sources = {source: self.sources[source] for source in selected_sources}
 
+    def configure_reads(self, readers, now=None):
+        """Coordinate only enabled contributors; profiles and energy identities stay intact."""
+        from .adapters.modbus import ModbusReader
+
+        if not self.config.plant.coordinated_reads_enabled:
+            return
+        origin = time.monotonic() if now is None else now
+        power = {ref for ref, unit in self.expected_units.items() if unit == "W"}
+        energy = {ref for ref, unit in self.expected_units.items() if unit == "kWh"}
+        self.power_cycles = PowerCycles(power, origin, self.config.plant.power_cycle_seconds)
+        self.recipe_cycles = {
+            key: self.power_cycles
+            if frozenset(ref for ref, _ in terms) == power
+            else PowerCycles(
+                (ref for ref, _ in terms), origin, self.config.plant.power_cycle_seconds
+            )
+            for key, (_, unit, terms) in self.recipes.items()
+            if unit == "W"
+        }
+        self.state.cycles = self.recipe_cycles
+        for state, reader, _ in readers:
+            wanted = {ref.key for ref in power if ref.source == state.id}
+            counters = {ref.key for ref in energy if ref.source == state.id}
+            if wanted and isinstance(reader, ModbusReader):
+                reader.configure_schedule(
+                    wanted, counters, origin, self.config.plant.power_cycle_seconds
+                )
+                state.properties = reader.properties
+
+    def observe_source(self, state, values):
+        now = time.monotonic()
+        for cycle in set(self.recipe_cycles.values()):
+            cycle.observe(state, values, now)
+
+    def power_observations(self, now, key="house/consumption"):
+        if self.power_cycles is not None:
+            cycle = self.recipe_cycles[key]
+            return cycle.snapshot if cycle.available(now) else None
+        return {
+            ref: self.sources[ref.source].values.get(ref.key)
+            for ref, unit in self.expected_units.items()
+            if unit == "W"
+        }
+
     @property
     def output_states(self):
         return (self.state, self.price.state, self.feed_in_price.state) + (
@@ -591,18 +648,23 @@ class PlantEngine:
     def power_skew(self):
         return self.config.plant.power_max_skew_seconds or self.config.plant.max_skew_seconds
 
-    def frame(self, inputs, now, *, max_skew=None):
+    def frame(self, inputs, now, *, max_skew=None, observations=None, snapshot_deadline=None):
         values, stamps, expires, hardware = {}, [], [], []
         for ref, sign in inputs:
             source = self.sources[ref.source]
             if source.error:
                 return None
             fresh = source.fresh_values(now)
-            value = number(fresh.get(ref.key))
+            observation = (
+                observations.get(ref) if observations is not None else source.values.get(ref.key)
+            )
+            value = number(observation[0]) if observation else None
+            if ref.key not in fresh:
+                return None
             if value is None or (ref in self.nonnegative and value < 0):
                 return None
             prop = source.property_index().get(ref.key)
-            received = source.values[ref.key][1]
+            received = observation[1]
             if (
                 prop is None
                 or prop.unit != self.expected_units[ref]
@@ -611,6 +673,8 @@ class PlantEngine:
                 return None
             values[ref.identity] = value * sign
             stamps.append(received)
+            if now < received:
+                return None
             expires.append(
                 received
                 + (prop.stale_seconds if prop.stale_seconds is not None else source.stale_seconds)
@@ -629,6 +693,10 @@ class PlantEngine:
             self.config.plant.max_skew_seconds if max_skew is None else max_skew
         ):
             return None
+        if now > min(expires):
+            return None
+        if snapshot_deadline is not None:
+            expires.append(snapshot_deadline)
         fingerprint = hashlib.sha256(json.dumps(sorted(set(hardware))).encode()).hexdigest()
         return values, min(stamps), min(expires), fingerprint, max(stamps)
 
@@ -642,6 +710,7 @@ class PlantEngine:
         return previous[1]
 
     def account(self, name, inputs, now, wall):
+        self.account_signs[name] = {ref.identity: Decimal(sign) for ref, sign in inputs}
         frame = self.frame(tuple((ref, 1) for ref, _ in inputs), now)
         if frame is None:
             return None, None, "unavailable", None
@@ -708,12 +777,15 @@ class PlantEngine:
     def power_input_problems(self, now):
         """Identify blocked power inputs without exposing device identities or addresses."""
         problems, stamps = {}, {}
+        observations = self.power_observations(now)
+        if observations is None:
+            return {"status": "waiting-for-power-cycle"}
         for ref, _ in self.recipes["house/consumption"][2]:
             source = self.sources[ref.source]
             prop = source.property_index().get(ref.key)
             if source.error:
                 reason = "source-error"
-            elif ref.key not in source.values:
+            elif not observations.get(ref):
                 reason = "missing-or-invalid"
             elif (
                 prop is None
@@ -721,14 +793,16 @@ class PlantEngine:
                 or prop.datatype not in ("integer", "float")
             ):
                 reason = "unit-or-type-mismatch"
-            elif ref.key not in source.fresh_values(now):
+            elif ref.key not in source.fresh_values(now) or not 0 <= now - observations[ref][1] <= (
+                prop.stale_seconds if prop.stale_seconds is not None else source.stale_seconds
+            ):
                 reason = "stale"
-            elif (value := number(source.values[ref.key][0])) is None:
+            elif (value := number(observations[ref][0])) is None:
                 reason = "invalid"
             elif ref in self.nonnegative and value < 0:
                 reason = "negative-directional-flow"
             else:
-                stamps[ref.identity] = source.values[ref.key][1]
+                stamps[ref.identity] = observations[ref][1]
                 continue
             problems[ref.identity] = reason
         if stamps:
@@ -751,7 +825,19 @@ class PlantEngine:
         accounts = {}
         power_problems = self.power_input_problems(now)
         for key, (_, unit, inputs) in self.recipes.items():
-            frame = self.frame(inputs, now, max_skew=self.power_skew if unit == "W" else None)
+            power_observations = self.power_observations(now, key) if unit == "W" else None
+            cycle = self.recipe_cycles.get(key)
+            if cycle is not None:
+                self.state.snapshots[key] = power_observations or {}
+                if power_observations is None:
+                    continue
+            frame = self.frame(
+                inputs,
+                now,
+                max_skew=self.power_skew if unit == "W" else None,
+                observations=power_observations,
+                snapshot_deadline=cycle.deadline if cycle is not None else None,
+            )
             if frame is not None:
                 values, oldest, deadline, _, _ = frame
                 value = sum(values.values(), Decimal(0))
@@ -822,7 +908,7 @@ class PlantEngine:
         packet["diagnostics/battery-energy-boundary"] = self.boundary
         # A critical state transition is durable before its derived value reaches MQTT.
         self.ledger.persist(now)
-        # Only durable energy snapshots are published; power sums remain immediate.
+        # Complete power frames do not wait for durable energy checkpoints.
         for name, candidates in accounts.items():
             record = self.ledger.committed.get(name)
             if record is None:

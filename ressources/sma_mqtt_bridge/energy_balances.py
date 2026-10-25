@@ -409,6 +409,16 @@ class EnergyBalances:
             # Save the rejected source high-water marks before reporting the grace period.
             self.force_save = True
         since, cutoff, waiting = pending
+        # Later outflow advances change which inflows are old, never the first deadline.
+        advanced = [
+            sample_times[key]
+            for key in values
+            if signs[key] < 0 and values[key] > Decimal(previous["last"][key])
+        ]
+        if advanced:
+            cutoff = max(cutoff, max(advanced))
+            waiting = {key for key in values if signs[key] > 0 and sample_times[key] < cutoff}
+            self.synchronizing[name] = (since, cutoff, waiting)
         if (wall - since).total_seconds() < self.settings.max_skew_seconds and any(
             sample_times[key] < cutoff for key in waiting
         ):

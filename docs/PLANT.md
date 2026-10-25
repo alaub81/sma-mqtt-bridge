@@ -1,7 +1,9 @@
 # Plant measurements and energy accounting
 
-Optional plant calculations reuse existing source observations without extra
-polling. Select enabled contributors by configured role and profile contribution
+Optional plant calculations reuse source observations. With coordinated reads
+enabled, contributing W pollers use a shared cadence and immutable complete-cycle
+snapshots; counter pollers keep their intervals on a shared time origin.
+See [coordinated reads](CONFIGURATION.md#coordinated-calculation-reads). Select enabled contributors by configured role and profile contribution
 mapping; use one grid source. Validate units and independently measured hybrid
 contributions before enabling accounting. See [configuration](CONFIGURATION.md#plant-aggregates-and-energy-state).
 
@@ -28,7 +30,8 @@ Partial/gap/complete statuses describe coverage, independently of MQTT connectiv
 
 A rising outflow counter can temporarily precede older inflow measurements.
 Household energy then reports `synchronizing` for one bounded wait, while the
-rejected energy remains unavailable. After the older inflows are sampled again,
+rejected energy remains unavailable. Later outflow advances update the required inflow cutoff without renewing the
+original timeout. After the older inflows are sampled again,
 or the configured skew timeout expires, an unresolved decrease reports
 `inconsistent`. Retained values keep their last-known meaning. Actual counter
 resets and source changes remain blocked immediately. See the

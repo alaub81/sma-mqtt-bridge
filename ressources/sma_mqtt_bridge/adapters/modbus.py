@@ -5,11 +5,13 @@ import hashlib
 import math
 import struct
 import time
+from dataclasses import replace
 from datetime import datetime, timezone
 from decimal import Decimal
 
-from ..errors import ProtocolError
+from ..errors import ConfigError, ProtocolError
 from ..model import Property, SampleValues, channel_group_enabled
+from ..plant_cycles import ReadSchedule
 from ..plant_debug import PlantDebug
 from ..profiles import verify_identity
 
@@ -102,6 +104,7 @@ class ModbusReader:
         self.settings, self.profile = settings, profile
         self.interval_override = interval_override
         self.next_due = {}
+        self.schedule = None
         self.debug = PlantDebug(debug_interval_seconds)
         self.transaction = 0
         self.definitions = [p for p in profile["properties"] if self.channel_enabled(p)]
@@ -146,6 +149,46 @@ class ModbusReader:
                 ),
             )
 
+    def configure_schedule(self, power_keys, energy_keys, origin, power_seconds):
+        definitions = self.profile["properties"]
+        power = {p["poller"] for p in definitions if p["node"] + "/" + p["id"] in power_keys}
+        energy = {p["poller"] for p in definitions if p["node"] + "/" + p["id"] in energy_keys}
+        if not power <= {p["id"] for p in self.pollers}:
+            raise ConfigError("Coordinated power references an inactive poller")
+        self.schedule = ReadSchedule(origin, power_seconds, power, energy)
+        for identifier in power | energy:
+            self.next_due[identifier] = origin
+        keys = {p["node"] + "/" + p["id"] for p in definitions if p["poller"] in power}
+        self.properties = tuple(
+            replace(
+                p,
+                stale_seconds=max(
+                    p.stale_seconds or self.settings.stale_seconds, 2 * power_seconds
+                ),
+            )
+            if p.key in keys
+            else p
+            for p in self.properties
+        )
+
+    def advance(self, poller, now):
+        if (
+            self.schedule
+            and poller["id"] in self.schedule.power_pollers | self.schedule.energy_pollers
+        ):
+            self.next_due[poller["id"]] = self.schedule.next_due(poller, self.interval(poller), now)
+        else:
+            self.next_due[poller["id"]] = now + self.interval(poller)
+
+    async def read_group(self, reader, writer, group):
+        first = group[0]
+        combined = first | {"count": group[-1]["start"] + group[-1]["count"] - first["start"]}
+        words = await self.read_block(reader, writer, combined)
+        return {
+            p["id"]: words[p["start"] - first["start"] : p["start"] - first["start"] + p["count"]]
+            for p in group
+        }
+
     def channel_enabled(self, prop):
         return channel_group_enabled(
             profile_channel_group(prop),
@@ -154,6 +197,8 @@ class ModbusReader:
         )
 
     def interval(self, poller):
+        if self.schedule and poller["id"] in self.schedule.power_pollers:
+            return self.schedule.power_seconds
         if self.interval_override:
             return self.settings.poll_interval_seconds
         return poller.get("intervalSeconds", self.settings.poll_interval_seconds)
@@ -215,10 +260,11 @@ class ModbusReader:
                 identity_pollers = {
                     p["poller"] for p in self.profile["properties"] if p["id"] in identity_refs
                 }
-                blocks, values = {}, {}
+                blocks, values, received = {}, {}, {}
                 for poller in self.profile["pollers"]:
                     if poller["id"] in identity_pollers:
                         blocks[poller["id"]] = await self.read_block(reader, writer, poller)
+                        received[poller["id"]] = time.monotonic()
                 for p in self.profile["properties"]:
                     if p["id"] in identity_refs:
                         values[p["id"]] = decode(blocks[p["poller"]], p)
@@ -226,12 +272,16 @@ class ModbusReader:
                 self.identity_fingerprint = hashlib.sha256(
                     str(values[self.profile["identity"]["serial"]]).encode()
                 ).hexdigest()
-                now, selected = time.monotonic(), set()
-                for poller in self.pollers:
-                    if now >= self.next_due.get(poller["id"], 0):
-                        if poller["id"] not in blocks:
-                            blocks[poller["id"]] = await self.read_block(reader, writer, poller)
-                        selected.add(poller["id"])
+                now = time.monotonic()
+                due = [p for p in self.pollers if now >= self.next_due.get(p["id"], 0)]
+                selected = {p["id"] for p in due}
+                groups = self.schedule.groups(due) if self.schedule else [[p] for p in due]
+                for group in groups:
+                    missing = [p for p in group if p["id"] not in blocks]
+                    if missing:
+                        blocks.update(await self.read_group(reader, writer, missing))
+                        stamp = time.monotonic()
+                        received.update({p["id"]: stamp for p in missing})
                 # Read each guard on the same connection as its dependent DC sample.
                 refs = {
                     ref
@@ -264,7 +314,16 @@ class ModbusReader:
                         paired[prop["node"] + "/" + prop["id"]] = decode(
                             blocks[prop["poller"]], legacy
                         )
-                result = SampleValues(result, {})
+                result = SampleValues(
+                    result,
+                    {
+                        p["node"] + "/" + p["id"]: received[p["poller"]]
+                        for p in self.definitions
+                        if p["poller"] in selected
+                    },
+                )
+                if self.schedule and self.schedule.power_pollers <= selected:
+                    result.power_cycle = self.schedule.cycle(now)
                 result.legacy_counters = paired
                 if self.energy_ratio and "measurements/battery-charge-energy" in result:
                     charged = result["measurements/battery-charge-energy"]
@@ -272,9 +331,15 @@ class ModbusReader:
                     result["measurements/battery-efficiency"] = energy_return_ratio(
                         charged, discharged
                     )
+                finished = time.monotonic() if self.schedule else now
                 for poller in self.pollers:
                     if poller["id"] in selected:
-                        self.next_due[poller["id"]] = now + self.interval(poller)
+                        aligned = (
+                            self.schedule
+                            and poller["id"]
+                            in self.schedule.power_pollers | self.schedule.energy_pollers
+                        )
+                        self.advance(poller, finished if aligned else now)
                 self.debug.modbus(self, blocks, selected, now, result)
                 return result
             finally:
