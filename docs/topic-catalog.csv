@@ -181,10 +181,36 @@ home-manager-udp,home-manager,diagnostics/homemanagerstatus,Source availability,
 home-manager-udp,home-manager,diagnostics/homemanagertimeouts,Source timeouts,,diagnostics
 home-manager-udp,home-manager,diagnostics/rawenergyexport,Raw grid export energy,kWh,diagnostics
 home-manager-udp,home-manager,diagnostics/rawenergyimport,Raw grid import energy,kWh,diagnostics
+home-manager-udp,home-manager,measurements/currentl1,Current L1,A,basic
+home-manager-udp,home-manager,measurements/currentl2,Current L2,A,basic
+home-manager-udp,home-manager,measurements/currentl3,Current L3,A,basic
 home-manager-udp,home-manager,measurements/energyexport,Corrected grid export energy,kWh,basic
 home-manager-udp,home-manager,measurements/energyimport,Corrected grid import energy,kWh,basic
 home-manager-udp,home-manager,measurements/powerdrawn,Power drawn,W,basic
+home-manager-udp,home-manager,measurements/powerdrawnl1,Power Drawn L1,W,basic
+home-manager-udp,home-manager,measurements/powerdrawnl2,Power Drawn L2,W,basic
+home-manager-udp,home-manager,measurements/powerdrawnl3,Power Drawn L3,W,basic
 home-manager-udp,home-manager,measurements/powergridfeedin,Power grid feed-in,W,basic
+home-manager-udp,home-manager,measurements/powergridfeedinl1,Power Grid Feed In L1,W,basic
+home-manager-udp,home-manager,measurements/powergridfeedinl2,Power Grid Feed In L2,W,basic
+home-manager-udp,home-manager,measurements/powergridfeedinl3,Power Grid Feed In L3,W,basic
+home-manager-udp,home-manager,measurements/voltagel1,Voltage L1,V,basic
+home-manager-udp,home-manager,measurements/voltagel2,Voltage L2,V,basic
+home-manager-udp,home-manager,measurements/voltagel3,Voltage L3,V,basic
+home-manager-modbus-udp-phases,home-manager-phases,diagnostics/homemanagerphaseslastsuccess,Last successful receipt (UTC),,diagnostics
+home-manager-modbus-udp-phases,home-manager-phases,diagnostics/homemanagerphasesstatus,Source availability,,diagnostics
+home-manager-modbus-udp-phases,home-manager-phases,measurements/currentl1,Current L1,A,basic
+home-manager-modbus-udp-phases,home-manager-phases,measurements/currentl2,Current L2,A,basic
+home-manager-modbus-udp-phases,home-manager-phases,measurements/currentl3,Current L3,A,basic
+home-manager-modbus-udp-phases,home-manager-phases,measurements/powerdrawnl1,Power Drawn L1,W,basic
+home-manager-modbus-udp-phases,home-manager-phases,measurements/powerdrawnl2,Power Drawn L2,W,basic
+home-manager-modbus-udp-phases,home-manager-phases,measurements/powerdrawnl3,Power Drawn L3,W,basic
+home-manager-modbus-udp-phases,home-manager-phases,measurements/powergridfeedinl1,Power Grid Feed In L1,W,basic
+home-manager-modbus-udp-phases,home-manager-phases,measurements/powergridfeedinl2,Power Grid Feed In L2,W,basic
+home-manager-modbus-udp-phases,home-manager-phases,measurements/powergridfeedinl3,Power Grid Feed In L3,W,basic
+home-manager-modbus-udp-phases,home-manager-phases,measurements/voltagel1,Voltage L1,V,basic
+home-manager-modbus-udp-phases,home-manager-phases,measurements/voltagel2,Voltage L2,V,basic
+home-manager-modbus-udp-phases,home-manager-phases,measurements/voltagel3,Voltage L3,V,basic
 echarger-api,api,diagnostics/apiconsecutivefailures,Source consecutiveFailures,,diagnostics
 echarger-api,api,diagnostics/apifailures,Source failures,,diagnostics
 echarger-api,api,diagnostics/apilastsuccess,Last successful receipt (UTC),,diagnostics

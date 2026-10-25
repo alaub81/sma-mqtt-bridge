@@ -94,6 +94,8 @@ class HomeManager(SafeRepr):
     ready_properties: str = ""
     advanced_channels_enabled: bool = False
     diagnostics_enabled: bool = False
+    udp_phases_enabled: bool = False
+    udp_host: str = ""
     transport: str = "modbus-tcp"
     profile: str = "sma-home-manager-2-modbus"
     modbus_port: int = 502
@@ -579,6 +581,11 @@ def load_config(environ=None, bundled_dir=None):
             raise ConfigError("Invalid Home Manager network address") from None
     if hm.transport not in ("udp", "modbus-tcp"):
         raise ConfigError("Home Manager transport must be udp or modbus-tcp")
+    if hm.udp_host:
+        try:
+            ipaddress.IPv4Address(hm.udp_host)
+        except ValueError:
+            raise ConfigError("Home Manager UDP host must be an IPv4 address") from None
     if hm.enabled and hm.transport == "modbus-tcp":
         from .home_manager_profile import load_home_manager_profile
 

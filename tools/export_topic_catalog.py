@@ -77,6 +77,15 @@ def inventories(directory):
             ).properties,
         ),
     )
+    yield (
+        "home-manager-modbus-udp-phases",
+        "home-manager-phases",
+        describe(
+            "home-manager-phases",
+            MeterReader(HomeManager(), phases_only=True).properties,
+            availability=False,
+        ),
+    )
     for source, reader in (
         (
             "api",

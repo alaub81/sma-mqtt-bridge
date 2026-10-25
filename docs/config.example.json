@@ -99,6 +99,8 @@
     "staleSeconds": 30.0,
     "homieId": "sma-home-manager",
     "transport": "modbus-tcp",
+    "udpPhasesEnabled": false,
+    "udpHost": "",
     "profile": "sma-home-manager-2-modbus",
     "modbusPort": 502,
     "connectTimeoutSeconds": 5,

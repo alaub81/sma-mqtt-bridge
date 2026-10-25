@@ -8,13 +8,26 @@ from decimal import Decimal
 from ..errors import ProtocolError
 from ..model import Property
 
-# Protocol field definitions, checked against official openHAB ObisId documentation.
+# SMA EMETER-Protocol-TI-en-10 sections 3.1/3.3: W/10, A/1000, V/1000.
 OBIS = {
     0x00010400: ("power-import", "W", 10),
     0x00020400: ("power-export", "W", 10),
     0x00010800: ("energy-import", "kWh", 3600000),
     0x00020800: ("energy-export", "kWh", 3600000),
 }
+
+# Class B=0 follows the existing meter dialect; C indexes identify the phases.
+PHASE_OBIS = {}
+for phase, base in enumerate((20, 40, 60), 1):
+    for offset, name, unit, divisor in (
+        (1, "power-drawn", "W", 10),
+        (2, "power-grid-feed-in", "W", 10),
+        (11, "current", "A", 1000),
+        (12, "voltage", "V", 1000),
+    ):
+        PHASE_OBIS[((base + offset) << 16) | 0x0400] = (f"{name}-l{phase}", unit, divisor)
+OBIS.update(PHASE_OBIS)
+PHASE_KEYS = frozenset("measurements/" + name for name, _, _ in PHASE_OBIS.values())
 
 
 def parse_telegram(data, expected_serial):
@@ -37,8 +50,12 @@ def parse_telegram(data, expected_serial):
         if size not in (4, 8) or offset + size > len(data) or code in seen:
             raise ProtocolError("Invalid/truncated/duplicate OBIS record")
         seen.add(code)
-        if code in OBIS:
-            name, _, divisor = OBIS[code]
+        # Accept documented channel B=1 and existing B=0 telegrams.
+        lookup = code & 0x00FFFFFF if code >> 24 == 1 else code
+        if lookup in OBIS:
+            name, _, divisor = OBIS[lookup]
+            if "measurements/" + name in result:
+                raise ProtocolError("Duplicate meter measurement")
             raw = int.from_bytes(data[offset : offset + size], "big")
             result["measurements/" + name] = Decimal(raw) / divisor
         offset += size
@@ -46,8 +63,9 @@ def parse_telegram(data, expected_serial):
 
 
 class MeterReader:
-    def __init__(self, settings):
+    def __init__(self, settings, *, phases_only=False):
         self.settings = settings
+        self.phases_only = phases_only
         self.socket = None
         self.last_counter = None
         self.last_received = None
@@ -60,7 +78,7 @@ class MeterReader:
                 required_for_ready=name in ("power-import", "power-export"),
                 channel_group="basic",
             )
-            for name, unit, _ in OBIS.values()
+            for name, unit, _ in (PHASE_OBIS if phases_only else OBIS).values()
         )
 
     async def read(self):
@@ -98,6 +116,8 @@ class MeterReader:
                     ):
                         continue
                 self.last_counter, self.last_received = counter, now
+                if self.phases_only:
+                    return {key: value for key, value in values.items() if key in PHASE_KEYS}
                 return values
 
         return await asyncio.wait_for(receive(), self.settings.timeout_seconds)

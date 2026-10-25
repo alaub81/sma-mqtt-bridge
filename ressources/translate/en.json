@@ -218,6 +218,12 @@
     "Highest reported battery temperature": "Highest reported battery temperature",
     "Lowest reported battery temperature": "Lowest reported battery temperature",
     "Event number": "Event number",
-    "Power limitation source (raw code)": "Power limitation source (raw code)"
+    "Power limitation source (raw code)": "Power limitation source (raw code)",
+    "Power Drawn L1": "Power Drawn L1",
+    "Power Grid Feed In L1": "Power Grid Feed In L1",
+    "Power Drawn L2": "Power Drawn L2",
+    "Power Grid Feed In L2": "Power Grid Feed In L2",
+    "Power Drawn L3": "Power Drawn L3",
+    "Power Grid Feed In L3": "Power Grid Feed In L3"
   }
 }

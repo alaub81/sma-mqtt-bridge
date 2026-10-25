@@ -218,6 +218,12 @@
     "Highest reported battery temperature": "Höchste gemeldete Batterietemperatur",
     "Lowest reported battery temperature": "Niedrigste gemeldete Batterietemperatur",
     "Event number": "Ereignisnummer",
-    "Power limitation source (raw code)": "Leistungsbegrenzungsquelle (Rohcode)"
+    "Power limitation source (raw code)": "Leistungsbegrenzungsquelle (Rohcode)",
+    "Power Drawn L1": "Bezogene Leistung Phase L1",
+    "Power Grid Feed In L1": "Netzeinspeiseleistung Phase L1",
+    "Power Drawn L2": "Bezogene Leistung Phase L2",
+    "Power Grid Feed In L2": "Netzeinspeiseleistung Phase L2",
+    "Power Drawn L3": "Bezogene Leistung Phase L3",
+    "Power Grid Feed In L3": "Netzeinspeiseleistung Phase L3"
   }
 }

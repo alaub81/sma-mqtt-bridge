@@ -174,7 +174,9 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 | Home Manager suffix after `SMAB_HOME_MANAGER_` | Default | Meaning / validation |
 | --- | --- | --- |
 | `ENABLED` | `false` | Explicitly enable the selected transport. |
-| `TRANSPORT` | `modbus-tcp` | `udp` or `modbus-tcp`; no automatic fallback or dual ownership. |
+| `TRANSPORT` | `modbus-tcp` | `udp` or `modbus-tcp`; no automatic fallback or dual ownership of totals/counters. |
+| `UDP_PHASES_ENABLED` | `false` | With Modbus, independently receive UDP phase power/current/voltage; no duplicate totals/counters. UDP-only mode already includes phases. |
+| `UDP_HOST` | empty | Optional IPv4 sender filter for supplemental UDP; serial selector always applies. |
 | `PROFILE` | `sma-home-manager-2-modbus` | Bundled ID or host `file:<name>.json`; used only for Modbus. |
 | `HOST` | empty | Optional UDP source IP filter; required TCP hostname/address for Modbus. |
 | `SERIAL` | empty | Required numeric serial selector/identity guard when enabled. |

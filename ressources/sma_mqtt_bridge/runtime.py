@@ -110,6 +110,22 @@ def sources(config):
                 interval,
             )
         )
+    if hm.enabled and hm.transport == "modbus-tcp" and hm.udp_phases_enabled:
+        reader = MeterReader(replace(hm, host=hm.udp_host), phases_only=True)
+        result.append(
+            (
+                SourceState(
+                    "home-manager-phases",
+                    hm.homie_id,
+                    reader.properties,
+                    hm.stale_seconds,
+                    diagnostics_enabled=hm.diagnostics_enabled,
+                    contributes_availability=False,
+                ),
+                reader,
+                None,
+            )
+        )
     if ec.enabled:
         reader = EChargerReader(
             ec, limit, include_base=not ec.semp_enabled, timestamp_observer=timestamp_observer
@@ -163,6 +179,7 @@ def sources(config):
     settings.update(
         {
             "home-manager": (hm, "ready_properties"),
+            "home-manager-phases": (hm, "ready_properties"),
             "api": (ec, "api_ready_properties"),
             "semp": (ec, "semp_ready_properties"),
             "portal": (portal, "ready_properties"),
@@ -171,7 +188,7 @@ def sources(config):
     for state, reader, _interval in result:
         state.max_payload_bytes = config.runtime.max_payload_bytes
         device, attr = settings[state.id]
-        value = getattr(device, attr)
+        value = "" if state.id == "home-manager-phases" else getattr(device, attr)
         state.ready_properties = tuple(value.split(",")) if value else ()
         state.__post_init__()  # Reject filtered or unknown readiness keys before device I/O.
         if isinstance(reader, HomeManagerModbusReader):
