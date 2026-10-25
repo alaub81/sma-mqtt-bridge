@@ -325,8 +325,10 @@ def section(defaults, data, env, prefix, recognized):
                 )
             ):
                 minimum = 0
-            elif field.name in ("timestamp_diagnostics_max_bytes", "recorder_max_bytes"):
+            elif field.name == "timestamp_diagnostics_max_bytes":
                 minimum, maximum = 4096, 16777216
+            elif field.name == "recorder_max_bytes":
+                minimum, maximum = 4096, 1073741824
             elif isinstance(defaults, Plant) and field.name == "power_max_skew_seconds":
                 minimum, maximum = 0, 3600
             elif field.name == "future_tolerance_seconds":

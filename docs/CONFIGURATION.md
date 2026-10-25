@@ -703,7 +703,7 @@ device polling or InfluxDB credentials are required.
 | `SMAB_PLANT_MAX_SKEW_SECONDS` | `240` | Positive seconds, at most 3600; maximum spread of contributing observation times, in addition to individual freshness. Also bounds the one-time wait for older household energy inflows after an outflow counter advances. |
 | `SMAB_PLANT_POWER_MAX_SKEW_SECONDS` | `0` | Number from 0 to 3600 seconds; 0 preserves the general skew limit. A positive value selects an independent limit for W recipes only, also enforced before publication. Choose a short limit from recorded source timing; energy counters and their synchronization window keep `MAX_SKEW_SECONDS`. |
 | `SMAB_PLANT_RECORDER_ENABLED` | `false` | Boolean; record each calculation frame in `plant-frames.jsonl` under the state directory. Independent of DEBUG logging and MQTT diagnostics; no additional device reads. |
-| `SMAB_PLANT_RECORDER_MAX_BYTES` | `8388608` | Integer, 4096–16777216 bytes per file; keep the active file and one `.1` rotation. Best-effort diagnostics, storage failures do not invalidate calculations. |
+| `SMAB_PLANT_RECORDER_MAX_BYTES` | `8388608` | Integer, 4096–1073741824 bytes per file (up to 1 GiB each, 2 GiB total); keep the active file and one `.1` rotation. Best-effort diagnostics, storage failures do not invalidate calculations. |
 | `SMAB_PLANT_BOUNDARY_TOLERANCE_SECONDS` | `240` | Positive seconds, at most 900; bounded uncertainty for real counter snapshots around local midnight. No extrapolation. |
 | `SMAB_PLANT_CHECKPOINT_INTERVAL_SECONDS` | `300` | Positive seconds; regular durable energy snapshot/publication cadence. Initial baselines, boundary transitions, resets and entry into energy synchronization are saved immediately. |
 | `SMAB_PLANT_INITIAL_CONSUMPTION_KWH` | `0` | Deprecated compatibility setting, finite nonnegative number. Retained for existing ledger fingerprints/internal fields; no household lifetime topic is published. Leave existing values unchanged to preserve ledger compatibility. |
@@ -1179,7 +1179,13 @@ recorded.
 Copy `plant-frames.jsonl` and `plant-frames.jsonl.1` from the state volume promptly
 after a natural PV ramp or status transition; retention depends on frame size and
 update frequency, not a guaranteed duration. Each file is bounded by
-`RECORDER_MAX_BYTES`. Turn recording off after the investigation. Do not delete
+`RECORDER_MAX_BYTES`. For a longer capture, set
+`SMAB_PLANT_RECORDER_MAX_BYTES=1073741824` (1 GiB per file, up to 2 GiB total)
+and recreate the container. This requires a bridge version supporting the expanded
+limit; older versions reject values above 16777216. Existing files are preserved
+until normal rotation; changing the limit does not recover overwritten frames.
+Ensure the state volume has room for the selected recording size alongside the
+existing runtime state. Turn recording off after the investigation. Do not delete
 or replace the volume or `energy-balances.json` to collect diagnostics.
 
 After inspecting the capture, a positive `POWER_MAX_SKEW_SECONDS` (for example

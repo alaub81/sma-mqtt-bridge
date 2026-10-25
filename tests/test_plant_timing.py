@@ -7,6 +7,7 @@ from unittest.mock import patch
 
 from test_plant import PlantFixture
 
+from sma_mqtt_bridge.config import load_config
 from sma_mqtt_bridge.errors import ConfigError
 
 
@@ -129,3 +130,16 @@ class PlantTimingTests(PlantFixture):
         self.assertEqual(engine.state.values["diagnostics/house-energy-status"][0], "synchronizing")
         engine.refresh(102, self.wall + timedelta(seconds=1.9999))
         self.assertEqual(engine.state.values["diagnostics/house-energy-status"][0], "synchronizing")
+
+    def test_expanded_recorder_limit_preserves_other_limits_and_checks_bounds(self):
+        default = load_config({})
+        self.assertEqual(default.plant.recorder_max_bytes, 8388608)
+        for limit in (4096, 16777216, 536870912, 1073741824):
+            with self.subTest(limit=limit):
+                engine = self.engine(env={"SMAB_PLANT_RECORDER_MAX_BYTES": str(limit)})
+                self.assertEqual(engine.recorder.max_bytes, limit)
+        for limit in (4095, 1073741825):
+            with self.subTest(limit=limit), self.assertRaises(ConfigError):
+                load_config({"SMAB_PLANT_RECORDER_MAX_BYTES": str(limit)})
+        with self.assertRaises(ConfigError):
+            load_config({"SMAB_ECHARGER_TIMESTAMP_DIAGNOSTICS_MAX_BYTES": "16777217"})
