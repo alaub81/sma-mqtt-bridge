@@ -241,9 +241,20 @@ processing time consumes the remaining lifetime. Repeated receipt of the same
 device timestamp cannot rejuvenate these values. See the
 [operational diagnostics](OPERATIONS.md#health-and-unavailable-measurements).
 
-Phase voltage/power, alternative energy channels, session energy and unresolved
-health/event/mode/authorization observations retain the existing timestamp filter
-and receipt-based runtime lifetime pending their separate classification. Confirmed
+Five state channels use successful-response freshness instead of device timestamp age:
+`Measurement.Operation.Health`, `Measurement.Operation.EVeh.Health`,
+`Measurement.Operation.Evt.Msg`, `Measurement.Chrg.ModSw` and
+`Measurement.Acs.AuthRegistStt`. Their device timestamps mark state initialization
+or transitions and may remain unchanged for months. A valid numeric state in a
+successful response renews its receipt-based `STALE_SECONDS` lifetime. Missing,
+malformed or excessively future timestamps, invalid numeric states and the
+observed startup placeholder `16777213` are not accepted. Failed requests do not
+renew availability. The original timestamp and raw age remain unchanged in the
+optional timestamp recorder; its `stale` classification describes device age,
+not the availability of these five state values.
+
+Phase voltage/power, alternative energy channels and session energy retain the
+existing device timestamp filter and receipt-based runtime lifetime. Confirmed
 settings keep their separate readback contract. No new environment option is needed.
 Source readiness follows its required fresh properties; aggregate device readiness
 does not certify every source. Expiry preserves MQTT's last retained observation
@@ -330,8 +341,9 @@ The default accepts device-clock leads up to 10 ms, including the boundary;
 larger leads remain `future`. Accepted tiny leads count as `fresh` while their
 raw negative age and original device timestamp remain visible in the recorder.
 Only internal monotonic age is clamped to zero, so availability is immediate and
-no extra lifetime is added. Values older than `STALE_SECONDS`, invalid timestamps
-and unresolved old health/event timestamps remain unavailable. No new ENV entry
+no extra lifetime is added. Periodic measurements older than `STALE_SECONDS` and
+invalid timestamps remain unavailable. The five state channels listed above use
+successful-response freshness while retaining their original recorder timestamps. No new ENV entry
 is required for the default behavior; apply a rebuilt image to enable the fix.
 
 `valueChanged` compares numeric values (0 and 0.0 are equal); `timestampChanged`

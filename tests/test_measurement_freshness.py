@@ -6,13 +6,15 @@ import unittest
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from types import SimpleNamespace
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 from sma_mqtt_bridge.adapters.echarger import (
     NS,
+    STATE_CHANNELS,
     EChargerReader,
     SempReader,
     current_measurement,
+    observation_time,
     semp_values,
 )
 from sma_mqtt_bridge.charging_session import ChargingSession
@@ -68,10 +70,65 @@ class MeasurementFreshnessTests(unittest.TestCase):
             f'<Device2EM xmlns="{NS}"><Parameters>{body}</Parameters></Device2EM>', 180, self.now
         )
         self.assertEqual(values["measurements/power"], Decimal("4500"))
-        for key in ("session-energy", "health", "vehicle-status"):
+        self.assertEqual(values["measurements/health"], "OK")
+        for key in ("session-energy", "vehicle-status"):
             with self.subTest(key=key):
                 self.assertIsNone(values["measurements/" + key])
         self.assertEqual(values["settings/charge-mode"], "4719")
+
+    def test_old_state_timestamps_are_accepted_but_future_and_invalid_are_not(self):
+        for channel in STATE_CHANNELS:
+            with self.subTest(channel=channel):
+                for age in (0, 181, 10000000):
+                    self.assertEqual(
+                        current_measurement("307", self.stamp(age), 180, self.now, channel=channel),
+                        "307",
+                    )
+                for stamp in (None, "invalid", self.stamp(-1)):
+                    self.assertIsNone(
+                        current_measurement("307", stamp, 180, self.now, channel=channel)
+                    )
+                for value in (None, "NaN", "bad", "1.5", "-1", "4294967295", "16777213"):
+                    self.assertIsNone(
+                        current_measurement(
+                            value, self.stamp(10000), 180, self.now, channel=channel
+                        )
+                    )
+
+    def test_semp_state_reply_keeps_original_recorder_evidence_and_expires(self):
+        stamp = self.stamp(10000000)
+        body = "".join(
+            f"<Parameter><channelId>{channel}</channelId><timestamp>{stamp}</timestamp>"
+            "<value>307</value></Parameter>"
+            for channel in sorted(STATE_CHANNELS)
+        )
+        observer = Mock()
+        with patch("sma_mqtt_bridge.adapters.echarger.time.monotonic", return_value=1000):
+            values = semp_values(
+                f'<Device2EM xmlns="{NS}"><Parameters>{body}</Parameters></Device2EM>',
+                180,
+                self.now,
+                timestamp_observer=observer,
+            )
+        self.assertEqual(values["measurements/health"], "OK")
+        for channel in STATE_CHANNELS:
+            observer.observe.assert_any_call("semp", channel, "307", stamp, 180, self.now)
+        state = RemainingLifetimeTests().state(values)
+        state.update(values, now=1000)
+        self.assertEqual(state.fresh_values(1180)["measurements/health"], "OK")
+        self.assertNotIn("measurements/health", state.fresh_values(1181))
+        state.error = "offline"
+        # A failed read does not produce a new sample or change its receipt time.
+        self.assertEqual(state.values["measurements/health"][1], 1000)
+
+    def test_state_reply_lifetime_does_not_change_original_timestamp(self):
+        stamp = self.stamp(10000000)
+        self.assertEqual(
+            observation_time("Measurement.Operation.Health", "307", stamp, 180, self.now, 1000),
+            1000,
+        )
+        for channel in ("Measurement.ChaSess.WhIn", "Measurement.Metering.GridMs.TotWIn.ChaSta"):
+            self.assertIsNone(current_measurement("307", stamp, 180, self.now, channel=channel))
 
 
 class RemainingLifetimeTests(unittest.TestCase):
@@ -236,7 +293,7 @@ class RemainingLifetimeTests(unittest.TestCase):
             state.update(values, now=1000)
             self.assertNotIn("measurements/power", state.fresh_values(1000))
 
-    def test_session_health_and_plain_adapters_keep_existing_receipt_lifetime(self):
+    def test_session_expires_but_confirmed_state_uses_reply_lifetime(self):
         values = self.reply(
             [
                 ("Measurement.Metering.GridMs.TotWIn.ChaSta", "1", 0),
@@ -256,7 +313,8 @@ class RemainingLifetimeTests(unittest.TestCase):
         )
         state.update(stale, now=1003)
         self.assertNotIn("measurements/session-energy", state.fresh_values(1003))
-        self.assertNotIn("measurements/health", state.fresh_values(1003))
+        self.assertIn("measurements/health", state.fresh_values(1003))
+        self.assertNotIn("measurements/health", state.fresh_values(1184))
         for source in ("modbus", "meter", "portal"):
             plain = self.state({"measurements/power": 1})
             plain.id = source
@@ -350,6 +408,15 @@ class ReaderLifetimeTests(unittest.IsolatedAsyncioTestCase):
         delayed.update(values, now=1002)
         self.assertNotIn("measurements/current-l1", delayed.fresh_values(1002))
         self.assertEqual(delayed.status(1002), "stale")
+
+    async def test_api_health_with_old_state_timestamp_uses_current_reply(self):
+        values, state = await self.read_api([("Measurement.Operation.Health", "307", 10000000)])
+        state.update(values, now=1000)
+        self.assertEqual(state.fresh_values(1001)["measurements/health"], "OK")
+        self.assertNotIn("measurements/health", state.fresh_values(1181))
+        invalid, _ = await self.read_api([("Measurement.Operation.Health", "307", -1)])
+        state.update(invalid, now=1002)
+        self.assertNotIn("measurements/health", state.fresh_values(1002))
 
     async def test_api_session_observation_preserves_source_time_without_expanding_base_inventory(
         self,

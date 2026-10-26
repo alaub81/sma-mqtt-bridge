@@ -219,8 +219,21 @@ SEMP_EXTRA = (
 )
 
 
+# These status timestamps mark initialization/state transitions, not live sampling.
+# Keep their original timestamps in the recorder; availability follows successful replies.
+STATE_CHANNELS = frozenset(
+    {
+        "Measurement.Operation.Health",
+        "Measurement.Operation.EVeh.Health",
+        "Measurement.Operation.Evt.Msg",
+        "Measurement.Chrg.ModSw",
+        "Measurement.Acs.AuthRegistStt",
+    }
+)
+
+
 # Only channels observed refreshing timestamps with unchanged numeric values.
-# Session energy, voltage, phase power and unresolved states retain their old policy.
+# Session energy, voltage, phase power and other states retain their device-age policy.
 REFRESHED_CHANNELS = frozenset(
     {
         "Measurement.Metering.GridMs.TotWIn.ChaSta",
@@ -249,6 +262,11 @@ def observation_time(
     future_tolerance_seconds=DEFAULT_FUTURE_TOLERANCE_SECONDS,
 ):
     """Anchor accepted device age to a monotonic clock before further processing."""
+    if channel in STATE_CHANNELS:
+        accepted = current_measurement(
+            value, timestamp, stale_seconds, now, future_tolerance_seconds, channel=channel
+        )
+        return monotonic if accepted is not None else None
     if channel not in REFRESHED_CHANNELS or value is None:
         return None
     _, age, quality = sample_timestamp(timestamp, now, stale_seconds, future_tolerance_seconds)
@@ -411,9 +429,22 @@ def current_measurement(
     stale_seconds,
     now=None,
     future_tolerance_seconds=DEFAULT_FUTURE_TOLERANCE_SECONDS,
+    *,
+    channel=None,
 ):
     now = datetime.now(timezone.utc) if now is None else now
     _, _, quality = sample_timestamp(timestamp, now, stale_seconds, future_tolerance_seconds)
+    if channel in STATE_CHANNELS:
+        code = number(value)
+        if (
+            quality not in ("fresh", "stale")
+            or code is None
+            or code != code.to_integral_value()
+            or not 0 <= code < 4294967295
+            or code == 16777213
+        ):
+            return None
+        return value
     return value if quality == "fresh" else None
 
 
@@ -440,7 +471,9 @@ def semp_values(
         if channel.startswith(("Measurement.", "Setpoint.")):
             if timestamp_observer is not None:
                 timestamp_observer.observe("semp", channel, raw, stamp, stale_seconds, now)
-            raw = current_measurement(raw, stamp, stale_seconds, now, future_tolerance_seconds)
+            raw = current_measurement(
+                raw, stamp, stale_seconds, now, future_tolerance_seconds, channel=channel
+            )
             observed = observation_time(
                 channel, raw, stamp, stale_seconds, now, monotonic, future_tolerance_seconds
             )
@@ -665,6 +698,7 @@ class EChargerReader:
                         self.settings.stale_seconds,
                         now,
                         self.settings.future_tolerance_seconds,
+                        channel=m["channelId"],
                     )
                     observed = observation_time(
                         m["channelId"],
