@@ -713,8 +713,9 @@ device polling or InfluxDB credentials are required.
 | `SMAB_PLANT_GRID_SOURCE` | `home-manager` | One enabled grid source; alternatively an enabled inverter slot with complete verified `grid` mappings. |
 | `SMAB_PLANT_UPDATE_INTERVAL_SECONDS` | `1` | Positive seconds; maximum wait for expiry/calendar/checkpoint checks. New source receipts/errors wake calculation immediately. |
 | `SMAB_PLANT_MAX_SKEW_SECONDS` | `240` | Positive seconds, at most 3600; maximum spread of contributing observation times, in addition to individual freshness. Also bounds the one-time wait for older household energy inflows after an outflow counter advances. |
-| `SMAB_PLANT_COORDINATED_READS_ENABLED` | `true` | Boolean; when plant calculations are enabled, align contributing Modbus reads and use one complete W snapshot per shared cycle. False restores independent scheduling and immediate W calculations. No additional adapter is enabled. |
+| `SMAB_PLANT_COORDINATED_READS_ENABLED` | `true` | Boolean; when plant calculations are enabled, align contributing Modbus/API counter reads, use complete W cycles and confirm household kWh only from complete counter rounds. False restores independent scheduling and immediate calculations. No additional adapter is enabled. |
 | `SMAB_PLANT_POWER_CYCLE_SECONDS` | `5` | Positive number, at most 60 seconds; shared interval for contributing W pollers when coordinated reads are enabled. Overrides their profile/device poll intervals; other pollers keep their effective intervals. |
+| `SMAB_PLANT_ENERGY_MAX_SKEW_SECONDS` | `10` | Positive number, at most 60 seconds; maximum receipt-time spread of a completed household counter round. Applies when coordinated reads are enabled. Independent of W skew and the longer energy synchronization timeout. |
 | `SMAB_PLANT_POWER_MAX_SKEW_SECONDS` | `0` | Number from 0 to 3600 seconds; 0 preserves the general skew limit. A positive value selects an independent limit for W recipes only, also enforced before publication. Choose a short limit from recorded source timing; energy counters and their synchronization window keep `MAX_SKEW_SECONDS`. |
 | `SMAB_PLANT_RECORDER_ENABLED` | `false` | Boolean; record each calculation frame in `plant-frames.jsonl` under the state directory. Independent of DEBUG logging and MQTT diagnostics; no additional device reads. |
 | `SMAB_PLANT_RECORDER_MAX_BYTES` | `8388608` | Integer, 4096–1073741824 bytes per file (up to 1 GiB each, 2 GiB total); keep the active file and one `.1` rotation. Best-effort diagnostics, storage failures do not invalidate calculations. |
@@ -729,7 +730,7 @@ device polling or InfluxDB credentials are required.
 
 JSON uses `plant.enabled`, `homieId`, `gridSource`, `updateIntervalSeconds`,
 `maxSkewSeconds`, `powerMaxSkewSeconds`, `coordinatedReadsEnabled`,
-`powerCycleSeconds`, `recorderEnabled`, `recorderMaxBytes`,
+`powerCycleSeconds`, `energyMaxSkewSeconds`, `recorderEnabled`, `recorderMaxBytes`,
 `boundaryToleranceSeconds`, `checkpointIntervalSeconds`,
 `initialConsumptionKwh`, `assumeAcBatteryEnergy`, `publishPartialDay`, `debugEnabled`,
 `debugIntervalSeconds`, `diagnosticsEnabled`; each inverter gains `role`.
@@ -751,6 +752,25 @@ durable grid/house balances publish only committed snapshots. Their actual oldes
 input time is retained, not renewed on calculation or MQTT reconnect. All required
 inputs must remain fresh and within skew limits; last-known retained values remain
 distinct from current validity. Existing per-device topics are unchanged.
+
+With coordinated reads enabled, household energy is confirmed only after every
+contributor has supplied a valid observation from the same counter round. The
+round interval is the slowest participating effective polling interval (typically
+180 seconds); faster counters retain their polling cadence. Household energy
+excluding the Wallbox also waits for its API total-energy counter. The API polling
+interval is unchanged but anchored to the shared origin, halfway into the shorter
+of its polling interval and `ENERGY_MAX_SKEW_SECONDS`, to allow device timestamp
+updates after the round boundary. Requests are not replayed to catch up missed slots.
+Only completed rounds within `ENERGY_MAX_SKEW_SECONDS` can update confirmed values.
+Partial rounds cannot confirm an intermediate PV-only peak. Original observation
+ages remain attached; stale or failed inputs block publication rather than making
+a saved snapshot artificially fresh. Between completed rounds the previous
+eligible snapshot may remain available until its original lifetime expires.
+Initial collection reports `synchronizing` for at most `MAX_SKEW_SECONDS`, then
+`unavailable` without a complete usable round. Invalid complete rounds are
+unavailable. Previously confirmed high-water marks, daily baselines, precision
+offsets and state schema remain unchanged. This does not certify simultaneous
+internal measurements across devices. No openHAB Item or topic changes are required.
 
 Counter accounting persists `energy-balances.json` under `SMAB_STATE_DIR`, normally
 `/data/sma-mqtt-bridge/state/energy-balances.json` in volume `data_smab_state`.
@@ -1187,7 +1207,9 @@ and ENV, preserving the state volume. The recorder runs on every calculation
 including unchanged values. It records the actual input vector used for that
 calculation, receipt times/ages, expected and actual units, freshness, signed W
 recipes, candidate/available outputs, source status and missing critical values,
-plant status, energy statuses and accounting times. Source updates can coalesce
+plant status, energy statuses and accounting times. `energyRounds` records the
+actual frozen counter inputs and completion/availability evidence for each household
+account; raw latest inputs can differ while the next round is being collected. Source updates can coalesce
 before calculation; this is not a raw protocol-packet capture or proof of devices'
 internal measurement simultaneity. Outputs indicate internal eligibility, not
 broker acknowledgement. No addresses, credentials or hardware fingerprints are

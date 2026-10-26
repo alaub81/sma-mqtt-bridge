@@ -139,6 +139,16 @@ class PlantRecorder(TimestampDiagnostics):
             "inputs": inputs,
             "powerInputs": power_inputs,
             "powerFrames": power_frames,
+            "energyRounds": {
+                name: {
+                    "cycle": cycle.evidence(now),
+                    "inputs": {
+                        ref.identity: self.input_record(engine, ref, "kWh", observation, now)
+                        for ref, observation in (cycle.snapshot or {}).items()
+                    },
+                }
+                for name, cycle in engine.energy_cycles.items()
+            },
             "latestPowerBalances": latest_balances,
             "powerCycle": engine.power_cycles.evidence(now)
             if engine.power_cycles is not None

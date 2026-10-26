@@ -1,6 +1,12 @@
 version: 1
 widgets:
   sma_echarger_comfort_list:
+    tags:
+      - SMA
+      - eCharger
+      - Wallbox
+      - Elektromobilität
+      - Energie
     component: li
     config:
       style:

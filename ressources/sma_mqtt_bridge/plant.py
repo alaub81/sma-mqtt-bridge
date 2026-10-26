@@ -13,7 +13,7 @@ from .energy_balances import EnergyBalances
 from .energy_profile_compat import released_energy_layout
 from .errors import ConfigError
 from .model import Property, SampleValues, SourceState, number, payload
-from .plant_cycles import PowerCycles
+from .plant_cycles import CounterReadCadence, PowerCycles
 from .plant_debug import PlantDebug
 from .plant_price import PlantPrice
 from .plant_profiles import FIELDS
@@ -68,8 +68,12 @@ def plant_plan(config):
         not 0 < settings.boundary_tolerance_seconds <= 900
         or not 0 < settings.max_skew_seconds <= 3600
         or not 0 <= settings.power_max_skew_seconds <= 3600
+        or not 0 < settings.energy_max_skew_seconds <= 60
     ):
-        raise ConfigError("Plant boundary tolerance must be <= 900 s and sample skew <= 3600 s")
+        raise ConfigError(
+            "Plant boundary tolerance must be <= 900 s, sample skew <= 3600 s, "
+            "and energy round skew > 0 and <= 60 s"
+        )
     groups = {"pv": [], "battery": []}
     identities = []
     grid = None
@@ -272,6 +276,10 @@ class PlantEngine:
         self.account_signs = {}
         self.sample_walls = {}
         self.recorder = PlantRecorder(config)
+        self.energy_cycles = {}
+        self.energy_intervals = {}
+        self.energy_origin = None
+        self.energy_walls = {}
         self.power_cycles = None
         self.recipe_cycles = {}
         self.committed_times = {}
@@ -539,6 +547,7 @@ class PlantEngine:
         if not self.config.plant.coordinated_reads_enabled:
             return
         origin = time.monotonic() if now is None else now
+        self.energy_origin = origin
         power = {ref for ref, unit in self.expected_units.items() if unit == "W"}
         energy = {ref for ref, unit in self.expected_units.items() if unit == "kWh"}
         self.power_cycles = PowerCycles(power, origin, self.config.plant.power_cycle_seconds)
@@ -552,9 +561,26 @@ class PlantEngine:
             if unit == "W"
         }
         self.state.cycles = self.recipe_cycles
-        for state, reader, _ in readers:
+        for state, reader, reader_interval in readers:
             wanted = {ref.key for ref in power if ref.source == state.id}
             counters = {ref.key for ref in energy if ref.source == state.id}
+            for ref in energy:
+                if ref.source != state.id:
+                    continue
+                interval = reader_interval or self.config.home_manager.poll_interval_seconds
+                if isinstance(reader, ModbusReader):
+                    definition = next(
+                        p
+                        for p in reader.profile["properties"]
+                        if p["node"] + "/" + p["id"] == ref.key
+                    )
+                    poller = next(p for p in reader.pollers if p["id"] == definition["poller"])
+                    interval = reader.interval(poller)
+                self.energy_intervals[ref] = interval
+                if ref.source == "api":
+                    reader.counter_cadence = CounterReadCadence(
+                        origin, interval, self.config.plant.energy_max_skew_seconds
+                    )
             if wanted and isinstance(reader, ModbusReader):
                 reader.configure_schedule(
                     wanted, counters, origin, self.config.plant.power_cycle_seconds
@@ -563,8 +589,24 @@ class PlantEngine:
 
     def observe_source(self, state, values):
         now = time.monotonic()
-        for cycle in set(self.recipe_cycles.values()):
+        for cycle in set(self.recipe_cycles.values()) | set(self.energy_cycles.values()):
             cycle.observe(state, values, now)
+
+    def energy_observations(self, name, inputs, now):
+        """Only confirm a complete counter round, including independent API contributions."""
+        if self.energy_origin is None or name not in ("house", "housewithoutwallbox"):
+            return None
+        if name not in self.energy_cycles:
+            refs = frozenset(ref for ref, _ in inputs)
+            interval = max(self.energy_intervals[ref] for ref in refs)
+            self.energy_cycles[name] = PowerCycles(
+                refs, self.energy_origin, interval, label_attribute=None
+            )
+            # Initial observations must genuinely belong to this round, never startup leftovers.
+            for source in self.sources.values():
+                self.energy_cycles[name].observe(source, source.fresh_values(now), now)
+        cycle = self.energy_cycles[name]
+        return cycle.snapshot if cycle.available(now) else {}
 
     def power_observations(self, now, key="house/consumption"):
         if self.power_cycles is not None:
@@ -741,7 +783,47 @@ class PlantEngine:
         values = self.ledger.precise_values(values, paired)
         if values is None:
             return None, None, "unavailable", None
-        sample_times = {ref.identity: self.sample_wall(ref, now, wall) for ref, _ in inputs}
+        observations = self.energy_observations(name, inputs, now)
+        regressed = record is not None and any(
+            values[key] < Decimal(record["last"][key]) for key in values
+        )
+        if observations is not None and regressed:
+            cycle = self.energy_cycles[name]
+            cycle.snapshot = None
+            cycle.pending.clear()
+        if observations is not None and not regressed:
+            if not observations:
+                waiting = now - self.energy_origin < self.config.plant.max_skew_seconds
+                return None, None, "synchronizing" if waiting else "unavailable", None
+            frozen = self.frame(
+                tuple((ref, 1) for ref, _ in inputs),
+                now,
+                observations=observations,
+                max_skew=self.config.plant.energy_max_skew_seconds,
+            )
+            if frozen is None:
+                return None, None, "unavailable", None
+            raw, oldest, deadline, hardware, latest = frozen
+            values = self.ledger.precise_values(raw, {})
+            if values is None:
+                return None, None, "unavailable", None
+            cycle = self.energy_cycles[name]
+            cycle_token = (cycle.origin, cycle.completed)
+            previous_walls = self.energy_walls.get(name)
+            if previous_walls is None or previous_walls[0] != cycle_token:
+                times = {
+                    ref.identity: wall - timedelta(seconds=now - observations[ref][1])
+                    for ref, _ in inputs
+                }
+                self.energy_walls[name] = (cycle_token, times)
+            sample_times = self.energy_walls[name][1]
+            if (
+                max(sample_times.values()).astimezone(self.zone).date()
+                != wall.astimezone(self.zone).date()
+            ):
+                return None, None, "synchronizing", None
+        else:
+            sample_times = {ref.identity: self.sample_wall(ref, now, wall) for ref, _ in inputs}
         oldest_wall = min(sample_times.values())
         token = (
             tuple(sorted(values.items())),

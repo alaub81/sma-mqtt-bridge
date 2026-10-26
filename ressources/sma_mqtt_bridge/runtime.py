@@ -19,6 +19,7 @@ from .errors import AuthenticationError
 from .health import atomic_json, heartbeat
 from .homie import HomiePublisher, backoff, wait_stop
 from .model import Property, SourceState
+from .plant_cycles import CounterReadCadence
 from .portal_commands import CommandRouter, PortalCommands
 from .portal_refresh import PortalRefresh
 from .storage import journal_status, state_lock
@@ -278,7 +279,14 @@ async def supervise(
                         await refresh.wait(stop)
                 elif interval is not None:
                     monitor.progress("waiting")
-                    delay = reader.delay() if isinstance(reader, ModbusReader) else interval
+                    cadence = getattr(reader, "counter_cadence", None)
+                    delay = (
+                        reader.delay()
+                        if isinstance(reader, ModbusReader)
+                        else cadence.delay(time.monotonic())
+                        if isinstance(cadence, CounterReadCadence)
+                        else interval
+                    )
                     if refresh is None:
                         await wait_stop(stop, delay)
                     else:

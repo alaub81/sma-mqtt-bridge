@@ -54,8 +54,9 @@ class ReadSchedule:
 class PowerCycles:
     """Freeze each complete cycle once; never substitute a different cycle's samples."""
 
-    def __init__(self, references, origin, seconds):
+    def __init__(self, references, origin, seconds, *, label_attribute="power_cycle"):
         self.references = frozenset(references)
+        self.label_attribute = label_attribute
         self.origin, self.seconds = origin, seconds
         self.pending = {}
         self.snapshot = None
@@ -85,7 +86,7 @@ class PowerCycles:
                 for ref in relevant:
                     frame.pop(ref, None)
             return
-        label = getattr(values, "power_cycle", None)
+        label = getattr(values, self.label_attribute, None) if self.label_attribute else None
         # UDP telegrams have no request label: their genuine receipt time chooses the cycle.
         label = current if label is None else label
         if label != current or label <= self.completed:
@@ -131,3 +132,17 @@ class PowerCycles:
             else [],
             "failedSources": sorted(self.failed),
         }
+
+
+class CounterReadCadence:
+    """Anchor independent counter reads after the common round start, without bursts."""
+
+    def __init__(self, origin, interval, collection_seconds):
+        self.origin = origin + min(interval / 2, collection_seconds / 2)
+        self.interval = interval
+
+    def delay(self, now):
+        if now < self.origin:
+            return self.origin - now
+        next_slot = math.floor((now - self.origin) / self.interval) + 1
+        return self.origin + next_slot * self.interval - now

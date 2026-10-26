@@ -1,6 +1,12 @@
 version: 1
 widgets:
   smabChargingPlan:
+    tags:
+      - SMA
+      - eCharger
+      - Wallbox
+      - Elektromobilität
+      - Ladeplan
     props:
       parameters:
         - name: item
@@ -115,6 +121,12 @@ widgets:
                     nach Bestätigung aktiviert. Fortfahren?
           config: {}
   smabChargingPlanList:
+    tags:
+      - SMA
+      - eCharger
+      - Wallbox
+      - Elektromobilität
+      - Ladeplan
     props:
       parameters:
         - name: item

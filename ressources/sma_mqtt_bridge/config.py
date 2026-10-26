@@ -190,6 +190,7 @@ class Plant(SafeRepr):
     power_max_skew_seconds: float = 0.0
     coordinated_reads_enabled: bool = True
     power_cycle_seconds: float = 5.0
+    energy_max_skew_seconds: float = 10.0
     recorder_enabled: bool = False
     recorder_max_bytes: int = 8388608
     boundary_tolerance_seconds: float = 240.0
