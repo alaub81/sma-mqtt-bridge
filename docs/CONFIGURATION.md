@@ -765,7 +765,12 @@ Only completed rounds within `ENERGY_MAX_SKEW_SECONDS` can update confirmed valu
 Partial rounds cannot confirm an intermediate PV-only peak. Original observation
 ages remain attached; stale or failed inputs block publication rather than making
 a saved snapshot artificially fresh. Between completed rounds the previous
-eligible snapshot may remain available until its original lifetime expires.
+confirmed counter snapshot remains available until the next expected round plus
+`ENERGY_MAX_SKEW_SECONDS`, provided all current source observations remain fresh,
+valid and bound to the same devices. Individual acquisition lifetimes still govern
+new candidates; they do not prematurely expire a previously confirmed cumulative
+counter. Its original observation time is preserved. A source failure, reset,
+invalid input, local date change or missed round deadline blocks the held value.
 Initial collection reports `synchronizing` for at most `MAX_SKEW_SECONDS`, then
 `unavailable` without a complete usable round. Invalid complete rounds are
 unavailable. Previously confirmed high-water marks, daily baselines, precision

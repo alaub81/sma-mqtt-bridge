@@ -795,6 +795,29 @@ class PlantEngine:
             if not observations:
                 waiting = now - self.energy_origin < self.config.plant.max_skew_seconds
                 return None, None, "synchronizing" if waiting else "unavailable", None
+            cycle = self.energy_cycles[name]
+            cycle_token = (cycle.origin, cycle.completed)
+            cached = self.account_frames.get(name)
+            previous_walls = self.energy_walls.get(name)
+            if (
+                cached is not None
+                and previous_walls is not None
+                and previous_walls[0] == cycle_token
+                and cached[1][2] in ("complete", "partial")
+            ):
+                if cached[0][-1] != wall.astimezone(self.zone).date():
+                    return None, None, "synchronizing", None
+                # A confirmed counter is historical. Require live inputs, but do not
+                # expire it using an individual member's old acquisition lifetime.
+                hold_until = (
+                    cycle.origin
+                    + (cycle.completed + 1) * cycle.seconds
+                    + self.config.plant.energy_max_skew_seconds
+                )
+                if now >= hold_until:
+                    return None, None, "unavailable", None
+                daily, total, status, age = cached[1]
+                return daily, total, status, (age[0], min(deadline, hold_until))
             frozen = self.frame(
                 tuple((ref, 1) for ref, _ in inputs),
                 now,

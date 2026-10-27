@@ -169,3 +169,45 @@ class EnergyRoundTests(PlantFixture):
         )
         self.assertEqual(engine.energy_intervals[engine.grid["energyimport"]], 60)
         self.assertEqual(engine.energy_intervals[engine.grid["energyexport"]], 60)
+
+    def test_confirmed_counter_bridges_member_expiry_without_retiming(self):
+        engine, inputs = self.prepared()
+        record = engine.ledger.data["accounts"]["house"]
+        original = record.copy()
+        # Current sources keep reporting; the accepted round itself stays at t=100.
+        self.fill(engine, 220)
+        daily, _, status, age = engine.account(
+            "house", inputs, 230, self.wall + timedelta(seconds=130)
+        )
+        self.assertEqual(daily, Decimal("0"))
+        self.assertEqual(status, "partial")
+        self.assertEqual(age[0], 100)
+        self.assertEqual(age[1], 250)
+        self.assertEqual(record, original)
+
+    def test_confirmed_counter_hold_ends_at_next_round_collection_deadline(self):
+        engine, inputs = self.prepared()
+        self.fill(engine, 280)
+        self.assertIsNotNone(
+            engine.account("house", inputs, 289, self.wall + timedelta(seconds=189))[0]
+        )
+        self.assertEqual(
+            engine.account("house", inputs, 290, self.wall + timedelta(seconds=190))[2],
+            "unavailable",
+        )
+
+    def test_current_stale_input_still_blocks_confirmed_counter(self):
+        engine, inputs = self.prepared()
+        self.assertEqual(
+            engine.account("house", inputs, 230, self.wall + timedelta(seconds=130))[2],
+            "unavailable",
+        )
+
+    def test_publication_keeps_original_confirmed_time_across_member_expiry(self):
+        engine, _ = self.prepared()
+        self.fill(engine, 220)
+        engine.refresh(230, self.wall + timedelta(seconds=130))
+        key = "house/daily-consumption"
+        self.assertEqual(engine.state.fresh_values(230)[key], "0")
+        self.assertEqual(engine.state.values[key][1], 100)
+        self.assertEqual(engine.state.deadlines[key], 250)
