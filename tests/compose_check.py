@@ -51,8 +51,12 @@ def render(filename, overrides):
 def check(overrides):
     dev, deployment = [render(filename, overrides) for filename in FILES]
     build = dev.pop("build")
-    if build["dockerfile"] != "Dockerfile-SMAB" or Path(build["context"]) != ROOT:
-        raise ValueError("Development build must use the root Dockerfile-SMAB")
+    if (
+        build["dockerfile"] != "Dockerfile-SMAB"
+        or Path(build["context"]) != ROOT
+        or build.get("pull") is not True
+    ):
+        raise ValueError("Development must use the root Dockerfile-SMAB and refresh base images")
     if "build" in deployment:
         raise ValueError("Deployment must use GHCR instead of a local build")
     if dev.pop("image") != "sma-mqtt-bridge:dev" or dev.pop("pull_policy") != "build":

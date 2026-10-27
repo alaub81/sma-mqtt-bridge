@@ -108,10 +108,20 @@ which requires reusable CI before building, scanning and publishing GHCR images.
 Checks include Compose parity and amd64/arm64 images. Local test success does not
 establish a successful hosted workflow or image publication.
 
-The official Python image tag and multi-platform digest are pinned in
-[Dockerfile-SMAB](../Dockerfile-SMAB). Verify published stable tags before changing
-the base; exclude prereleases. Publishing new commits/tags is explicit release
-work. Local builds and checks do not publish or deploy automatically.
+The [Dockerfile](../Dockerfile-SMAB) uses the official `python:3.15-slim-trixie`
+tag without a patch-version or digest pin. New builds follow stable 3.15 patches
+and Debian Trixie image updates while retaining the slim variant. The build helper,
+development Compose build and CI/release builds pull the current base; unchanged
+layers can still use Docker's build cache. CI also resolves the latest stable
+3.15 interpreter. A later build of the same checkout can therefore use a newer
+base image. Record the resulting image digest when an exact artifact is needed.
+
+Existing images and running containers do not change automatically. Rebuild and
+replace the container to apply base-image updates. Updating the upstream tag alone
+does not trigger CI or publish a new bridge image. A new Python feature line or
+Debian variant requires a deliberate update; verify official tags and exclude
+prereleases. Publishing new commits/tags is explicit release work. Local builds
+and checks do not publish or deploy automatically.
 
 ## Build versions and dependencies
 

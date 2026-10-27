@@ -4,6 +4,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile-SMAB
+      pull: true
     image: sma-mqtt-bridge:dev
     pull_policy: build
     user: "${SMAB_UID:-10001}:${SMAB_GID:-10001}"
