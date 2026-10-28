@@ -103,6 +103,9 @@ class MeterReader:
                 data, sender = await asyncio.get_running_loop().sock_recvfrom(self.socket, 65536)
                 if self.settings.host and sender[0] != self.settings.host:
                     continue
+                # Speedwire shares this port with SMA protocols unrelated to meter readings.
+                if len(data) >= 18 and data[:4] == b"SMA\0" and data[16:18] != b"\x60\x69":
+                    continue
                 parsed = parse_telegram(data, self.settings.serial)
                 if parsed is None:
                     continue

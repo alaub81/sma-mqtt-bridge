@@ -1,5 +1,6 @@
 """Deterministic phase decoding and independent Modbus/UDP ownership."""
 
+import asyncio
 import json
 import struct
 import tempfile
@@ -180,6 +181,79 @@ class SupplementalRuntimeTests(unittest.TestCase):
 
 
 class SupplementalReceiveTests(unittest.IsolatedAsyncioTestCase):
+    async def test_other_speedwire_protocols_do_not_interrupt_meter_reads(self):
+        frame = telegram([(0x00010400, 999)] + PHASE_RECORDS)
+        other = frame[:16] + b"\x60\x65" + frame[18:]
+        # Keep the meter parser strict; dispatch unrelated traffic in the receiver.
+        with self.assertRaises(ProtocolError):
+            parse_telegram(other, "123")
+        for phases_only in (False, True):
+            with self.subTest(phases_only=phases_only):
+                reader = MeterReader(HomeManager(serial="123"), phases_only=phases_only)
+                reader.socket = object()
+                receive = AsyncMock(
+                    side_effect=[
+                        (other, ("192.0.2.2", 9522)),
+                        (frame, ("192.0.2.1", 9522)),
+                        (other, ("192.0.2.1", 9522)),
+                        (telegram(PHASE_RECORDS, counter=2), ("192.0.2.1", 9522)),
+                    ]
+                )
+                with patch(
+                    "sma_mqtt_bridge.adapters.meter.asyncio.get_running_loop",
+                    return_value=SimpleNamespace(sock_recvfrom=receive),
+                ):
+                    first = await reader.read()
+                    self.assertEqual(reader.last_counter, 1)
+                    second = await reader.read()
+                self.assertEqual(len(first), 12 if phases_only else 13)
+                self.assertEqual(len(second), 12)
+                self.assertEqual(reader.last_counter, 2)
+                self.assertEqual(receive.await_count, 4)
+
+    async def test_other_protocol_traffic_does_not_refresh_or_extend_deadline(self):
+        reader = MeterReader(HomeManager(serial="123", timeout_seconds=0.02), phases_only=True)
+        reader.socket = object()
+        reader.last_counter, reader.last_received = 42, 100.0
+        other = telegram([], counter=99)
+        other = other[:16] + b"\x60\x65" + other[18:]
+        waiting = asyncio.Event()
+        calls = 0
+
+        async def receive_packet(*_):
+            nonlocal calls
+            calls += 1
+            if calls <= 3:
+                return other, ("192.0.2.1", 9522)
+            await waiting.wait()
+            self.fail("The read deadline must cancel a receiver waiting for meter data")
+
+        with patch(
+            "sma_mqtt_bridge.adapters.meter.asyncio.get_running_loop",
+            return_value=SimpleNamespace(sock_recvfrom=receive_packet),
+        ):
+            with self.assertRaises(TimeoutError):
+                await reader.read()
+        self.assertEqual(calls, 4)
+        self.assertEqual((reader.last_counter, reader.last_received), (42, 100.0))
+
+    async def test_malformed_meter_packets_still_fail_without_updating_state(self):
+        frame = telegram(PHASE_RECORDS)
+        duplicate = telegram(PHASE_RECORDS[:1] * 2)
+        for malformed in (frame[:17], b"BAD!" + frame[4:], frame[:-5], duplicate):
+            with self.subTest(length=len(malformed), prefix=malformed[:4]):
+                reader = MeterReader(HomeManager(serial="123"), phases_only=True)
+                reader.socket = object()
+                reader.last_counter, reader.last_received = 42, 100.0
+                receive = AsyncMock(return_value=(malformed, ("192.0.2.1", 9522)))
+                with patch(
+                    "sma_mqtt_bridge.adapters.meter.asyncio.get_running_loop",
+                    return_value=SimpleNamespace(sock_recvfrom=receive),
+                ):
+                    with self.assertRaises(ProtocolError):
+                        await reader.read()
+                self.assertEqual((reader.last_counter, reader.last_received), (42, 100.0))
+
     async def test_filter_serial_counter_and_exclude_total_values(self):
         reader = MeterReader(HomeManager(serial="123", host="192.0.2.1"), phases_only=True)
         reader.socket = object()

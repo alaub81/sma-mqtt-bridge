@@ -68,6 +68,11 @@ group and port, including when used beside Modbus. On Linux the standalone
 UDP network/timeout/staleness settings apply. No device configuration or charging
 control writes are performed.
 
+The shared Speedwire port can also carry other SMA protocols. The UDP receiver
+ignores SMA packets with a protocol ID other than the meter protocol `0x6069`;
+they neither refresh measurements nor extend the read timeout. Malformed meter
+telegrams still fail validation. Sender and meter serial filters remain active.
+
 Protocol references: [SMA meter protocol, sections 3.1 and 3.3](https://cdn.sma.de/fileadmin/content/www.developer.sma.de/docs/EMETER-Protokoll-TI-en-10.pdf),
 [SMA Home Manager Modbus assignment tables](https://files.sma.de/downloads/HM-20-Modbus-NSD-TI-en-12.pdf),
 and [openHAB Energy Meter channels](https://www.openhab.org/addons/bindings/smaenergymeter/).
