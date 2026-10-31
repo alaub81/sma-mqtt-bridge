@@ -12,6 +12,7 @@ from pathlib import Path
 
 import aiomqtt
 
+from .adapters.meter import PHASE_KEYS
 from .availability import Availability, is_timeout
 from .config import ID, ssl_context
 from .errors import ConfigError, StateError
@@ -522,6 +523,8 @@ class HomiePublisher:
         declared = self.properties(states) if declared is None else declared
         current = declared
         inventory = None
+        phase_topics, phase_sent_at = set(), {}
+        phase_interval = self.config.home_manager.phase_publish_interval_seconds
         while not stop.is_set():
             observed_inventory = tuple(
                 (
@@ -536,6 +539,13 @@ class HomiePublisher:
             if observed_inventory != inventory:
                 current = self.properties(states)
                 inventory = observed_inventory
+                phase_topics = {
+                    base + "/" + wire_key(p.key)
+                    for source in states
+                    if source.id in ("home-manager", "home-manager-phases")
+                    for p in source.published_properties
+                    if p.key in PHASE_KEYS
+                }
             if current != declared:
                 # Inventory changes require a new Homie description and retained retirement.
                 device = states[0].device
@@ -548,6 +558,7 @@ class HomiePublisher:
                 for topic in sorted(previous - topics):
                     await client.publish(topic, b"", qos=mqtt.qos, retain=True)
                     sent.pop(topic, None)
+                    phase_sent_at.pop(topic, None)
                 for topic, value in metadata.items():
                     await client.publish(topic, value, qos=mqtt.qos, retain=True)
                 self.owned[device] = topics
@@ -562,19 +573,30 @@ class HomiePublisher:
             desired = {base + "/" + wire_key(key): value for key, value in values.items()}
             desired[base + "/$state"] = state
             # Missing/expired values are not new observations; retain the last publication.
+            # Recovery may publish immediately, but never enqueue an expired intermediate value.
+            phase_sent_at = {k: v for k, v in phase_sent_at.items() if k in desired}
             for topic, value in desired.items():
+                if (
+                    topic in phase_topics
+                    and phase_interval > 0
+                    and topic in phase_sent_at
+                    and time.monotonic() - phase_sent_at[topic] < phase_interval
+                ):
+                    continue
                 if sent.get(topic) != value or (
                     topic == base + "/$state"
                     and time.monotonic() - last_status >= min(runtime.health_interval_seconds, 1)
                 ):
                     await client.publish(topic, value, qos=mqtt.qos, retain=True)
+                    sent[topic] = value
+                    if topic in phase_topics:
+                        phase_sent_at[topic] = time.monotonic()
             last_status = time.monotonic()
             monitor = self.monitors.get(base.split("/")[1])
             if monitor is not None:
                 monitor.progress("publishing")
                 monitor.success()  # Only after the full batch's QoS acknowledgements.
                 monitor.observe("ready")
-            sent.update(desired)
             await wait_stop(stop, min(runtime.health_interval_seconds, 1))
 
     async def run(self, stop):

@@ -95,6 +95,7 @@ class HomeManager(SafeRepr):
     advanced_channels_enabled: bool = False
     diagnostics_enabled: bool = False
     udp_phases_enabled: bool = False
+    phase_publish_interval_seconds: float = 5.0
     udp_host: str = ""
     transport: str = "modbus-tcp"
     profile: str = "sma-home-manager-2-modbus"
@@ -337,6 +338,10 @@ def section(defaults, data, env, prefix, recognized):
             elif field.name == "recorder_max_bytes":
                 minimum, maximum = 4096, 1073741824
             elif isinstance(defaults, Plant) and field.name == "power_max_skew_seconds":
+                minimum, maximum = 0, 3600
+            elif (
+                isinstance(defaults, HomeManager) and field.name == "phase_publish_interval_seconds"
+            ):
                 minimum, maximum = 0, 3600
             elif field.name == "future_tolerance_seconds":
                 minimum, maximum = 0, 1

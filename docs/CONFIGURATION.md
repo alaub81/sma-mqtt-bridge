@@ -176,6 +176,7 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 | `ENABLED` | `false` | Explicitly enable the selected transport. |
 | `TRANSPORT` | `modbus-tcp` | `udp` or `modbus-tcp`; no automatic fallback or dual ownership of totals/counters. |
 | `UDP_PHASES_ENABLED` | `false` | With Modbus, independently receive UDP phase power/current/voltage; no duplicate totals/counters. UDP-only mode already includes phases. |
+| `PHASE_PUBLISH_INTERVAL_SECONDS` | `5` | MQTT minimum interval per L1–L3 power/current/voltage topic, 0–3600 seconds; 0 disables the limit. Applies to UDP-only phases and supplemental UDP phases. Publish the latest fresh changed value at full precision; totals, counters, status and internal sampling/freshness remain unchanged. |
 | `UDP_HOST` | empty | Optional IPv4 sender filter for supplemental UDP; serial selector always applies. |
 | `PROFILE` | `sma-home-manager-2-modbus` | Bundled ID or host `file:<name>.json`; used only for Modbus. |
 | `HOST` | empty | Optional UDP source IP filter; required TCP hostname/address for Modbus. |
@@ -192,6 +193,20 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 | `MULTICAST_GROUP` | `239.12.255.254` | IPv4 multicast group. |
 | `TIMEOUT_SECONDS`, `STALE_SECONDS` | `5`, `30` | Receive supervision and freshness thresholds. |
 | `HOMIE_ID` | `sma-home-manager` | Stable Homie identity; no charging-control writes. |
+
+Home Manager phase publication coalesces intermediate values rather than queueing
+all changes. The first value after connection is immediate; subsequent changed
+values wait at least `PHASE_PUBLISH_INTERVAL_SECONDS` after the last successful
+publication for that topic. Unchanged payloads are still suppressed. Missing or
+expired values are not sent later from a queue; the first changed valid value
+after such an interruption may publish immediately. Reconnect and metadata
+retirement retain their existing Homie behavior. For eight continuously changing
+phase Items, 5 seconds allows approximately 1,440 steady-state updates per
+15 minutes instead of about 7,000 at one-second resolution. This reduces MQTT
+and subscriber events without reducing measurement precision; short phase
+transients between publications will no longer appear in downstream history.
+JSON uses `homeManager.phasePublishIntervalSeconds`. No openHAB Item or link
+changes are required.
 
 | eCharger suffix after `SMAB_ECHARGER_` | Default | Meaning / validation |
 | --- | --- | --- |
