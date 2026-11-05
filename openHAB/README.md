@@ -45,6 +45,31 @@ Forecast widgets display forecast Items supplied by your setup; the bridge does
 not calculate a weather-based PV forecast. The widget files let you select your
 own Items and display options. Install each widget UID only once.
 
+### Battery directions in the daily energy widget
+
+In `daily_energy_overview`, select the Items linked to the plant's new kWh
+channels:
+
+| Widget parameter | Meaning | Plant channel |
+| --- | --- | --- |
+| `batteryChargeEnergyItem` | Charged today | `battery/dailychargeenergy` |
+| `batteryEnergyItem` | Discharged today | `battery/dailydischargeenergy` |
+
+Both values are displayed separately, like grid import and export. The existing
+`batteryEnergyItem` parameter keeps its name and meaning. The charge Item is
+optional; leaving it empty preserves the discharge-only display. If only the
+charge Item is configured, the battery remains visible with that direction.
+Do not select cumulative charge/discharge counters for these daily inputs.
+
+Charge uses green and an arrow toward the battery; discharge uses orange and an
+arrow toward the house. Both directions share a striped line when their displayed
+values are positive, with a neutral battery icon. Values that round to zero at the
+selected precision keep an inactive arrow/color. Unknown values show a dash and
+do not activate a direction. Customize `batteryChargeColor`,
+`batteryDischargeColor`, `batteryIconColor`, `batteryChargeIcon`,
+`batteryDischargeIcon` and `batteryIcon` as needed. The analyzer includes both
+configured Items. Daily differences are calculated by the bridge, not the widget.
+
 ## Manual MainUI import
 
 [imports/widgets/sma_echarger_comfort_list.yaml](imports/widgets/sma_echarger_comfort_list.yaml)

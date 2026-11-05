@@ -370,88 +370,13 @@ widgets:
                                     default:
                                       - component: div
                                         config:
-                                          style: {}
-                                          class: smab-roof-shape
+                                          style:
+                                            background: var(--pv-grid)
+                                            mask-image: 'url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20156%2088%22%3E%3Cpath%20d%3D%22M48.2857%2032.9762l19.2000%20-8.7595%20M52.5714%2031.6380l19.2000%20-9.0028%20M56.8572%2030.2998l19.2001%20-9.2461%20M61.1428%2028.9615l19.2000%20-9.4894%20M65.4286%2027.6233l19.2001%20-9.7327%20M69.7142%2026.2851l19.2000%20-9.9761%20M53.6000%2030.0565l30.0000%20-10.2194%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%220.5%22%2F%3E%3C%2Fsvg%3E")'
+                                            mask-size: 100% 100%
+                                            mask-repeat: no-repeat
+                                            class: smab-roof-shape
                                           visible: =props.showGrid !== false
-                                        slots:
-                                          default:
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 30.9524%
-                                                  top: 37.1889%
-                                                  width: 21.1038px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(-24.5235deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 33.6996%
-                                                  top: 35.6682%
-                                                  width: 21.2059px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(-25.1216deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 36.4469%
-                                                  top: 34.1475%
-                                                  width: 21.3104px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(-25.7139deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 39.1941%
-                                                  top: 32.6267%
-                                                  width: 21.4170px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(-26.3004deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 41.9414%
-                                                  top: 31.1060%
-                                                  width: 21.5260px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(-26.8810deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 44.6886%
-                                                  top: 29.5853%
-                                                  width: 21.6371px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(-27.4558deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 34.3590%
-                                                  top: 33.8710%
-                                                  width: 31.6928px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(-18.8112deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
                                 - component: div
                                   config:
                                     style:
@@ -479,99 +404,13 @@ widgets:
                                     default:
                                       - component: div
                                         config:
-                                          style: {}
-                                          class: smab-roof-shape
+                                          style:
+                                            background: var(--pv-grid)
+                                            mask-image: 'url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20156%2088%22%3E%3Cpath%20d%3D%22M75.5333%2021.8715l25.6667%2016.0861%20M80.2667%2020.2156l25.7333%2015.9914%20M85.0000%2018.5597l25.8000%2015.8968%20M89.7334%2016.9037l25.8667%2015.8022%20M94.4667%2015.2478l25.9333%2015.7075%20M77.2000%2027.5726l28.5000%20-10.0774%20M83.5999%2031.6178l28.5999%20-10.2193%20M90.0000%2035.6629l28.7000%20-10.3613%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%220.5%22%2F%3E%3C%2Fsvg%3E")'
+                                            mask-size: 100% 100%
+                                            mask-repeat: no-repeat
+                                            class: smab-roof-shape
                                           visible: =props.showGrid !== false
-                                        slots:
-                                          default:
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 48.4188%
-                                                  top: 24.5699%
-                                                  width: 30.2909px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(32.0766deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 51.4530%
-                                                  top: 22.6882%
-                                                  width: 30.2973px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(31.8579deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 54.4872%
-                                                  top: 20.8065%
-                                                  width: 30.3043px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(31.6395deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 57.5214%
-                                                  top: 18.9247%
-                                                  width: 30.3116px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(31.4211deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 60.5556%
-                                                  top: 17.0430%
-                                                  width: 30.3193px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(31.2028deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 49.4872%
-                                                  top: 31.0484%
-                                                  width: 30.2292px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(-19.4733deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 53.5897%
-                                                  top: 35.6452%
-                                                  width: 30.3709px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(-19.6628deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 57.6923%
-                                                  top: 40.2419%
-                                                  width: 30.5130px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(-19.8506deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
                                 - component: div
                                   config:
                                     style:
@@ -651,110 +490,13 @@ widgets:
                                     default:
                                       - component: div
                                         config:
-                                          style: {}
-                                          class: smab-roof-shape
+                                          style:
+                                            background: var(--pv-grid)
+                                            mask-image: 'url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%20156%2088%22%3E%3Cpath%20d%3D%22M46.0500%2058.1952l-17.1500%206.2451%20M52.0999%2058.7984l-17.1001%206.2452%20M58.1499%2059.4016l-17.0500%206.2452%20M64.1999%2060.0048l-17.0000%206.2451%20M70.2501%2060.6081l-16.9501%206.2452%20M76.3001%2061.2113l-16.9000%206.2452%20M82.3501%2061.8145l-16.8500%206.2451%20M34.2666%2059.6737l48.5334%204.8258%20M28.5333%2061.7554l48.6666%204.8258%22%20fill%3D%22none%22%20stroke%3D%22black%22%20stroke-width%3D%220.5%22%2F%3E%3C%2Fsvg%3E")'
+                                            mask-size: 100% 100%
+                                            mask-repeat: no-repeat
+                                            class: smab-roof-shape
                                           visible: =props.showGrid !== false
-                                        slots:
-                                          default:
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 29.5192%
-                                                  top: 65.8468%
-                                                  width: 18.2517px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(159.9910deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 33.3974%
-                                                  top: 66.5323%
-                                                  width: 18.2048px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(159.9371deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 37.2756%
-                                                  top: 67.2177%
-                                                  width: 18.1578px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(159.8829deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 41.1538%
-                                                  top: 67.9032%
-                                                  width: 18.1108px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(159.8286deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 45.0321%
-                                                  top: 68.5887%
-                                                  width: 18.0640px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(159.7739deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 48.9103%
-                                                  top: 69.2742%
-                                                  width: 18.0170px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(159.7189deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 52.7885%
-                                                  top: 69.9597%
-                                                  width: 17.9701px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(159.6637deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 21.9658%
-                                                  top: 67.5269%
-                                                  width: 48.7727px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(5.6784deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
-                                            - component: div
-                                              config:
-                                                style:
-                                                  left: 18.2906%
-                                                  top: 69.8925%
-                                                  width: 48.9053px
-                                                  height: 0.5px
-                                                  background: var(--pv-grid)
-                                                  transform: rotate(5.6630deg)
-                                                  transform-origin: 0 50%
-                                                class: smab-roof-stroke
                                 - component: div
                                   config:
                                     style:
@@ -903,23 +645,23 @@ widgets:
                                 flex-shrink: '0'
                                 font-weight: '600'
                                 font-variant-numeric: tabular-nums
-              - component: Label
-                config:
-                  text: >-
-                    =Number.isFinite(fn.power(props.soPowerItem, 2400, props.roofStatusItem) + fn.power(props.nwPowerItem,
-                    1200, props.roofStatusItem) + fn.power(props.swPowerItem, 1800, props.carportStatusItem)) ?
-                    '' : 'Mindestens eine DC-Leistung fehlt.'
-                  style:
-                    font-size: 11px
-                    color: var(--pv-muted)
-                    display: block
-                    margin-top: '0'
               - component: div
                 config:
                   visible: =['so', 'nw', 'sw'].includes(vars.pvArea)
                   class: smab-roof-details
                 slots:
                   default:
+                    - component: Label
+                      config:
+                        text: >-
+                          =Number.isFinite(fn.power(props.soPowerItem, 2400, props.roofStatusItem) + fn.power(props.nwPowerItem,
+                          1200, props.roofStatusItem) + fn.power(props.swPowerItem, 1800, props.carportStatusItem)) ?
+                          '' : 'Mindestens eine DC-Leistung fehlt.'
+                        style:
+                          font-size: 11px
+                          color: var(--pv-muted)
+                          display: block
+                          margin-top: '0'
                     - component: div
                       config:
                         style:

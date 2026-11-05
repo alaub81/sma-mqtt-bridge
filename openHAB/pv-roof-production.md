@@ -58,7 +58,8 @@ change widget-local variables. The voltage/current fields show a dash when absen
   unavailable. Negative DC inputs are rejected rather than silently reversed.
 - Actual zero remains `0 W`. Missing values do not become invented zeros.
 - The total uses all three independently normalized DC power readings. If any
-  power is unavailable, the total is a dash and an incomplete-input note appears.
+  power is unavailable, the total is a dash. An incomplete-input note appears only in the opened
+  details, so delayed initial Item states do not increase the closed card height.
   It is not AC power, daily yield or an estimate derived from voltage/current.
 - When a source-status Item is selected, only `ready` permits its values.
   A missing or non-ready selected status suppresses those source values. Without
@@ -91,8 +92,9 @@ Selecting a module area adds its details below that overview, with 8 px side
 insets and 12 px bottom padding to keep text clear of the rounded card edges. The former
 sceneAspectRatio option is removed because the overview no longer scales in
 height with the cell width.
-There are no scripts, embedded SVG documents or external assets required by the
-widget. Power labels use fixed 56 px widths and a 26 px minimum height, with
+The module grids use three inline SVG CSS masks instead of individual line
+components; their geometry and colors follow the same roof surfaces. No scripts
+or external assets are required by the widget. Power labels use fixed 56 px widths and a 26 px minimum height, with
 separate positions for NW, SO and SW. Their 10 px values fit two-decimal kW
 readings, including `12,34 kW`, in narrow two-column grid cells. The total uses one compact row, and its
 value and unit stay together. Details use normal MainUI
