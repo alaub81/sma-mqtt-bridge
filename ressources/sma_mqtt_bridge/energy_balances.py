@@ -71,7 +71,15 @@ def validate_ledger(data):
             or any(c not in "0123456789abcdef" for c in data["signature"])
             or not isinstance(data["accounts"], dict)
             or set(data["accounts"])
-            - {"import", "export", "house", "wallbox", "housewithoutwallbox"}
+            - {
+                "import",
+                "export",
+                "house",
+                "wallbox",
+                "housewithoutwallbox",
+                "batterycharge",
+                "batterydischarge",
+            }
         ):
             raise ValueError
         if data["schemaVersion"] == 2:

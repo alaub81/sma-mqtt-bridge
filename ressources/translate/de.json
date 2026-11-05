@@ -224,6 +224,10 @@
     "Power Drawn L2": "Bezogene Leistung Phase L2",
     "Power Grid Feed In L2": "Netzeinspeiseleistung Phase L2",
     "Power Drawn L3": "Bezogene Leistung Phase L3",
-    "Power Grid Feed In L3": "Netzeinspeiseleistung Phase L3"
+    "Power Grid Feed In L3": "Netzeinspeiseleistung Phase L3",
+    "Daily battery charge energy": "Batterie-Tagesladung",
+    "Daily battery discharge energy": "Batterie-Tagesentladung",
+    "Battery charge day coverage": "Abdeckung Batterie-Tagesladung",
+    "Battery discharge day coverage": "Abdeckung Batterie-Tagesentladung"
   }
 }

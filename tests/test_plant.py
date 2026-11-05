@@ -255,7 +255,10 @@ class PlantConfigurationTests(PlantFixture):
     def test_generic_repeated_profile_and_single_device_suppression(self):
         engine = self.engine(env={"SMAB_INVERTER3_ENABLED": "false"})
         self.assertFalse(any(p.node == "pv" for p in engine.state.properties))
-        self.assertFalse(any(p.node == "battery" for p in engine.state.properties))
+        self.assertEqual(
+            {p.id for p in engine.state.properties if p.node == "battery"},
+            {"daily-charge-energy", "daily-discharge-energy"},
+        )
         engine.refresh(100, self.wall)
         self.assertEqual(engine.state.fresh_values(100)["house/consumption"], "1600")
         engine = self.engine(

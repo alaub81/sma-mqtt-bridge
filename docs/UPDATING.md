@@ -49,3 +49,10 @@ and [bridge configuration](CONFIGURATION.md#compose-usage).
 A restart alone does not apply a changed image/environment. No command or charge
 plan needs to be resent as part of an upgrade. Host profile/translation overrides
 can mask bundled additions and need an explicit independent review.
+
+Battery daily accounting adds `batterycharge` and `batterydischarge` accounts to
+`energy-balances.json` without rebasing existing accounts or changing the binding
+fingerprint. Older builds that do not recognize these account names cannot read
+the extended ledger. Before downgrading, use a compatible build or restore the
+complete matching pre-upgrade state backup; do not delete individual accounts or
+reset the state volume as a routine update step.

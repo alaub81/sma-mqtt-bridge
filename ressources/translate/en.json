@@ -224,6 +224,10 @@
     "Power Drawn L2": "Power Drawn L2",
     "Power Grid Feed In L2": "Power Grid Feed In L2",
     "Power Drawn L3": "Power Drawn L3",
-    "Power Grid Feed In L3": "Power Grid Feed In L3"
+    "Power Grid Feed In L3": "Power Grid Feed In L3",
+    "Daily battery charge energy": "Daily battery charge energy",
+    "Daily battery discharge energy": "Daily battery discharge energy",
+    "Battery charge day coverage": "Battery charge day coverage",
+    "Battery discharge day coverage": "Battery discharge day coverage"
   }
 }

@@ -847,6 +847,11 @@ startup before connections. Preserve the file for reconciliation. Starting a new
 ledger deliberately requires stopping the service, backing up the old file and
 choosing a verified opening value; keep the volume, manifests and command journals.
 
+Battery daily charge/discharge use the same durable accounting, with independent
+accounts for each direction and fixed configured contributor membership, even for
+one battery. See [battery daily energy](PLANT.md#battery-daily-energy) for topics,
+labels, first-day coverage and source-boundary semantics.
+
 `diagnostics/importdaystatus`, `exportdaystatus`, `houseenergystatus`, `localdate`,
 `batteryenergyboundary`, `importenergytime`, `exportenergytime`, `houseenergytime`
 and `houseenergystart` expose coverage and scope. `diagnostics/validproperties`

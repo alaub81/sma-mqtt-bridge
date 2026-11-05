@@ -32,6 +32,11 @@ class EnergyResetTests(unittest.TestCase):
         self.path = self.old.ledger.path
 
     def test_bundled_ac_upgrade_archives_old_five_accounts_and_restarts_without_assumption(self):
+        # Reproduce a pre-battery-daily ledger while retaining all original accounts.
+        old_data = json.loads(self.path.read_text())
+        for name in self.old.battery_accounts:
+            old_data["accounts"].pop(name)
+        self.path.write_text(json.dumps(old_data))
         env = dict(self.env)
         env.pop("SMAB_PLANT_ASSUME_AC_BATTERY_ENERGY")
         config = load_config(env)

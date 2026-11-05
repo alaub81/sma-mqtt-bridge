@@ -20,6 +20,37 @@ its default 0 retains the general limit until a capture has been reviewed.
 Wallbox daily kWh belongs to the eCharger; household energy excluding Wallbox
 belongs to the plant. Derived day coverage does not determine charger availability.
 
+## Battery daily energy
+
+With at least one configured battery contributor, the plant publishes two read-only
+Basic properties, including for a single battery:
+
+| Topic suffix | English label | German label | Unit |
+| --- | --- | --- | --- |
+| `battery/dailychargeenergy` | Daily battery charge energy | Batterie-Tagesladung | kWh |
+| `battery/dailydischargeenergy` | Daily battery discharge energy | Batterie-Tagesentladung | kWh |
+
+Each direction uses the sum of the configured contributors' cumulative charge or
+discharge counter deltas against its own saved daily baseline. Membership never
+shrinks on failure. These are directional energy flows, not state of charge or
+battery losses. They retain the configured counters' physical measurement boundary;
+they do not establish an AC boundary for household accounting. The inverter's
+existing device daily-discharge property remains independent.
+
+The same calendar, first-day partial coverage, checkpoint, freshness, identity,
+reset and midnight-gap rules as grid daily energy apply. With coordinated reads,
+each battery direction waits for all its contributors in a complete counter round.
+PV or grid failure does not block valid battery day values. Check the Basic
+`diagnostics/batterychargedaystatus` and `diagnostics/batterydischargedaystatus`
+properties alongside the numbers; optional Diagnostics timestamps are
+`diagnostics/batterychargeenergytime` and `diagnostics/batterydischargeenergytime`.
+
+Existing energy accounts keep their baselines when upgrading. The two new accounts
+start at their first valid observation, not retrospectively at midnight; initial
+partial publication follows `SMAB_PLANT_PUBLISH_PARTIAL_DAY`. Preserve the state
+volume. openHAB can display these kWh values directly without calculating daily
+differences itself.
+
 ## Durable accounting
 
 Counter vectors, local calendar boundaries, compatible AC storage counters and

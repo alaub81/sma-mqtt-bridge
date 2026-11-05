@@ -300,6 +300,36 @@ class PlantEngine:
             )
             for key, (label, unit, _) in self.recipes.items()
         ]
+        self.battery_accounts = {}
+        if self.groups["battery"]:
+            for direction in ("charge", "discharge"):
+                name = "battery" + direction
+                key = "battery/daily-" + direction + "-energy"
+                inputs = tuple((m[name + "energy"], 1) for m in self.groups["battery"])
+                self.battery_accounts[name] = (key, inputs)
+                properties += [
+                    Property(
+                        "battery",
+                        "daily-" + direction + "-energy",
+                        "Daily battery " + direction + " energy",
+                        unit="kWh",
+                        channel_group="basic",
+                    ),
+                    Property(
+                        "diagnostics",
+                        name + "-day-status",
+                        "Battery " + direction + " day coverage",
+                        "string",
+                        channel_group="basic",
+                    ),
+                    Property(
+                        "diagnostics",
+                        name + "-energy-time",
+                        "Energy snapshot time (UTC)",
+                        "string",
+                        channel_group="diagnostics",
+                    ),
+                ]
         self.daily_tariffs = {}
         self.daily_tariffs["grid/daily-costs"] = ("import", None, "Daily grid import costs")
         self.daily_tariffs["grid/daily-earnings"] = ("export", None, "Daily feed-in remuneration")
@@ -517,6 +547,8 @@ class PlantEngine:
         }
         self.state.guards["grid/daily-energy-import"] = (self.grid["energyimport"],)
         self.state.guards["grid/daily-energy-export"] = (self.grid["energyexport"],)
+        for key, inputs in self.battery_accounts.values():
+            self.state.guards[key] = tuple(ref for ref, _ in inputs)
         for key, (direction, _, _) in self.daily_tariffs.items():
             self.state.guards[key] = (self.grid["energy" + direction],)
         energy_inputs = [m["totalyield"] for m in self.groups["pv"]]
@@ -594,7 +626,9 @@ class PlantEngine:
 
     def energy_observations(self, name, inputs, now):
         """Only confirm a complete counter round, including independent API contributions."""
-        if self.energy_origin is None or name not in ("house", "housewithoutwallbox"):
+        if self.energy_origin is None or (
+            name not in ("house", "housewithoutwallbox") and name not in self.battery_accounts
+        ):
             return None
         if name not in self.energy_cycles:
             refs = frozenset(ref for ref, _ in inputs)
@@ -873,7 +907,7 @@ class PlantEngine:
             oldest_wall,
             sample_wall=max(sample_times.values()),
             sample_times=sample_times,
-            daily_only=name in ("wallbox", "housewithoutwallbox"),
+            daily_only=name in ("wallbox", "housewithoutwallbox") or name in self.battery_accounts,
         )
         result = (daily, total, status, (oldest, deadline))
         self.account_frames[name] = (token, result)
@@ -967,6 +1001,13 @@ class PlantEngine:
         for name, metric in (("import", "energyimport"), ("export", "energyexport")):
             daily, _, status, age = self.account(name, [(self.grid[metric], 1)], now, wall)
             key = "grid/daily-energy-" + name
+            packet[key] = daily
+            if age:
+                observed[key], deadlines[key] = age
+            packet["diagnostics/" + name + "-day-status"] = status
+            accounts[name] = {key: daily}
+        for name, (key, inputs) in self.battery_accounts.items():
+            daily, _, status, age = self.account(name, inputs, now, wall)
             packet[key] = daily
             if age:
                 observed[key], deadlines[key] = age

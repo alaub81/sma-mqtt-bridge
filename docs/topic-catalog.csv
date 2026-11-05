@@ -311,12 +311,18 @@ echarger-charging-session,charging-session,session/endedat,Observed session disc
 echarger-charging-session,charging-session,session/energy,Observed session energy,kWh,basic
 echarger-charging-session,charging-session,session/energytime,Session energy observation time,,basic
 echarger-charging-session,charging-session,session/status,Charging session status,,basic
+derived-plant,plant,battery/dailychargeenergy,Daily battery charge energy,kWh,basic
+derived-plant,plant,battery/dailydischargeenergy,Daily battery discharge energy,kWh,basic
 derived-plant,plant,battery/totalbatterychargeenergy,Total battery charge energy,kWh,basic
 derived-plant,plant,battery/totalbatterydischargeenergy,Total battery discharge energy,kWh,basic
 derived-plant,plant,battery/totalchargepower,Total battery charging power,W,basic
 derived-plant,plant,battery/totaldischargepower,Total battery discharging power,W,basic
 derived-plant,plant,diagnostics/averagedaystatus,Seven-day coverage,,basic
 derived-plant,plant,diagnostics/averagewithoutwallboxdaystatus,Seven-day coverage without wallbox,,basic
+derived-plant,plant,diagnostics/batterychargedaystatus,Battery charge day coverage,,basic
+derived-plant,plant,diagnostics/batterychargeenergytime,Energy snapshot time (UTC),,diagnostics
+derived-plant,plant,diagnostics/batterydischargedaystatus,Battery discharge day coverage,,basic
+derived-plant,plant,diagnostics/batterydischargeenergytime,Energy snapshot time (UTC),,diagnostics
 derived-plant,plant,diagnostics/batteryenergyboundary,Battery energy boundary,,diagnostics
 derived-plant,plant,diagnostics/exportdaystatus,Export day coverage,,basic
 derived-plant,plant,diagnostics/exportenergytime,Energy snapshot time (UTC),,diagnostics

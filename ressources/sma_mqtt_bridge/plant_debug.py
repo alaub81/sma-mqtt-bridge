@@ -91,6 +91,8 @@ class PlantDebug:
             "export": {engine.grid["energyexport"].identity: 1},
             "house": house_terms,
         }
+        for name, (_, terms) in engine.battery_accounts.items():
+            energy_recipes[name] = {ref.identity: sign for ref, sign in terms}
         if engine.wallbox is not None:
             energy_recipes.update(
                 {

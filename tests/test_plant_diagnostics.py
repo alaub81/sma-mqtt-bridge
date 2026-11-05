@@ -11,6 +11,8 @@ from test_runtime import FakeClient
 from sma_mqtt_bridge.homie import HomiePublisher, discovery
 
 BASE_PLANT_QUALITY = {
+    "diagnostics/batterycharge-day-status",
+    "diagnostics/batterydischarge-day-status",
     "diagnostics/average-day-status",
     "diagnostics/import-day-status",
     "diagnostics/export-day-status",
