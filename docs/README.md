@@ -16,6 +16,7 @@ private `smab.env` is sufficient; additional JSON configuration is optional.
 | [Topic groups](TOPIC_GROUPS.md) | Basic, Advanced and Diagnostics properties |
 | [Value catalog](WERTEKATALOG.md) | Supported MQTT properties and units |
 | [Operation](OPERATIONS.md) | Startup checks, health, unavailable values and recovery |
+| [Diagnostic tools](TOOLS.md) | CLI checks, resource recording, exports and offline mapping helpers |
 | [Updating and backups](UPDATING.md) | Container replacement and persistent-state protection |
 | [openHAB setup](../openHAB/openHAB.md), [widget overview](../openHAB/README.md) | Discovery, Item types and widget installation |
 | [Building and checks](BUILDING.md) | Custom images, native diagnostics, tests, lint and CI |

@@ -1,207 +1,180 @@
-# Quick start: three inverters, Home Manager and eCharger
+# Set up SMA MQTT Bridge with Docker
 
-This example uses the updated defaults: Modbus TCP, Basic channels, English labels
-and read-only device access. Copy the first block into a private root `smab.env`
-and replace every installation placeholder. No JSON configuration is required.
-Descriptions and typed defaults below come from [smab.example.env](../smab.example.env).
+Start with one device, verify its MQTT values, then add the other sources you need.
+Each source is independent; no additional JSON configuration is required. All
+sources and device-write gates default to disabled.
 
-The bundled inverter selections are STP8.0-3AV-40 (slot 1), SBS3.7-10 (slot 2)
-and SB4.0-1AV-41 (slot 3). For different hardware, explicitly select a matching
-verified `SMAB_INVERTER<N>_PROFILE`. Remove or disable any adapter you do not have;
-addresses alone never activate one. Enable Modbus access on the devices beforehand.
-Remove MQTT username/password if your broker does not require authentication.
+## 1. Prepare the host
 
-## Minimal installation configuration
+You need Docker with Compose **2.24 or newer**, Git and a reachable MQTT broker.
+The images support Linux amd64 and arm64, including 64-bit Raspberry Pi systems.
+The bridge does not install a broker or provide a web dashboard.
 
-```dotenv
-# Broker hostname/IP; empty default, required for active publishing. Replace the placeholder.
-# Type: string; default: empty.
-SMAB_MQTT_HOST=mqtt.example.invalid
+Check your device's exact model and firmware against the
+[supported devices](../README.md#supported-devices). Enable its required local
+interface before connecting; inverter Modbus TCP is a device setting.
 
-# Optional broker authentication username.
-# Type: string; default: empty.
-SMAB_MQTT_USERNAME=bridge-user
+For a new installation:
 
-# Account password; use either PASSWORD or PASSWORD_FILE, never both.
-# Type: string; default: empty.
-SMAB_MQTT_PASSWORD='REPLACE_WITH_MQTT_PASSWORD'
-
-# Enable this source explicitly; addresses or credentials never activate it.
-# Type: boolean; default: false.
-SMAB_INVERTER1_ENABLED=true
-
-# Device hostname/IP; required only for this enabled source.
-# Type: string; default: empty.
-SMAB_INVERTER1_HOST=inverter1.example.invalid
-
-# Enable this source explicitly; addresses or credentials never activate it.
-# Type: boolean; default: false.
-SMAB_INVERTER2_ENABLED=true
-
-# Device hostname/IP; required only for this enabled source.
-# Type: string; default: empty.
-SMAB_INVERTER2_HOST=inverter2.example.invalid
-
-# Enable this source explicitly; addresses or credentials never activate it.
-# Type: boolean; default: false.
-SMAB_INVERTER3_ENABLED=true
-
-# Device hostname/IP; required only for this enabled source.
-# Type: string; default: empty.
-SMAB_INVERTER3_HOST=inverter3.example.invalid
-
-# Enable this source explicitly; addresses or credentials never activate it.
-# Type: boolean; default: false.
-SMAB_HOME_MANAGER_ENABLED=true
-
-# Optional UDP sender IPv4 filter; required TCP host for modbus-tcp.
-# Type: string; default: empty.
-SMAB_HOME_MANAGER_HOST=home-manager.example.invalid
-
-# Required decimal serial selector when enabled; verifies telegrams or Modbus identity.
-# Type: string; default: empty.
-SMAB_HOME_MANAGER_SERIAL=REPLACE_WITH_NUMERIC_SERIAL
-
-# Enable local HTTPS API reads only; does not enable SEMP.
-# Type: boolean; default: false.
-SMAB_ECHARGER_ENABLED=true
-
-# Trusted certificate DNS name/IP of the local charger; shared by API and SEMP.
-# Type: string; default: empty.
-SMAB_ECHARGER_HOST=echarger.example.invalid
-
-# Local charger account; separate from the portal account.
-# Type: string; default: empty.
-SMAB_ECHARGER_USERNAME=REPLACE_WITH_LOCAL_USER
-
-# Account password; use either PASSWORD or PASSWORD_FILE, never both.
-# Type: string; default: empty.
-SMAB_ECHARGER_PASSWORD='REPLACE_WITH_LOCAL_PASSWORD'
-
-# Required serial guard for local API; optional additional SEMP identity check.
-# Type: string; default: empty.
-SMAB_ECHARGER_EXPECTED_SERIAL=REPLACE_WITH_CHARGER_SERIAL
-
-# Enable a separate logical Homie plant with an explicitly selected enabled grid source.
-# With the local eCharger API enabled, also publish daily kWh on the eCharger
-# and household daily kWh without Wallbox on the plant (household AC gate still applies).
-# Type: boolean; default: false.
-SMAB_PLANT_ENABLED=true
+```sh
+git clone https://github.com/alaub81/sma-mqtt-bridge.git
+cd sma-mqtt-bridge
+mkdir -p data/sma-mqtt-bridge
+touch smab.env
+chmod 600 smab.env
+docker compose version
 ```
 
-TLS and certificate/name verification are enabled for MQTT and the local eCharger.
-The MQTT port defaults to 8883. Use reachable certificate names above.
-If certificates use a private CA, add the relevant settings below and place the
-CA files in the mounted host `data/sma-mqtt-bridge/certificates/` directory.
-The certificate must match the configured host; a CA file alone does not fix
-a name mismatch. MQTT and eCharger each have independent trust settings.
+Edit `smab.env` with a text editor. Keep existing files when updating.
+[smab.example.env](../smab.example.env) lists every option; you only need the
+settings relevant to your installation. Paths below refer to the default layout.
+
+## 2. Configure MQTT
+
+Add your broker's hostname or IP:
 
 ```dotenv
-# Container path to a trusted broker CA; empty uses system trust.
-# Type: string; default: empty.
-SMAB_MQTT_TLS_CA_FILE=/data/sma-mqtt-bridge/config/certificates/mqtt-ca.crt
+SMAB_MQTT_HOST=mqtt.example.invalid
+```
 
-# Container path to trusted local charger certificate/CA; empty uses system trust.
-# Type: string; default: empty.
+Replace the example address with one reachable **from the container**. `localhost`
+inside the container refers to the bridge container. A service name such as
+`mosquitto` requires a shared Docker network; the standalone template creates its
+own network. See [network variants](CONFIGURATION.md#compose-network-variants).
+
+MQTT defaults to TLS on port **8883**, with certificate verification. For a private
+CA, place the trusted CA at `data/sma-mqtt-bridge/certificates/mqtt-ca.crt` and add:
+
+```dotenv
+SMAB_MQTT_TLS_CA_FILE=/data/sma-mqtt-bridge/config/certificates/mqtt-ca.crt
+```
+
+For a deliberately plaintext broker, explicitly add both settings instead:
+
+```dotenv
+SMAB_MQTT_TLS=false
+SMAB_MQTT_PORT=1883
+```
+
+Add authentication only if your broker requires it. Single-quote passwords
+containing `$` or `#` so Compose preserves them literally:
+
+```dotenv
+SMAB_MQTT_USERNAME=bridge-user
+SMAB_MQTT_PASSWORD='REPLACE_WITH_MQTT_PASSWORD'
+```
+
+The default container user is UID/GID 10001. Mounted directories must be traversable
+and any CA/password files readable by that user. The host-only `smab.env` stays
+mode 600; Compose reads it before starting the container.
+
+## 3. Add a source
+
+Copy only the blocks for equipment you actually have, replacing every placeholder.
+An address or password alone never enables a source.
+
+### One inverter
+
+```dotenv
+SMAB_INVERTER1_ENABLED=true
+SMAB_INVERTER1_HOST=inverter.example.invalid
+SMAB_INVERTER1_PROFILE=sma-stp8-0-3av-40
+```
+
+Choose the [profile](PROFILES.md) matching the exact model/firmware. To add more
+inverters, repeat the block with `INVERTER2`, `INVERTER3`, etc. A profile can be used
+in any slot. For the bundled three-model setup, select `sma-stp8-0-3av-40`,
+`sma-sbs3-7-10` and `sma-sb4-0-1av-41` respectively.
+
+### Sunny Home Manager 2.0
+
+```dotenv
+SMAB_HOME_MANAGER_ENABLED=true
+SMAB_HOME_MANAGER_HOST=home-manager.example.invalid
+SMAB_HOME_MANAGER_SERIAL=REPLACE_WITH_NUMERIC_SERIAL
+```
+
+The default is Modbus TCP. It provides grid totals; UDP provides phase readings
+and can also be selected as the main transport. Linux UDP multicast requires the
+[host-network template and transport settings](HOME_MANAGER_MODBUS.md#phase-measurements).
+The bridge never enables the device's Modbus server or sends a Grid Guard login.
+
+### SMA eCharger local API
+
+```dotenv
+SMAB_ECHARGER_ENABLED=true
+SMAB_ECHARGER_HOST=echarger.example.invalid
+SMAB_ECHARGER_USERNAME=REPLACE_WITH_LOCAL_USER
+SMAB_ECHARGER_PASSWORD='REPLACE_WITH_LOCAL_PASSWORD'
+SMAB_ECHARGER_EXPECTED_SERIAL=REPLACE_WITH_CHARGER_SERIAL
+```
+
+Use the local charger account, independently of any Sunny Portal account. TLS
+verification is enabled. If system trust does not cover the charger, supply its
+trusted certificate/CA in `data/sma-mqtt-bridge/certificates/echarger-ca.crt`:
+
+```dotenv
 SMAB_ECHARGER_TLS_CA_FILE=/data/sma-mqtt-bridge/config/certificates/echarger-ca.crt
 ```
 
-## Optional additions
+The certificate must match the host. For connection by IP with a certificate for
+a DNS name, use `SMAB_ECHARGER_TLS_SERVER_NAME` as documented in
+[configuration](CONFIGURATION.md#minimal-deployment-overrides). A CA alone does not
+fix a hostname mismatch. SEMP and portal access are separate optional readers.
 
-Add only the options needed by your installation. Advanced and detailed diagnostic
-channels remain disabled; operational status and Basic measurements remain available.
+### BYD Battery-Box
 
-For German display labels:
+For the separately supported four-module HVS layout, add the two settings in the
+[BYD guide](BYD.md#configuration). Check its strict firmware/topology requirements
+first; support does not extend to arbitrary HVS/HVM systems.
 
-```dotenv
-# Display labels only; IDs, units, enum values and commands remain language-independent.
-# Type: string; default: en. Bundled: en/de; custom language needs <language>.json.
-SMAB_LANGUAGE=de
-```
+## 4. Validate and start
 
-For the separate SEMP reader (use the device's actual SEMP ID):
-
-```dotenv
-# Enable local SEMP reads independently; no local API credentials required.
-# Type: boolean; default: false.
-SMAB_ECHARGER_SEMP_ENABLED=true
-
-# Required SEMP device ID selector when SEMP is enabled.
-# Type: string; default: empty.
-SMAB_ECHARGER_SEMP_DEVICE_ID=REPLACE_WITH_SEMP_DEVICE_ID
-```
-
-For the ennexOS minimum-PV-percentage reader, add the separate portal account and
-selectors. Refresh defaults to 900 seconds; freshness defaults to 1800 seconds.
-
-```dotenv
-# Enable optional ennexOS minimum-PV reader separately from all local sources.
-# Type: boolean; default: false.
-SMAB_PORTAL_ENABLED=true
-
-# Normal portal account username; separate from local charger credentials.
-# Type: string; default: empty.
-SMAB_PORTAL_USERNAME=REPLACE_WITH_PORTAL_USER
-
-# Account password; use either PASSWORD or PASSWORD_FILE, never both.
-# Type: string; default: empty.
-SMAB_PORTAL_PASSWORD='REPLACE_WITH_PORTAL_PASSWORD'
-
-# Required portal plant selector when this source is enabled.
-# Type: string; default: empty.
-SMAB_PORTAL_PLANT_ID=REPLACE_WITH_PLANT_ID
-
-# Required portal charger device selector when this source is enabled.
-# Type: string; default: empty.
-SMAB_PORTAL_DEVICE_ID=REPLACE_WITH_PORTAL_DEVICE_ID
-```
-
-To intentionally allow supported charger commands, add the first two gates below.
-Add the portal gate only when the portal adapter is configured and portal PV writes
-are wanted. Reading settings does not require these gates. Home Manager remains
-the charging controller; the bridge does not write commands on startup.
-
-```dotenv
-# Global write gate; local controls also require SMAB_ECHARGER_COMMANDS_ENABLED and the API.
-# Type: boolean; default: false.
-SMAB_COMMANDS_ENABLED=true
-
-# Local command gate; also requires SMAB_COMMANDS_ENABLED and enabled local API.
-# Type: boolean; default: false.
-SMAB_ECHARGER_COMMANDS_ENABLED=true
-
-# Portal PV write gate; also requires SMAB_COMMANDS_ENABLED and SMAB_PORTAL_ENABLED.
-# Type: boolean; default: false.
-SMAB_PORTAL_COMMANDS_ENABLED=true
-```
-
-Tariffs, energy offsets, identity overrides, special TLS settings and temporary
-timestamp recording are installation-specific options, not required quick-start
-settings. See the complete ENV reference before adding them. Initial daily deltas
-have `partial` coverage until a covered midnight; existing energy state is preserved.
-
-## Start
-
-Use [compose.example.yml](../compose.example.yml) for one `app-nw` network, or
-[compose.dev.yml](../compose.dev.yml) to build locally. Optional Compose values
-(image tag, paths, UID/GID) belong in `.env`; see [.env.example](../.env.example).
-The standalone template expects an existing reachable MQTT broker. A Docker
-service name such as `mosquitto` works only on a shared network.
+Use the standalone published-image template for the default TCP setup:
 
 ```sh
-chmod 600 smab.env
 docker compose -f compose.example.yml pull
 docker compose -f compose.example.yml run --rm --no-deps sma-mqtt-bridge --check-config
 docker compose -f compose.example.yml up -d
+docker compose -f compose.example.yml ps sma-mqtt-bridge
 docker compose -f compose.example.yml logs --tail=100 sma-mqtt-bridge
 ```
 
-For updates, keep the existing
-Compose project name and state volume and do not run a second writer instance.
-Check configuration successfully before starting the service. Verify container
-health, MQTT source availability and measurements after startup.
+Only start after a successful configuration check. With one inverter and the
+broker configured, expect `{"valid": true, "enabledSources": 1, "readOnly": true}`.
+The check validates settings and local files without connecting to devices or the
+broker. `enabledSources: 0` means there is no active source, even if settings are valid.
 
-Direct Home Manager UDP multicast on Linux uses the separate
-[host-network template](../compose.host.example.yml) and requires an explicit
-`SMAB_HOME_MANAGER_TRANSPORT=udp` override plus a host-reachable broker address.
-The default Modbus setup above uses the bridge-network template.
+Allow up to two minutes for initial reads. Check health and logs, then inspect
+your broker with an MQTT viewer: the default inverter root is
+`homie/sma-inverter1/`, with discovery metadata, `$state` and measurement nodes.
+Health alone does not establish fresh device values; follow
+[operation and troubleshooting](OPERATIONS.md).
+
+Published images come from `ghcr.io/alaub81/sma-mqtt-bridge`. `latest` follows the
+newest published stable image; a source checkout can be newer. For an exact image
+version, set `SMAB_BRIDGE_VERSION` in optional root `.env`, using
+[.env.example](../.env.example) as a reference. Bridge/device settings belong in
+`smab.env`. To build the checked-out source instead, see [building](BUILDING.md).
+
+## 5. Add optional features
+
+Add only what you need, then repeat the configuration check and `up -d`.
+Use the same Compose file, project name and `data_smab_state` volume throughout.
+
+| Feature | Settings / guide |
+| --- | --- |
+| German discovery labels | `SMAB_LANGUAGE=de`; [translations](TRANSLATIONS.md) |
+| Plant and daily energy balances | `SMAB_PLANT_ENABLED=true`, with an already enabled grid source and configured contributors; [plant setup](CONFIGURATION.md#plant-aggregates-and-energy-state) |
+| More technical channels | Independent `ADVANCED_CHANNELS_ENABLED` and `DIAGNOSTICS_ENABLED` switches; [topic groups](TOPIC_GROUPS.md) |
+| SEMP charger reader | `SMAB_ECHARGER_SEMP_ENABLED=true` and actual `SMAB_ECHARGER_SEMP_DEVICE_ID`; [configuration](CONFIGURATION.md) |
+| ennexOS minimum-PV preference | Separate portal activation, account, plant/device selectors; [portal settings](CONFIGURATION.md#minimal-deployment-overrides) |
+| Charger controls and plans | Global and source-specific write gates; [local controls](CONFIGURATION.md#local-echarger-controls) and [plan/portal commands](CONFIGURATION.md#combined-charging-plan-and-portal-pv-commands) |
+| openHAB dashboards | [Homie discovery and Items](../openHAB/openHAB.md), then [widgets](../openHAB/README.md) |
+
+Home Manager remains the charging controller. Initial counter-based day values
+cover the period since the first saved baseline and report `partial`; they are
+not reconstructed full-day totals. Tariffs and offsets are optional.
+
+Before the first update, follow [backups and safe upgrades](UPDATING.md).
+[Diagnostic tools](TOOLS.md) are available when investigating a problem.

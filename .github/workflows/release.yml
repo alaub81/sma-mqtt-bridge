@@ -25,6 +25,9 @@ jobs:
       contents: read
       packages: write
     runs-on: ubuntu-latest
+    outputs:
+      image_digest: ${{ steps.publish.outputs.digest }}
+      is_latest: ${{ steps.release_tag.outputs.is_latest }}
     steps:
       - uses: actions/checkout@v7
         with:
@@ -85,7 +88,10 @@ jobs:
             type=semver,pattern={{major}},prefix=,enable=${{ steps.release_tag.outputs.is_latest }}
             type=raw,value=latest,enable=${{ steps.release_tag.outputs.is_latest }}
           labels: |
-            org.opencontainers.image.source=${{ github.repository }}
+            org.opencontainers.image.source=https://github.com/${{ github.repository }}
+            org.opencontainers.image.title=SMA MQTT Bridge
+            org.opencontainers.image.description=Local SMA solar, battery and EV charger monitoring via Homie 4 MQTT for openHAB and smart homes.
+            org.opencontainers.image.licenses=MIT
 
       # Build for amd64 before scanning
       - name: Pre-build (load for scan)
@@ -118,6 +124,7 @@ jobs:
           hide-progress: true
 
       - name: Build & Push (multi-arch)
+        id: publish
         uses: docker/build-push-action@v7
         with:
           context: .
@@ -130,3 +137,41 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  release_notes:
+    needs: [release]
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v7
+        with:
+          python-version: '3.15'
+          check-latest: true
+      - name: Generate user-facing release notes including direct commits
+        env:
+          SMAB_RELEASE_TAG: ${{ github.ref_name }}
+          SMAB_RELEASE_REPOSITORY: ${{ github.repository }}
+          SMAB_RELEASE_IMAGE_DIGEST: ${{ needs.release.outputs.image_digest }}
+        run: |
+          python tools/create_release_notes.py --tag "$SMAB_RELEASE_TAG" \
+            --repository "$SMAB_RELEASE_REPOSITORY" \
+            --image-digest "$SMAB_RELEASE_IMAGE_DIGEST" \
+            --output "$RUNNER_TEMP/smab-release-notes.md"
+      - name: Publish release without replacing existing edited notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SMAB_RELEASE_TAG: ${{ github.ref_name }}
+          SMAB_RELEASE_IS_LATEST: ${{ needs.release.outputs.is_latest }}
+        run: |
+          if gh release view "$SMAB_RELEASE_TAG" >/dev/null 2>&1; then
+            echo "Existing release preserved; no notes were overwritten."
+          else
+            gh release create "$SMAB_RELEASE_TAG" --verify-tag \
+              --title "SMA MQTT Bridge $SMAB_RELEASE_TAG" \
+              --notes-file "$RUNNER_TEMP/smab-release-notes.md" \
+              --latest="$SMAB_RELEASE_IS_LATEST"
+          fi

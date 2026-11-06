@@ -30,6 +30,8 @@ These existing topic suffixes remain visible with Diagnostics disabled:
 | Plant | `diagnostics/importdaystatus` | Daily grid import coverage |
 | Plant | `diagnostics/exportdaystatus` | Daily grid export coverage |
 | Plant | `diagnostics/houseenergystatus` | Daily household energy coverage |
+| Plant | `diagnostics/batterychargedaystatus` | Daily battery charge coverage |
+| Plant | `diagnostics/batterydischargedaystatus` | Daily battery discharge coverage |
 | Plant | `diagnostics/housewithoutwallboxdaystatus` | Household coverage excluding Wallbox |
 | Plant | `diagnostics/averagedaystatus` | Seven-day household average coverage |
 | Plant | `diagnostics/averagewithoutwallboxdaystatus` | Average coverage excluding Wallbox |

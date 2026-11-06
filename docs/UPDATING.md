@@ -21,6 +21,8 @@ and [bridge configuration](CONFIGURATION.md#compose-usage).
 
 ## Replace the container
 
+Use the backup procedure below before changing the image tag.
+
 1. Read the target version's changes and check configuration/profile overrides.
    Back up private configuration and persistent state using the installation's
    existing procedure. Preserve the same Compose project and state volume;
@@ -56,3 +58,52 @@ fingerprint. Older builds that do not recognize these account names cannot read
 the extended ledger. Before downgrading, use a compatible build or restore the
 complete matching pre-upgrade state backup; do not delete individual accounts or
 reset the state volume as a routine update step.
+
+## Create a backup
+
+For the default paths and `compose.example.yml`, run from the project directory.
+This briefly stops polling so the state files form a consistent backup. Use your
+active Compose file if it differs. Keep any custom profiles, certificates and
+password files under the configuration directory included here.
+
+```sh
+(
+set -eu
+umask 077
+smab_backup_dir="private/backups/$(date +%Y%m%d-%H%M%S)"
+mkdir -p "$smab_backup_dir"
+cp -p smab.env compose.example.yml "$smab_backup_dir/"
+cp -Rp data/sma-mqtt-bridge "$smab_backup_dir/config"
+if [ -f .env ]; then cp -p .env "$smab_backup_dir/.env"; fi
+docker compose -f compose.example.yml stop sma-mqtt-bridge
+docker compose -f compose.example.yml run --rm --no-deps --entrypoint tar \
+  sma-mqtt-bridge -C /data/sma-mqtt-bridge/state -czf - . \
+  > "$smab_backup_dir/state.tar.gz"
+tar -tzf "$smab_backup_dir/state.tar.gz"
+docker compose -f compose.example.yml up -d
+)
+```
+
+The block stops on the first error. The one-off container runs only
+`tar`, never the bridge or device readers. Its state mount is the same project
+volume; it includes the ledger, topic manifest, command journals, price preferences
+and session history. The archive preserves container ownership and permissions.
+If archiving or verification fails, preserve the existing volume and investigate;
+do not treat a partial archive as a usable backup.
+The original service can remain stopped after an error; once the cause is resolved,
+resume it with `docker compose -f compose.example.yml up -d`.
+
+The backup contains secrets and installation data. It is ignored by Git and
+excluded from image builds, but still needs a protected copy outside this checkout.
+If you override `SMAB_DATA_DIR`, `SMAB_ENV_FILE`, state mounts or the Compose file,
+adapt the paths and include those exact files. Keep a note of the active image
+version and Compose project name with the backup.
+
+For recovery, stop the service and restore the **complete matching configuration
+and state** with an image compatible with that state schema. Restore into an empty
+state destination with the correct numeric ownership (default UID/GID 10001);
+overlaying an older archive onto newer state can leave incompatible journals/files.
+Check the archive before replacing any existing state, preserve the failed state
+separately, and keep the original Compose project/volume association. Validate
+configuration and verify health, source availability and MQTT after restarting.
+Do not restore a single old energy ledger alongside unrelated newer command state.

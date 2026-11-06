@@ -64,7 +64,9 @@ binary is provided upstream. Use Python 3.15 to match CI. Creating
 the Python 3.15 lint environment needs a C++ compiler to build the pinned
 `pyjson5` helper. The application runtime image needs no compiler.
 
-All public repository files receive text hygiene and applicable language checks.
+All public text files receive text hygiene and applicable language checks.
+JPEG screenshot assets receive signature/end-marker checks and are inspected
+visually before inclusion.
 Ruff uses E4/E7/E9/F/I and the correctness rules in [ruff.toml](../ruff.toml):
 B006/B008 (shared defaults), B012 (exception suppression in finally), B018/B032
 (discarded expressions or accidental annotations), B020/B023 (loop bindings),
@@ -90,6 +92,9 @@ The command prepares local tool directories but never fixes source files.
 
 ## Generated files
 
+See [diagnostic and maintenance tools](TOOLS.md) for the complete helper inventory,
+including host resource sampling, the synthetic benchmark and mapping/query tools.
+
 ```sh
 .venv/bin/python tools/export_topic_catalog.py --check
 .venv/bin/python tools/export_openhab_widget.py --check
@@ -107,6 +112,24 @@ Stable tag pushes invoke the [release workflow](../.github/workflows/release.yml
 which requires reusable CI before building, scanning and publishing GHCR images.
 Checks include Compose parity and amd64/arm64 images. Local test success does not
 establish a successful hosted workflow or image publication.
+
+After successful multi-architecture publication, the release workflow creates a
+GitHub Release with changes since the previous reachable stable tag, including
+direct commits, plus versioned setup/update links and the published image digest.
+Only the newest stable version receives the `latest` release designation.
+Existing release entries are preserved so reruns do not overwrite edited notes.
+The release-notes job alone receives repository-content write permission; builds
+retain read-only repository access. It does not create a tag or deploy a service.
+
+Preview notes locally for an existing tag without publishing:
+
+```sh
+.venv/bin/python tools/create_release_notes.py --tag vX.Y.Z --output /tmp/smab-release-notes.md
+```
+
+Replace `vX.Y.Z` with the actual stable tag. This requires Git history/tags and
+generates a local file only. Future release automation applies after the workflow
+change is present in the tagged commit; earlier tags do not acquire it retroactively.
 
 The [Dockerfile](../Dockerfile-SMAB) uses the official `python:3.15-slim-trixie`
 tag without a patch-version or digest pin. New builds follow stable 3.15 patches

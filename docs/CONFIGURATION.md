@@ -249,7 +249,7 @@ changes are required.
 | `TIMEOUT_SECONDS` | `15` | Request timeout. |
 | `POLL_INTERVAL_SECONDS` | `900` | Periodic portal refresh; zero disables periodic requests. |
 | `STALE_SECONDS` | `1800` | Positive freshness limit for retrieved portal preferences. |
-| `COMMANDS_ENABLED` | `false` | Reserved gate; enabling it is rejected until command implementation. |
+| `COMMANDS_ENABLED` | `false` | Portal minimum-PV write gate; also requires the global command gate and enabled portal adapter. See [portal commands](#combined-charging-plan-and-portal-pv-commands). |
 
 The option list is expandable as adapters are implemented; add settings, their defaults and validation here and in `smab.example.env` in the same change. Validate Homie IDs as lowercase letters, digits and internal hyphens; derive one MQTT connection/Last Will per advertised device. Command gates never override a missing allowlist, missing rights, invalid bounds or readback requirements. Do not expose an editable installer setting merely because its metadata is writable.
 
@@ -396,7 +396,7 @@ local profile/password/certificate files without device connections. Its `readOn
 field describes the effective global and per-adapter command gates of that validated
 configuration. Neither diagnostic sends a command or activates an adapter.
 
-Place only needed overrides in the root `smab.env`; no additional JSON file is mandatory. On a fresh installation, copy `smab.example.env` to `smab.env` and replace its placeholder broker host. Keep existing configuration intact. Both Compose files explicitly pass `smab.env` through the service's `env_file`. No extra flag is needed to load bridge settings with the default layout:
+Place only needed overrides in the root `smab.env`; no additional JSON file is mandatory. On a fresh installation, create `smab.env` with the [minimal setup](../README.md#quick-start), or copy `smab.example.env` and uncomment only needed overrides. Keep existing configuration intact. Both Compose files explicitly pass `smab.env` through the service's `env_file`. No extra flag is needed to load bridge settings with the default layout:
 
 ```bash
 docker compose -f compose.dev.yml run --rm sma-mqtt-bridge --check-config
@@ -409,7 +409,7 @@ For Compose-only overrides such as host data paths, UID/GID or the deployment im
 docker compose --env-file smab.env -f compose.dev.yml up -d --build
 ```
 
-Both Compose files are standalone and carry identical runtime options. Development explicitly builds `Dockerfile-SMAB`; example uses the GHCR image instead. `python3 tests/compose_check.py` checks this parity with public settings and overrides. Use `--check-config` to validate all enabled sources without connecting. Starting without a diagnostic flag runs only explicitly enabled read sources. No command gate may be enabled in this milestone. The optional service ENV file requires Docker Compose 2.24 or newer. Diagnostics can render templates without any private file. To use another ENV file for both interpolation and service variables, set `SMAB_ENV_FILE` to that path in the shell and also pass `--env-file` with the same path. Home Manager multicast networking on the Raspberry Pi remains a separate deployment check; the bind mount alone does not establish UDP reachability.
+Both Compose files are standalone and carry identical runtime options. Development explicitly builds `Dockerfile-SMAB`; example uses the GHCR image instead. `python3 tests/compose_check.py` checks this parity with public settings and overrides. Use `--check-config` to validate all enabled sources without connecting. Starting without a diagnostic flag runs only explicitly enabled read sources. Device writes remain opt-in through the documented global and per-adapter gates. The optional service ENV file requires Docker Compose 2.24 or newer. Diagnostics can render templates without any private file. To use another ENV file for both interpolation and service variables, set `SMAB_ENV_FILE` to that path in the shell and also pass `--env-file` with the same path. Home Manager multicast networking requires target-host verification; the bind mount alone does not establish UDP reachability.
 
 References: [Docker Compose ENV files](https://docs.docker.com/compose/how-tos/environment-variables/set-environment-variables/), [Compose bind mounts](https://docs.docker.com/reference/compose-file/services/#volumes), [Homie 4 convention](https://homieiot.github.io/specification/spec-core-v4_0_0/).
 
@@ -539,7 +539,8 @@ readings cannot mask expired critical measurements. Property-specific expiry int
 Bundled Modbus profiles mark these keys with boolean `requiredForReady`. Unmarked profiles default
 to all advertised `measurements/` properties. Without measurements or marks, any fresh value suffices.
 Unreadable nighttime power does not affect inverter readiness while the identity-checked status is fresh.
-The last published power remains retained; no zero is synthesized. A stale status or communication
+Except for the explicitly declared [profile sentinel rules](PROFILES.md#explicit-pv-power-sentinel-compatibility),
+invalid power retains its last published observation; no zero is synthesized. A stale status or communication
 error still changes availability. Status values such as warning/error remain visible on their channel;
 readiness describes communication availability, not fault-free equipment operation.
 
@@ -644,7 +645,7 @@ Portal activation is independent of the local API:
 For periodic portal reads, configure `SMAB_PORTAL_STALE_SECONDS` above
 `SMAB_PORTAL_POLL_INTERVAL_SECONDS`, allowing time for requests and scheduling.
 For example, a 900-second polling interval with a 1800-second freshness limit
-keeps successful observations fresh between reads. Keeping the default 180-second
+keeps successful observations fresh between reads. Using a 180-second
 limit with that interval produces roughly 720 seconds of `stale` status per cycle,
 even when all requests succeed. Request failures still set source status to `error`
 immediately; increasing freshness does not suppress those errors. With interval
@@ -755,7 +756,7 @@ device polling or InfluxDB credentials are required.
 | `SMAB_PLANT_PUBLISH_PARTIAL_DAY` | `true` | Boolean; publishing initial partial-day counter deltas from the first valid saved snapshot. Status remains `partial`. Does not override gaps, resets, battery-boundary or input-validity guards. |
 | `SMAB_PLANT_DEBUG_ENABLED` | `false` | Boolean; opt into calculation and selected register evidence. Requires enabled plant and `SMAB_LOG_LEVEL=DEBUG` to emit logs. No extra device reads. |
 | `SMAB_PLANT_DEBUG_INTERVAL_SECONDS` | `60` | Positive number of seconds; minimum interval between calculation reports and between reports per selected register. No immediate log on every change. |
-| `SMAB_PLANT_DIAGNOSTICS_ENABLED` | `true` | Boolean; publish detailed plant diagnostics including dates, boundaries, input status and accounting timestamps. False retires their metadata/retained values; operational plantstatus and Basic day/average coverage statuses remain. |
+| `SMAB_PLANT_DIAGNOSTICS_ENABLED` | `false` | Boolean; publish detailed plant diagnostics including dates, boundaries, input status and accounting timestamps. False retires their metadata/retained values; operational plantstatus and Basic day/average coverage statuses remain. |
 
 JSON uses `plant.enabled`, `homieId`, `gridSource`, `updateIntervalSeconds`,
 `maxSkewSeconds`, `powerMaxSkewSeconds`, `coordinatedReadsEnabled`,
@@ -1289,7 +1290,8 @@ Contributing counter pollers retain their effective profile/device intervals,
 but use the same monotonic origin instead of adding each response delay to their
 next deadline. Commensurate intervals (for example 60 and 180 seconds) therefore
 become due together. Missed deadlines skip to the next future slot without a
-catch-up burst. HTTP/SEMP/portal scheduling and UDP listening are unchanged.
+catch-up burst. The contributing eCharger API counter follows the anchored
+schedule described above; SEMP/portal scheduling and UDP listening are unchanged.
 
 Pollers remain on their existing identity-verified connection paths and respect
 Home Manager transaction/reconnect pacing. Only selected adjacent ranges with

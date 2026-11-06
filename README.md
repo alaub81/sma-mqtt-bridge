@@ -1,4 +1,4 @@
-# SMA MQTT Bridge
+# SMA MQTT Bridge — SMA solar monitoring for MQTT and openHAB
 
 Bring your SMA solar system, battery storage and EV charger into your smart home.
 SMA MQTT Bridge collects measurements and device settings from SMA inverters,
@@ -6,6 +6,10 @@ Sunny Home Manager 2.0 and SMA eCharger, with optional direct BYD Battery-Box
 diagnostics, then publishes them through **Homie 4 MQTT**.
 Your smart home can use those values for dashboards, histories and automations;
 openHAB can discover the devices through its Homie binding.
+
+Monitor Sunny Tripower and Sunny Boy PV production, Sunny Boy Storage battery
+flows, grid import/export and EV charging in one place. The bridge runs locally
+in Docker on Linux PCs, servers and ARM64 systems such as a Raspberry Pi.
 
 One Docker service brings the sources together, with optional plant calculations
 for household consumption, daily energy balances, charging energy, costs and
@@ -60,26 +64,28 @@ it is enabled and authenticated separately from local device access.
 
 ## Quick start
 
-You need Docker with Compose v2, Git, a reachable MQTT broker and at least one
+You need Docker with **Compose 2.24 or newer**, Git, a reachable MQTT broker and at least one
 supported SMA source. Enable the required device interface, such as Modbus TCP,
-before starting the bridge.
+before starting the bridge. The bridge publishes to your broker; it does not
+include a broker or its own web dashboard. openHAB is optional.
 
 ### 1. Prepare a new installation
 
 ```sh
 git clone https://github.com/alaub81/sma-mqtt-bridge.git
 cd sma-mqtt-bridge
-cp smab.example.env smab.env
 mkdir -p data/sma-mqtt-bridge
+touch smab.env
 chmod 600 smab.env
 ```
 
-Keep an existing `smab.env` when updating. Optional JSON configuration is not
-required; the ENV file is enough to get started.
+Keep an existing `smab.env` when updating. Start with the short configuration
+below; [smab.example.env](smab.example.env) is the complete optional-settings
+reference. No additional JSON configuration is required.
 
 ### 2. Configure your broker and devices
 
-Edit `smab.env`. For example, the following settings enable one supported inverter:
+Paste this into the new `smab.env` to enable one supported inverter:
 
 ```dotenv
 SMAB_MQTT_HOST=mqtt.example.invalid
@@ -97,7 +103,7 @@ For an intentionally plaintext broker, explicitly set `SMAB_MQTT_TLS=false` and
 
 All other sources remain disabled until you enable them. For Home Manager,
 eCharger, SEMP and portal settings, use the
-[full quick-start example](docs/WIKI_QUICKSTART.md) and
+[step-by-step setup guide](docs/WIKI_QUICKSTART.md) and
 [configuration reference](docs/CONFIGURATION.md).
 
 ### 3. Validate and start
@@ -106,11 +112,18 @@ eCharger, SEMP and portal settings, use the
 docker compose -f compose.example.yml pull
 docker compose -f compose.example.yml run --rm --no-deps sma-mqtt-bridge --check-config
 docker compose -f compose.example.yml up -d
+docker compose -f compose.example.yml ps sma-mqtt-bridge
 docker compose -f compose.example.yml logs --tail=100 sma-mqtt-bridge
 ```
 
-The image is pulled from `ghcr.io/alaub81/sma-mqtt-bridge`. Check container health,
-source availability and MQTT values using the [operating guide](docs/OPERATIONS.md).
+The configuration check should report `valid: true`, `enabledSources: 1` and
+`readOnly: true` for this example. It checks settings and local files; device and
+broker connections are verified after startup. A source count of zero means no
+device is enabled.
+
+The image is pulled from `ghcr.io/alaub81/sma-mqtt-bridge`. Allow up to two minutes
+for initial device reads. Check container health, source availability and MQTT
+values using the [operating guide](docs/OPERATIONS.md).
 For a pinned image version and safe container replacement, follow
 [updates and backups](docs/UPDATING.md). Preserve the `data_smab_state` volume.
 
@@ -124,6 +137,13 @@ provided by your setup; the bridge does not generate a weather-based PV forecast
 Start with [openHAB discovery and Item setup](openHAB/openHAB.md), then use the
 [widget overview and installation guide](openHAB/README.md). File-based widget
 sources and a generated manual import for the eCharger widget are included.
+
+Live energy flow and daily energy overview, captured from the actual openHAB
+widgets using their built-in demo mode. All displayed numbers are example data.
+
+![Live energy flow in openHAB with synthetic demo values](docs/images/live-energy-flow-demo.jpg)
+
+![Daily energy overview in openHAB with synthetic demo values](docs/images/daily-energy-overview-demo.jpg)
 
 ## Adapt the bridge to your setup
 
@@ -140,6 +160,16 @@ Language changes preserve MQTT topic IDs, units and command payloads.
 For all supported settings, use [smab.example.env](smab.example.env) and the
 [documentation index](docs/README.md). To build your own image, run offline tests
 or work on the source, see [building and checks](docs/BUILDING.md).
+
+## Help and feedback
+
+Start with [troubleshooting](docs/OPERATIONS.md#common-setup-problems).
+For a reproducible problem or a new device request, open a
+[GitHub issue](https://github.com/alaub81/sma-mqtt-bridge/issues).
+Include the image version, exact device model/firmware and sanitized error details;
+keep passwords, tokens, serials and private configuration out of the report.
+Useful [diagnostic and export tools](docs/TOOLS.md) are included.
+For security-sensitive reports, follow the [security reporting guide](SECURITY.md).
 
 ## License
 

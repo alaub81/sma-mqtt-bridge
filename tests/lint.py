@@ -57,8 +57,13 @@ def project_files():
 def check_text(files):
     failures = []
     for name in files:
+        raw = (ROOT / name).read_bytes()
+        if name.lower().endswith((".jpg", ".jpeg")):
+            if not raw.startswith(b"\xff\xd8\xff") or not raw.endswith(b"\xff\xd9"):
+                failures.append(f"{name}: invalid JPEG signature or end marker")
+            continue
         try:
-            text = (ROOT / name).read_bytes().decode("utf-8")
+            text = raw.decode("utf-8")
         except UnicodeError:
             failures.append(f"{name}: not valid UTF-8")
             continue
@@ -271,7 +276,10 @@ def main():
         command=["pymarkdown", "--config", ".pymarkdown.yaml", "--strict-config", "scan"],
     )
     print("\n================ Summary ================", flush=True)
-    print(f"All {len(files)} project files received the text hygiene check.", flush=True)
+    print(
+        f"All {len(files)} project files received text hygiene or JPEG signature checks.",
+        flush=True,
+    )
     for label, passed in results:
         print(f"{'PASS' if passed else 'FAIL'}  {label}", flush=True)
     return 0 if all(passed for _, passed in results) else 1
