@@ -25,6 +25,12 @@ device. MQTT retains the last valid observation, which may remain visible after
 expiry. Never interpret a retained number alone as fresh data or missing data as zero.
 Check [topic groups](TOPIC_GROUPS.md) and [plant coverage](PLANT.md).
 
+Unchanged Homie device `$state` messages repeat every 10 seconds by default;
+configure positive `SMAB_MQTT_STATE_PUBLISH_INTERVAL_SECONDS` to change this interval.
+Actual state changes and the first state after connection are published on the next
+publisher pass without waiting for that interval. Measurement publication, device
+polling, health checks and the retained `lost` Last Will use their own schedules.
+
 For missing values, check adapter activation, source status, identity errors,
 model/profile support, channel-group filters, units and timestamps. Bulk API reads
 can succeed while individual values are unavailable. Repeated old device timestamps

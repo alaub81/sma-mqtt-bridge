@@ -587,13 +587,15 @@ class HomiePublisher:
                     continue
                 if sent.get(topic) != value or (
                     topic == base + "/$state"
-                    and time.monotonic() - last_status >= min(runtime.health_interval_seconds, 1)
+                    and time.monotonic() - last_status >= mqtt.state_publish_interval_seconds
                 ):
                     await client.publish(topic, value, qos=mqtt.qos, retain=True)
                     sent[topic] = value
+                    if topic == base + "/$state":
+                        # Measure repeats from the acknowledged state, including real changes.
+                        last_status = time.monotonic()
                     if topic in phase_topics:
                         phase_sent_at[topic] = time.monotonic()
-            last_status = time.monotonic()
             monitor = self.monitors.get(base.split("/")[1])
             if monitor is not None:
                 monitor.progress("publishing")

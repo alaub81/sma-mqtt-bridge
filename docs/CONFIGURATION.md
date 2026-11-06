@@ -160,6 +160,7 @@ All names below include the `SMAB_` prefix. Empty strings are the default for op
 | `TLS_CA_FILE` | empty | System trust by default; optional private broker CA. |
 | `TLS_CERT_FILE`, `TLS_KEY_FILE` | empty | Optional mutual TLS; require both together. |
 | `KEEPALIVE_SECONDS` | `60` | MQTT keepalive interval. |
+| `STATE_PUBLISH_INTERVAL_SECONDS` | `10` | Positive seconds between repeated unchanged Homie device `$state` messages; JSON `mqtt.statePublishIntervalSeconds`. State changes, first publication and reconnect publication are immediate on the next publisher pass. Independent of device polling, measurement publication and health checks. |
 | `CONNECT_TIMEOUT_SECONDS` | `10` | Bounded connection timeout. |
 | `QOS` | `1` | Homie publish QoS, allowed values 1 or 2. |
 | `MAX_QUEUE_MESSAGES` | `1000` | Positive queue limit; supervise backpressure. |

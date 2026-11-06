@@ -29,6 +29,7 @@
     "tlsCertFile": "",
     "tlsKeyFile": "",
     "keepaliveSeconds": 60,
+    "statePublishIntervalSeconds": 10.0,
     "connectTimeoutSeconds": 10.0,
     "qos": 1,
     "maxQueueMessages": 1000

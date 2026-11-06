@@ -61,6 +61,7 @@ class MQTT(SafeRepr):
     tls_cert_file: str = ""
     tls_key_file: str = ""
     keepalive_seconds: int = 60
+    state_publish_interval_seconds: float = 10.0
     connect_timeout_seconds: float = 10.0
     qos: int = 1
     max_queue_messages: int = 1000

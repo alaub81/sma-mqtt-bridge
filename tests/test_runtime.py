@@ -545,25 +545,33 @@ class AsyncRuntimeTests(unittest.IsolatedAsyncioTestCase):
         stop = asyncio.Event()
         messages = []
         phase = 0
+        observed_status = []
 
         class Client(FakeClient):
             async def publish(self, topic, payload, **kwargs):
-                nonlocal phase
                 messages.append((topic, payload))
-                if topic.endswith("/$state") and payload == "ready":
-                    if phase == 0:
-                        state.update({"measurements/status": "Ok (Ok)", "measurements/power": None})
-                    elif phase == 1:
-                        self.assert_ready = state.status()
-                        state.update({"measurements/status": "Ok (Ok)", "measurements/power": 12})
-                    phase += 1
                 if topic.endswith("/measurements/power") and payload == "12":
                     stop.set()
 
+        async def next_cycle(_stop, _seconds):
+            nonlocal phase
+            if _stop.is_set():
+                return
+            # Reader progress is independent of repeated Homie availability messages.
+            if phase == 0:
+                state.update({"measurements/status": "Ok (Ok)", "measurements/power": None})
+            elif phase == 1:
+                observed_status.append(state.status())
+                state.update({"measurements/status": "Ok (Ok)", "measurements/power": 12})
+            else:
+                self.fail("Recovered measurement was not published on the next pass")
+            phase += 1
+
         client = Client()
         publisher = HomiePublisher(self.config, [state], lambda *args, **kwargs: client)
-        await asyncio.wait_for(publisher.run(stop), 1)
-        self.assertEqual(client.assert_ready, "ready")
+        with patch("sma_mqtt_bridge.homie.wait_stop", side_effect=next_cycle):
+            await asyncio.wait_for(publisher.run(stop), 1)
+        self.assertEqual(observed_status, ["ready"])
         self.assertEqual(
             [v for t, v in messages if t.endswith("/measurements/power")], ["10", "12"]
         )
