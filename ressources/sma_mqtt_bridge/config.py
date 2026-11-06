@@ -205,6 +205,30 @@ class Plant(SafeRepr):
 
 
 @dataclass(frozen=True, repr=False)
+class BYD(SafeRepr):
+    enabled: bool = False
+    paused: bool = False
+    host: str = ""
+    port: int = 8080
+    unit_id: int = 1
+    profile: str = "byd-hvs-4"
+    expected_serial: str = ""
+    homie_id: str = "byd-battery"
+    advanced_channels_enabled: bool = False
+    diagnostics_enabled: bool = False
+    ready_properties: str = ""
+    poll_interval_seconds: float = 60.0
+    detail_poll_interval_seconds: float = 300.0
+    log_poll_interval_seconds: float = 300.0
+    timeout_seconds: float = 5.0
+    buffer_ready_timeout_seconds: float = 8.0
+    buffer_poll_interval_seconds: float = 0.3
+    stale_seconds: float = 180.0
+    detail_stale_seconds: float = 900.0
+    log_stale_seconds: float = 900.0
+
+
+@dataclass(frozen=True, repr=False)
 class Config(SafeRepr):
     runtime: Runtime
     mqtt: MQTT
@@ -218,6 +242,7 @@ class Config(SafeRepr):
     plant: Plant = Plant()
     feed_in_tariff_configured: bool = False
     electricity_price_configured: bool = False
+    byd: BYD = BYD()
 
     @property
     def has_sources(self):
@@ -227,6 +252,7 @@ class Config(SafeRepr):
             or self.echarger.enabled
             or self.echarger.semp_enabled
             or self.portal.enabled
+            or self.byd.enabled
         )
 
 
@@ -456,6 +482,7 @@ def load_config(environ=None, bundled_dir=None):
         "portal",
         "commands",
         "plant",
+        "byd",
     }:
         raise ConfigError("Unknown JSON configuration section")
     if "schemaVersion" in data and (
@@ -473,6 +500,28 @@ def load_config(environ=None, bundled_dir=None):
     portal = section(Portal(), data.get("portal", {}), env, "SMAB_PORTAL_", recognized)
     commands = section(Commands(), data.get("commands", {}), env, "SMAB_COMMAND_", recognized)
     plant = section(Plant(), data.get("plant", {}), env, "SMAB_PLANT_", recognized)
+    byd = section(BYD(), data.get("byd", {}), env, "SMAB_BYD_", recognized)
+    if (
+        byd.poll_interval_seconds < 30
+        or min(byd.detail_poll_interval_seconds, byd.log_poll_interval_seconds) < 60
+    ):
+        raise ConfigError("BYD polling requires at least 30 s basic / 60 s detail and logs")
+    if not 0.1 <= byd.buffer_poll_interval_seconds <= byd.buffer_ready_timeout_seconds <= 60:
+        raise ConfigError("Invalid BYD diagnostic buffer timing")
+    if any(
+        stale < interval
+        for stale, interval in (
+            (byd.stale_seconds, byd.poll_interval_seconds),
+            (byd.detail_stale_seconds, byd.detail_poll_interval_seconds),
+            (byd.log_stale_seconds, byd.log_poll_interval_seconds),
+        )
+    ):
+        raise ConfigError("BYD stale thresholds must cover their polling intervals")
+    if byd.enabled:
+        from .byd_profile import load_byd_profile
+
+        require_host(byd.host, "BYD")
+        profiles_byd = load_byd_profile(byd.profile, runtime.profile_dir)
     if plant.feed_in_energy_offset_kwh:
         raise ConfigError(
             "Use SMAB_HOME_MANAGER_ENERGY_EXPORT_OFFSET_KWH instead of the retired plant energy offset"
@@ -506,6 +555,8 @@ def load_config(environ=None, bundled_dir=None):
         if match:
             slots.add(int(match[1]))
     inverters, profiles, intervals = [], {}, set()
+    if byd.enabled:
+        profiles["byd"] = profiles_byd
     for number in sorted(slots):
         slot = f"inverter{number}"
         prefix = f"SMAB_INVERTER{number}_"
@@ -549,7 +600,7 @@ def load_config(environ=None, bundled_dir=None):
         ZoneInfo(runtime.timezone)
     except ValueError, ZoneInfoNotFoundError:
         raise ConfigError("Invalid SMAB_TIMEZONE") from None
-    ids = [i.homie_id for i in inverters] + [hm.homie_id, ec.homie_id]
+    ids = [i.homie_id for i in inverters] + [hm.homie_id, ec.homie_id, byd.homie_id]
     if not ID.fullmatch(plant.homie_id):
         raise ConfigError("Invalid plant Homie ID")
     if plant.enabled:
@@ -574,6 +625,7 @@ def load_config(environ=None, bundled_dir=None):
         "feedInTariffPerKwh" in data.get("plant", {}) or "SMAB_PLANT_FEED_IN_TARIFF_PER_KWH" in env,
         "electricityPricePerKwh" in data.get("plant", {})
         or "SMAB_PLANT_ELECTRICITY_PRICE_PER_KWH" in env,
+        byd,
     )
     mqtt_needed = config.has_sources or (Path(runtime.state_dir) / "mqtt-topics.json").exists()
     if mqtt_needed:

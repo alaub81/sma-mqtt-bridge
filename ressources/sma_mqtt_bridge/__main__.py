@@ -120,6 +120,7 @@ def main(argv=None):
                                 config.echarger.enabled,
                                 config.echarger.semp_enabled,
                                 config.portal.enabled,
+                                config.byd.enabled,
                             )
                         ),
                         "readOnly": not (

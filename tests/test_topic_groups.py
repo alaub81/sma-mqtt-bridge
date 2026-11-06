@@ -8,10 +8,12 @@ from dataclasses import replace
 from pathlib import Path
 
 import sma_mqtt_bridge
+from sma_mqtt_bridge.adapters.byd import BYDReader
 from sma_mqtt_bridge.adapters.echarger import EChargerReader, SempReader
 from sma_mqtt_bridge.adapters.home_manager_modbus import HomeManagerModbusReader
 from sma_mqtt_bridge.adapters.modbus import ModbusReader
-from sma_mqtt_bridge.config import ECharger, HomeManager, Inverter
+from sma_mqtt_bridge.byd_profile import load_byd_profile
+from sma_mqtt_bridge.config import BYD, ECharger, HomeManager, Inverter
 from sma_mqtt_bridge.errors import ConfigError
 from sma_mqtt_bridge.home_manager_profile import load_home_manager_profile
 from sma_mqtt_bridge.model import Property
@@ -46,6 +48,12 @@ class TopicGroupTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             hm_profile = load_home_manager_profile("sma-home-manager-2-modbus", directory)
         factories = [
+            (
+                BYD(advanced_channels_enabled=True, diagnostics_enabled=True),
+                lambda s: BYDReader(
+                    s, load_byd_profile("byd-hvs-4", "/nonexistent-byd-profile-fixture")
+                ),
+            ),
             (
                 ECharger(advanced_channels_enabled=True, diagnostics_enabled=True),
                 lambda s: EChargerReader(s, 4096),

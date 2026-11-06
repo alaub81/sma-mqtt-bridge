@@ -1,5 +1,9 @@
 # Inverter profiles
 
+Direct Battery-Box monitoring uses a separate [BYD profile contract](BYD.md).
+BYD profiles are not inverter register profiles and cannot be selected for an
+inverter slot.
+
 The JSON files under `ressources/profiles/` contain reusable protocol mappings,
 not installation addresses, credentials or serials. Supported firmware and
 identity constraints are declared in each file. Select a profile matching the

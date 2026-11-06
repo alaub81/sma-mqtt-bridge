@@ -171,6 +171,477 @@ sma-stp8-0-3av-40,inverter<N>,measurements/voltagebinput,DC voltage input B,V,ba
 sma-stp8-0-3av-40,inverter<N>,measurements/voltagel1,Voltage L1,V,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/voltagel2,Voltage L2,V,basic
 sma-stp8-0-3av-40,inverter<N>,measurements/voltagel3,Voltage L3,V,basic
+byd-hvs-4,byd,battery/chargeenergy,Battery-side charge energy (100 Wh resolution),kWh,basic
+byd-hvs-4,byd,battery/chargepower,Calculated DC charging power,W,basic
+byd-hvs-4,byd,battery/condition,BMU reported condition,,basic
+byd-hvs-4,byd,battery/current,Battery current (positive discharge),A,basic
+byd-hvs-4,byd,battery/dischargeenergy,Battery-side discharge energy (100 Wh resolution),kWh,basic
+byd-hvs-4,byd,battery/dischargepower,Calculated DC discharging power,W,basic
+byd-hvs-4,byd,battery/outputvoltage,Battery output voltage,V,basic
+byd-hvs-4,byd,battery/power,Calculated DC battery power (positive discharge),W,basic
+byd-hvs-4,byd,battery/soc,Battery state of charge,%,basic
+byd-hvs-4,byd,battery/soh,Reported battery state of health,%,basic
+byd-hvs-4,byd,battery/state,Battery state from current direction,,basic
+byd-hvs-4,byd,battery/temperature,Battery management unit temperature,°C,basic
+byd-hvs-4,byd,battery/temperaturemax,Reported maximum battery temperature,°C,basic
+byd-hvs-4,byd,battery/temperaturemin,Reported minimum battery temperature,°C,basic
+byd-hvs-4,byd,battery/voltage,Battery voltage,V,basic
+byd-hvs-4,byd,diagnostics/bmsbankcoderaw,Raw BMS firmware bank code,,diagnostics
+byd-hvs-4,byd,diagnostics/bmubankcoderaw,Raw BMU firmware bank code,,diagnostics
+byd-hvs-4,byd,diagnostics/bmucellvoltagemax,Coarse BMU maximum cell voltage,V,diagnostics
+byd-hvs-4,byd,diagnostics/bmucellvoltagemin,Coarse BMU minimum cell voltage,V,diagnostics
+byd-hvs-4,byd,diagnostics/bmuerrorbits,BMU error bits,,diagnostics
+byd-hvs-4,byd,diagnostics/bmuerrors,Reported BMU errors,,diagnostics
+byd-hvs-4,byd,diagnostics/bmulogrecords,BMU fetched event count,,diagnostics
+byd-hvs-4,byd,diagnostics/bydconsecutivefailures,Source consecutiveFailures,,diagnostics
+byd-hvs-4,byd,diagnostics/byddetaillastsuccess,Last successful BYD detail receipt (UTC),,diagnostics
+byd-hvs-4,byd,diagnostics/bydfailures,Source failures,,diagnostics
+byd-hvs-4,byd,diagnostics/bydlastsuccess,Last successful receipt (UTC),,diagnostics
+byd-hvs-4,byd,diagnostics/bydloglastsuccess,Last successful BYD log receipt (UTC),,diagnostics
+byd-hvs-4,byd,diagnostics/bydmissingcritical,Source missingCritical,,diagnostics
+byd-hvs-4,byd,diagnostics/bydoutageseconds,Source outageSeconds,s,diagnostics
+byd-hvs-4,byd,diagnostics/bydphase,Source phase,,diagnostics
+byd-hvs-4,byd,diagnostics/bydstatus,Source availability,,basic
+byd-hvs-4,byd,diagnostics/bydtimeouts,Source timeouts,,diagnostics
+byd-hvs-4,byd,diagnostics/tower1current,Additional BMS current,A,diagnostics
+byd-hvs-4,byd,diagnostics/tower1errorbits,BMS error bits,,diagnostics
+byd-hvs-4,byd,diagnostics/tower1errors,Reported BMS errors,,diagnostics
+byd-hvs-4,byd,diagnostics/tower1logrecords,TOWER1 fetched event count,,diagnostics
+byd-hvs-4,byd,diagnostics/tower1outputvoltage,Additional BMS output voltage,V,diagnostics
+byd-hvs-4,byd,diagnostics/tower1reportedcellvoltagemax,BMS header maximum cell voltage,V,diagnostics
+byd-hvs-4,byd,diagnostics/tower1reportedcellvoltagemin,BMS header minimum cell voltage,V,diagnostics
+byd-hvs-4,byd,diagnostics/tower1reportedtemperaturemax,BMS header maximum temperature,°C,diagnostics
+byd-hvs-4,byd,diagnostics/tower1reportedtemperaturemin,BMS header minimum temperature,°C,diagnostics
+byd-hvs-4,byd,diagnostics/tower1soh,Additional BMS state of health,%,diagnostics
+byd-hvs-4,byd,diagnostics/tower1switchbitsraw,Uninterpreted BMS switch word,,diagnostics
+byd-hvs-4,byd,diagnostics/tower1temperaturemaxindexraw,Raw reported maximum temperature index,,diagnostics
+byd-hvs-4,byd,diagnostics/tower1temperatureminindexraw,Raw reported minimum temperature index,,diagnostics
+byd-hvs-4,byd,diagnostics/tower1voltage,Additional BMS voltage,V,diagnostics
+byd-hvs-4,byd,diagnostics/tower1warningbits1,BMS warning bits 1,,diagnostics
+byd-hvs-4,byd,diagnostics/tower1warningbits2,BMS warning bits 2,,diagnostics
+byd-hvs-4,byd,diagnostics/tower1warningbits3,BMS warning bits 3,,diagnostics
+byd-hvs-4,byd,diagnostics/tower1warnings,Reported BMS warnings,,diagnostics
+byd-hvs-4,byd,events/bmuentry01,BMU recent event 1,,diagnostics
+byd-hvs-4,byd,events/bmuentry02,BMU recent event 2,,diagnostics
+byd-hvs-4,byd,events/bmuentry03,BMU recent event 3,,diagnostics
+byd-hvs-4,byd,events/bmuentry04,BMU recent event 4,,diagnostics
+byd-hvs-4,byd,events/bmuentry05,BMU recent event 5,,diagnostics
+byd-hvs-4,byd,events/bmuentry06,BMU recent event 6,,diagnostics
+byd-hvs-4,byd,events/bmuentry07,BMU recent event 7,,diagnostics
+byd-hvs-4,byd,events/bmuentry08,BMU recent event 8,,diagnostics
+byd-hvs-4,byd,events/bmuentry09,BMU recent event 9,,diagnostics
+byd-hvs-4,byd,events/bmuentry10,BMU recent event 10,,diagnostics
+byd-hvs-4,byd,events/bmuentry11,BMU recent event 11,,diagnostics
+byd-hvs-4,byd,events/bmuentry12,BMU recent event 12,,diagnostics
+byd-hvs-4,byd,events/bmuentry13,BMU recent event 13,,diagnostics
+byd-hvs-4,byd,events/bmuentry14,BMU recent event 14,,diagnostics
+byd-hvs-4,byd,events/bmuentry15,BMU recent event 15,,diagnostics
+byd-hvs-4,byd,events/bmuentry16,BMU recent event 16,,diagnostics
+byd-hvs-4,byd,events/bmuentry17,BMU recent event 17,,diagnostics
+byd-hvs-4,byd,events/bmuentry18,BMU recent event 18,,diagnostics
+byd-hvs-4,byd,events/bmuentry19,BMU recent event 19,,diagnostics
+byd-hvs-4,byd,events/bmuentry20,BMU recent event 20,,diagnostics
+byd-hvs-4,byd,events/tower1entry01,TOWER1 recent event 1,,diagnostics
+byd-hvs-4,byd,events/tower1entry02,TOWER1 recent event 2,,diagnostics
+byd-hvs-4,byd,events/tower1entry03,TOWER1 recent event 3,,diagnostics
+byd-hvs-4,byd,events/tower1entry04,TOWER1 recent event 4,,diagnostics
+byd-hvs-4,byd,events/tower1entry05,TOWER1 recent event 5,,diagnostics
+byd-hvs-4,byd,events/tower1entry06,TOWER1 recent event 6,,diagnostics
+byd-hvs-4,byd,events/tower1entry07,TOWER1 recent event 7,,diagnostics
+byd-hvs-4,byd,events/tower1entry08,TOWER1 recent event 8,,diagnostics
+byd-hvs-4,byd,events/tower1entry09,TOWER1 recent event 9,,diagnostics
+byd-hvs-4,byd,events/tower1entry10,TOWER1 recent event 10,,diagnostics
+byd-hvs-4,byd,events/tower1entry11,TOWER1 recent event 11,,diagnostics
+byd-hvs-4,byd,events/tower1entry12,TOWER1 recent event 12,,diagnostics
+byd-hvs-4,byd,events/tower1entry13,TOWER1 recent event 13,,diagnostics
+byd-hvs-4,byd,events/tower1entry14,TOWER1 recent event 14,,diagnostics
+byd-hvs-4,byd,events/tower1entry15,TOWER1 recent event 15,,diagnostics
+byd-hvs-4,byd,events/tower1entry16,TOWER1 recent event 16,,diagnostics
+byd-hvs-4,byd,events/tower1entry17,TOWER1 recent event 17,,diagnostics
+byd-hvs-4,byd,events/tower1entry18,TOWER1 recent event 18,,diagnostics
+byd-hvs-4,byd,events/tower1entry19,TOWER1 recent event 19,,diagnostics
+byd-hvs-4,byd,events/tower1entry20,TOWER1 recent event 20,,diagnostics
+byd-hvs-4,byd,identity/application,Configured battery application,,advanced
+byd-hvs-4,byd,identity/bmsfirmware,Active BMS firmware,,advanced
+byd-hvs-4,byd,identity/bmsfirmwarea,BMS firmware bank A,,advanced
+byd-hvs-4,byd,identity/bmsfirmwareb,BMS firmware bank B,,advanced
+byd-hvs-4,byd,identity/bmufirmware,Active BMU firmware,,advanced
+byd-hvs-4,byd,identity/bmufirmwarea,BMU firmware bank A,,advanced
+byd-hvs-4,byd,identity/bmufirmwareb,BMU firmware bank B,,advanced
+byd-hvs-4,byd,identity/cellcount,Cell count,,advanced
+byd-hvs-4,byd,identity/cellspermodule,Cells per module,,advanced
+byd-hvs-4,byd,identity/inverter,Configured inverter family,,advanced
+byd-hvs-4,byd,identity/manufacturer,Manufacturer,,advanced
+byd-hvs-4,byd,identity/model,Battery model,,advanced
+byd-hvs-4,byd,identity/modules,Modules per tower,,advanced
+byd-hvs-4,byd,identity/nominalcapacity,Nominal energy from module specification,kWh,advanced
+byd-hvs-4,byd,identity/parametertable,Active parameter table version,,advanced
+byd-hvs-4,byd,identity/parametertablea,Parameter table A,,advanced
+byd-hvs-4,byd,identity/parametertableb,Parameter table B,,advanced
+byd-hvs-4,byd,identity/phase,Configured phase arrangement,,advanced
+byd-hvs-4,byd,identity/serial,Serial number,,advanced
+byd-hvs-4,byd,identity/temperaturecount,Temperature sensor count,,advanced
+byd-hvs-4,byd,identity/temperaturespermodule,Temperature sensors per module,,advanced
+byd-hvs-4,byd,identity/towers,Battery tower count,,advanced
+byd-hvs-4,byd,tower1/balancingactive,Reported balancing active,,advanced
+byd-hvs-4,byd,tower1/balancingcount,Reported balancing cell count,,advanced
+byd-hvs-4,byd,tower1/cellvoltagemax,Maximum sampled cell voltage,V,advanced
+byd-hvs-4,byd,tower1/cellvoltagemaxindex,Reported maximum voltage cell number,,advanced
+byd-hvs-4,byd,tower1/cellvoltagemean,Mean sampled cell voltage,V,advanced
+byd-hvs-4,byd,tower1/cellvoltagemin,Minimum sampled cell voltage,V,advanced
+byd-hvs-4,byd,tower1/cellvoltageminindex,Reported minimum voltage cell number,,advanced
+byd-hvs-4,byd,tower1/cellvoltagespread,Sampled cell voltage spread,mV,advanced
+byd-hvs-4,byd,tower1/chargeenergy,Tower charge energy (1 Wh resolution),kWh,advanced
+byd-hvs-4,byd,tower1/dischargeenergy,Tower discharge energy (1 Wh resolution),kWh,advanced
+byd-hvs-4,byd,tower1/soc,BMS state of charge (0.1 percent resolution),%,advanced
+byd-hvs-4,byd,tower1/temperaturemax,Maximum sampled sensor temperature,°C,advanced
+byd-hvs-4,byd,tower1/temperaturemean,Mean sampled sensor temperature,°C,advanced
+byd-hvs-4,byd,tower1/temperaturemin,Minimum sampled sensor temperature,°C,advanced
+byd-hvs-4,byd,tower1/voltagecellsum,Sum of sampled cell voltages,V,advanced
+byd-hvs-4,byd,tower1module1/balancingactive,Reported balancing active,,advanced
+byd-hvs-4,byd,tower1module1/balancingcount,Reported balancing cell count,,advanced
+byd-hvs-4,byd,tower1module1/cell01balancing,Cell 1 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell01voltage,Cell 1 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell02balancing,Cell 2 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell02voltage,Cell 2 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell03balancing,Cell 3 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell03voltage,Cell 3 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell04balancing,Cell 4 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell04voltage,Cell 4 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell05balancing,Cell 5 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell05voltage,Cell 5 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell06balancing,Cell 6 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell06voltage,Cell 6 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell07balancing,Cell 7 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell07voltage,Cell 7 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell08balancing,Cell 8 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell08voltage,Cell 8 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell09balancing,Cell 9 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell09voltage,Cell 9 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell10balancing,Cell 10 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell10voltage,Cell 10 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell11balancing,Cell 11 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell11voltage,Cell 11 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell12balancing,Cell 12 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell12voltage,Cell 12 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell13balancing,Cell 13 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell13voltage,Cell 13 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell14balancing,Cell 14 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell14voltage,Cell 14 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell15balancing,Cell 15 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell15voltage,Cell 15 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell16balancing,Cell 16 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell16voltage,Cell 16 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell17balancing,Cell 17 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell17voltage,Cell 17 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell18balancing,Cell 18 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell18voltage,Cell 18 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell19balancing,Cell 19 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell19voltage,Cell 19 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell20balancing,Cell 20 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell20voltage,Cell 20 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell21balancing,Cell 21 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell21voltage,Cell 21 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell22balancing,Cell 22 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell22voltage,Cell 22 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell23balancing,Cell 23 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell23voltage,Cell 23 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell24balancing,Cell 24 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell24voltage,Cell 24 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell25balancing,Cell 25 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell25voltage,Cell 25 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell26balancing,Cell 26 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell26voltage,Cell 26 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell27balancing,Cell 27 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell27voltage,Cell 27 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell28balancing,Cell 28 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell28voltage,Cell 28 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell29balancing,Cell 29 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell29voltage,Cell 29 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell30balancing,Cell 30 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell30voltage,Cell 30 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell31balancing,Cell 31 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell31voltage,Cell 31 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cell32balancing,Cell 32 balancing,,diagnostics
+byd-hvs-4,byd,tower1module1/cell32voltage,Cell 32 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module1/cellvoltagemax,Maximum sampled cell voltage,V,advanced
+byd-hvs-4,byd,tower1module1/cellvoltagemean,Mean sampled cell voltage,V,advanced
+byd-hvs-4,byd,tower1module1/cellvoltagemin,Minimum sampled cell voltage,V,advanced
+byd-hvs-4,byd,tower1module1/cellvoltagespread,Sampled cell voltage spread,mV,advanced
+byd-hvs-4,byd,tower1module1/temperature01,Temperature sensor 1,°C,diagnostics
+byd-hvs-4,byd,tower1module1/temperature02,Temperature sensor 2,°C,diagnostics
+byd-hvs-4,byd,tower1module1/temperature03,Temperature sensor 3,°C,diagnostics
+byd-hvs-4,byd,tower1module1/temperature04,Temperature sensor 4,°C,diagnostics
+byd-hvs-4,byd,tower1module1/temperature05,Temperature sensor 5,°C,diagnostics
+byd-hvs-4,byd,tower1module1/temperature06,Temperature sensor 6,°C,diagnostics
+byd-hvs-4,byd,tower1module1/temperature07,Temperature sensor 7,°C,diagnostics
+byd-hvs-4,byd,tower1module1/temperature08,Temperature sensor 8,°C,diagnostics
+byd-hvs-4,byd,tower1module1/temperature09,Temperature sensor 9,°C,diagnostics
+byd-hvs-4,byd,tower1module1/temperature10,Temperature sensor 10,°C,diagnostics
+byd-hvs-4,byd,tower1module1/temperature11,Temperature sensor 11,°C,diagnostics
+byd-hvs-4,byd,tower1module1/temperature12,Temperature sensor 12,°C,diagnostics
+byd-hvs-4,byd,tower1module1/temperaturemax,Maximum sampled sensor temperature,°C,advanced
+byd-hvs-4,byd,tower1module1/temperaturemean,Mean sampled sensor temperature,°C,advanced
+byd-hvs-4,byd,tower1module1/temperaturemin,Minimum sampled sensor temperature,°C,advanced
+byd-hvs-4,byd,tower1module1/voltage,Sum of sampled cell voltages,V,advanced
+byd-hvs-4,byd,tower1module2/balancingactive,Reported balancing active,,advanced
+byd-hvs-4,byd,tower1module2/balancingcount,Reported balancing cell count,,advanced
+byd-hvs-4,byd,tower1module2/cell01balancing,Cell 1 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell01voltage,Cell 1 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell02balancing,Cell 2 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell02voltage,Cell 2 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell03balancing,Cell 3 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell03voltage,Cell 3 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell04balancing,Cell 4 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell04voltage,Cell 4 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell05balancing,Cell 5 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell05voltage,Cell 5 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell06balancing,Cell 6 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell06voltage,Cell 6 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell07balancing,Cell 7 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell07voltage,Cell 7 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell08balancing,Cell 8 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell08voltage,Cell 8 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell09balancing,Cell 9 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell09voltage,Cell 9 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell10balancing,Cell 10 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell10voltage,Cell 10 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell11balancing,Cell 11 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell11voltage,Cell 11 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell12balancing,Cell 12 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell12voltage,Cell 12 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell13balancing,Cell 13 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell13voltage,Cell 13 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell14balancing,Cell 14 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell14voltage,Cell 14 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell15balancing,Cell 15 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell15voltage,Cell 15 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell16balancing,Cell 16 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell16voltage,Cell 16 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell17balancing,Cell 17 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell17voltage,Cell 17 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell18balancing,Cell 18 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell18voltage,Cell 18 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell19balancing,Cell 19 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell19voltage,Cell 19 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell20balancing,Cell 20 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell20voltage,Cell 20 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell21balancing,Cell 21 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell21voltage,Cell 21 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell22balancing,Cell 22 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell22voltage,Cell 22 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell23balancing,Cell 23 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell23voltage,Cell 23 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell24balancing,Cell 24 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell24voltage,Cell 24 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell25balancing,Cell 25 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell25voltage,Cell 25 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell26balancing,Cell 26 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell26voltage,Cell 26 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell27balancing,Cell 27 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell27voltage,Cell 27 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell28balancing,Cell 28 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell28voltage,Cell 28 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell29balancing,Cell 29 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell29voltage,Cell 29 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell30balancing,Cell 30 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell30voltage,Cell 30 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell31balancing,Cell 31 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell31voltage,Cell 31 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cell32balancing,Cell 32 balancing,,diagnostics
+byd-hvs-4,byd,tower1module2/cell32voltage,Cell 32 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module2/cellvoltagemax,Maximum sampled cell voltage,V,advanced
+byd-hvs-4,byd,tower1module2/cellvoltagemean,Mean sampled cell voltage,V,advanced
+byd-hvs-4,byd,tower1module2/cellvoltagemin,Minimum sampled cell voltage,V,advanced
+byd-hvs-4,byd,tower1module2/cellvoltagespread,Sampled cell voltage spread,mV,advanced
+byd-hvs-4,byd,tower1module2/temperature01,Temperature sensor 1,°C,diagnostics
+byd-hvs-4,byd,tower1module2/temperature02,Temperature sensor 2,°C,diagnostics
+byd-hvs-4,byd,tower1module2/temperature03,Temperature sensor 3,°C,diagnostics
+byd-hvs-4,byd,tower1module2/temperature04,Temperature sensor 4,°C,diagnostics
+byd-hvs-4,byd,tower1module2/temperature05,Temperature sensor 5,°C,diagnostics
+byd-hvs-4,byd,tower1module2/temperature06,Temperature sensor 6,°C,diagnostics
+byd-hvs-4,byd,tower1module2/temperature07,Temperature sensor 7,°C,diagnostics
+byd-hvs-4,byd,tower1module2/temperature08,Temperature sensor 8,°C,diagnostics
+byd-hvs-4,byd,tower1module2/temperature09,Temperature sensor 9,°C,diagnostics
+byd-hvs-4,byd,tower1module2/temperature10,Temperature sensor 10,°C,diagnostics
+byd-hvs-4,byd,tower1module2/temperature11,Temperature sensor 11,°C,diagnostics
+byd-hvs-4,byd,tower1module2/temperature12,Temperature sensor 12,°C,diagnostics
+byd-hvs-4,byd,tower1module2/temperaturemax,Maximum sampled sensor temperature,°C,advanced
+byd-hvs-4,byd,tower1module2/temperaturemean,Mean sampled sensor temperature,°C,advanced
+byd-hvs-4,byd,tower1module2/temperaturemin,Minimum sampled sensor temperature,°C,advanced
+byd-hvs-4,byd,tower1module2/voltage,Sum of sampled cell voltages,V,advanced
+byd-hvs-4,byd,tower1module3/balancingactive,Reported balancing active,,advanced
+byd-hvs-4,byd,tower1module3/balancingcount,Reported balancing cell count,,advanced
+byd-hvs-4,byd,tower1module3/cell01balancing,Cell 1 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell01voltage,Cell 1 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell02balancing,Cell 2 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell02voltage,Cell 2 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell03balancing,Cell 3 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell03voltage,Cell 3 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell04balancing,Cell 4 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell04voltage,Cell 4 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell05balancing,Cell 5 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell05voltage,Cell 5 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell06balancing,Cell 6 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell06voltage,Cell 6 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell07balancing,Cell 7 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell07voltage,Cell 7 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell08balancing,Cell 8 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell08voltage,Cell 8 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell09balancing,Cell 9 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell09voltage,Cell 9 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell10balancing,Cell 10 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell10voltage,Cell 10 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell11balancing,Cell 11 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell11voltage,Cell 11 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell12balancing,Cell 12 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell12voltage,Cell 12 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell13balancing,Cell 13 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell13voltage,Cell 13 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell14balancing,Cell 14 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell14voltage,Cell 14 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell15balancing,Cell 15 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell15voltage,Cell 15 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell16balancing,Cell 16 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell16voltage,Cell 16 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell17balancing,Cell 17 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell17voltage,Cell 17 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell18balancing,Cell 18 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell18voltage,Cell 18 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell19balancing,Cell 19 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell19voltage,Cell 19 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell20balancing,Cell 20 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell20voltage,Cell 20 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell21balancing,Cell 21 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell21voltage,Cell 21 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell22balancing,Cell 22 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell22voltage,Cell 22 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell23balancing,Cell 23 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell23voltage,Cell 23 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell24balancing,Cell 24 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell24voltage,Cell 24 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell25balancing,Cell 25 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell25voltage,Cell 25 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell26balancing,Cell 26 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell26voltage,Cell 26 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell27balancing,Cell 27 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell27voltage,Cell 27 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell28balancing,Cell 28 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell28voltage,Cell 28 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell29balancing,Cell 29 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell29voltage,Cell 29 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell30balancing,Cell 30 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell30voltage,Cell 30 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell31balancing,Cell 31 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell31voltage,Cell 31 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cell32balancing,Cell 32 balancing,,diagnostics
+byd-hvs-4,byd,tower1module3/cell32voltage,Cell 32 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module3/cellvoltagemax,Maximum sampled cell voltage,V,advanced
+byd-hvs-4,byd,tower1module3/cellvoltagemean,Mean sampled cell voltage,V,advanced
+byd-hvs-4,byd,tower1module3/cellvoltagemin,Minimum sampled cell voltage,V,advanced
+byd-hvs-4,byd,tower1module3/cellvoltagespread,Sampled cell voltage spread,mV,advanced
+byd-hvs-4,byd,tower1module3/temperature01,Temperature sensor 1,°C,diagnostics
+byd-hvs-4,byd,tower1module3/temperature02,Temperature sensor 2,°C,diagnostics
+byd-hvs-4,byd,tower1module3/temperature03,Temperature sensor 3,°C,diagnostics
+byd-hvs-4,byd,tower1module3/temperature04,Temperature sensor 4,°C,diagnostics
+byd-hvs-4,byd,tower1module3/temperature05,Temperature sensor 5,°C,diagnostics
+byd-hvs-4,byd,tower1module3/temperature06,Temperature sensor 6,°C,diagnostics
+byd-hvs-4,byd,tower1module3/temperature07,Temperature sensor 7,°C,diagnostics
+byd-hvs-4,byd,tower1module3/temperature08,Temperature sensor 8,°C,diagnostics
+byd-hvs-4,byd,tower1module3/temperature09,Temperature sensor 9,°C,diagnostics
+byd-hvs-4,byd,tower1module3/temperature10,Temperature sensor 10,°C,diagnostics
+byd-hvs-4,byd,tower1module3/temperature11,Temperature sensor 11,°C,diagnostics
+byd-hvs-4,byd,tower1module3/temperature12,Temperature sensor 12,°C,diagnostics
+byd-hvs-4,byd,tower1module3/temperaturemax,Maximum sampled sensor temperature,°C,advanced
+byd-hvs-4,byd,tower1module3/temperaturemean,Mean sampled sensor temperature,°C,advanced
+byd-hvs-4,byd,tower1module3/temperaturemin,Minimum sampled sensor temperature,°C,advanced
+byd-hvs-4,byd,tower1module3/voltage,Sum of sampled cell voltages,V,advanced
+byd-hvs-4,byd,tower1module4/balancingactive,Reported balancing active,,advanced
+byd-hvs-4,byd,tower1module4/balancingcount,Reported balancing cell count,,advanced
+byd-hvs-4,byd,tower1module4/cell01balancing,Cell 1 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell01voltage,Cell 1 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell02balancing,Cell 2 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell02voltage,Cell 2 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell03balancing,Cell 3 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell03voltage,Cell 3 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell04balancing,Cell 4 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell04voltage,Cell 4 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell05balancing,Cell 5 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell05voltage,Cell 5 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell06balancing,Cell 6 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell06voltage,Cell 6 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell07balancing,Cell 7 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell07voltage,Cell 7 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell08balancing,Cell 8 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell08voltage,Cell 8 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell09balancing,Cell 9 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell09voltage,Cell 9 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell10balancing,Cell 10 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell10voltage,Cell 10 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell11balancing,Cell 11 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell11voltage,Cell 11 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell12balancing,Cell 12 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell12voltage,Cell 12 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell13balancing,Cell 13 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell13voltage,Cell 13 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell14balancing,Cell 14 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell14voltage,Cell 14 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell15balancing,Cell 15 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell15voltage,Cell 15 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell16balancing,Cell 16 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell16voltage,Cell 16 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell17balancing,Cell 17 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell17voltage,Cell 17 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell18balancing,Cell 18 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell18voltage,Cell 18 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell19balancing,Cell 19 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell19voltage,Cell 19 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell20balancing,Cell 20 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell20voltage,Cell 20 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell21balancing,Cell 21 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell21voltage,Cell 21 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell22balancing,Cell 22 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell22voltage,Cell 22 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell23balancing,Cell 23 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell23voltage,Cell 23 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell24balancing,Cell 24 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell24voltage,Cell 24 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell25balancing,Cell 25 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell25voltage,Cell 25 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell26balancing,Cell 26 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell26voltage,Cell 26 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell27balancing,Cell 27 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell27voltage,Cell 27 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell28balancing,Cell 28 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell28voltage,Cell 28 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell29balancing,Cell 29 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell29voltage,Cell 29 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell30balancing,Cell 30 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell30voltage,Cell 30 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell31balancing,Cell 31 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell31voltage,Cell 31 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cell32balancing,Cell 32 balancing,,diagnostics
+byd-hvs-4,byd,tower1module4/cell32voltage,Cell 32 voltage,V,diagnostics
+byd-hvs-4,byd,tower1module4/cellvoltagemax,Maximum sampled cell voltage,V,advanced
+byd-hvs-4,byd,tower1module4/cellvoltagemean,Mean sampled cell voltage,V,advanced
+byd-hvs-4,byd,tower1module4/cellvoltagemin,Minimum sampled cell voltage,V,advanced
+byd-hvs-4,byd,tower1module4/cellvoltagespread,Sampled cell voltage spread,mV,advanced
+byd-hvs-4,byd,tower1module4/temperature01,Temperature sensor 1,°C,diagnostics
+byd-hvs-4,byd,tower1module4/temperature02,Temperature sensor 2,°C,diagnostics
+byd-hvs-4,byd,tower1module4/temperature03,Temperature sensor 3,°C,diagnostics
+byd-hvs-4,byd,tower1module4/temperature04,Temperature sensor 4,°C,diagnostics
+byd-hvs-4,byd,tower1module4/temperature05,Temperature sensor 5,°C,diagnostics
+byd-hvs-4,byd,tower1module4/temperature06,Temperature sensor 6,°C,diagnostics
+byd-hvs-4,byd,tower1module4/temperature07,Temperature sensor 7,°C,diagnostics
+byd-hvs-4,byd,tower1module4/temperature08,Temperature sensor 8,°C,diagnostics
+byd-hvs-4,byd,tower1module4/temperature09,Temperature sensor 9,°C,diagnostics
+byd-hvs-4,byd,tower1module4/temperature10,Temperature sensor 10,°C,diagnostics
+byd-hvs-4,byd,tower1module4/temperature11,Temperature sensor 11,°C,diagnostics
+byd-hvs-4,byd,tower1module4/temperature12,Temperature sensor 12,°C,diagnostics
+byd-hvs-4,byd,tower1module4/temperaturemax,Maximum sampled sensor temperature,°C,advanced
+byd-hvs-4,byd,tower1module4/temperaturemean,Mean sampled sensor temperature,°C,advanced
+byd-hvs-4,byd,tower1module4/temperaturemin,Minimum sampled sensor temperature,°C,advanced
+byd-hvs-4,byd,tower1module4/voltage,Sum of sampled cell voltages,V,advanced
 home-manager-udp,home-manager,diagnostics/homemanagerconsecutivefailures,Source consecutiveFailures,,diagnostics
 home-manager-udp,home-manager,diagnostics/homemanagerfailures,Source failures,,diagnostics
 home-manager-udp,home-manager,diagnostics/homemanagerlastsuccess,Last successful receipt (UTC),,diagnostics

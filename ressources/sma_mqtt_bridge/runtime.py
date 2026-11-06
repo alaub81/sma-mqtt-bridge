@@ -7,6 +7,7 @@ import time
 from dataclasses import replace
 from pathlib import Path
 
+from .adapters.byd import BYDReader
 from .adapters.echarger import EChargerReader, SempReader
 from .adapters.home_manager_modbus import HomeManagerModbusReader
 from .adapters.meter import MeterReader
@@ -80,6 +81,21 @@ def sources(config):
                 )
             )
     hm, ec, portal = config.home_manager, config.echarger, config.portal
+    if config.byd.enabled:
+        reader = BYDReader(config.byd, config.profiles["byd"], config.runtime.max_payload_bytes)
+        result.append(
+            (
+                SourceState(
+                    "byd",
+                    config.byd.homie_id,
+                    reader.properties,
+                    config.byd.stale_seconds,
+                    diagnostics_enabled=config.byd.diagnostics_enabled,
+                ),
+                reader,
+                config.byd.poll_interval_seconds,
+            )
+        )
     timestamp_observer = (
         TimestampDiagnostics(
             config.runtime.state_dir,
@@ -184,6 +200,7 @@ def sources(config):
             "api": (ec, "api_ready_properties"),
             "semp": (ec, "semp_ready_properties"),
             "portal": (portal, "ready_properties"),
+            "byd": (config.byd, "ready_properties"),
         }
     )
     for state, reader, _interval in result:
@@ -367,6 +384,7 @@ def log_startup_status(config, states, mqtt_status, deadline, now=None):
         "api",
         "semp",
         "portal",
+        "byd",
     ]
     if config.plant.enabled:
         configured.append("plant")

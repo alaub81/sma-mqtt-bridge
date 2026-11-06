@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "byd-hvs-4",
+  "kind": "byd-hvs-read",
+  "layout": 1,
+  "validation": {
+    "status": "validated",
+    "evidence": "Known HVS read blocks, CRC-checked protocol captures and cross-block consistency; no external calibration or active fault acceptance."
+  },
+  "model": "HVS",
+  "modules": 4,
+  "cellsPerModule": 32,
+  "temperaturesPerModule": 12,
+  "moduleCapacityKwh": 2.56,
+  "supportedBmuFirmware": ["3.16"],
+  "supportedBmsFirmware": ["3.24"],
+  "supportedParameterTables": ["9.2"]
+}

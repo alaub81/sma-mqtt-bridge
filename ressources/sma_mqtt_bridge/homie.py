@@ -219,6 +219,8 @@ class HomiePublisher:
             if any(s.id == "plant" for s in states)
             else "Home Manager"
             if any(s.id == "home-manager" for s in states)
+            else "BYD battery"
+            if any(s.id == "byd" for s in states)
             else ("eCharger" if any(s.id in ("api", "semp", "portal") for s in states) else device)
         )
         if inverter is not None:

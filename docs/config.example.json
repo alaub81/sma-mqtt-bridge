@@ -167,5 +167,27 @@
     "initialConsumptionKwh": 0.0,
     "diagnosticsEnabled": false,
     "publishPartialDay": true
+  },
+  "byd": {
+    "enabled": false,
+    "paused": false,
+    "host": "",
+    "port": 8080,
+    "unitId": 1,
+    "profile": "byd-hvs-4",
+    "expectedSerial": "",
+    "homieId": "byd-battery",
+    "advancedChannelsEnabled": false,
+    "diagnosticsEnabled": false,
+    "readyProperties": "",
+    "pollIntervalSeconds": 60.0,
+    "detailPollIntervalSeconds": 300.0,
+    "logPollIntervalSeconds": 300.0,
+    "timeoutSeconds": 5.0,
+    "bufferReadyTimeoutSeconds": 8.0,
+    "bufferPollIntervalSeconds": 0.3,
+    "staleSeconds": 180.0,
+    "detailStaleSeconds": 900.0,
+    "logStaleSeconds": 900.0
   }
 }

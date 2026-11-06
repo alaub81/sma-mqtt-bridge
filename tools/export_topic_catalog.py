@@ -15,13 +15,15 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "ressources"))
 
+from sma_mqtt_bridge.adapters.byd import BYDReader
 from sma_mqtt_bridge.adapters.echarger import EChargerReader, SempReader
 from sma_mqtt_bridge.adapters.home_manager_modbus import HomeManagerModbusReader
 from sma_mqtt_bridge.adapters.meter import MeterReader
 from sma_mqtt_bridge.adapters.modbus import ModbusReader
 from sma_mqtt_bridge.adapters.portal import PortalReader
+from sma_mqtt_bridge.byd_profile import load_byd_profile
 from sma_mqtt_bridge.charging_session import PROPERTIES as SESSION_PROPERTIES
-from sma_mqtt_bridge.config import ECharger, HomeManager, Inverter, load_config
+from sma_mqtt_bridge.config import BYD, ECharger, HomeManager, Inverter, load_config
 from sma_mqtt_bridge.homie import HomiePublisher, wire_key
 from sma_mqtt_bridge.model import SourceState
 from sma_mqtt_bridge.plant import PlantEngine
@@ -67,6 +69,11 @@ def inventories(directory):
                 Inverter(advanced_channels_enabled=True, diagnostics_enabled=True), profile
             )
             yield path.stem, "inverter<N>", describe("inverter<N>", reader.properties)
+    byd = BYDReader(
+        BYD(advanced_channels_enabled=True, diagnostics_enabled=True),
+        load_byd_profile("byd-hvs-4", directory),
+    )
+    yield "byd-hvs-4", "byd", describe("byd", byd.properties)
     yield (
         "home-manager-udp",
         "home-manager",

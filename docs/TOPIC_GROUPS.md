@@ -15,6 +15,12 @@ Diagnostics switches. Portal and plant have their documented Diagnostics switche
 Advanced and optional Diagnostics default to disabled; Basic remains enabled. Classification does not grant write access, select
 readiness requirements, activate adapters or change freshness/retention policies.
 
+The [BYD adapter](BYD.md) follows the same independent filters: Basic pack
+measurements and source availability; Advanced identity and cell/module summaries;
+Diagnostics individual cells/sensors/balancing, bounded events and troubleshooting.
+Diagnostics does not require Advanced. Their different polling blocks retain
+independent receipt times and expiry; a fresh pack reading does not refresh old cells.
+
 ## Basic quality status
 
 These existing topic suffixes remain visible with Diagnostics disabled:

@@ -54,6 +54,12 @@ eCharger requires a host and local account credentials. With the default TLS ver
 
 ## Optional channel groups
 
+The optional [BYD adapter](BYD.md) has its own `SMAB_BYD_` settings and independent
+Advanced/Diagnostics flags. It publishes a separate Homie device and does not
+replace the SMA battery source or plant accounting. Its complete typed defaults,
+profile requirements, service pause and polling/lifetime constraints are listed
+in that guide and `smab.example.env`; optional JSON uses the `byd` section.
+
 Basic channels are always available for enabled sources. Advanced and optional diagnostics are disabled by default. Each inverter slot, Home Manager and eCharger supports
 `SMAB_<DEVICE>_ADVANCED_CHANNELS_ENABLED` and `SMAB_<DEVICE>_DIAGNOSTICS_ENABLED` (boolean, default `false`).
 The portal supports its own `SMAB_PORTAL_DIAGNOSTICS_ENABLED` flag. JSON equivalents are

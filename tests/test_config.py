@@ -299,6 +299,7 @@ class ConfigTests(unittest.TestCase):
             ("SMAB_PORTAL_", defaults.portal),
             ("SMAB_COMMAND_", defaults.commands),
             ("SMAB_PLANT_", defaults.plant),
+            ("SMAB_BYD_", defaults.byd),
         ]
         sections.extend(
             (f"SMAB_INVERTER{n}_", device) for n, device in enumerate(defaults.inverters, 1)

@@ -2,7 +2,8 @@
 
 Bring your SMA solar system, battery storage and EV charger into your smart home.
 SMA MQTT Bridge collects measurements and device settings from SMA inverters,
-Sunny Home Manager 2.0 and SMA eCharger, then publishes them through **Homie 4 MQTT**.
+Sunny Home Manager 2.0 and SMA eCharger, with optional direct BYD Battery-Box
+diagnostics, then publishes them through **Homie 4 MQTT**.
 Your smart home can use those values for dashboards, histories and automations;
 openHAB can discover the devices through its Homie binding.
 
@@ -41,6 +42,7 @@ The repository includes profiles and adapters for the following devices:
 | Sunny Boy Storage 3.7 | [SBS3.7-10](ressources/profiles/sma-sbs3-7-10.json) | Modbus TCP |
 | Sunny Boy 4.0 | [SB4.0-1AV-41](ressources/profiles/sma-sb4-0-1av-41.json) | Modbus TCP |
 | Sunny Home Manager 2.0 | Sunny Home Manager 2.0 | Modbus TCP or UDP meter telegrams |
+| BYD Battery-Box Premium HVS | [Four-module HVS profile](docs/BYD.md) | Local diagnostic RTU over TCP |
 | SMA eCharger | EVC22-3AC-20 | Local HTTPS API and independently enabled SEMP |
 
 The bundled inverter profiles currently allow firmware **4.10.10.R** for

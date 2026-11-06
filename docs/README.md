@@ -8,6 +8,7 @@ private `smab.env` is sufficient; additional JSON configuration is optional.
 | --- | --- |
 | [Configuration](CONFIGURATION.md) | Settings, defaults, credentials, TLS, storage and commands |
 | [Profiles](PROFILES.md) | Supported inverter models and adding custom mappings |
+| [BYD monitoring](BYD.md) | Direct Battery-Box measurements, cells, events and filters |
 | [Translations](TRANSLATIONS.md) | Display languages, label overrides and new dictionaries |
 | [Home Manager](HOME_MANAGER_MODBUS.md) | Meter transports and identity requirements |
 | [Charger power limit](ECHARGER_POWER_LIMIT.md) | Command requirements and phase-switching limits |
