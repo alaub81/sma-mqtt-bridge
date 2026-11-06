@@ -63,7 +63,8 @@ Do not select cumulative charge/discharge counters for these daily inputs.
 
 Charge uses green and an arrow toward the battery; discharge uses orange and an
 arrow toward the house. Both directions share a striped line when their displayed
-values are positive, with a neutral battery icon. Values that round to zero at the
+values are positive, with a neutral battery icon in muted yellow-green (`#98B831`).
+Values that round to zero at the
 selected precision keep an inactive arrow/color. Unknown values show a dash and
 do not activate a direction. Customize `batteryChargeColor`,
 `batteryDischargeColor`, `batteryIconColor`, `batteryChargeIcon`,

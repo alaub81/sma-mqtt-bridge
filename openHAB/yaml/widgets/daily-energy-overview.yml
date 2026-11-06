@@ -93,7 +93,7 @@ widgets:
           label: 'Neutrales Batterie-Icon: Farbe'
           type: TEXT
           groupName: farben
-          default: '#30d158'
+          default: '#98B831'
           description: Farbe bei gleichzeitigem Laden und Entladen am selben Tag. Ohne aktive Werte gilt die inaktive Farbe.
         - name: batteryDischargeColor
           label: Batterie → Haus (Entladen)
@@ -785,7 +785,7 @@ widgets:
                                       justify-content: center
                                       gap: 3px
                                       height: 16px
-                                      color: '=(((props.demoMode === true || props.demoMode === ''true'') || !!props.batteryEnergyItem) && fn.displayPositive(fn.energy(props.batteryEnergyItem, 4.8))) && (((props.demoMode === true || props.demoMode === ''true'') || !!props.batteryChargeEnergyItem) && fn.displayPositive(fn.energy(props.batteryChargeEnergyItem, 6.2))) ? (props.batteryIconColor || ''#30d158'') : (((props.demoMode === true || props.demoMode === ''true'') || !!props.batteryEnergyItem) && fn.displayPositive(fn.energy(props.batteryEnergyItem, 4.8))) ? (props.batteryDischargeColor || ''#ff9f0a'') : (((props.demoMode === true || props.demoMode === ''true'') || !!props.batteryChargeEnergyItem) && fn.displayPositive(fn.energy(props.batteryChargeEnergyItem, 6.2))) ? (props.batteryChargeColor || ''#30d158'') : (props.inactiveColor || ''#8e8e93'')'
+                                      color: '=(((props.demoMode === true || props.demoMode === ''true'') || !!props.batteryEnergyItem) && fn.displayPositive(fn.energy(props.batteryEnergyItem, 4.8))) && (((props.demoMode === true || props.demoMode === ''true'') || !!props.batteryChargeEnergyItem) && fn.displayPositive(fn.energy(props.batteryChargeEnergyItem, 6.2))) ? (props.batteryIconColor || ''#98B831'') : (((props.demoMode === true || props.demoMode === ''true'') || !!props.batteryEnergyItem) && fn.displayPositive(fn.energy(props.batteryEnergyItem, 4.8))) ? (props.batteryDischargeColor || ''#ff9f0a'') : (((props.demoMode === true || props.demoMode === ''true'') || !!props.batteryChargeEnergyItem) && fn.displayPositive(fn.energy(props.batteryChargeEnergyItem, 6.2))) ? (props.batteryChargeColor || ''#30d158'') : (props.inactiveColor || ''#8e8e93'')'
                                       opacity: 1
                                   slots:
                                     default:
