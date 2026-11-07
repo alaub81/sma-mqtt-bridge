@@ -13,6 +13,10 @@ openhab_api_key
 # Private installation records, including local README files.
 /private/
 
+# Local project instructions for coding agents.
+AGENTS.md
+AGENTS.override.md
+
 # Local Python runtime and lint tools.
 .venv/
 .lint-venv/
