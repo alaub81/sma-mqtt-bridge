@@ -19,9 +19,9 @@ openHAB/
       live-energy-flow.yml
       pv-roof-production.yml
       pv-forecast.yml
-  imports/
-    widgets/
-      sma_echarger_comfort_list.yaml
+  mainui/
+    README.md
+    widgets/          # Generated MainUI imports, one YAML per widget UID
 ```
 
 ## File-defined widgets
@@ -73,21 +73,22 @@ configured Items. Daily differences are calculated by the bridge, not the widget
 
 ## Manual MainUI import
 
-[imports/widgets/sma_echarger_comfort_list.yaml](imports/widgets/sma_echarger_comfort_list.yaml)
-is the generated alternative for manual MainUI editor import. It has a `uid:`
-root rather than the file-loader wrapper. Do not copy it into the openHAB YAML
-configuration directory or install it alongside the file-defined copy of the same UID.
+[mainui/README.md](mainui/README.md) explains editor-based installation. All seven
+widget UIDs have generated files under `mainui/widgets/`, each with a `uid:` root.
+The file-defined sources above retain their `version`/`widgets` wrapper. Choose
+one installation method per UID; copying both versions creates a duplicate.
 
-Edit the canonical source under `yaml/widgets/echarger-comfort.yml`, then regenerate:
+Edit only the canonical sources under `yaml/widgets/`, then regenerate all exports:
 
 ```sh
 python3 tools/export_openhab_widget.py
 python3 tools/export_openhab_widget.py --check
 ```
 
-Run these commands from the repository root. The project linter checks that the
-manual import matches the canonical definition. The other widgets currently have
-file-install sources only; no duplicate manual exports are maintained.
+Run from the repository root. The linter checks every export, including both
+widgets in `charging-plan.yml`, and detects missing, changed or obsolete imports.
+When updating an installed MainUI copy, compare its current definition first so
+local changes are preserved.
 
 ## Guides
 

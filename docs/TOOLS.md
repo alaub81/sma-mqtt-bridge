@@ -41,12 +41,16 @@ Python packages. All paths below are relative to the repository root.
 | `tools/build_image.sh` | Build a local image with the checkout version and current base. | Downloads image/dependencies; creates a local image, without deploying or publishing it. |
 | `tools/create_release_notes.py` | Generate notes from stable tags/direct commits with versioned setup links. | Local Git reads and an explicit output file only; publication belongs to the release workflow. See [release automation](BUILDING.md#ci-and-image-publication). |
 | `tools/export_topic_catalog.py` | Generate `docs/topic-catalog.csv` from bundled profiles/runtime metadata. | Offline; `--check` verifies without replacing the catalog. |
-| `tools/export_openhab_widget.py` | Generate the manual eCharger widget import from its canonical YAML. | Offline; `--check` verifies without replacing the import. |
+| `tools/export_openhab_widget.py` | Generate all MainUI widget imports under `openHAB/mainui/widgets/`. | Offline; `--check` verifies every UID/file without replacing imports. |
 | `tests/compose_check.py` | Verify standalone Compose runtime parity, host networking and overrides. | Requires Docker Compose; renders public examples without starting services or reading private ENV settings. |
 | `tests/resource_soak.py` | Bounded CPU/memory/I/O sampling on the Linux Docker host. | Reads local Docker/process/cgroup data; creates a new JSONL file. Does not connect to SMA or MQTT. |
 | `tests/runtime_benchmark.py` | Synthetic publication/heartbeat CPU comparison. | Offline; temporary state only. Not a measurement of actual device polling or production resource usage. |
 | `tests/inventory_things.py` | Extract supported Modbus mappings from local openHAB `.things` files. | Offline; writes an inventory, without generating an authorized polling profile or changing openHAB. |
 | `tools/influx2_copy_item.py` | Generate reviewable Flux for one InfluxDB 2 Item measurement. | Offline query generation only; it never executes a database request. Generated copy queries write only if you separately execute them. |
+
+The catalog and widget exporters are maintenance tools: they generate public
+documentation/import artifacts and therefore live under `tools/`. Tests reuse them
+to verify those artifacts remain current.
 
 The `tests/` location includes reusable diagnostic helpers as well as the regression
 suite. Keep them available when collecting evidence; they are not installed in the

@@ -100,10 +100,11 @@ including host resource sampling, the synthetic benchmark and mapping/query tool
 .venv/bin/python tools/export_openhab_widget.py --check
 ```
 
-Omit `--check` to regenerate the topic catalog or manual widget import after a
-source change. Edit the canonical eCharger widget under
-`openHAB/yaml/widgets/echarger-comfort.yml`; see the
-[widget guide](../openHAB/README.md) for the generated alternative.
+Omit `--check` to regenerate the topic catalog or all manual MainUI widget imports
+after a source change. Edit only the canonical files under
+`openHAB/yaml/widgets/`; see the [MainUI import guide](../openHAB/mainui/README.md).
+The topic exporter is a documentation generator under `tools/`; tests also check
+its output for drift.
 
 ## CI and image publication
 

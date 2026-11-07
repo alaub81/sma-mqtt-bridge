@@ -9,7 +9,7 @@ bridge settings or device settings are created by installing the widgets.
 ## Source and manual import
 
 [echarger-comfort.yml](yaml/widgets/echarger-comfort.yml) is the only editable source.
-[sma_echarger_comfort_list.yaml](imports/widgets/sma_echarger_comfort_list.yaml) is generated for
+[sma_echarger_comfort_list.yaml](mainui/widgets/sma_echarger_comfort_list.yaml) is generated for
 manual import into MainUI's widget editor. Both represent the same widget UID,
 properties and behavior. Install one version per openHAB instance.
 

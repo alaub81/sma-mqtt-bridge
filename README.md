@@ -136,7 +136,7 @@ provided by your setup; the bridge does not generate a weather-based PV forecast
 
 Start with [openHAB discovery and Item setup](openHAB/openHAB.md), then use the
 [widget overview and installation guide](openHAB/README.md). File-based widget
-sources and a generated manual import for the eCharger widget are included.
+sources and generated [MainUI imports for every widget](openHAB/mainui/README.md) are included.
 
 Live energy flow and daily energy overview, captured from the actual openHAB
 widgets using their built-in demo mode. All displayed numbers are example data.
