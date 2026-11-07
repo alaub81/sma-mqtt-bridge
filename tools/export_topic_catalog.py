@@ -64,7 +64,10 @@ def inventories(directory):
             reader.assignments = {0: (1, 1234, 3)}
             reader.rebuild_delegated()
             yield path.stem, "home-manager", describe("home-manager", reader.properties)
-        elif profile.get("validation", {}).get("status") == "validated":
+        elif (
+            profile.get("kind") is None
+            and profile.get("validation", {}).get("status") == "validated"
+        ):
             reader = ModbusReader(
                 Inverter(advanced_channels_enabled=True, diagnostics_enabled=True), profile
             )

@@ -16,6 +16,7 @@ from sma_mqtt_bridge.config import BYD, load_config
 from sma_mqtt_bridge.errors import ConfigError, ProtocolError
 from sma_mqtt_bridge.homie import HomiePublisher, discovery
 from sma_mqtt_bridge.model import SourceState
+from sma_mqtt_bridge.profiles import BUNDLED, load_profile
 from sma_mqtt_bridge.runtime import sources
 from sma_mqtt_bridge.translation import load_translation
 
@@ -205,6 +206,24 @@ class BYDValuesTests(unittest.TestCase):
 
 
 class BYDConfigTests(unittest.TestCase):
+    def test_shared_profile_directory_preserves_adapter_schema_boundaries(self):
+        from sma_mqtt_bridge.byd_profile import BUNDLED as BYD_BUNDLED
+        from sma_mqtt_bridge.home_manager_profile import load_home_manager_profile
+
+        self.assertEqual(BYD_BUNDLED, BUNDLED)
+        self.assertTrue((BUNDLED / "byd-hvs-4.json").is_file())
+        with tempfile.TemporaryDirectory() as directory:
+            self.assertEqual(load_byd_profile("byd-hvs-4", directory)["kind"], "byd-hvs-read")
+            for loader, selector in (
+                (load_profile, "byd-hvs-4"),
+                (load_home_manager_profile, "byd-hvs-4"),
+                (load_byd_profile, "sma-stp8-0-3av-40"),
+                (load_byd_profile, "sma-home-manager-2-modbus"),
+            ):
+                with self.subTest(selector=selector, loader=loader.__name__):
+                    with self.assertRaises(ConfigError):
+                        loader(selector, directory)
+
     def test_default_disabled_and_addresses_do_not_enable_io(self):
         config = load_config(
             {"SMAB_BYD_HOST": "battery.invalid", "SMAB_BYD_PROFILE": "file:missing.json"}

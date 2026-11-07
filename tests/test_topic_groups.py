@@ -39,6 +39,8 @@ class TopicGroupTests(unittest.TestCase):
                     )
         for path in BUNDLED.glob("*.json"):
             raw = json.loads(path.read_text())
+            if raw.get("kind") == "byd-hvs-read":
+                continue  # BYD properties are declared by the reader, not its layout profile.
             for prop in raw["properties"] + raw.get("delegated", {}).get("properties", []):
                 self.assertIn(prop["channelGroup"], ("basic", "advanced", "diagnostics"))
         with self.assertRaises(ConfigError):
@@ -69,7 +71,7 @@ class TopicGroupTests(unittest.TestCase):
         ]
         for path in BUNDLED.glob("*.json"):
             raw = json.loads(path.read_text())
-            if raw.get("validation", {}).get("status") == "validated":
+            if raw.get("kind") is None and raw.get("validation", {}).get("status") == "validated":
                 factories.append(
                     (
                         Inverter(advanced_channels_enabled=True, diagnostics_enabled=True),

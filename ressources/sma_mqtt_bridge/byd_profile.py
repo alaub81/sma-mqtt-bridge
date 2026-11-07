@@ -5,8 +5,7 @@ from pathlib import Path
 
 from .config import read_json
 from .errors import ConfigError
-
-BUNDLED = Path(__file__).resolve().parent.parent / "byd-profiles"
+from .profiles import BUNDLED
 
 
 def load_byd_profile(selector, directory):

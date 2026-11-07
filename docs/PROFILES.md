@@ -1,10 +1,15 @@
-# Inverter profiles
+# Device profiles
 
-Direct Battery-Box monitoring uses a separate [BYD profile contract](BYD.md).
-BYD profiles are not inverter register profiles and cannot be selected for an
-inverter slot.
+All bundled device profiles live under `ressources/profiles/`: inverter Modbus
+mappings, the Home Manager Modbus read profile and the BYD battery layout profile.
+Each adapter validates its own schema; sharing the directory does not make the
+profile types interchangeable. Direct Battery-Box monitoring uses the
+[BYD profile contract](BYD.md), with `kind=byd-hvs-read`. BYD profiles cannot be
+selected for an inverter or Home Manager slot.
 
-The JSON files under `ressources/profiles/` contain reusable protocol mappings,
+The following sections describe inverter mappings and the Home Manager schema.
+
+The inverter JSON files under `ressources/profiles/` contain reusable protocol mappings,
 not installation addresses, credentials or serials. Supported firmware and
 identity constraints are declared in each file. Select a profile matching the
 actual device; related model names do not establish compatibility.

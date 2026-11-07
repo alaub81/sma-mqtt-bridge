@@ -165,7 +165,7 @@ the image; package installation inside a running container is unsupported.
 | Location | Contents |
 | --- | --- |
 | `ressources/sma_mqtt_bridge/` | Python runtime package |
-| `ressources/profiles/` | Bundled model profiles |
+| `ressources/profiles/` | Bundled inverter, Home Manager and BYD profiles |
 | `ressources/translate/` | Bundled English/German discovery labels |
 | `ressources/requirements.txt` | Pinned runtime dependencies |
 | `docs/` | Current setup, configuration, operation and extension guides |

@@ -27,6 +27,8 @@ class TranslationTests(unittest.TestCase):
         labels = load_translation("de", "/nonexistent-smab-translation-fixture")
         for path in (BUNDLED.parent / "profiles").glob("*.json"):
             data = json.loads(path.read_text())
+            if data.get("kind") == "byd-hvs-read":
+                continue  # BYD display names come from runtime property declarations.
             for prop in data["properties"] + data.get("delegated", {}).get("properties", []):
                 self.assertNotEqual(prop["name"], "-", (path.name, prop["id"]))
                 self.assertIn(prop["name"], labels, (path.name, prop["id"]))

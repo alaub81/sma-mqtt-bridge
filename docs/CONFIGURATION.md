@@ -11,7 +11,7 @@ smab.env               # Explicit overrides and installation credentials, host o
 smab.example.env       # Public defaults reference with a broker placeholder
 data/sma-mqtt-bridge/
   config.json          # Optional non-secret configuration
-  profiles/            # Verified register profiles, one or more per inverter
+  profiles/            # Host overrides for inverter, Home Manager and BYD profiles
   certificates/        # CA certificates and optional client certificate/key
   secrets/             # Optional password files
 
