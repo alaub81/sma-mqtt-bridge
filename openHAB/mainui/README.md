@@ -4,15 +4,15 @@ Use these generated definitions when you prefer pasting a widget into openHAB's
 editor. Each file under `widgets/` contains one complete widget with its own `uid`.
 The canonical, editable repository sources remain under [../yaml/widgets/](../yaml/widgets/).
 
-| Import file | Purpose |
+| Import file | Guide |
 | --- | --- |
-| [live_energy_flow.yaml](widgets/live_energy_flow.yaml) | Live energy flow |
-| [daily_energy_overview.yaml](widgets/daily_energy_overview.yaml) | Daily energy overview |
-| [pv_roof_production.yaml](widgets/pv_roof_production.yaml) | DC roof production |
-| [pv_forecast.yaml](widgets/pv_forecast.yaml) | PV forecast display |
-| [sma_echarger_comfort_list.yaml](widgets/sma_echarger_comfort_list.yaml) | eCharger controls and session display |
-| [smabChargingPlan.yaml](widgets/smabChargingPlan.yaml) | Standalone charging-plan card |
-| [smabChargingPlanList.yaml](widgets/smabChargingPlanList.yaml) | List entry opening the charging-plan card; also install `smabChargingPlan` |
+| [live_energy_flow.yaml](widgets/live_energy_flow.yaml) | [Live energy flow](../live-energy-flow.md) |
+| [daily_energy_overview.yaml](widgets/daily_energy_overview.yaml) | [Daily energy overview](../daily-energy-overview.md) |
+| [pv_roof_production.yaml](widgets/pv_roof_production.yaml) | [DC roof production](../pv-roof-production.md) |
+| [pv_forecast.yaml](widgets/pv_forecast.yaml) | [PV forecast display](../pv-forecast.md) |
+| [sma_echarger_comfort_list.yaml](widgets/sma_echarger_comfort_list.yaml) | [eCharger controls and session display](../echarger-comfort.md) |
+| [smabChargingPlan.yaml](widgets/smabChargingPlan.yaml) | [Standalone charging-plan card](../charging-plan.md) |
+| [smabChargingPlanList.yaml](widgets/smabChargingPlanList.yaml) | [Charging-plan popup opener](../charging-plan.md); also install `smabChargingPlan` |
 
 ## Import
 

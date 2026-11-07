@@ -14,6 +14,9 @@ Copy [yaml/widgets/pv-forecast.yml](yaml/widgets/pv-forecast.yml) to
 `oh-grid-cells` component and configure its Item parameters. Do not install a
 second definition of the same UID. File-defined widgets are read-only in MainUI.
 
+Alternatively, import [pv_forecast.yaml](mainui/widgets/pv_forecast.yaml) using the
+[MainUI import guide](mainui/README.md). Choose one installation method per UID.
+
 ```yaml
 component: oh-grid-cells
 config: {}

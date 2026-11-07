@@ -304,9 +304,9 @@ For both widgets select the three parameters in MainUI:
 
 All names are configurable; no installation-specific Item or Thing UID is embedded.
 The same card can be added to a custom page through **Personal Widgets**.
-For manual MainUI import instead of file installation, create two widgets in
-**Developer Tools → Widgets**: use each body below `widgets.<UID>`, add `uid: <UID>`
-at its root, and omit the outer `version`/`widgets` keys. Do not install duplicate UIDs.
+For manual MainUI import, use the two prepared files linked in the
+[charging-plan guide](charging-plan.md) and follow the
+[MainUI import instructions](mainui/README.md). Do not install duplicate UIDs.
 
 ## Use and verify the plan dialog
 

@@ -18,6 +18,9 @@ For Docker, use the corresponding host directory mounted under
 The file uses the openHAB YAML loader wrapper; do not paste the whole file into
 the MainUI single-widget editor. Avoid installing the same UID twice.
 
+Alternatively, import [pv_roof_production.yaml](mainui/widgets/pv_roof_production.yaml) using the
+[MainUI import guide](mainui/README.md). Choose one installation method per UID.
+
 After the widget appears in MainUI, add `pv_roof_production` to a responsive
 page and choose its Item parameters. No Items, rules or device commands are
 created by the widget. This change only prepares the file; installation and
