@@ -159,7 +159,7 @@ def check_markdown_links(files, root=ROOT):
                 )
                 resolved = destination.resolve()
                 private_root = (root / "private").resolve()
-                if resolved.is_relative_to(private_root) and resolved != private_root / "README.md":
+                if resolved.is_relative_to(private_root):
                     print(f"{name}:{number}: public Markdown links to private data", flush=True)
                     passed = False
                 elif not resolved.exists():

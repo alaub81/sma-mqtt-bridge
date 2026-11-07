@@ -16,7 +16,7 @@ class DocumentationLinkTests(unittest.TestCase):
             (root / "docs").mkdir()
             (root / "target file.md").write_text("# Target\n")
             (root / "private").mkdir()
-            (root / "private/README.md").write_text("# Public privacy policy\n")
+            (root / "private/README.md").write_text("# Local private records\n")
             (root / "private/notes.md").write_text("Private installation evidence\n")
             document = root / "docs/check.md"
             for text, expected in (
@@ -26,7 +26,7 @@ class DocumentationLinkTests(unittest.TestCase):
                 ("[external](https://example.invalid/missing.md)", True),
                 ("[mail](mailto:test@example.invalid)", True),
                 ("[anchor](#heading)", True),
-                ("[policy](../private/README.md)", True),
+                ("[private readme](../private/README.md)", False),
                 ("[private](../private/notes.md)", False),
                 ("[encoded](../private%2Fnotes.md)", False),
                 ("[absolute](/private/notes.md)", False),

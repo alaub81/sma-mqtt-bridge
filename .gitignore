@@ -10,9 +10,8 @@ data/
 secrets/
 openhab_api_key
 
-# Private installation records; only the generic README is public.
-private/*
-!private/README.md
+# Private installation records, including local README files.
+/private/
 
 # Local Python runtime and lint tools.
 .venv/
