@@ -31,7 +31,7 @@ from pathlib import Path
 import sys
 
 failures = []
-for line in Path("ressources/requirements.txt").read_text().splitlines():
+for line in Path("resources/sma-mqtt-bridge/requirements.txt").read_text().splitlines():
     if "==" not in line:
         continue
     package, expected = line.split("==", 1)
@@ -46,6 +46,6 @@ if failures:
 sys.exit(bool(failures))
 PY
 then
-  "$PYTHON_RUNNER" -m pip install --requirement ressources/requirements.txt
+  "$PYTHON_RUNNER" -m pip install --requirement resources/sma-mqtt-bridge/requirements.txt
 fi
 exec "$PYTHON_RUNNER" tests/run_tests.py

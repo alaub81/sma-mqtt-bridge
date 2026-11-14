@@ -36,7 +36,7 @@ rather than overwriting it when updating.
 ```
 
 Original English labels are lookup keys. The complete dictionaries under
-[ressources/translate/](../ressources/translate/) list the current built-in keys.
+[resources/sma-mqtt-bridge/translate/](../resources/sma-mqtt-bridge/translate/) list the current built-in keys.
 Keep the `{number}` placeholder in `Device {number}`. Custom profile labels can
 also be translated through the same dictionary.
 

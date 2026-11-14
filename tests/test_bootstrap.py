@@ -13,7 +13,11 @@ from pathlib import Path
 from sma_mqtt_bridge.__main__ import TimestampFormatter
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "ressources" if (ROOT / "ressources/sma_mqtt_bridge").is_dir() else ROOT
+SOURCE = (
+    ROOT / "resources/sma-mqtt-bridge"
+    if (ROOT / "resources/sma-mqtt-bridge/sma_mqtt_bridge").is_dir()
+    else ROOT
+)
 
 
 class BootstrapTests(unittest.TestCase):

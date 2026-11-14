@@ -14,7 +14,7 @@ class VersionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
             (root / ".git").mkdir()
-            package = root / "ressources" / "sma_mqtt_bridge"
+            package = root / "resources/sma-mqtt-bridge" / "sma_mqtt_bridge"
             package.mkdir(parents=True)
             for description, expected in (
                 ("v0.3.2-0-gabcdef12", "0.3.2"),
@@ -35,7 +35,7 @@ class VersionTests(unittest.TestCase):
 
     def test_image_version_without_git_or_environment_override(self):
         with tempfile.TemporaryDirectory() as folder:
-            package = Path(folder) / "ressources" / "sma_mqtt_bridge"
+            package = Path(folder) / "resources/sma-mqtt-bridge" / "sma_mqtt_bridge"
             package.mkdir(parents=True)
             self.assertEqual(resolve_version(package), UNKNOWN)
             with patch("sma_mqtt_bridge.version.subprocess.run") as git:

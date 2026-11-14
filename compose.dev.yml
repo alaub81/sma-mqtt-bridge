@@ -2,8 +2,8 @@
 services:
   sma-mqtt-bridge:
     build:
-      context: .
-      dockerfile: Dockerfile-SMAB
+      context: ./resources/sma-mqtt-bridge
+      dockerfile: Dockerfile
       pull: true
     image: sma-mqtt-bridge:dev
     pull_policy: build

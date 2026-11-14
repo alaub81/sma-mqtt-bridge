@@ -41,7 +41,7 @@ jobs:
           python-version: '3.15'
           check-latest: true
       - name: Install runtime libraries
-        run: python -m pip install --requirement ressources/requirements.txt
+        run: python -m pip install --requirement resources/sma-mqtt-bridge/requirements.txt
       - name: Run offline Python regressions
         run: ./tests/test-check.sh
       - name: Validate both Compose templates with public settings
@@ -64,15 +64,15 @@ jobs:
       - name: Resolve checkout version
         id: version
         run: |
-          smab_build_version=$(PYTHONPATH=ressources python3 -c 'from sma_mqtt_bridge import __version__; print(__version__)')
+          smab_build_version=$(PYTHONPATH=resources/sma-mqtt-bridge python3 -c 'from sma_mqtt_bridge import __version__; print(__version__)')
           echo "value=$smab_build_version" >> "$GITHUB_OUTPUT"
       - uses: docker/setup-qemu-action@v4
       - uses: docker/setup-buildx-action@v4
       - name: Build Python image without publication
         uses: docker/build-push-action@v7
         with:
-          context: .
-          file: Dockerfile-SMAB
+          context: resources/sma-mqtt-bridge
+          file: resources/sma-mqtt-bridge/Dockerfile
           build-args: SMAB_BUILD_VERSION=${{ steps.version.outputs.value }}
           platforms: linux/${{ matrix.platform }}
           load: true

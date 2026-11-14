@@ -1,0 +1,12 @@
+# Only runtime inputs are sent to the image builder.
+**
+!requirements.txt
+!sma_mqtt_bridge/
+!sma_mqtt_bridge/**
+!profiles/
+!profiles/**
+!translate/
+!translate/**
+**/__pycache__/
+**/*.pyc
+**/*.pyo

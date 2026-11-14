@@ -12,7 +12,7 @@ docker compose --env-file smab.env -f compose.dev.yml run --rm sma-mqtt-bridge -
 ```
 
 Both Compose variants are standalone and share runtime settings.
-[compose.dev.yml](../compose.dev.yml) builds [Dockerfile-SMAB](../Dockerfile-SMAB);
+[compose.dev.yml](../compose.dev.yml) builds [resources/sma-mqtt-bridge/Dockerfile](../resources/sma-mqtt-bridge/Dockerfile);
 [compose.example.yml](../compose.example.yml) pulls the GHCR image. The normal
 network uses `app-nw` for Modbus, local HTTP and portal traffic. Linux Home Manager
 UDP multicast has a separate [network variant](CONFIGURATION.md#compose-network-variants).
@@ -29,8 +29,8 @@ Python 3.9+.
 
 ```sh
 python3.15 -m venv .venv
-.venv/bin/python -m pip install --requirement ressources/requirements.txt
-(cd ressources && ../.venv/bin/python -m sma_mqtt_bridge --check-config)
+.venv/bin/python -m pip install --requirement resources/sma-mqtt-bridge/requirements.txt
+(cd resources/sma-mqtt-bridge && ../../.venv/bin/python -m sma_mqtt_bridge --check-config)
 ./tests/test-check.sh
 ```
 
@@ -42,7 +42,7 @@ permission to bind loopback sockets in restricted environments.
 
 To run only the offline tests, use `./tests/test-check.sh`. It creates `.venv`
 when missing, preferring Python 3.15, then 3.14, then a compatible `python3`.
-It installs missing or mismatched dependencies from `ressources/requirements.txt`
+It installs missing or mismatched dependencies from `resources/sma-mqtt-bridge/requirements.txt`
 and reuses matching packages. Initial setup and dependency updates require internet
 access; subsequent checks run offline. An existing `.venv` must use Python 3.14+.
 No activation or manual package installation is needed for this command.
@@ -84,8 +84,8 @@ heading anchors and external URLs are outside the automated link check.
 To apply only import ordering and formatting with the pinned Ruff:
 
 ```sh
-.lint-venv/bin/ruff check --select I --fix ressources tests tools
-.lint-venv/bin/ruff format ressources tests tools
+.lint-venv/bin/ruff check --select I --fix resources/sma-mqtt-bridge tests tools
+.lint-venv/bin/ruff format resources/sma-mqtt-bridge tests tools
 ```
 
 The command prepares local tool directories but never fixes source files.
@@ -132,7 +132,7 @@ Replace `vX.Y.Z` with the actual stable tag. This requires Git history/tags and
 generates a local file only. Future release automation applies after the workflow
 change is present in the tagged commit; earlier tags do not acquire it retroactively.
 
-The [Dockerfile](../Dockerfile-SMAB) uses the official `python:3.15-slim-trixie`
+The [Dockerfile](../resources/sma-mqtt-bridge/Dockerfile) uses the official `python:3.15-slim-trixie`
 tag without a patch-version or digest pin. New builds follow stable 3.15 patches
 and Debian Trixie image updates while retaining the slim variant. The build helper,
 development Compose build and CI/release builds pull the current base; unchanged
@@ -165,15 +165,16 @@ the image; package installation inside a running container is unsupported.
 
 | Location | Contents |
 | --- | --- |
-| `ressources/sma_mqtt_bridge/` | Python runtime package |
-| `ressources/profiles/` | Bundled inverter, Home Manager and BYD profiles |
-| `ressources/translate/` | Bundled English/German discovery labels |
-| `ressources/requirements.txt` | Pinned runtime dependencies |
+| `resources/sma-mqtt-bridge/sma_mqtt_bridge/` | Python runtime package |
+| `resources/sma-mqtt-bridge/profiles/` | Bundled inverter, Home Manager and BYD profiles |
+| `resources/sma-mqtt-bridge/translate/` | Bundled English/German discovery labels |
+| `resources/sma-mqtt-bridge/requirements.txt` | Pinned runtime dependencies |
 | `docs/` | Current setup, configuration, operation and extension guides |
 | `openHAB/` | MainUI widget sources, generated import and setup guides |
 | `translate/` | Host translation template |
 | `tests/`, `tools/` | Offline checks, lint/Compose tooling and exporters |
 
-Only `ressources/` is sent as Docker image input and copied into `/app`.
+The build context is `resources/sma-mqtt-bridge/`; its runtime inputs are copied
+into `/app`. The Dockerfile and ignore rules stay outside the runtime filesystem.
 Compose files, examples, configuration, tests and documentation remain outside it.
 Root `smab.env`, `data/` and private records stay outside Git and Docker inputs.

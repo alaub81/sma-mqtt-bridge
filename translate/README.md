@@ -1,7 +1,7 @@
 # Translation template
 
 [example.json](example.json) is a host translation template. The complete
-bundled dictionaries live under [ressources/translate/](../ressources/translate/).
+bundled dictionaries live under [resources/sma-mqtt-bridge/translate/](../resources/sma-mqtt-bridge/translate/).
 
 Use the [translation guide](../docs/TRANSLATIONS.md) to select a language,
 override individual display labels or add a new JSON dictionary. This directory

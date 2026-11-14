@@ -42,9 +42,9 @@ The repository includes profiles and adapters for the following devices:
 
 | Device | Exact model | Connection |
 | --- | --- | --- |
-| Sunny Tripower 8.0 | [STP8.0-3AV-40](ressources/profiles/sma-stp8-0-3av-40.json) | Modbus TCP |
-| Sunny Boy Storage 3.7 | [SBS3.7-10](ressources/profiles/sma-sbs3-7-10.json) | Modbus TCP |
-| Sunny Boy 4.0 | [SB4.0-1AV-41](ressources/profiles/sma-sb4-0-1av-41.json) | Modbus TCP |
+| Sunny Tripower 8.0 | [STP8.0-3AV-40](resources/sma-mqtt-bridge/profiles/sma-stp8-0-3av-40.json) | Modbus TCP |
+| Sunny Boy Storage 3.7 | [SBS3.7-10](resources/sma-mqtt-bridge/profiles/sma-sbs3-7-10.json) | Modbus TCP |
+| Sunny Boy 4.0 | [SB4.0-1AV-41](resources/sma-mqtt-bridge/profiles/sma-sb4-0-1av-41.json) | Modbus TCP |
 | Sunny Home Manager 2.0 | Sunny Home Manager 2.0 | Modbus TCP or UDP meter telegrams |
 | BYD Battery-Box Premium HVS | [Four-module HVS profile](docs/BYD.md) | Local diagnostic RTU over TCP |
 | SMA eCharger | EVC22-3AC-20 | Local HTTPS API and independently enabled SEMP |
@@ -174,3 +174,7 @@ For security-sensitive reports, follow the [security reporting guide](SECURITY.m
 ## License
 
 [MIT](LICENSE). This project is not affiliated with SMA.
+
+Image build inputs live in `resources/sma-mqtt-bridge/`, including the Dockerfile and
+its `.dockerignore`. Compose, runtime configuration and repository tooling remain
+outside the image context.

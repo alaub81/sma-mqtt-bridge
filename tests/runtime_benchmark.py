@@ -12,8 +12,8 @@ from pathlib import Path
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
-if (ROOT / "ressources/sma_mqtt_bridge").is_dir():
-    sys.path.insert(0, str(ROOT / "ressources"))
+if (ROOT / "resources/sma-mqtt-bridge/sma_mqtt_bridge").is_dir():
+    sys.path.insert(0, str(ROOT / "resources/sma-mqtt-bridge"))
 
 from sma_mqtt_bridge.availability import Availability  # noqa: E402
 from sma_mqtt_bridge.config import DEFAULT_PROFILES, load_config  # noqa: E402

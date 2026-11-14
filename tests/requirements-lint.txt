@@ -13,7 +13,7 @@ toolz==1.2.0
 typing_extensions==4.16.0
 wcwidth==0.9.4
 yamllint==1.38.0
--r ../ressources/requirements.txt
+-r ../resources/sma-mqtt-bridge/requirements.txt
 astroid==4.3.4
 dill==0.4.1
 isort==9.0.2

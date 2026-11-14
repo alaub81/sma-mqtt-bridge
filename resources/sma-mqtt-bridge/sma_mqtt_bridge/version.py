@@ -19,8 +19,8 @@ def resolve_version(package_dir=None):
         pass
     except OSError:
         return UNKNOWN
-    root = package.parents[1]
-    if not (root / ".git").exists():
+    root = next((parent for parent in package.parents if (parent / ".git").exists()), None)
+    if root is None:
         return UNKNOWN
     try:
         result = subprocess.run(

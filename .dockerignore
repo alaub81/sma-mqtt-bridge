@@ -1,8 +1,0 @@
-# Only image inputs are sent as build context.
-**
-!ressources/
-!ressources/**
-# Local bytecode is not a runtime input.
-**/__pycache__/
-**/*.pyc
-**/*.pyo

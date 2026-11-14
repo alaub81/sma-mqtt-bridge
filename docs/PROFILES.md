@@ -1,6 +1,6 @@
 # Device profiles
 
-All bundled device profiles live under `ressources/profiles/`: inverter Modbus
+All bundled device profiles live under `resources/sma-mqtt-bridge/profiles/`: inverter Modbus
 mappings, the Home Manager Modbus read profile and the BYD battery layout profile.
 Each adapter validates its own schema; sharing the directory does not make the
 profile types interchangeable. Direct Battery-Box monitoring uses the
@@ -9,7 +9,7 @@ selected for an inverter or Home Manager slot.
 
 The following sections describe inverter mappings and the Home Manager schema.
 
-The inverter JSON files under `ressources/profiles/` contain reusable protocol mappings,
+The inverter JSON files under `resources/sma-mqtt-bridge/profiles/` contain reusable protocol mappings,
 not installation addresses, credentials or serials. Supported firmware and
 identity constraints are declared in each file. Select a profile matching the
 actual device; related model names do not establish compatibility.
@@ -24,7 +24,7 @@ Select an ID through `SMAB_INVERTER<N>_PROFILE` or the inverter's JSON `profile`
 
 The Docker image packages these defaults as resources. For a bare profile ID, resolve `<id>.json` in the host profile directory first, then the bundled resource directory. A malformed or incompatible host override is an error; do not fall back silently. Require the file's `id` to match its selected ID. Use `file:custom-name.json` to select only a file in the host profile directory, without bundled fallback. Reject absolute paths and traversal outside that directory. Additional slots have no default model and require explicit selection.
 
-Custom installation files belong under `./data/sma-mqtt-bridge/profiles/`. Future reusable, sanitized model profiles can be added under `ressources/profiles/`. The loader/adapter must use profile data rather than model-specific branches, so adding a supported model needs no new adapter implementation.
+Custom installation files belong under `./data/sma-mqtt-bridge/profiles/`. Future reusable, sanitized model profiles can be added under `resources/sma-mqtt-bridge/profiles/`. The loader/adapter must use profile data rather than model-specific branches, so adding a supported model needs no new adapter implementation.
 
 The schema separates device identity, protocol defaults, evidence/validation, pollers, property definitions and command allowlists. It declares register functions and zero-based addresses, lengths, data types, word/byte order, scaling, units, invalid sentinels, source channels, per-poller intervals and Homie metadata. Keep installation connection overrides separate from model defaults. Profiles are validated before device access.
 

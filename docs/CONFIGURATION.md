@@ -42,7 +42,7 @@ SMAB_INVERTER1_HOST=inverter.example.invalid
 SMAB_INVERTER1_PROFILE=sma-stp8-0-3av-40
 ```
 
-Add broker authentication/CA overrides if required by that installation. Select a reusable model profile by ID; the repository packages three validated profiles under [ressources/profiles/](../ressources/profiles/), covering reusable model-specific read mappings. Their schema and host overrides are documented in [PROFILES.md](PROFILES.md). Never invent an IP address, password, serial number or register mapping as a working default.
+Add broker authentication/CA overrides if required by that installation. Select a reusable model profile by ID; the repository packages three validated profiles under [resources/sma-mqtt-bridge/profiles/](../resources/sma-mqtt-bridge/profiles/), covering reusable model-specific read mappings. Their schema and host overrides are documented in [PROFILES.md](PROFILES.md). Never invent an IP address, password, serial number or register mapping as a working default.
 
 Each inverter is independent. The first three slots default respectively to `sma-stp8-0-3av-40`, `sma-sbs3-7-10` and `sma-sb4-0-1av-41`, and each selection can be overridden. A profile is reusable across slots; slot number does not determine the connected model. Further slots use the same `SMAB_INVERTER<N>_` family, with an empty profile default requiring explicit selection, without another hard-coded adapter. A disabled slot does not require a host or profile. An enabled slot requires a host and validated matching profile; validate discovered device identity against the profile and an optional expected serial number before accepting data.
 
@@ -409,7 +409,7 @@ For Compose-only overrides such as host data paths, UID/GID or the deployment im
 docker compose --env-file smab.env -f compose.dev.yml up -d --build
 ```
 
-Both Compose files are standalone and carry identical runtime options. Development explicitly builds `Dockerfile-SMAB`; example uses the GHCR image instead. `python3 tests/compose_check.py` checks this parity with public settings and overrides. Use `--check-config` to validate all enabled sources without connecting. Starting without a diagnostic flag runs only explicitly enabled read sources. Device writes remain opt-in through the documented global and per-adapter gates. The optional service ENV file requires Docker Compose 2.24 or newer. Diagnostics can render templates without any private file. To use another ENV file for both interpolation and service variables, set `SMAB_ENV_FILE` to that path in the shell and also pass `--env-file` with the same path. Home Manager multicast networking requires target-host verification; the bind mount alone does not establish UDP reachability.
+Both Compose files are standalone and carry identical runtime options. Development explicitly builds `resources/sma-mqtt-bridge/Dockerfile`; example uses the GHCR image instead. `python3 tests/compose_check.py` checks this parity with public settings and overrides. Use `--check-config` to validate all enabled sources without connecting. Starting without a diagnostic flag runs only explicitly enabled read sources. Device writes remain opt-in through the documented global and per-adapter gates. The optional service ENV file requires Docker Compose 2.24 or newer. Diagnostics can render templates without any private file. To use another ENV file for both interpolation and service variables, set `SMAB_ENV_FILE` to that path in the shell and also pass `--env-file` with the same path. Home Manager multicast networking requires target-host verification; the bind mount alone does not establish UDP reachability.
 
 References: [Docker Compose ENV files](https://docs.docker.com/compose/how-tos/environment-variables/set-environment-variables/), [Compose bind mounts](https://docs.docker.com/reference/compose-file/services/#volumes), [Homie 4 convention](https://homieiot.github.io/specification/spec-core-v4_0_0/).
 
@@ -434,7 +434,7 @@ Local plan energy, stop delay and plan end need matching `unit` metadata or the 
 
 Retained retirement uses `state/mqtt-topics.json`, containing owned topics only. Removed properties/devices and previous prefixes are cleared on reconnect. Fresh values are reannounced; unavailable current values are cleared first. The manifest cannot retire another broker's data after changing `HOST`/port. Keep the original broker available for a separate retirement step; no automatic cross-broker access occurs.
 
-Every dataclass field in `ressources/sma_mqtt_bridge/config.py` has the documented ENV family and camelCase JSON name. `runtime` fields use `SMAB_`; `commands.enabled` maps to `SMAB_COMMANDS_ENABLED`, and its timeout maps to `SMAB_COMMAND_READBACK_TIMEOUT_SECONDS`. Numbered inverter IDs are JSON selectors, not ENV identity overrides. The Python CLI receives ENV from Compose; dotenv syntax is handled by Compose rather than a second parser.
+Every dataclass field in `resources/sma-mqtt-bridge/sma_mqtt_bridge/config.py` has the documented ENV family and camelCase JSON name. `runtime` fields use `SMAB_`; `commands.enabled` maps to `SMAB_COMMANDS_ENABLED`, and its timeout maps to `SMAB_COMMAND_READBACK_TIMEOUT_SECONDS`. Numbered inverter IDs are JSON selectors, not ENV identity overrides. The Python CLI receives ENV from Compose; dotenv syntax is handled by Compose rather than a second parser.
 
 ## Failure supervision and healthcheck
 
@@ -662,7 +662,7 @@ All device-write gates stay false by default. Plan transmission, mode activation
 `SMAB_LANGUAGE` (string, default `en`; JSON `runtime.language`) selects bundled English or German
 (`de`) display labels. `SMAB_TRANSLATE_DIR` (container path, default
 `/data/sma-mqtt-bridge/config/translate`; JSON `runtime.translateDir`) selects host translation overrides.
-The image includes `ressources/translate/en.json` and `de.json`. Copy `translate/example.json` to
+The image includes `resources/sma-mqtt-bridge/translate/en.json` and `de.json`. Copy `translate/example.json` to
 `data/sma-mqtt-bridge/translate/de.json` to customize German labels, or to `fr.json` and select `fr`
 to add another language. The host directory is covered by the existing data bind mount; it is not
 created or overwritten automatically. The container user must be able to read the files.

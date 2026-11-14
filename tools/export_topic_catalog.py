@@ -13,7 +13,7 @@ import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "ressources"))
+sys.path.insert(0, str(ROOT / "resources/sma-mqtt-bridge"))
 
 from sma_mqtt_bridge.adapters.byd import BYDReader
 from sma_mqtt_bridge.adapters.echarger import EChargerReader, SempReader

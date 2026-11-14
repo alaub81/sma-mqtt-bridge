@@ -2,7 +2,7 @@
 FROM python:3.15-slim-trixie
 
 WORKDIR /app
-COPY ressources/requirements.txt ./
+COPY requirements.txt ./
 RUN python -m pip install --no-cache-dir --requirement requirements.txt \
     && python -m pip check \
     && python -m pip uninstall --yes pip \
@@ -11,7 +11,9 @@ RUN python -m pip install --no-cache-dir --requirement requirements.txt \
     && useradd --uid 10001 --gid smab --no-create-home smab \
     && mkdir -p /data/sma-mqtt-bridge/state \
     && chown -R smab:smab /data/sma-mqtt-bridge
-COPY ressources/ ./
+COPY sma_mqtt_bridge/ ./sma_mqtt_bridge/
+COPY profiles/ ./profiles/
+COPY translate/ ./translate/
 
 ARG SMAB_BUILD_VERSION=0.0.0+unknown
 RUN python -c 'import os, pathlib; from sma_mqtt_bridge.version import VERSION; value = os.environ["SMAB_BUILD_VERSION"]; assert VERSION.fullmatch(value), "Invalid build version"; pathlib.Path("sma_mqtt_bridge/_build_version.txt").write_text(value + "\n", encoding="utf-8")'

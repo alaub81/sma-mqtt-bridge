@@ -66,7 +66,7 @@ The configured profile is loaded only for an enabled adapter.
 | `LOG_STALE_SECONDS` | number `900` | Event lifetime, at least the event interval |
 
 Profile resolution checks `<id>.json` in `SMAB_PROFILE_DIR` before the bundled
-`ressources/profiles/` resource. BYD, inverter and Home Manager files share this
+`resources/sma-mqtt-bridge/profiles/` resource. BYD, inverter and Home Manager files share this
 directory but retain their adapter-specific schemas and identity checks. Invalid overrides fail without fallback.
 `file:name.json` selects only a host file. Path traversal and absolute selectors
 are rejected. Layout 1 supports the fixed HVS cell/sensor arrangement for up to

@@ -1,6 +1,6 @@
 [MAIN]
 py-version=3.15
-init-hook=import sys; sys.path[:0] = ['ressources', 'tests']
+init-hook=import sys; sys.path[:0] = ['resources/sma-mqtt-bridge', 'tests']
 persistent=no
 
 [REPORTS]

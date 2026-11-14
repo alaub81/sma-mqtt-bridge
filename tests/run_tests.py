@@ -11,9 +11,9 @@ from unittest.mock import patch
 def main():
     root = Path(__file__).resolve().parents[1]
     sys.path.insert(0, str(root))
-    # Local sources live under ressources; the image places them directly in /app.
-    if (root / "ressources/sma_mqtt_bridge").is_dir():
-        sys.path.insert(0, str(root / "ressources"))
+    # Local sources live under resources/sma-mqtt-bridge; the image places them directly in /app.
+    if (root / "resources/sma-mqtt-bridge/sma_mqtt_bridge").is_dir():
+        sys.path.insert(0, str(root / "resources/sma-mqtt-bridge"))
     suite = unittest.defaultTestLoader.discover(str(root / "tests"))
     loop_errors = []
     original_new_loop = asyncio.events.new_event_loop

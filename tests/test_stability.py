@@ -256,7 +256,7 @@ class StabilityTests(unittest.TestCase):
         self.assertEqual(path.read_bytes(), before)
 
     def test_state_lock_excludes_a_second_process_and_releases_after_crash(self):
-        source = Path(__file__).resolve().parents[1] / "ressources"
+        source = Path(__file__).resolve().parents[1] / "resources/sma-mqtt-bridge"
         env = os.environ.copy() | {"PYTHONPATH": str(source)}
         code = (
             "import sys\nfrom sma_mqtt_bridge.storage import state_lock\n"
